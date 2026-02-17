@@ -7,6 +7,7 @@ import { createBrowserRouter, RouterProvider } from 'react-router-dom'
 import './index.css'
 import Home from './Home.jsx'
 import Products from './ProductsListing.jsx'
+import ProductUpload from './admin/ProductUpload.jsx'
 
 const router = createBrowserRouter([
   {
@@ -16,6 +17,10 @@ const router = createBrowserRouter([
   {
     path: '/products',
     element: <Products />,
+  },
+  {
+    path: '/admin/products/new',
+    element: <ProductUpload />,
   },
   // {
   //   path: '/products/:id',
