@@ -40,170 +40,30 @@ const useCartStore = create((set) => ({
       cart: state.cart.filter((item) => item.id !== id),
     })),
 }))
-
-// Mock API for Products
 const fetchProducts = async () => {
-  await new Promise((resolve) => setTimeout(resolve, 500))
-  return [
-    {
-      id: 1,
-      name: 'Silk Saree with Golden Border',
-      price: 4999,
-      category: 'Sarees',
-      fabric: 'Silk',
-      color: 'Red',
-      occasion: 'Wedding',
-      rating: 4.8,
-      image: '👗',
-      bgColor: 'bg-gradient-to-br from-red-200 to-pink-300',
-      description:
-        'Elegant silk saree with intricate golden border perfect for weddings and special occasions.',
-    },
-    {
-      id: 2,
-      name: 'Banarasi Saree',
-      price: 8999,
-      category: 'Sarees',
-      fabric: 'Banarasi Silk',
-      color: 'Gold',
-      occasion: 'Wedding',
-      rating: 4.9,
-      image: '👗',
-      bgColor: 'bg-gradient-to-br from-amber-200 to-orange-300',
-      description: 'Traditional Banarasi silk saree with rich zari work.',
-    },
-    {
-      id: 3,
-      name: 'Anarkali Suit Set',
-      price: 3499,
-      category: 'Suits',
-      fabric: 'Georgette',
-      color: 'Purple',
-      occasion: 'Party',
-      rating: 4.7,
-      image: '👗',
-      bgColor: 'bg-gradient-to-br from-purple-200 to-pink-300',
-      description: 'Flowy Anarkali suit with embroidered work.',
-    },
-    {
-      id: 4,
-      name: 'Bridal Lehenga Choli',
-      price: 12999,
-      category: 'Lehengas',
-      fabric: 'Velvet',
-      color: 'Red',
-      occasion: 'Wedding',
-      rating: 4.9,
-      image: '👗',
-      bgColor: 'bg-gradient-to-br from-red-200 to-pink-400',
-      description: 'Heavy embroidered bridal lehenga with dupatta.',
-    },
-    {
-      id: 5,
-      name: 'Cotton Palazzo Suit',
-      price: 2499,
-      category: 'Suits',
-      fabric: 'Cotton',
-      color: 'Blue',
-      occasion: 'Casual',
-      rating: 4.6,
-      image: '👗',
-      bgColor: 'bg-gradient-to-br from-blue-200 to-cyan-300',
-      description: 'Comfortable cotton palazzo suit for everyday wear.',
-    },
-    {
-      id: 6,
-      name: 'Designer Kurti Set',
-      price: 1799,
-      category: 'Kurtis',
-      fabric: 'Rayon',
-      color: 'Green',
-      occasion: 'Casual',
-      rating: 4.5,
-      image: '👗',
-      bgColor: 'bg-gradient-to-br from-green-200 to-emerald-300',
-      description: 'Trendy kurti with modern prints and palazzo.',
-    },
-    {
-      id: 7,
-      name: 'Chanderi Silk Saree',
-      price: 6999,
-      category: 'Sarees',
-      fabric: 'Chanderi',
-      color: 'Pink',
-      occasion: 'Festive',
-      rating: 4.8,
-      image: '👗',
-      bgColor: 'bg-gradient-to-br from-pink-200 to-rose-300',
-      description: 'Lightweight Chanderi silk saree with elegant motifs.',
-    },
-    {
-      id: 8,
-      name: 'Printed Cotton Kurti',
-      price: 999,
-      category: 'Kurtis',
-      fabric: 'Cotton',
-      color: 'Yellow',
-      occasion: 'Casual',
-      rating: 4.4,
-      image: '👗',
-      bgColor: 'bg-gradient-to-br from-yellow-200 to-amber-300',
-      description: 'Casual printed kurti for daily wear.',
-    },
-    {
-      id: 9,
-      name: 'Net Lehenga',
-      price: 7999,
-      category: 'Lehengas',
-      fabric: 'Net',
-      color: 'Purple',
-      occasion: 'Party',
-      rating: 4.7,
-      image: '👗',
-      bgColor: 'bg-gradient-to-br from-purple-200 to-fuchsia-300',
-      description: 'Elegant net lehenga with sequin work.',
-    },
-    {
-      id: 10,
-      name: 'Georgette Anarkali',
-      price: 4299,
-      category: 'Suits',
-      fabric: 'Georgette',
-      color: 'Pink',
-      occasion: 'Party',
-      rating: 4.6,
-      image: '👗',
-      bgColor: 'bg-gradient-to-br from-pink-200 to-rose-300',
-      description: 'Stylish georgette anarkali with stone work.',
-    },
-    {
-      id: 11,
-      name: 'Cotton Saree',
-      price: 1499,
-      category: 'Sarees',
-      fabric: 'Cotton',
-      color: 'Blue',
-      occasion: 'Casual',
-      rating: 4.5,
-      image: '👗',
-      bgColor: 'bg-gradient-to-br from-blue-200 to-indigo-300',
-      description: 'Pure cotton saree for comfortable daily wear.',
-    },
-    {
-      id: 12,
-      name: 'Party Wear Lehenga',
-      price: 9999,
-      category: 'Lehengas',
-      fabric: 'Silk',
-      color: 'Gold',
-      occasion: 'Party',
-      rating: 4.8,
-      image: '👗',
-      bgColor: 'bg-gradient-to-br from-amber-200 to-yellow-300',
-      description: 'Stunning party wear lehenga with mirror work.',
-    },
-  ]
-}
+  const response = await fetch('http://57.131.30.252:8081/listings', {
+    method: 'GET', // assuming it's GET (change if needed)
+  });
+
+  const data = await response.json();
+
+  return data.map((item) => ({
+    id: item.id,
+    name: item.title,
+    price: item.price,
+    category: item.category,
+    image: item.images?.[0] ? `https://cdn.aarria.com/app/images/${item.images[0]}` : "👗",
+    stock: item.stock,
+
+    // fallback fields for UI consistency
+    rating: 4.2,
+    fabric: "Cotton",
+    color: "Red",
+    occasion: "Casual",
+    bgColor: "bg-gradient-to-br from-pink-200 to-red-300",
+    description: item.title,
+  }));
+};
 
 // Mock API for Filters
 const fetchFilters = async () => {
@@ -716,69 +576,29 @@ const ProductDetailModal = ({ product, onClose }) => {
   )
 }
 
-// Pagination Component
+// Pagination Component — First, Back, Next only
 const Pagination = ({ currentPage, totalPages, onPageChange }) => {
-  const pages = []
-  const maxVisible = 5
-
-  let start = Math.max(1, currentPage - Math.floor(maxVisible / 2))
-  let end = Math.min(totalPages, start + maxVisible - 1)
-
-  if (end - start + 1 < maxVisible) {
-    start = Math.max(1, end - maxVisible + 1)
-  }
-
-  for (let i = start; i <= end; i++) {
-    pages.push(i)
-  }
-
   return (
     <div className='flex items-center justify-center gap-2 mt-8'>
+      <button
+        onClick={() => onPageChange(1)}
+        disabled={currentPage === 1}
+        className='px-4 py-2 rounded-lg border border-pink-200 text-gray-700 hover:bg-pink-50 disabled:opacity-50 disabled:cursor-not-allowed transition'
+      >
+        First
+      </button>
+
       <button
         onClick={() => onPageChange(currentPage - 1)}
         disabled={currentPage === 1}
         className='px-4 py-2 rounded-lg border border-pink-200 text-gray-700 hover:bg-pink-50 disabled:opacity-50 disabled:cursor-not-allowed transition'
       >
-        Previous
+        Back
       </button>
 
-      {start > 1 && (
-        <>
-          <button
-            onClick={() => onPageChange(1)}
-            className='px-4 py-2 rounded-lg border border-pink-200 text-gray-700 hover:bg-pink-50 transition'
-          >
-            1
-          </button>
-          {start > 2 && <span className='text-gray-400'>...</span>}
-        </>
-      )}
-
-      {pages.map((page) => (
-        <button
-          key={page}
-          onClick={() => onPageChange(page)}
-          className={`px-4 py-2 rounded-lg transition ${
-            currentPage === page
-              ? 'bg-gradient-to-r from-pink-500 to-rose-500 text-white'
-              : 'border border-pink-200 text-gray-700 hover:bg-pink-50'
-          }`}
-        >
-          {page}
-        </button>
-      ))}
-
-      {end < totalPages && (
-        <>
-          {end < totalPages - 1 && <span className='text-gray-400'>...</span>}
-          <button
-            onClick={() => onPageChange(totalPages)}
-            className='px-4 py-2 rounded-lg border border-pink-200 text-gray-700 hover:bg-pink-50 transition'
-          >
-            {totalPages}
-          </button>
-        </>
-      )}
+      <span className='px-4 py-2 text-sm text-gray-600'>
+        Page {currentPage} of {totalPages}
+      </span>
 
       <button
         onClick={() => onPageChange(currentPage + 1)}
