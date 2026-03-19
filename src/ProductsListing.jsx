@@ -422,9 +422,13 @@ const ProductCard = ({ product, onViewDetails }) => {
       <div
         className={`${product.bgColor} h-56 flex items-center justify-center text-6xl relative overflow-hidden`}
       >
-        <div className='text-7xl transform group-hover:scale-110 transition'>
-          {product.image}
-        </div>
+        <div className='h-full w-full overflow-hidden'>
+  <img
+    src={product.image}
+    alt={product.name}
+    className='h-full w-full object-cover object-top transition group-hover:scale-110'
+  />
+</div>
         <button
           onClick={(e) => {
             e.stopPropagation()
