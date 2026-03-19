@@ -428,6 +428,7 @@ const ProductCard = ({ product, onViewDetails }) => {
     alt={product.name}
     className='h-full w-full object-cover object-top transition group-hover:scale-110'
   />
+  
 </div>
         <button
           onClick={(e) => {
