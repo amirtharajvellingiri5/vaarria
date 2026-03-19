@@ -41,7 +41,7 @@ const useCartStore = create((set) => ({
     })),
 }))
 const fetchProducts = async () => {
-  const response = await fetch('http://57.131.30.252:8081/listings', {
+  const response = await fetch('https://api.aarria.com/listings', {
     method: 'GET', // assuming it's GET (change if needed)
   });
 
@@ -428,7 +428,7 @@ const ProductCard = ({ product, onViewDetails }) => {
     alt={product.name}
     className='h-full w-full object-cover object-top transition group-hover:scale-110'
   />
-  
+
 </div>
         <button
           onClick={(e) => {
