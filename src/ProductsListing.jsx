@@ -40,10 +40,13 @@ const useCartStore = create((set) => ({
       cart: state.cart.filter((item) => item.id !== id),
     })),
 }))
+
+const BASE_URL = "https://cdn.aarria.com/app/images/";
+
 const fetchProducts = async () => {
-  const response = await fetch('https://api.aarria.com/listings', {
-    method: 'GET', // assuming it's GET (change if needed)
-  });
+  const response = await fetch(
+    'https://products-api.chatoyantvortex.workers.dev/?page=1'
+  );
 
   const data = await response.json();
 
@@ -51,11 +54,15 @@ const fetchProducts = async () => {
     id: item.id,
     name: item.title,
     price: item.price,
-    category: item.category,
-    image: item.images?.[0] ? `https://cdn.aarria.com/app/images/${item.images[0]}` : "👗",
+
+    image: item.images?.length
+      ? BASE_URL + item.images[0]
+      : "",
+
     stock: item.stock,
 
-    // fallback fields for UI consistency
+    // optional defaults (since KV doesn't have these)
+    category: "Ethnic",
     rating: 4.2,
     fabric: "Cotton",
     color: "Red",
