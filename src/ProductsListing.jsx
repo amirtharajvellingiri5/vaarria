@@ -623,6 +623,49 @@ const Pagination = ({ currentPage, totalPages, onPageChange }) => {
   )
 }
 
+// Skeleton Box
+const Skeleton = ({ className }) => (
+  <div className={`animate-pulse bg-pink-100 rounded ${className}`} />
+)
+
+// Product Card Skeleton
+const ProductCardSkeleton = () => {
+  return (
+    <div className="bg-white rounded-2xl shadow-md overflow-hidden">
+      <Skeleton className="h-56 w-full" />
+
+      <div className="p-4 space-y-3">
+        <Skeleton className="h-3 w-20" />
+        <Skeleton className="h-4 w-full" />
+        <Skeleton className="h-3 w-24" />
+
+        <div className="flex justify-between items-center pt-2">
+          <Skeleton className="h-5 w-20" />
+          <Skeleton className="h-8 w-24 rounded-lg" />
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// Filters Skeleton
+const FilterSkeleton = () => {
+  return (
+    <div className="bg-white rounded-lg shadow-md p-4 space-y-4">
+      <Skeleton className="h-6 w-24" />
+
+      {[1, 2, 3, 4, 5].map((i) => (
+        <div key={i} className="space-y-2">
+          <Skeleton className="h-4 w-32" />
+          {[1, 2, 3].map((j) => (
+            <Skeleton key={j} className="h-3 w-24" />
+          ))}
+        </div>
+      ))}
+    </div>
+  )
+}
+
 // Main Listing Page Component
 const ListingPage = () => {
   const [selectedFilters, setSelectedFilters] = useState({
@@ -726,19 +769,37 @@ const ListingPage = () => {
     currentPage * itemsPerPage
   )
 
-  if (productsLoading || filtersLoading) {
-    return (
-      <div className='min-h-screen bg-gradient-to-b from-white to-pink-50'>
-        <Navbar />
-        <div className='flex items-center justify-center h-96'>
-          <div className='text-center'>
-            <div className='inline-block animate-spin rounded-full h-12 w-12 border-4 border-pink-200 border-t-pink-600'></div>
-            <p className='mt-4 text-gray-600'>Loading products...</p>
+if (productsLoading || filtersLoading) {
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-white to-pink-50">
+      <Navbar />
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Title Skeleton */}
+        <div className="mb-6 space-y-2">
+          <Skeleton className="h-8 w-64" />
+          <Skeleton className="h-4 w-40" />
+        </div>
+
+        <div className="flex gap-6">
+          {/* Left Filters Skeleton */}
+          <div className="hidden lg:block w-64 flex-shrink-0">
+            <FilterSkeleton />
+          </div>
+
+          {/* Products Skeleton */}
+          <div className="flex-1">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {Array.from({ length: 15 }).map((_, i) => (
+                <ProductCardSkeleton key={i} />
+              ))}
+            </div>
           </div>
         </div>
       </div>
-    )
-  }
+    </div>
+  )
+}
 
   return (
     <div className='min-h-screen bg-gradient-to-b from-white to-pink-50'>
