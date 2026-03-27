@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { useNavigate } from "react-router-dom"
 import { create } from 'zustand'
 import {
   ShoppingBag,
@@ -668,6 +669,7 @@ const FilterSkeleton = () => {
 
 // Main Listing Page Component
 const ListingPage = () => {
+
   const [selectedFilters, setSelectedFilters] = useState({
     category: [],
     fabric: [],
@@ -679,6 +681,7 @@ const ListingPage = () => {
   const [currentPage, setCurrentPage] = useState(1)
   const [selectedProduct, setSelectedProduct] = useState(null)
   const itemsPerPage = 9
+  const navigate = useNavigate();
 
   const { data: products, isLoading: productsLoading } = useQuery({
     queryKey: ['products'],
@@ -865,7 +868,10 @@ if (productsLoading || filtersLoading) {
                     <ProductCard
                       key={product.id}
                       product={product}
-                      onViewDetails={setSelectedProduct}
+                      onViewDetails={(product) => {
+                        setSelectedProduct(product)
+                        navigate("/product", { state: product })
+                      }}
                     />
                   ))}
                 </div>
