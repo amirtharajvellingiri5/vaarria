@@ -18,7 +18,7 @@ import {
   Menu,
 } from "lucide-react";
 
-// ─── Navbar (from ProductsListing) ───────────────────────────────────────────
+// ─── Navbar (keep yours — untouched) ─────────────────────────────────────────
 const Navbar = ({ cartCount = 0 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [activeMenu, setActiveMenu] = useState(null);
@@ -26,40 +26,19 @@ const Navbar = ({ cartCount = 0 }) => {
   const menuItems = [
     {
       name: "Sarees",
-      submenu: [
-        "Silk Sarees",
-        "Cotton Sarees",
-        "Designer Sarees",
-        "Banarasi Sarees",
-        "Kanjivaram Sarees",
-      ],
+      submenu: ["Silk Sarees","Cotton Sarees","Designer Sarees","Banarasi Sarees","Kanjivaram Sarees"],
     },
     {
       name: "Lehengas",
-      submenu: [
-        "Bridal Lehengas",
-        "Party Wear",
-        "Designer Lehengas",
-        "Silk Lehengas",
-      ],
+      submenu: ["Bridal Lehengas","Party Wear","Designer Lehengas","Silk Lehengas"],
     },
     {
       name: "Suits",
-      submenu: [
-        "Anarkali Suits",
-        "Palazzo Suits",
-        "Salwar Suits",
-        "Churidar Suits",
-      ],
+      submenu: ["Anarkali Suits","Palazzo Suits","Salwar Suits","Churidar Suits"],
     },
     {
       name: "Kurtis",
-      submenu: [
-        "Cotton Kurtis",
-        "Designer Kurtis",
-        "Printed Kurtis",
-        "Long Kurtis",
-      ],
+      submenu: ["Cotton Kurtis","Designer Kurtis","Printed Kurtis","Long Kurtis"],
     },
   ];
 
@@ -67,7 +46,6 @@ const Navbar = ({ cartCount = 0 }) => {
     <nav className="bg-white shadow-sm sticky top-0 z-50 border-b border-pink-100">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
-          {/* Left: hamburger + logo */}
           <div className="flex items-center">
             <button
               onClick={() => setIsOpen(!isOpen)}
@@ -76,112 +54,54 @@ const Navbar = ({ cartCount = 0 }) => {
               {isOpen ? <X size={24} /> : <Menu size={24} />}
             </button>
             <a href="/">
-              {/* Inline SVG logo — same pink-brand feel as the listing page */}
-              <svg
-                width="120"
-                height="40"
-                viewBox="0 0 120 40"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-                aria-label="Aarria logo"
-              >
-                <text
-                  x="0"
-                  y="30"
-                  fontFamily="'Playfair Display', Georgia, serif"
-                  fontWeight="700"
-                  fontSize="26"
-                  fill="#ec4899"
-                  letterSpacing="-1"
-                >
-                  aarria
-                </text>
-                {/* small decorative dot accent */}
+              <svg width="120" height="40" viewBox="0 0 120 40" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="Aarria logo">
+                <text x="0" y="30" fontFamily="'Playfair Display', Georgia, serif" fontWeight="700" fontSize="26" fill="#ec4899" letterSpacing="-1">aarria</text>
                 <circle cx="112" cy="10" r="4" fill="#fb7185" />
               </svg>
             </a>
           </div>
 
-          {/* Center: desktop menu */}
           <div className="hidden md:flex space-x-6 relative">
             {menuItems.map((item) => (
-              <div
-                key={item.name}
-                className="relative"
-                onMouseEnter={() => setActiveMenu(item.name)}
-                onMouseLeave={() => setActiveMenu(null)}
-              >
+              <div key={item.name} className="relative" onMouseEnter={() => setActiveMenu(item.name)} onMouseLeave={() => setActiveMenu(null)}>
                 <button className="text-gray-700 hover:text-pink-600 transition font-medium flex items-center gap-1 text-sm">
-                  {item.name}
-                  <ChevronDown size={14} />
+                  {item.name}<ChevronDown size={14} />
                 </button>
-
                 {activeMenu === item.name && (
                   <div className="absolute top-full left-0 mt-2 bg-white shadow-xl rounded-xl py-2 min-w-48 border border-pink-100 z-50">
                     {item.submenu.map((sub) => (
-                      <a
-                        key={sub}
-                        href="#"
-                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-pink-50 hover:text-pink-600 transition"
-                      >
-                        {sub}
-                      </a>
+                      <a key={sub} href="#" className="block px-4 py-2 text-sm text-gray-700 hover:bg-pink-50 hover:text-pink-600 transition">{sub}</a>
                     ))}
                   </div>
                 )}
               </div>
             ))}
-            <a
-              href="#"
-              className="text-pink-600 hover:text-pink-700 transition font-bold text-sm"
-            >
-              Sale
-            </a>
+            <a href="#" className="text-pink-600 hover:text-pink-700 transition font-bold text-sm">Sale</a>
           </div>
 
-          {/* Right: icons */}
           <div className="flex items-center space-x-4">
-            <button className="text-gray-700 hover:text-pink-600 transition">
-              <Search size={20} />
-            </button>
-            <button className="text-gray-700 hover:text-pink-600 transition">
-              <Heart size={20} />
-            </button>
-            <button className="text-gray-700 hover:text-pink-600 transition">
-              <User size={20} />
-            </button>
+            <button className="text-gray-700 hover:text-pink-600 transition"><Search size={20} /></button>
+            <button className="text-gray-700 hover:text-pink-600 transition"><Heart size={20} /></button>
+            <button className="text-gray-700 hover:text-pink-600 transition"><User size={20} /></button>
             <button className="relative text-gray-700 hover:text-pink-600 transition">
               <ShoppingBag size={20} />
               {cartCount > 0 && (
-                <span className="absolute -top-2 -right-2 bg-pink-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                  {cartCount}
-                </span>
+                <span className="absolute -top-2 -right-2 bg-pink-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">{cartCount}</span>
               )}
             </button>
           </div>
         </div>
       </div>
 
-      {/* Mobile menu */}
       {isOpen && (
         <div className="md:hidden border-t border-pink-100">
           <div className="px-4 pt-2 pb-3 space-y-1 bg-pink-50/50">
             {menuItems.map((item) => (
               <div key={item.name}>
-                <a
-                  href="#"
-                  className="block px-3 py-2 text-gray-700 hover:bg-pink-100 rounded font-medium text-sm"
-                >
-                  {item.name}
-                </a>
+                <a href="#" className="block px-3 py-2 text-gray-700 hover:bg-pink-100 rounded font-medium text-sm">{item.name}</a>
               </div>
             ))}
-            <a
-              href="#"
-              className="block px-3 py-2 text-pink-600 hover:bg-pink-100 rounded font-bold text-sm"
-            >
-              Sale
-            </a>
+            <a href="#" className="block px-3 py-2 text-pink-600 hover:bg-pink-100 rounded font-bold text-sm">Sale</a>
           </div>
         </div>
       )}
@@ -276,7 +196,7 @@ async function fetchProduct(productId) {
   return HARDCODED_PRODUCT;
 }
 
-// ─── Image Slider ─────────────────────────────────────────────────────────────
+// ─── Full-screen Image Slider ─────────────────────────────────────────────────
 function ImageSlider({ images, placeholderImages, initialIndex, onClose }) {
   const [current, setCurrent] = useState(initialIndex);
   const [imgErrors, setImgErrors] = useState({});
@@ -294,84 +214,41 @@ function ImageSlider({ images, placeholderImages, initialIndex, onClose }) {
     return () => window.removeEventListener("keydown", handleKey);
   }, [prev, next, onClose]);
 
-  const getImageSrc = (index) =>
-    imgErrors[index]
-      ? placeholderImages[index] || `https://placehold.co/1080x1440/ec4899/ffffff?text=Image+${index + 1}`
-      : images[index];
+  const getImg = (i) =>
+    imgErrors[i]
+      ? placeholderImages[i] || `https://placehold.co/1080x1440/ec4899/ffffff?text=Image+${i + 1}`
+      : images[i];
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col" style={{ background: "rgba(0,0,0,0.96)" }}>
-      {/* Header */}
+    <div className="fixed inset-0 z-50 flex flex-col" style={{ background: "rgba(0,0,0,0.97)" }}>
       <div className="flex items-center justify-between px-6 py-4">
-        <span style={{ color: "#aaa", fontSize: 14 }}>
-          {current + 1} / {images.length}
-        </span>
-        <button
-          onClick={onClose}
-          className="flex items-center justify-center rounded-full transition-all hover:bg-white/20"
-          style={{ width: 40, height: 40, background: "rgba(255,255,255,0.1)", color: "#fff" }}
-        >
+        <span style={{ color: "#aaa", fontSize: 14 }}>{current + 1} / {images.length}</span>
+        <button onClick={onClose} className="flex items-center justify-center rounded-full transition-all hover:bg-white/20" style={{ width: 40, height: 40, background: "rgba(255,255,255,0.1)", color: "#fff" }}>
           <X size={20} />
         </button>
       </div>
-
-      {/* Main image */}
       <div className="relative flex-1 flex items-center justify-center overflow-hidden">
-        <button
-          onClick={prev}
-          className="absolute left-4 z-10 flex items-center justify-center rounded-full transition-all hover:scale-110"
-          style={{ width: 48, height: 48, background: "rgba(255,255,255,0.15)", color: "#fff", backdropFilter: "blur(4px)" }}
-        >
+        <button onClick={prev} className="absolute left-4 z-10 flex items-center justify-center rounded-full transition-all hover:scale-110" style={{ width: 48, height: 48, background: "rgba(255,255,255,0.15)", color: "#fff", backdropFilter: "blur(4px)" }}>
           <ChevronLeft size={24} />
         </button>
-
         <div className="relative flex items-center justify-center" style={{ height: "calc(100vh - 180px)", width: "100%" }}>
-          <img
-            key={current}
-            src={getImageSrc(current)}
-            alt={`Product view ${current + 1}`}
-            onError={() => setImgErrors((e) => ({ ...e, [current]: true }))}
-            className="object-contain rounded"
-            style={{ maxHeight: "100%", maxWidth: "min(500px, 90vw)", animation: "sliderFadeIn 0.25s ease" }}
-          />
+          <img key={current} src={getImg(current)} alt={`view ${current + 1}`} onError={() => setImgErrors((e) => ({ ...e, [current]: true }))} className="object-contain rounded" style={{ maxHeight: "100%", maxWidth: "min(520px, 90vw)", animation: "sliderFadeIn 0.25s ease" }} />
         </div>
-
-        <button
-          onClick={next}
-          className="absolute right-4 z-10 flex items-center justify-center rounded-full transition-all hover:scale-110"
-          style={{ width: 48, height: 48, background: "rgba(255,255,255,0.15)", color: "#fff", backdropFilter: "blur(4px)" }}
-        >
+        <button onClick={next} className="absolute right-4 z-10 flex items-center justify-center rounded-full transition-all hover:scale-110" style={{ width: 48, height: 48, background: "rgba(255,255,255,0.15)", color: "#fff", backdropFilter: "blur(4px)" }}>
           <ChevronRight size={24} />
         </button>
       </div>
-
-      {/* Thumbnail strip */}
       <div className="flex justify-center gap-2 py-4 overflow-x-auto px-4">
-        {images.map((img, i) => {
-          const thumbSrc = imgErrors[i] ? (placeholderImages[i] || `https://placehold.co/100x140/ec4899/ffffff?text=${i + 1}`) : img;
+        {images.map((_, i) => {
+          const src = imgErrors[i] ? (placeholderImages[i] || `https://placehold.co/100x140/ec4899/ffffff?text=${i + 1}`) : images[i];
           return (
-            <button
-              key={i}
-              onClick={() => setCurrent(i)}
-              className="flex-shrink-0 rounded overflow-hidden transition-all"
-              style={{
-                width: 56, height: 76,
-                border: i === current ? "2px solid #ec4899" : "2px solid transparent",
-                opacity: i === current ? 1 : 0.55,
-              }}
-            >
-              <img src={thumbSrc} alt="" onError={() => setImgErrors((e) => ({ ...e, [i]: true }))} className="w-full h-full object-cover" />
+            <button key={i} onClick={() => setCurrent(i)} className="flex-shrink-0 rounded overflow-hidden transition-all" style={{ width: 56, height: 76, border: i === current ? "2px solid #ec4899" : "2px solid transparent", opacity: i === current ? 1 : 0.55 }}>
+              <img src={src} alt="" onError={() => setImgErrors((e) => ({ ...e, [i]: true }))} className="w-full h-full object-cover" />
             </button>
           );
         })}
       </div>
-
-      <style>{`
-        @keyframes sliderFadeIn {
-          from { opacity: 0; transform: scale(0.97); }
-          to   { opacity: 1; transform: scale(1); }
-        }
-      `}</style>
+      <style>{`@keyframes sliderFadeIn { from { opacity:0; transform:scale(0.97); } to { opacity:1; transform:scale(1); } }`}</style>
     </div>
   );
 }
@@ -379,18 +256,12 @@ function ImageSlider({ images, placeholderImages, initialIndex, onClose }) {
 // ─── Rating Bar ───────────────────────────────────────────────────────────────
 function RatingBar({ label, pct }) {
   return (
-    <div className="flex items-center gap-2 mb-1">
-      <span style={{ minWidth: 30, fontSize: 12, color: "#888" }}>{label}</span>
-      <div className="flex-1 rounded-full overflow-hidden" style={{ height: 6, background: "#f0f0f0" }}>
-        <div
-          className="h-full rounded-full transition-all"
-          style={{
-            width: `${pct}%`,
-            background: pct > 50 ? "#10b981" : pct > 25 ? "#f59e0b" : "#f43f5e",
-          }}
-        />
+    <div className="flex items-center gap-3 mb-1.5">
+      <span style={{ minWidth: 32, fontSize: 12, color: "#888" }}>{label}</span>
+      <div className="flex-1 rounded-full overflow-hidden" style={{ height: 5, background: "#f0f0f0" }}>
+        <div className="h-full rounded-full" style={{ width: `${pct}%`, background: pct > 50 ? "#10b981" : pct > 25 ? "#f59e0b" : "#f43f5e", transition: "width 0.6s ease" }} />
       </div>
-      <span style={{ minWidth: 28, fontSize: 12, color: "#888", textAlign: "right" }}>{pct}%</span>
+      <span style={{ minWidth: 30, fontSize: 12, color: "#888", textAlign: "right" }}>{pct}%</span>
     </div>
   );
 }
@@ -410,10 +281,7 @@ export default function ProductDetail({ productId = "24386974" }) {
 
   useEffect(() => {
     setLoading(true);
-    fetchProduct(productId).then((data) => {
-      setProduct(data);
-      setLoading(false);
-    });
+    fetchProduct(productId).then((data) => { setProduct(data); setLoading(false); });
   }, [productId]);
 
   const openSlider = (index) => { setSliderIndex(index); setSliderOpen(true); };
@@ -424,29 +292,20 @@ export default function ProductDetail({ productId = "24386974" }) {
     setTimeout(() => setAddedToBag(false), 2000);
   };
 
-  const getImageSrc = (index) => {
+  const getImg = (index) => {
     if (!product) return "";
     return imgErrors[index]
       ? product.placeholderImages[index] || `https://placehold.co/1080x1440/ec4899/ffffff?text=Image+${index + 1}`
       : product.images[index];
   };
 
-  // ── Loading state ──
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-white to-pink-50">
+      <div className="min-h-screen bg-white">
         <Navbar />
         <div className="flex items-center justify-center" style={{ minHeight: "calc(100vh - 64px)" }}>
           <div className="text-center">
-            <div
-              className="mx-auto mb-4 rounded-full"
-              style={{
-                width: 48, height: 48,
-                border: "3px solid #ec4899",
-                borderTopColor: "transparent",
-                animation: "spin 0.7s linear infinite",
-              }}
-            />
+            <div className="mx-auto mb-4 rounded-full" style={{ width: 44, height: 44, border: "3px solid #ec4899", borderTopColor: "transparent", animation: "spin 0.7s linear infinite" }} />
             <p className="text-gray-400 text-sm">Loading product…</p>
           </div>
           <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
@@ -455,482 +314,710 @@ export default function ProductDetail({ productId = "24386974" }) {
     );
   }
 
-  const images = product.images;
-  const imageRows = [];
-  for (let i = 0; i < images.length; i += 2) imageRows.push(images.slice(i, i + 2).map((_, j) => i + j));
+  const accordionSections = [
+    {
+      key: "description",
+      label: "Product Description",
+      content: (
+        <>
+          <p style={{ fontSize: 13.5, color: "#555", lineHeight: 1.75, marginBottom: 14 }}>{product.description}</p>
+          <p style={{ fontSize: 12, fontWeight: 700, color: "#374151", textTransform: "uppercase", letterSpacing: "0.6px", marginBottom: 8 }}>Product Highlights</p>
+          <ul style={{ paddingLeft: 18, margin: 0 }}>
+            {product.highlights.map((h, i) => (
+              <li key={i} style={{ fontSize: 13.5, color: "#555", marginBottom: 5, lineHeight: 1.65 }}>{h}</li>
+            ))}
+          </ul>
+        </>
+      ),
+    },
+    {
+      key: "details",
+      label: "Product Details",
+      content: (
+        <table style={{ width: "100%", borderCollapse: "collapse" }}>
+          <tbody>
+            {Object.entries(product.details).map(([k, v]) => (
+              <tr key={k} style={{ borderBottom: "1px solid #fdf2f8" }}>
+                <td style={{ padding: "7px 0", fontSize: 13, color: "#9ca3af", width: "42%", verticalAlign: "top" }}>{k}</td>
+                <td style={{ padding: "7px 0", fontSize: 13, color: "#374151", fontWeight: 500 }}>{v}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      ),
+    },
+    {
+      key: "ratings",
+      label: `Ratings & Reviews (${product.ratingCount.toLocaleString()})`,
+      content: (
+        <>
+          <div style={{ display: "flex", gap: 32, alignItems: "center", marginBottom: 20, paddingBottom: 20, borderBottom: "1px solid #fdf2f8" }}>
+            <div style={{ textAlign: "center", minWidth: 80 }}>
+              <div style={{ fontSize: 48, fontWeight: 800, color: "#1f2937", lineHeight: 1 }}>{product.ratings.overall}</div>
+              <div style={{ display: "flex", justifyContent: "center", gap: 2, marginTop: 6 }}>
+                {[1,2,3,4,5].map((s) => (
+                  <Star key={s} size={13} fill={s <= Math.round(product.ratings.overall) ? "#fbbf24" : "none"} color="#fbbf24" />
+                ))}
+              </div>
+              <div style={{ fontSize: 11, color: "#9ca3af", marginTop: 4 }}>{product.ratingCount.toLocaleString()} ratings</div>
+            </div>
+            <div style={{ flex: 1 }}>
+              {product.ratings.breakdown.map((b) => <RatingBar key={b.label} label={b.label} pct={b.pct} />)}
+            </div>
+          </div>
+          {product.reviews.map((r) => (
+            <div key={r.id} style={{ paddingBottom: 16, marginBottom: 16, borderBottom: "1px solid #fdf2f8" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
+                <span style={{ display: "inline-flex", alignItems: "center", gap: 3, background: "linear-gradient(135deg,#10b981,#059669)", color: "#fff", borderRadius: 10, padding: "2px 9px", fontSize: 12, fontWeight: 600 }}>
+                  <Star size={10} fill="#fff" strokeWidth={0} /> {r.rating}
+                </span>
+                <span style={{ fontSize: 14, fontWeight: 600, color: "#1f2937" }}>{r.title}</span>
+              </div>
+              <p style={{ fontSize: 13.5, color: "#6b7280", lineHeight: 1.65, margin: 0 }}>{r.body}</p>
+              <p style={{ fontSize: 11, color: "#9ca3af", marginTop: 6 }}>{r.user} · {r.date} &nbsp;|&nbsp; {r.helpful} people found this helpful</p>
+            </div>
+          ))}
+        </>
+      ),
+    },
+  ];
 
   return (
     <>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Playfair+Display:wght@600;700&display=swap');
-        * { box-sizing: border-box; }
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-        .pdp-root { max-width: 1280px; margin: 0 auto; background: #fff; font-family: 'DM Sans', sans-serif; }
+        /* ── Page base ── */
+        .pdp-page {
+          min-height: 100vh;
+          background: #fff;
+          font-family: 'DM Sans', sans-serif;
+          color: #1f2937;
+        }
 
-        /* Breadcrumb — matches listing page soft-pink palette */
+        /* ── Breadcrumb ── */
         .pdp-breadcrumb {
-          padding: 10px 24px;
+          padding: 11px 20px;
           font-size: 12px;
           color: #9ca3af;
           display: flex;
           gap: 6px;
           align-items: center;
-          border-bottom: 1px solid #fce7f3;
-          background: #fff7f8;
+          border-bottom: 1px solid #f3f4f6;
+          background: #fafafa;
+          max-width: 1440px;
+          margin: 0 auto;
+          box-sizing: border-box;
+          width: 100%;
         }
-        .pdp-breadcrumb a { color: #9ca3af; text-decoration: none; transition: color 0.15s; }
+        .pdp-breadcrumb a { color: #9ca3af; text-decoration: none; }
         .pdp-breadcrumb a:hover { color: #ec4899; }
-        .pdp-breadcrumb-sep { color: #f9a8d4; }
+        .pdp-breadcrumb-sep { color: #d1d5db; font-size: 10px; }
         .pdp-breadcrumb-current { color: #374151; font-weight: 500; }
 
-        /* Layout */
-        .pdp-layout { display: flex; gap: 0; align-items: flex-start; }
+        /* ── Myntra-style layout: left images scroll, right info sticky ── */
+        .pdp-outer {
+          display: flex;
+          align-items: flex-start;
+          max-width: 1440px;
+          margin: 0 auto;
+          padding: 0 20px;
+        }
 
-        /* Image column */
-        .pdp-images { width: 55%; position: relative; }
-        .pdp-image-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 3px; }
-        .pdp-image-cell {
-          position: relative; overflow: hidden; cursor: zoom-in;
-          aspect-ratio: 3/4; background: #fdf2f8;
+        /* ─ Left: vertical image strip ─ */
+        .pdp-images-col {
+          /* Myntra uses ~52% for images on wide screens */
+          width: 52%;
+          min-width: 0;
+          /* Images scroll naturally with the page */
         }
-        .pdp-image-cell img {
-          width: 100%; height: 100%; object-fit: cover; display: block;
-          transition: transform 0.5s ease;
-        }
-        .pdp-image-cell:hover img { transform: scale(1.05); }
-        .pdp-zoom-icon {
-          position: absolute; top: 10px; right: 10px;
-          background: rgba(255,255,255,0.9); border-radius: 50%;
-          width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;
-          opacity: 0; transition: opacity 0.2s; pointer-events: none;
-          box-shadow: 0 2px 8px rgba(236,72,153,0.15);
-        }
-        .pdp-image-cell:hover .pdp-zoom-icon { opacity: 1; }
 
-        /* Info panel */
-        .pdp-info {
-          width: 45%; padding: 28px 32px;
-          position: sticky; top: 64px;
-          align-self: flex-start;
+        /* Each image is full column width, tall aspect ratio */
+        .pdp-img-item {
+          position: relative;
+          width: 100%;
+          /* 3:4 ratio */
+          aspect-ratio: 3 / 4;
+          overflow: hidden;
+          cursor: zoom-in;
+          background: #f9f9f9;
+          /* No gap between images — Myntra stacks them flush */
+          display: block;
+        }
+        .pdp-img-item + .pdp-img-item {
+          margin-top: 2px;
+        }
+        .pdp-img-item img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          display: block;
+          transition: transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+        .pdp-img-item:hover img {
+          transform: scale(1.04);
+        }
+        .pdp-img-zoom-badge {
+          position: absolute;
+          bottom: 14px;
+          right: 14px;
+          background: rgba(255,255,255,0.92);
+          border-radius: 50%;
+          width: 36px;
+          height: 36px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          opacity: 0;
+          transition: opacity 0.2s;
+          box-shadow: 0 2px 10px rgba(0,0,0,0.12);
+        }
+        .pdp-img-item:hover .pdp-img-zoom-badge { opacity: 1; }
+
+        /* Image counter badge top-right of first image */
+        .pdp-img-counter {
+          position: absolute;
+          top: 14px;
+          right: 14px;
+          background: rgba(255,255,255,0.88);
+          backdrop-filter: blur(4px);
+          border-radius: 20px;
+          padding: 3px 10px;
+          font-size: 11px;
+          font-weight: 600;
+          color: #374151;
+        }
+
+        /* ─ Right: sticky info panel ─ */
+        .pdp-info-col {
+          width: 48%;
+          min-width: 0;
+          position: sticky;
+          top: 64px; /* below navbar */
           height: calc(100vh - 64px);
           overflow-y: auto;
+          padding: 32px 48px 48px 40px;
+          border-left: 1px solid #f3f4f6;
+          background: #fff;
+          scrollbar-width: thin;
+          scrollbar-color: #fce7f3 transparent;
         }
-        .pdp-info::-webkit-scrollbar { width: 3px; }
-        .pdp-info::-webkit-scrollbar-thumb { background: #fce7f3; border-radius: 2px; }
+        .pdp-info-col::-webkit-scrollbar { width: 4px; }
+        .pdp-info-col::-webkit-scrollbar-thumb { background: #fce7f3; border-radius: 4px; }
 
-        /* Brand & name */
-        .pdp-brand { font-family: 'Playfair Display', serif; font-size: 22px; font-weight: 700; color: #1f2937; }
-        .pdp-product-name { font-size: 14px; color: #6b7280; margin: 4px 0 14px; line-height: 1.5; }
+        /* ─ Brand/name ─ */
+        .pdp-brand-name {
+          font-family: 'Playfair Display', serif;
+          font-size: 24px;
+          font-weight: 700;
+          color: #1f2937;
+          line-height: 1.2;
+        }
+        .pdp-product-subtitle {
+          font-size: 14px;
+          color: #6b7280;
+          margin-top: 5px;
+          line-height: 1.55;
+          font-weight: 400;
+        }
 
-        /* Rating — matching listing green badge style */
+        /* ─ Rating ─ */
+        .pdp-rating-row {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          margin-top: 12px;
+        }
         .pdp-rating-pill {
-          display: inline-flex; align-items: center; gap: 4px;
+          display: inline-flex;
+          align-items: center;
+          gap: 4px;
           background: linear-gradient(135deg, #10b981, #059669);
-          color: #fff; border-radius: 20px;
-          padding: 3px 10px; font-size: 12px; font-weight: 600;
+          color: #fff;
+          border-radius: 4px;
+          padding: 3px 9px;
+          font-size: 13px;
+          font-weight: 700;
         }
-        .pdp-rating-count { font-size: 12px; color: #9ca3af; margin-left: 8px; }
+        .pdp-rating-meta { font-size: 13px; color: #9ca3af; }
+        .pdp-rating-sep { color: #e5e7eb; }
 
-        /* Price — pink accent matching listing page */
-        .pdp-price-row { display: flex; align-items: baseline; gap: 12px; margin: 16px 0 4px; }
-        .pdp-price-current { font-size: 28px; font-weight: 700; color: #ec4899; }
-        .pdp-price-mrp { font-size: 16px; color: #d1d5db; text-decoration: line-through; }
-        .pdp-price-discount { font-size: 14px; color: #f59e0b; font-weight: 700; }
-        .pdp-tax-note { font-size: 11px; color: #9ca3af; }
+        /* ─ Price ─ */
+        .pdp-price-row {
+          display: flex;
+          align-items: baseline;
+          gap: 14px;
+          margin-top: 18px;
+        }
+        .pdp-price { font-size: 30px; font-weight: 700; color: #1f2937; }
+        .pdp-mrp { font-size: 16px; color: #d1d5db; text-decoration: line-through; }
+        .pdp-discount { font-size: 15px; color: #ff6b35; font-weight: 700; }
+        .pdp-tax { font-size: 11px; color: #9ca3af; margin-top: 3px; }
 
-        /* Divider */
-        .pdp-divider { height: 1px; background: #fce7f3; margin: 20px 0; }
+        /* ─ Divider ─ */
+        .pdp-hr { height: 1px; background: #f3f4f6; margin: 20px 0; }
 
-        /* Offers */
-        .pdp-offer-item { display: flex; gap: 10px; align-items: flex-start; padding: 8px 0; border-bottom: 1px solid #fdf2f8; }
-        .pdp-offer-icon { font-size: 16px; }
-        .pdp-offer-title { font-size: 13px; font-weight: 600; color: #374151; }
+        /* ─ Offers ─ */
+        .pdp-offers-title {
+          font-size: 13px;
+          font-weight: 700;
+          color: #374151;
+          margin-bottom: 10px;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+        }
+        .pdp-offer-row {
+          display: flex;
+          align-items: flex-start;
+          gap: 10px;
+          padding: 8px 12px;
+          border-radius: 8px;
+          background: #fffbf5;
+          border: 1px solid #fef3c7;
+          margin-bottom: 7px;
+        }
+        .pdp-offer-icon { font-size: 15px; margin-top: 1px; flex-shrink: 0; }
+        .pdp-offer-title-text { font-size: 13px; font-weight: 600; color: #374151; }
         .pdp-offer-desc { font-size: 12px; color: #6b7280; }
 
-        /* Section label */
-        .pdp-section-label { font-size: 12px; font-weight: 700; color: #374151; margin: 18px 0 10px; text-transform: uppercase; letter-spacing: 0.6px; }
-
-        /* Sizes — reuse listing button feel */
-        .pdp-size-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+        /* ─ Size selector ─ */
+        .pdp-size-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 12px;
+        }
+        .pdp-section-label {
+          font-size: 13px;
+          font-weight: 700;
+          color: #374151;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+        }
+        .pdp-size-guide { font-size: 13px; color: #ec4899; font-weight: 600; cursor: pointer; }
+        .pdp-sizes {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 10px;
+        }
         .pdp-size-btn {
-          width: 52px; height: 52px; border-radius: 50%;
+          width: 56px;
+          height: 56px;
+          border-radius: 50%;
           border: 1.5px solid #e5e7eb;
-          display: flex; align-items: center; justify-content: center;
-          font-size: 13px; font-weight: 500; color: #374151;
-          cursor: pointer; transition: all 0.15s; background: #fff;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 13px;
+          font-weight: 500;
+          color: #374151;
+          cursor: pointer;
+          transition: all 0.15s;
+          background: #fff;
+          font-family: 'DM Sans', sans-serif;
         }
-        .pdp-size-btn:hover:not(.pdp-size-disabled) { border-color: #ec4899; color: #ec4899; }
-        .pdp-size-btn.pdp-size-selected { border-color: #ec4899; color: #ec4899; background: #fff1f5; font-weight: 700; box-shadow: 0 0 0 3px #fce7f3; }
-        .pdp-size-btn.pdp-size-disabled { opacity: 0.3; cursor: not-allowed; border-style: dashed; }
-        .pdp-size-warn { font-size: 12px; color: #f59e0b; margin-top: 6px; font-weight: 500; }
+        .pdp-size-btn:hover:not([disabled]) {
+          border-color: #ec4899;
+          color: #ec4899;
+        }
+        .pdp-size-btn.selected {
+          border-color: #ec4899;
+          color: #ec4899;
+          background: #fff1f5;
+          font-weight: 700;
+          box-shadow: 0 0 0 3px rgba(236,72,153,0.12);
+        }
+        .pdp-size-btn[disabled] {
+          opacity: 0.28;
+          cursor: not-allowed;
+          border-style: dashed;
+        }
+        .pdp-size-warn {
+          font-size: 12px;
+          color: #f59e0b;
+          margin-top: 8px;
+          font-weight: 500;
+        }
 
-        /* CTA — matching listing gradient button */
-        .pdp-cta-row { display: flex; gap: 10px; margin: 20px 0; }
-        .pdp-btn-bag {
-          flex: 1; height: 52px; border: none; border-radius: 12px;
-          font-size: 15px; font-weight: 700; cursor: pointer;
-          display: flex; align-items: center; justify-content: center; gap: 8px;
-          background: linear-gradient(135deg, #ec4899, #f43f5e);
-          color: #fff; transition: all 0.2s;
-          text-transform: uppercase; letter-spacing: 0.5px;
-          box-shadow: 0 4px 14px rgba(236, 72, 153, 0.35);
+        /* ─ CTA buttons ─ */
+        .pdp-cta {
+          display: flex;
+          gap: 10px;
+          margin: 22px 0 18px;
         }
-        .pdp-btn-bag:hover:not(:disabled) {
+        .pdp-btn-bag {
+          flex: 1;
+          height: 54px;
+          border: none;
+          border-radius: 4px;
+          font-size: 15px;
+          font-weight: 700;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+          letter-spacing: 0.8px;
+          text-transform: uppercase;
+          background: linear-gradient(135deg, #ec4899, #f43f5e);
+          color: #fff;
+          transition: all 0.2s;
+          box-shadow: 0 4px 16px rgba(236,72,153,0.3);
+          font-family: 'DM Sans', sans-serif;
+        }
+        .pdp-btn-bag:hover:not([disabled]) {
           background: linear-gradient(135deg, #db2777, #e11d48);
           transform: translateY(-1px);
-          box-shadow: 0 6px 20px rgba(236, 72, 153, 0.45);
+          box-shadow: 0 6px 22px rgba(236,72,153,0.42);
         }
-        .pdp-btn-bag:disabled { background: #f3f4f6; color: #9ca3af; cursor: not-allowed; box-shadow: none; }
-        .pdp-btn-bag.pdp-btn-added { background: linear-gradient(135deg, #10b981, #059669); box-shadow: 0 4px 14px rgba(16,185,129,0.35); }
+        .pdp-btn-bag[disabled] {
+          background: #f3f4f6;
+          color: #9ca3af;
+          cursor: not-allowed;
+          box-shadow: none;
+        }
+        .pdp-btn-bag.added {
+          background: linear-gradient(135deg, #10b981, #059669);
+          box-shadow: 0 4px 16px rgba(16,185,129,0.3);
+        }
         .pdp-btn-wishlist {
-          width: 52px; height: 52px; border-radius: 12px;
+          width: 54px;
+          height: 54px;
+          border-radius: 4px;
           border: 1.5px solid #e5e7eb;
-          display: flex; align-items: center; justify-content: center;
-          cursor: pointer; background: #fff; transition: all 0.2s;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          background: #fff;
+          transition: all 0.2s;
         }
         .pdp-btn-wishlist:hover { border-color: #ec4899; background: #fff1f5; }
-        .pdp-btn-wishlist.pdp-wishlist-active { border-color: #ec4899; background: #fff1f5; }
+        .pdp-btn-wishlist.active { border-color: #ec4899; background: #fff1f5; }
 
-        /* Trust badges — card row matching listing card style */
-        .pdp-trust-row {
-          display: flex; gap: 0;
-          border: 1px solid #fce7f3; border-radius: 12px; overflow: hidden; margin: 16px 0;
-          background: #fff7f8;
+        /* ─ Trust strip ─ */
+        .pdp-trust {
+          display: flex;
+          border: 1px solid #f3f4f6;
+          border-radius: 8px;
+          overflow: hidden;
+          margin-bottom: 20px;
         }
         .pdp-trust-item {
-          flex: 1; display: flex; flex-direction: column; align-items: center; gap: 5px;
-          padding: 12px 8px; border-right: 1px solid #fce7f3; text-align: center;
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 5px;
+          padding: 14px 8px;
+          border-right: 1px solid #f3f4f6;
+          text-align: center;
+          background: #fafafa;
         }
         .pdp-trust-item:last-child { border-right: none; }
         .pdp-trust-label { font-size: 11px; color: #6b7280; font-weight: 500; }
 
-        /* Delivery box */
-        .pdp-delivery-box {
-          border: 1px solid #fce7f3; border-radius: 12px;
-          padding: 14px 16px; margin: 14px 0; background: #fff7f8;
+        /* ─ Delivery box ─ */
+        .pdp-delivery {
+          border: 1px solid #f3f4f6;
+          border-radius: 8px;
+          padding: 16px;
+          margin-bottom: 20px;
+          background: #fafafa;
         }
-        .pdp-pincode-row { display: flex; gap: 8px; align-items: center; margin-top: 8px; }
+        .pdp-delivery-title {
+          font-size: 13px;
+          font-weight: 700;
+          color: #374151;
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          margin-bottom: 10px;
+        }
+        .pdp-pincode-row { display: flex; gap: 8px; align-items: center; }
         .pdp-pincode-input {
-          flex: 1; border: 1px solid #f9a8d4; border-radius: 8px;
-          padding: 8px 12px; font-size: 13px; outline: none;
-          font-family: 'DM Sans', sans-serif; background: #fff;
+          flex: 1;
+          border: 1.5px solid #e5e7eb;
+          border-radius: 6px;
+          padding: 9px 12px;
+          font-size: 13px;
+          outline: none;
+          font-family: 'DM Sans', sans-serif;
+          background: #fff;
           transition: border-color 0.15s;
+          color: #374151;
         }
         .pdp-pincode-input:focus { border-color: #ec4899; }
         .pdp-pincode-btn {
-          background: none; border: none; color: #ec4899;
-          font-size: 13px; font-weight: 700; cursor: pointer;
+          background: none;
+          border: none;
+          color: #ec4899;
+          font-size: 13px;
+          font-weight: 700;
+          cursor: pointer;
           font-family: 'DM Sans', sans-serif;
+          padding: 0 4px;
         }
-        .pdp-delivery-ok { font-size: 12px; color: #10b981; font-weight: 500; margin-top: 8px; }
+        .pdp-delivery-ok { font-size: 12px; color: #10b981; font-weight: 500; margin-top: 9px; }
 
-        /* Accordion */
-        .pdp-accordion-item { border-top: 1px solid #fce7f3; }
-        .pdp-accordion-header {
-          display: flex; justify-content: space-between; align-items: center;
-          padding: 14px 0; cursor: pointer; user-select: none;
+        /* ─ Accordion ─ */
+        .pdp-accordion { margin-top: 8px; }
+        .pdp-accordion-item { border-top: 1px solid #f3f4f6; }
+        .pdp-accordion-trigger {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 16px 0;
+          cursor: pointer;
+          user-select: none;
+          background: none;
+          border: none;
+          width: 100%;
+          font-family: 'DM Sans', sans-serif;
+          text-align: left;
         }
-        .pdp-accordion-label { font-size: 14px; font-weight: 600; color: #374151; }
-        .pdp-accordion-body { padding-bottom: 16px; }
-
-        /* Details table */
-        .pdp-details-table { width: 100%; border-collapse: collapse; }
-        .pdp-details-table tr td { padding: 6px 0; font-size: 13px; vertical-align: top; }
-        .pdp-details-table tr td:first-child { color: #9ca3af; width: 45%; }
-        .pdp-details-table tr td:last-child { color: #374151; font-weight: 500; }
-
-        /* Review card */
-        .pdp-review-card { padding: 14px 0; border-bottom: 1px solid #fdf2f8; }
-        .pdp-review-header { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
-        .pdp-review-rating {
-          display: flex; align-items: center; gap: 3px;
-          background: linear-gradient(135deg, #10b981, #059669);
-          color: #fff; border-radius: 10px; padding: 2px 8px;
-          font-size: 12px; font-weight: 600;
+        .pdp-accordion-label {
+          font-size: 14px;
+          font-weight: 600;
+          color: #374151;
         }
-        .pdp-review-title { font-size: 14px; font-weight: 600; color: #1f2937; }
-        .pdp-review-body { font-size: 13px; color: #6b7280; line-height: 1.6; }
-        .pdp-review-meta { font-size: 11px; color: #9ca3af; margin-top: 6px; }
+        .pdp-accordion-body { padding-bottom: 20px; }
 
-        /* Toast */
+        /* ─ Toast ─ */
         .pdp-toast {
-          position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+          position: fixed;
+          bottom: 28px;
+          left: 50%;
+          transform: translateX(-50%);
           background: linear-gradient(135deg, #ec4899, #f43f5e);
-          color: #fff; padding: 12px 28px; border-radius: 24px;
-          font-size: 14px; font-weight: 600; z-index: 100;
-          box-shadow: 0 8px 24px rgba(236,72,153,0.4);
+          color: #fff;
+          padding: 13px 32px;
+          border-radius: 24px;
+          font-size: 14px;
+          font-weight: 600;
+          z-index: 100;
+          box-shadow: 0 8px 28px rgba(236,72,153,0.4);
           animation: toastIn 0.3s ease;
+          font-family: 'DM Sans', sans-serif;
         }
         @keyframes toastIn {
           from { opacity: 0; transform: translateX(-50%) translateY(16px); }
           to   { opacity: 1; transform: translateX(-50%) translateY(0); }
         }
 
-        @media (max-width: 768px) {
-          .pdp-layout { flex-direction: column; }
-          .pdp-images, .pdp-info { width: 100%; }
-          .pdp-info { position: static; height: auto; padding: 16px; }
+        /* ─ Responsive ─ */
+        @media (max-width: 900px) {
+          .pdp-outer { flex-direction: column; padding: 0; }
+          .pdp-images-col { width: 100%; }
+          .pdp-info-col {
+            width: 100%;
+            position: static;
+            height: auto;
+            padding: 20px 16px 40px;
+            border-left: none;
+            border-top: 1px solid #f3f4f6;
+          }
+          .pdp-breadcrumb { padding: 10px 16px; }
         }
       `}</style>
 
-      {/* ── Background gradient matching listing page ── */}
-      <div className="min-h-screen bg-gradient-to-b from-white to-pink-50">
-        {/* Navbar from listing page */}
+      <div className="pdp-page">
         <Navbar />
 
-        <div className="pdp-root">
-          {/* Breadcrumb */}
-          <div className="pdp-breadcrumb">
-            <a href="#">Home</a>
-            <span className="pdp-breadcrumb-sep">›</span>
-            <a href="#">Women</a>
-            <span className="pdp-breadcrumb-sep">›</span>
-            <a href="#">Ethnic Wear</a>
-            <span className="pdp-breadcrumb-sep">›</span>
-            <a href="#">Kurtas</a>
-            <span className="pdp-breadcrumb-sep">›</span>
-            <span className="pdp-breadcrumb-current">{product.brand}</span>
+        {/* Breadcrumb */}
+        <div className="pdp-breadcrumb">
+          <a href="#">Home</a>
+          <span className="pdp-breadcrumb-sep">›</span>
+          <a href="#">Women</a>
+          <span className="pdp-breadcrumb-sep">›</span>
+          <a href="#">Ethnic Wear</a>
+          <span className="pdp-breadcrumb-sep">›</span>
+          <a href="#">Kurtas</a>
+          <span className="pdp-breadcrumb-sep">›</span>
+          <span className="pdp-breadcrumb-current">{product.brand}</span>
+        </div>
+
+        {/* ── Main layout ── */}
+        <div className="pdp-outer">
+
+          {/* ─ LEFT: vertical image stack ─ */}
+          <div className="pdp-images-col">
+            {product.images.map((img, i) => (
+              <div key={i} className="pdp-img-item" onClick={() => openSlider(i)}>
+                <img
+                  src={getImg(i)}
+                  alt={`${product.name} — view ${i + 1}`}
+                  onError={() => setImgErrors((e) => ({ ...e, [i]: true }))}
+                />
+                {/* Show counter badge only on first image */}
+                {i === 0 && (
+                  <div className="pdp-img-counter">1 / {product.images.length}</div>
+                )}
+                <div className="pdp-img-zoom-badge">
+                  <ZoomIn size={16} color="#ec4899" />
+                </div>
+              </div>
+            ))}
           </div>
 
-          {/* Main layout */}
-          <div className="pdp-layout">
-            {/* ── Images ── */}
-            <div className="pdp-images">
-              <div className="pdp-image-grid">
-                {imageRows.map((row) =>
-                  row.map((imgIdx) => (
-                    <div key={imgIdx} className="pdp-image-cell" onClick={() => openSlider(imgIdx)}>
-                      <img
-                        src={getImageSrc(imgIdx)}
-                        alt={`${product.name} - view ${imgIdx + 1}`}
-                        onError={() => setImgErrors((e) => ({ ...e, [imgIdx]: true }))}
-                      />
-                      <div className="pdp-zoom-icon">
-                        <ZoomIn size={15} color="#ec4899" />
-                      </div>
-                    </div>
-                  ))
-                )}
+          {/* ─ RIGHT: sticky info panel ─ */}
+          <div className="pdp-info-col">
+
+            {/* Brand + share */}
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+              <div style={{ flex: 1, paddingRight: 16 }}>
+                <div className="pdp-brand-name">{product.brand}</div>
+                <div className="pdp-product-subtitle">{product.name}</div>
+              </div>
+              <button style={{ background: "none", border: "none", cursor: "pointer", padding: "4px", flexShrink: 0 }}>
+                <Share2 size={18} color="#9ca3af" />
+              </button>
+            </div>
+
+            {/* Rating */}
+            <div className="pdp-rating-row">
+              <span className="pdp-rating-pill">
+                <Star size={11} fill="#fff" strokeWidth={0} /> {product.rating}
+              </span>
+              <span className="pdp-rating-sep">|</span>
+              <span className="pdp-rating-meta">{product.ratingCount.toLocaleString()} Ratings</span>
+              <span className="pdp-rating-sep">|</span>
+              <span className="pdp-rating-meta">{product.reviewCount} Reviews</span>
+            </div>
+
+            {/* Price */}
+            <div className="pdp-price-row">
+              <span className="pdp-price">₹{product.price.toLocaleString()}</span>
+              <span className="pdp-mrp">₹{product.mrp.toLocaleString()}</span>
+              <span className="pdp-discount">({product.discount}% OFF)</span>
+            </div>
+            <div className="pdp-tax">inclusive of all taxes</div>
+
+            <div className="pdp-hr" />
+
+            {/* Offers */}
+            <div className="pdp-offers-title">Available Offers</div>
+            {product.offers.map((o, i) => (
+              <div key={i} className="pdp-offer-row">
+                <span className="pdp-offer-icon">{o.icon}</span>
+                <div>
+                  <div className="pdp-offer-title-text">{o.title}</div>
+                  <div className="pdp-offer-desc">{o.desc}</div>
+                </div>
+              </div>
+            ))}
+
+            <div className="pdp-hr" />
+
+            {/* Size selector */}
+            <div className="pdp-size-header">
+              <span className="pdp-section-label">Select Size</span>
+              <span className="pdp-size-guide">Size Guide</span>
+            </div>
+            <div className="pdp-sizes">
+              {product.sizes.map((s) => {
+                const avail = product.availableSizes.includes(s);
+                return (
+                  <button
+                    key={s}
+                    className={`pdp-size-btn ${selectedSize === s ? "selected" : ""}`}
+                    disabled={!avail}
+                    onClick={() => avail && setSelectedSize(s)}
+                  >
+                    {s}
+                  </button>
+                );
+              })}
+            </div>
+            {!selectedSize && <div className="pdp-size-warn">Please select a size to continue</div>}
+
+            {/* CTA */}
+            <div className="pdp-cta">
+              <button
+                className={`pdp-btn-bag ${addedToBag ? "added" : ""}`}
+                onClick={handleAddToBag}
+                disabled={!selectedSize}
+              >
+                <ShoppingBag size={18} />
+                {addedToBag ? "✓ Added to Bag" : "Add to Bag"}
+              </button>
+              <button
+                className={`pdp-btn-wishlist ${wishlist ? "active" : ""}`}
+                onClick={() => setWishlist((w) => !w)}
+              >
+                <Heart size={20} color={wishlist ? "#ec4899" : "#6b7280"} fill={wishlist ? "#ec4899" : "none"} />
+              </button>
+            </div>
+
+            {/* Trust badges */}
+            <div className="pdp-trust">
+              <div className="pdp-trust-item">
+                <Truck size={18} color="#10b981" />
+                <span className="pdp-trust-label">Free Delivery</span>
+              </div>
+              <div className="pdp-trust-item">
+                <RefreshCw size={18} color="#f59e0b" />
+                <span className="pdp-trust-label">30-Day Returns</span>
+              </div>
+              <div className="pdp-trust-item">
+                <Shield size={18} color="#8b5cf6" />
+                <span className="pdp-trust-label">100% Genuine</span>
               </div>
             </div>
 
-            {/* ── Info panel ── */}
-            <div className="pdp-info">
-              {/* Brand + share */}
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-                <div>
-                  <div className="pdp-brand">{product.brand}</div>
-                  <div className="pdp-product-name">{product.name}</div>
-                </div>
-                <button style={{ background: "none", border: "none", cursor: "pointer", padding: 4 }}>
-                  <Share2 size={18} color="#9ca3af" />
-                </button>
+            {/* Delivery check */}
+            <div className="pdp-delivery">
+              <div className="pdp-delivery-title">
+                <Truck size={14} color="#ec4899" />
+                Delivery Options
               </div>
-
-              {/* Rating */}
-              <div style={{ display: "flex", alignItems: "center" }}>
-                <span className="pdp-rating-pill">
-                  <Star size={11} fill="#fff" strokeWidth={0} /> {product.rating}
-                </span>
-                <span className="pdp-rating-count">
-                  {product.ratingCount.toLocaleString()} Ratings & {product.reviewCount} Reviews
-                </span>
+              <div className="pdp-pincode-row">
+                <input
+                  className="pdp-pincode-input"
+                  value={pincode}
+                  onChange={(e) => setPincode(e.target.value.replace(/\D/g,"").slice(0,6))}
+                  placeholder="Enter pincode"
+                  maxLength={6}
+                />
+                <button className="pdp-pincode-btn">Check</button>
               </div>
-
-              {/* Price */}
-              <div className="pdp-price-row">
-                <span className="pdp-price-current">₹{product.price.toLocaleString()}</span>
-                <span className="pdp-price-mrp">₹{product.mrp.toLocaleString()}</span>
-                <span className="pdp-price-discount">{product.discount}% OFF</span>
+              <div className="pdp-delivery-ok">
+                ✓ Estimated delivery in {product.deliveryInfo.days}
+                {product.deliveryInfo.cod && " · COD available"}
               </div>
-              <div className="pdp-tax-note">inclusive of all taxes</div>
+            </div>
 
-              <div className="pdp-divider" />
-
-              {/* Offers */}
-              <div>
-                {product.offers.map((o, i) => (
-                  <div key={i} className="pdp-offer-item">
-                    <span className="pdp-offer-icon">{o.icon}</span>
-                    <div>
-                      <div className="pdp-offer-title">{o.title}</div>
-                      <div className="pdp-offer-desc">{o.desc}</div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              <div className="pdp-divider" />
-
-              {/* Size selector */}
-              <div>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <div className="pdp-section-label" style={{ margin: "0 0 10px" }}>Select Size</div>
-                  <span style={{ fontSize: 12, color: "#ec4899", fontWeight: 700, cursor: "pointer" }}>Size Guide</span>
-                </div>
-                <div className="pdp-size-grid">
-                  {product.sizes.map((s) => {
-                    const available = product.availableSizes.includes(s);
-                    return (
-                      <button
-                        key={s}
-                        className={`pdp-size-btn ${!available ? "pdp-size-disabled" : ""} ${selectedSize === s ? "pdp-size-selected" : ""}`}
-                        onClick={() => available && setSelectedSize(s)}
-                        disabled={!available}
-                      >
-                        {s}
-                      </button>
-                    );
-                  })}
-                </div>
-                {!selectedSize && <p className="pdp-size-warn">Please select a size</p>}
-              </div>
-
-              {/* CTA */}
-              <div className="pdp-cta-row">
-                <button
-                  className={`pdp-btn-bag ${addedToBag ? "pdp-btn-added" : ""}`}
-                  onClick={handleAddToBag}
-                  disabled={!selectedSize}
-                >
-                  <ShoppingBag size={18} />
-                  {addedToBag ? "✓ Added to Bag" : "Add to Bag"}
-                </button>
-                <button
-                  className={`pdp-btn-wishlist ${wishlist ? "pdp-wishlist-active" : ""}`}
-                  onClick={() => setWishlist((w) => !w)}
-                >
-                  <Heart size={20} color={wishlist ? "#ec4899" : "#6b7280"} fill={wishlist ? "#ec4899" : "none"} />
-                </button>
-              </div>
-
-              {/* Trust badges */}
-              <div className="pdp-trust-row">
-                <div className="pdp-trust-item">
-                  <Truck size={18} color="#10b981" />
-                  <span className="pdp-trust-label">Free Delivery</span>
-                </div>
-                <div className="pdp-trust-item">
-                  <RefreshCw size={18} color="#f59e0b" />
-                  <span className="pdp-trust-label">30-Day Returns</span>
-                </div>
-                <div className="pdp-trust-item">
-                  <Shield size={18} color="#8b5cf6" />
-                  <span className="pdp-trust-label">100% Genuine</span>
-                </div>
-              </div>
-
-              {/* Delivery */}
-              <div className="pdp-delivery-box">
-                <div style={{ fontSize: 13, fontWeight: 600, color: "#374151", display: "flex", alignItems: "center", gap: 6 }}>
-                  <Truck size={14} color="#ec4899" />
-                  Delivery Options
-                </div>
-                <div className="pdp-pincode-row">
-                  <input
-                    className="pdp-pincode-input"
-                    value={pincode}
-                    onChange={(e) => setPincode(e.target.value.replace(/\D/g, "").slice(0, 6))}
-                    placeholder="Enter pincode"
-                    maxLength={6}
-                  />
-                  <button className="pdp-pincode-btn">Check</button>
-                </div>
-                <div className="pdp-delivery-ok">
-                  ✓ Estimated delivery in {product.deliveryInfo.days}
-                  {product.deliveryInfo.cod && " · COD available"}
-                </div>
-              </div>
-
-              {/* Accordion sections */}
-              {[
-                {
-                  key: "description",
-                  label: "Product Description",
-                  content: (
-                    <>
-                      <p style={{ fontSize: 13, color: "#6b7280", lineHeight: 1.7, marginBottom: 12 }}>{product.description}</p>
-                      <div className="pdp-section-label" style={{ margin: "12px 0 8px" }}>Product Highlights</div>
-                      <ul style={{ paddingLeft: 18, margin: 0 }}>
-                        {product.highlights.map((h, i) => (
-                          <li key={i} style={{ fontSize: 13, color: "#6b7280", marginBottom: 4, lineHeight: 1.6 }}>{h}</li>
-                        ))}
-                      </ul>
-                    </>
-                  ),
-                },
-                {
-                  key: "details",
-                  label: "Product Details",
-                  content: (
-                    <table className="pdp-details-table">
-                      <tbody>
-                        {Object.entries(product.details).map(([k, v]) => (
-                          <tr key={k}><td>{k}</td><td>{v}</td></tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  ),
-                },
-                {
-                  key: "ratings",
-                  label: `Ratings & Reviews (${product.ratingCount.toLocaleString()})`,
-                  content: (
-                    <>
-                      <div style={{ display: "flex", gap: 24, alignItems: "center", marginBottom: 16 }}>
-                        <div style={{ textAlign: "center" }}>
-                          <div style={{ fontSize: 42, fontWeight: 800, color: "#1f2937", lineHeight: 1 }}>{product.ratings.overall}</div>
-                          <div style={{ display: "flex", justifyContent: "center", marginTop: 4 }}>
-                            {[1, 2, 3, 4, 5].map((s) => (
-                              <Star key={s} size={12} fill={s <= Math.round(product.ratings.overall) ? "#fbbf24" : "none"} color="#fbbf24" />
-                            ))}
-                          </div>
-                          <div style={{ fontSize: 11, color: "#9ca3af", marginTop: 2 }}>{product.ratingCount.toLocaleString()} ratings</div>
-                        </div>
-                        <div style={{ flex: 1 }}>
-                          {product.ratings.breakdown.map((b) => (
-                            <RatingBar key={b.label} label={b.label} pct={b.pct} />
-                          ))}
-                        </div>
-                      </div>
-                      {product.reviews.map((r) => (
-                        <div key={r.id} className="pdp-review-card">
-                          <div className="pdp-review-header">
-                            <span className="pdp-review-rating"><Star size={10} fill="#fff" strokeWidth={0} /> {r.rating}</span>
-                            <span className="pdp-review-title">{r.title}</span>
-                          </div>
-                          <div className="pdp-review-body">{r.body}</div>
-                          <div className="pdp-review-meta">{r.user} · {r.date} &nbsp;|&nbsp; {r.helpful} people found this helpful</div>
-                        </div>
-                      ))}
-                    </>
-                  ),
-                },
-              ].map((section) => (
-                <div key={section.key} className="pdp-accordion-item">
-                  <div
-                    className="pdp-accordion-header"
-                    onClick={() => setExpandedSection(expandedSection === section.key ? null : section.key)}
+            {/* Accordion */}
+            <div className="pdp-accordion">
+              {accordionSections.map((sec) => (
+                <div key={sec.key} className="pdp-accordion-item">
+                  <button
+                    className="pdp-accordion-trigger"
+                    onClick={() => setExpandedSection(expandedSection === sec.key ? null : sec.key)}
                   >
-                    <span className="pdp-accordion-label">{section.label}</span>
-                    {expandedSection === section.key
+                    <span className="pdp-accordion-label">{sec.label}</span>
+                    {expandedSection === sec.key
                       ? <ChevronUp size={16} color="#ec4899" />
                       : <ChevronDown size={16} color="#9ca3af" />}
-                  </div>
-                  {expandedSection === section.key && (
-                    <div className="pdp-accordion-body">{section.content}</div>
+                  </button>
+                  {expandedSection === sec.key && (
+                    <div className="pdp-accordion-body">{sec.content}</div>
                   )}
                 </div>
               ))}
             </div>
+
           </div>
+          {/* end info col */}
         </div>
+        {/* end outer */}
       </div>
 
-      {/* Image Slider Modal */}
+      {/* Image slider modal */}
       {sliderOpen && (
         <ImageSlider
-          images={images}
+          images={product.images}
           placeholderImages={product.placeholderImages}
           initialIndex={sliderIndex}
           onClose={() => setSliderOpen(false)}
