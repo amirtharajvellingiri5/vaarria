@@ -870,7 +870,7 @@ if (productsLoading || filtersLoading) {
                       product={product}
                       onViewDetails={(product) => {
                         setSelectedProduct(product)
-                        navigate("/product", { state: product })
+                        navigate("/product/1", { state: product })
                       }}
                     />
                   ))}

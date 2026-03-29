@@ -82,7 +82,7 @@ const Navbar = ({ cartCount = 0 }) => {
             >
               {isOpen ? <X size={24} /> : <Menu size={24} />}
             </button>
-            <a href=''>
+            <a href='/'>
               <img
                 src={logo}
                 alt='Logo'
@@ -293,8 +293,31 @@ const HARDCODED_PRODUCT = {
 }
 
 async function fetchProduct(productId) {
-  await new Promise((r) => setTimeout(r, 600))
-  return HARDCODED_PRODUCT
+  // dummy API (single product with multiple images)
+  const productFromApi = {
+    id: 3,
+    title: "Kurta Set Classic",
+    price: 3999.0,
+    images: [
+      "IMG-20220416-WA0000.jpg",
+      "IMG-20220416-WA0001.jpg",
+      "IMG-20220416-WA0002.jpg",
+      "IMG-20220416-WA0005.jpg",
+      "IMG-20220416-WA0006.jpg"
+    ],
+    stock: 14
+  }
+
+  await new Promise((r) => setTimeout(r, 500)) // simulate API
+
+  return {
+    ...HARDCODED_PRODUCT,
+    ...productFromApi,
+    name: productFromApi.title, // important mapping
+    images: productFromApi.images.map(
+      (img) => `https://cdn.aarria.com/app/images/${img}`
+    )
+  }
 }
 
 // ─── Full-screen Image Slider ─────────────────────────────────────────────────
@@ -826,8 +849,8 @@ export default function ProductDetail({ productId = '24386974' }) {
           display: flex;
           gap: 6px;
           align-items: center;
-          border-bottom: 1px solid #f3f4f6;
-          background: #fafafa;
+          border-bottom: 1px solid #fff;
+          background: #fff;
           max-width: 1440px;
           margin: 0 auto;
           box-sizing: border-box;
@@ -919,7 +942,7 @@ export default function ProductDetail({ productId = '24386974' }) {
           top: 64px; /* below navbar */
           height: calc(100vh - 64px);
           overflow-y: auto;
-          padding: 32px 48px 48px 40px;
+          padding: 0px 48px 48px 40px;
           border-left: 1px solid #f3f4f6;
           background: #fff;
           scrollbar-width: thin;
