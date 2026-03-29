@@ -485,110 +485,6 @@ const ProductCard = ({ product, onViewDetails }) => {
   )
 }
 
-// Product Detail Modal
-const ProductDetailModal = ({ product, onClose }) => {
-  const addToCart = useCartStore((state) => state.addToCart)
-  const [added, setAdded] = useState(false)
-
-  const handleAddToCart = () => {
-    addToCart(product)
-    setAdded(true)
-    setTimeout(() => setAdded(false), 2000)
-  }
-
-  if (!product) return null
-
-  return (
-    <div
-      className='fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4'
-      onClick={onClose}
-    >
-      <div
-        className='bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto'
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className='grid md:grid-cols-2 gap-6 p-6'>
-          <div
-            className={`${product.bgColor} rounded-xl h-96 flex items-center justify-center text-9xl`}
-          >
-            {product.image}
-          </div>
-
-          <div>
-            <div className='flex justify-between items-start mb-4'>
-              <div>
-                <span className='text-sm text-pink-600 uppercase font-semibold'>
-                  {product.category}
-                </span>
-                <h2 className='text-2xl font-bold text-gray-800 mt-1'>
-                  {product.name}
-                </h2>
-              </div>
-              <button
-                onClick={onClose}
-                className='text-gray-500 hover:text-gray-700'
-              >
-                <X size={24} />
-              </button>
-            </div>
-
-            <div className='flex items-center mb-4'>
-              <div className='flex items-center bg-green-50 px-3 py-1 rounded'>
-                <Star size={16} className='text-green-600 fill-current' />
-                <span className='text-sm ml-1 font-semibold text-green-600'>
-                  {product.rating}
-                </span>
-              </div>
-              <span className='text-sm text-gray-500 ml-3'>(150 reviews)</span>
-            </div>
-
-            <div className='text-3xl font-bold text-pink-600 mb-4'>
-              ₹{product.price.toLocaleString()}
-            </div>
-
-            <p className='text-gray-600 mb-6'>{product.description}</p>
-
-            <div className='space-y-3 mb-6'>
-              <div className='flex items-center'>
-                <span className='font-semibold text-gray-800 w-24'>
-                  Fabric:
-                </span>
-                <span className='text-gray-600'>{product.fabric}</span>
-              </div>
-              <div className='flex items-center'>
-                <span className='font-semibold text-gray-800 w-24'>Color:</span>
-                <span className='text-gray-600'>{product.color}</span>
-              </div>
-              <div className='flex items-center'>
-                <span className='font-semibold text-gray-800 w-24'>
-                  Occasion:
-                </span>
-                <span className='text-gray-600'>{product.occasion}</span>
-              </div>
-            </div>
-
-            <div className='flex gap-3'>
-              <button
-                onClick={handleAddToCart}
-                className={`flex-1 py-3 rounded-lg font-semibold transition ${
-                  added
-                    ? 'bg-green-500 text-white'
-                    : 'bg-gradient-to-r from-pink-500 to-rose-500 text-white hover:from-pink-600 hover:to-rose-600'
-                }`}
-              >
-                {added ? '✓ Added to Bag' : 'Add to Bag'}
-              </button>
-              <button className='px-6 py-3 rounded-lg font-semibold border-2 border-pink-500 text-pink-600 hover:bg-pink-50 transition'>
-                <Heart size={20} />
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  )
-}
-
 // Pagination Component — First, Back, Next only
 const Pagination = ({ currentPage, totalPages, onPageChange }) => {
   return (
@@ -900,13 +796,6 @@ if (productsLoading || filtersLoading) {
         </div>
       </div>
 
-      {/* Product Detail Modal */}
-      {selectedProduct && (
-        <ProductDetailModal
-          product={selectedProduct}
-          onClose={() => setSelectedProduct(null)}
-        />
-      )}
     </div>
   )
 }
