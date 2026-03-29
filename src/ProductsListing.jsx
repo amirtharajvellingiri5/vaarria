@@ -46,7 +46,7 @@ const BASE_URL = "https://cdn.aarria.com/app/images/";
 
 const fetchProducts = async () => {
   const response = await fetch(
-    'https://products-api.chatoyantvortex.workers.dev/?page=1'
+    'https://products-api.chatoyantvortex.workers.dev/products?page=1'
   );
 
   const data = await response.json();
