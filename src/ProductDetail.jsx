@@ -19,6 +19,8 @@ import {
 } from 'lucide-react'
 
 import logo from './assets/logo.png'
+import { useParams } from 'react-router-dom'
+
 
 // ─── Navbar ───────────────────────────────────────────────────────────────────
 const Navbar = ({ cartCount = 0 }) => {
@@ -233,25 +235,25 @@ async function fetchProduct(productId) {
   )
   const raw = await res.json()
 
-  // assuming API returns SAME structure as your mock
   const variant = raw.inventory.variants[0]
 
-  const images = [variant.main_image, ...variant.other_images]
+  // Images are just filenames — build full CDN URLs
+  const allImages = [variant.main_image, ...variant.other_images]
+  const images = allImages.map(
+    (img) => `https://cdn.aarria.com/app/images/${img}`
+  )
 
   const sizes = variant.sizes.map((s) => s.size)
   const availableSizes = variant.sizes
     .filter((s) => s.quantity > 0)
     .map((s) => s.size)
 
-  const EXCLUDE_FROM_TABLE = ['product_blurb', 'highlights']
+  // Real API nests description under description.description
+  const desc = raw.description?.description ?? {}
 
   const details = {
-    'Style Code': raw.style_code,
-    ...Object.fromEntries(
-      Object.entries(raw.description).filter(
-        ([k]) => !EXCLUDE_FROM_TABLE.includes(k)
-      )
-    ),
+    'Style Code': raw.style_code ?? '—',
+    ...desc,
   }
 
   const discount = Math.round(
@@ -259,15 +261,14 @@ async function fetchProduct(productId) {
   )
 
   return {
-    id: raw.id,
+    id: raw.product_id,
     brand: raw.brand.name,
     name: raw.title,
     category: raw.category.category_name,
 
     images,
     placeholderImages: images.map(
-      (_, i) =>
-        `https://placehold.co/1080x1440/ec4899/ffffff?text=Image+${i + 1}`
+      (_, i) => `https://placehold.co/1080x1440/ec4899/ffffff?text=Image+${i + 1}`
     ),
 
     price: raw.pricing.sale_price,
@@ -275,26 +276,25 @@ async function fetchProduct(productId) {
     discount,
 
     rating: raw.ratings.average_rating,
-    ratingCount: raw.ratings.rating_count,
-    reviewCount: raw.ratings.review_count,
+    ratingCount: raw.ratings.rating_count ?? raw.ratings.review_count ?? 0,
+    reviewCount: raw.ratings.review_count ?? 0,
 
     sizes,
     availableSizes,
 
     colors: raw.inventory.variants.map((v) => ({
       name: v.color,
-      hex: v.color_hex,
+      hex: v.color_hex ?? '#cccccc',
       active: v.color === variant.color,
     })),
 
-    description: raw.description.product_blurb,
-    highlights: raw.description.highlights,
+    // Real API has no blurb/highlights — fallback gracefully
+    description: raw.description?.product_blurb ?? raw.title,
+    highlights: raw.description?.highlights ?? Object.entries(desc).map(([k, v]) => `${k}: ${v}`),
     details,
 
-    deliveryInfo: {
-      days: raw.delivery.days,
-      cod: raw.delivery.cod,
-    },
+    // Real API has no delivery block — fallback
+    deliveryInfo: raw.delivery ?? { days: '3-5 Business Days', cod: true },
 
     offers: [
       { icon: '💳', title: 'Bank Offer', desc: '10% off on HDFC Bank Credit Cards' },
@@ -507,7 +507,8 @@ function SkeletonLoader() {
 }
 
 // ─── Main Product Detail Page ─────────────────────────────────────────────────
-export default function ProductDetail({ productId = '71943325918208' }) {
+export default function ProductDetail() {
+  const { id:productId } = useParams()
   const [product, setProduct]             = useState(null)
   const [ratingsData, setRatingsData]     = useState(null)
   const [loading, setLoading]             = useState(true)

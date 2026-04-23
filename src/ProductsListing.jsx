@@ -44,6 +44,7 @@ const useCartStore = create((set) => ({
 
 const BASE_URL = "https://cdn.aarria.com/app/images/";
 
+/** this url is from cdn */
 const fetchProducts = async () => {
   const response = await fetch(
     'https://products-api.chatoyantvortex.workers.dev/products?page=1'
@@ -51,12 +52,14 @@ const fetchProducts = async () => {
 
   const data = await response.json();
 
-  return data.map((item) => ({
+  return data.data.map((item) => ({
     id: item.id,
     name: item.title,
     price: item.price,
 
-    image: item.images?.length
+    image: item.main_image
+      ? BASE_URL + item.main_image
+      : item.images?.length
       ? BASE_URL + item.images[0]
       : "",
 
@@ -766,7 +769,7 @@ if (productsLoading || filtersLoading) {
                       product={product}
                       onViewDetails={(product) => {
                         setSelectedProduct(product)
-                        navigate("/product/1", { state: product })
+                          window.open(`/product/${product.id}`, "_blank")
                       }}
                     />
                   ))}
