@@ -168,10 +168,7 @@ const MOCK_PRODUCT_API_RESPONSE = {
   ratings: {
     average_rating: 4.3,
     review_count: 312,
-    // ADDED NEW: total ratings count (separate from review_count)
-    rating_count: 2847,
-    reviewed_user: "",
-    reviewed_on: ""
+    
   }
 }
 
