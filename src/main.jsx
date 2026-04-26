@@ -9,11 +9,16 @@ import Home from './Home.jsx'
 import Products from './ProductsListing.jsx'
 import ProductUpload from './admin/ProductUpload.jsx'
 import ProductDetail from './ProductDetail.jsx'
+import ProductListings from './admin/ProductAdminListings.jsx'
 
 const router = createBrowserRouter([
   {
     path: '/',
     element: <Home />,
+  },
+  {
+    path: '/product/:id',
+    element: <ProductDetail />,
   },
   {
     path: '/products',
@@ -24,9 +29,9 @@ const router = createBrowserRouter([
     element: <ProductUpload />,
   },
   {
-    path: '/product/:id',
-    element: <ProductDetail />,
-  },
+    path: '/admin/products',
+    element: <ProductListings />,
+  }
   // {
   //   path: '/cart',
   //   element: <Cart />,
