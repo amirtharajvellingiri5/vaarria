@@ -351,11 +351,12 @@ const ProductUpload = () => {
       sale_price: parseFloat(salePrice) || 0,
       buy_price: parseFloat(buyPrice) || 0,
       gst: parseFloat(gst) || 0,
+      discounts: {
+        discount_type: discountType,
+        value: parseFloat(discountValue) || 0,
+      }
     },
-    discounts: {
-      discount_type: discountType,
-      value: parseFloat(discountValue) || 0,
-    },
+    
     inventory: {
       variants: variants.map((v) => ({
         color: v.color,

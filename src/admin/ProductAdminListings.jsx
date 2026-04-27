@@ -19,7 +19,8 @@ import {
 
 const CDN = 'https://cdn.aarria.com/app/images/'
 const API = 'https://api.aarria.com/listings'
-const PRODUCTS_API = 'https://8184radc92.execute-api.ap-south-1.amazonaws.com/prod/products'
+const PRODUCTS_API =
+  'https://8184radc92.execute-api.ap-south-1.amazonaws.com/prod/products'
 const PAGE_SIZE = 10
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -94,7 +95,12 @@ const EditModal = ({ product, onSave, onClose }) => {
 
   const handleSave = () => {
     if (!title.trim()) return
-    onSave({ ...product, title: title.trim(), price: parseFloat(price) || 0, stock: parseInt(stock) || 0 })
+    onSave({
+      ...product,
+      title: title.trim(),
+      price: parseFloat(price) || 0,
+      stock: parseInt(stock) || 0,
+    })
   }
 
   return (
@@ -113,7 +119,10 @@ const EditModal = ({ product, onSave, onClose }) => {
               <p className='text-xs text-stone-500'>#{product.id}</p>
             </div>
           </div>
-          <button onClick={onClose} className='p-1.5 rounded-lg text-stone-500 hover:text-stone-200 hover:bg-stone-800 transition-colors'>
+          <button
+            onClick={onClose}
+            className='p-1.5 rounded-lg text-stone-500 hover:text-stone-200 hover:bg-stone-800 transition-colors'
+          >
             <X size={16} />
           </button>
         </div>
@@ -134,7 +143,9 @@ const EditModal = ({ product, onSave, onClose }) => {
           )}
 
           <div>
-            <label className='block text-xs font-semibold uppercase tracking-widest text-rose-400 mb-1.5'>Title</label>
+            <label className='block text-xs font-semibold uppercase tracking-widest text-rose-400 mb-1.5'>
+              Title
+            </label>
             <input
               value={title}
               onChange={(e) => setTitle(e.target.value)}
@@ -144,7 +155,9 @@ const EditModal = ({ product, onSave, onClose }) => {
 
           <div className='grid grid-cols-2 gap-4'>
             <div>
-              <label className='block text-xs font-semibold uppercase tracking-widest text-rose-400 mb-1.5'>Price (₹)</label>
+              <label className='block text-xs font-semibold uppercase tracking-widest text-rose-400 mb-1.5'>
+                Price (₹)
+              </label>
               <input
                 type='number'
                 step='0.01'
@@ -154,7 +167,9 @@ const EditModal = ({ product, onSave, onClose }) => {
               />
             </div>
             <div>
-              <label className='block text-xs font-semibold uppercase tracking-widest text-rose-400 mb-1.5'>Stock</label>
+              <label className='block text-xs font-semibold uppercase tracking-widest text-rose-400 mb-1.5'>
+                Stock
+              </label>
               <input
                 type='number'
                 value={stock}
@@ -166,7 +181,10 @@ const EditModal = ({ product, onSave, onClose }) => {
         </div>
 
         <div className='flex items-center justify-end gap-3 px-6 py-4 border-t border-stone-800 bg-stone-900/30'>
-          <button onClick={onClose} className='px-4 py-2 rounded-xl text-sm font-semibold border border-stone-700 text-stone-300 hover:border-stone-500 hover:text-stone-100 transition-colors'>
+          <button
+            onClick={onClose}
+            className='px-4 py-2 rounded-xl text-sm font-semibold border border-stone-700 text-stone-300 hover:border-stone-500 hover:text-stone-100 transition-colors'
+          >
             Cancel
           </button>
           <button
@@ -190,7 +208,9 @@ const DeleteModal = ({ product, onConfirm, onClose }) => {
     setDeleting(true)
     setError('')
     try {
-      const res = await fetch(`${PRODUCTS_API}/${product.id}`, { method: 'DELETE' })
+      const res = await fetch(`${PRODUCTS_API}/${product.id}`, {
+        method: 'DELETE',
+      })
       if (!res.ok) throw new Error(`Error ${res.status}`)
       onConfirm()
     } catch (e) {
@@ -212,7 +232,11 @@ const DeleteModal = ({ product, onConfirm, onClose }) => {
             </div>
             <h3 className='text-sm font-bold text-stone-100'>Delete Product</h3>
           </div>
-          <button onClick={onClose} disabled={deleting} className='p-1.5 rounded-lg text-stone-500 hover:text-stone-200 hover:bg-stone-800 transition-colors disabled:opacity-40'>
+          <button
+            onClick={onClose}
+            disabled={deleting}
+            className='p-1.5 rounded-lg text-stone-500 hover:text-stone-200 hover:bg-stone-800 transition-colors disabled:opacity-40'
+          >
             <X size={16} />
           </button>
         </div>
@@ -221,12 +245,15 @@ const DeleteModal = ({ product, onConfirm, onClose }) => {
           <div className='flex items-center gap-4 mb-4'>
             <Thumb filename={product.main_image} title={product.title} />
             <div>
-              <p className='text-sm font-semibold text-stone-100'>{product.title}</p>
+              <p className='text-sm font-semibold text-stone-100'>
+                {product.title}
+              </p>
               <p className='text-xs text-stone-500 font-mono'>#{product.id}</p>
             </div>
           </div>
           <p className='text-sm text-stone-400'>
-            Are you sure you want to delete this product? This action cannot be undone.
+            Are you sure you want to delete this product? This action cannot be
+            undone.
           </p>
           {error && (
             <p className='mt-3 text-xs text-rose-400 flex items-center gap-1.5'>
@@ -236,7 +263,11 @@ const DeleteModal = ({ product, onConfirm, onClose }) => {
         </div>
 
         <div className='flex items-center justify-end gap-3 px-6 py-4 border-t border-stone-800 bg-stone-900/30'>
-          <button onClick={onClose} disabled={deleting} className='px-4 py-2 rounded-xl text-sm font-semibold border border-stone-700 text-stone-300 hover:border-stone-500 hover:text-stone-100 transition-colors disabled:opacity-40'>
+          <button
+            onClick={onClose}
+            disabled={deleting}
+            className='px-4 py-2 rounded-xl text-sm font-semibold border border-stone-700 text-stone-300 hover:border-stone-500 hover:text-stone-100 transition-colors disabled:opacity-40'
+          >
             Cancel
           </button>
           <button
@@ -244,7 +275,13 @@ const DeleteModal = ({ product, onConfirm, onClose }) => {
             disabled={deleting}
             className='flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold bg-rose-600 hover:bg-rose-700 text-white transition-colors disabled:opacity-60'
           >
-            {deleting ? <><Loader2 size={13} className='animate-spin' /> Deleting…</> : 'Delete'}
+            {deleting ? (
+              <>
+                <Loader2 size={13} className='animate-spin' /> Deleting…
+              </>
+            ) : (
+              'Delete'
+            )}
           </button>
         </div>
       </div>
@@ -292,7 +329,7 @@ const ProductListings = () => {
     try {
       const res = await fetch(
         'https://8184radc92.execute-api.ap-south-1.amazonaws.com/prod//sync/products',
-        { method: 'POST' }
+        { method: 'POST' },
       )
       if (!res.ok) throw new Error(`Error ${res.status}`)
       setToast('Products synced successfully')
@@ -307,7 +344,8 @@ const ProductListings = () => {
   const filtered = (() => {
     let arr = allProducts.filter((p) => {
       const q = search.toLowerCase()
-      const matchQ = !q || p.title.toLowerCase().includes(q) || String(p.id).includes(q)
+      const matchQ =
+        !q || p.title.toLowerCase().includes(q) || String(p.id).includes(q)
       const matchStock =
         stockFilter === 'all' ||
         (stockFilter === 'instock' && p.stock > 0) ||
@@ -316,28 +354,46 @@ const ProductListings = () => {
       return matchQ && matchStock
     })
     arr = [...arr].sort((a, b) => {
-      let av = a[sortCol], bv = b[sortCol]
-      if (typeof av === 'string') { av = av.toLowerCase(); bv = bv.toLowerCase() }
-      return sortDir === 'asc' ? (av > bv ? 1 : -1) : (av < bv ? 1 : -1)
+      let av = a[sortCol],
+        bv = b[sortCol]
+      if (typeof av === 'string') {
+        av = av.toLowerCase()
+        bv = bv.toLowerCase()
+      }
+      return sortDir === 'asc' ? (av > bv ? 1 : -1) : av < bv ? 1 : -1
     })
     return arr
   })()
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
   const safePage = Math.min(page, totalPages)
-  const pageSlice = filtered.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE)
+  const pageSlice = filtered.slice(
+    (safePage - 1) * PAGE_SIZE,
+    safePage * PAGE_SIZE,
+  )
 
   const handleSort = (col) => {
     if (sortCol === col) setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'))
-    else { setSortCol(col); setSortDir('asc') }
+    else {
+      setSortCol(col)
+      setSortDir('asc')
+    }
     setPage(1)
   }
 
-  const handleSearch = (v) => { setSearch(v); setPage(1) }
-  const handleStockFilter = (v) => { setStockFilter(v); setPage(1) }
+  const handleSearch = (v) => {
+    setSearch(v)
+    setPage(1)
+  }
+  const handleStockFilter = (v) => {
+    setStockFilter(v)
+    setPage(1)
+  }
 
   const handleSaveEdit = useCallback((updated) => {
-    setAllProducts((prev) => prev.map((p) => (p.id === updated.id ? updated : p)))
+    setAllProducts((prev) =>
+      prev.map((p) => (p.id === updated.id ? updated : p)),
+    )
     setEditProduct(null)
     setToast('Product updated successfully')
   }, [])
@@ -355,10 +411,16 @@ const ProductListings = () => {
     out: allProducts.filter((p) => p.stock === 0).length,
   }
 
+  const openProduct = (id) => {
+      window.open(`/product/${id}`, '_blank')
+
+  }
+
   const pageNums = (() => {
     const nums = []
     for (let i = 1; i <= totalPages; i++) {
-      if (i === 1 || i === totalPages || Math.abs(i - safePage) <= 1) nums.push(i)
+      if (i === 1 || i === totalPages || Math.abs(i - safePage) <= 1)
+        nums.push(i)
       else if (nums[nums.length - 1] !== '…') nums.push('…')
     }
     return nums
@@ -370,14 +432,23 @@ const ProductListings = () => {
     }`
 
   return (
-    <div className='min-h-screen bg-stone-950 text-stone-100' style={{ fontFamily: "'DM Sans', sans-serif" }}>
-      <link href='https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Playfair+Display:wght@600;700&display=swap' rel='stylesheet' />
+    <div
+      className='min-h-screen bg-stone-950 text-stone-100'
+      style={{ fontFamily: "'DM Sans', sans-serif" }}
+    >
+      <link
+        href='https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Playfair+Display:wght@600;700&display=swap'
+        rel='stylesheet'
+      />
 
       {/* Top bar */}
       <div className='sticky top-0 z-30 bg-stone-950/95 backdrop-blur border-b border-stone-800'>
         <div className='max-w-7xl mx-auto px-6 h-16 flex items-center justify-between'>
           <div>
-            <h1 className='font-bold text-stone-100' style={{ fontFamily: "'Playfair Display', serif", fontSize: 18 }}>
+            <h1
+              className='font-bold text-stone-100'
+              style={{ fontFamily: "'Playfair Display', serif", fontSize: 18 }}
+            >
               Product Listings
             </h1>
             <p className='text-xs text-stone-500'>Women's Ethnic Wear Store</p>
@@ -388,7 +459,11 @@ const ProductListings = () => {
               disabled={syncing}
               className='flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold border border-stone-700 text-stone-300 hover:border-stone-500 hover:text-stone-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors'
             >
-              {syncing ? <Loader2 size={14} className='animate-spin' /> : <RefreshCw size={14} />}
+              {syncing ? (
+                <Loader2 size={14} className='animate-spin' />
+              ) : (
+                <RefreshCw size={14} />
+              )}
               {syncing ? 'Syncing…' : 'Sync'}
             </button>
             <button
@@ -405,13 +480,26 @@ const ProductListings = () => {
         {/* Stats */}
         <div className='grid grid-cols-2 sm:grid-cols-4 gap-4'>
           {[
-            { label: 'Total Products', val: stats.total, color: 'text-stone-100' },
-            { label: 'In Stock', val: stats.instock, color: 'text-emerald-400' },
+            {
+              label: 'Total Products',
+              val: stats.total,
+              color: 'text-stone-100',
+            },
+            {
+              label: 'In Stock',
+              val: stats.instock,
+              color: 'text-emerald-400',
+            },
             { label: 'Low Stock', val: stats.low, color: 'text-amber-400' },
             { label: 'Out of Stock', val: stats.out, color: 'text-rose-400' },
           ].map(({ label, val, color }) => (
-            <div key={label} className='bg-stone-900 border border-stone-800 rounded-2xl p-4'>
-              <p className='text-xs font-semibold uppercase tracking-widest text-stone-500 mb-1'>{label}</p>
+            <div
+              key={label}
+              className='bg-stone-900 border border-stone-800 rounded-2xl p-4'
+            >
+              <p className='text-xs font-semibold uppercase tracking-widest text-stone-500 mb-1'>
+                {label}
+              </p>
               <p className={`text-2xl font-bold ${color}`}>{val}</p>
             </div>
           ))}
@@ -422,7 +510,10 @@ const ProductListings = () => {
           {/* Toolbar */}
           <div className='flex flex-wrap items-center gap-3 px-5 py-4 border-b border-stone-800 bg-stone-900/40'>
             <div className='relative flex-1 min-w-[180px]'>
-              <Search size={14} className='absolute left-3 top-1/2 -translate-y-1/2 text-stone-500 pointer-events-none' />
+              <Search
+                size={14}
+                className='absolute left-3 top-1/2 -translate-y-1/2 text-stone-500 pointer-events-none'
+              />
               <input
                 value={search}
                 onChange={(e) => handleSearch(e.target.value)}
@@ -440,7 +531,9 @@ const ProductListings = () => {
               <option value='low'>Low stock</option>
               <option value='out'>Out of stock</option>
             </select>
-            <span className='text-xs text-stone-500 ml-auto'>{filtered.length} products</span>
+            <span className='text-xs text-stone-500 ml-auto'>
+              {filtered.length} products
+            </span>
           </div>
 
           {/* Table */}
@@ -453,7 +546,10 @@ const ProductListings = () => {
               <div className='flex flex-col items-center justify-center gap-3 py-20 text-stone-500'>
                 <AlertTriangle size={24} className='text-rose-400' />
                 <p className='text-sm'>{error}</p>
-                <button onClick={fetchListings} className='px-4 py-2 rounded-xl text-sm border border-stone-700 text-stone-300 hover:border-stone-500 transition-colors'>
+                <button
+                  onClick={fetchListings}
+                  className='px-4 py-2 rounded-xl text-sm border border-stone-700 text-stone-300 hover:border-stone-500 transition-colors'
+                >
                   Retry
                 </button>
               </div>
@@ -466,17 +562,51 @@ const ProductListings = () => {
               <table className='w-full'>
                 <thead>
                   <tr className='bg-stone-900/60'>
-                    <th className={thClass('title')} onClick={() => handleSort('title')}>
-                      <span className='flex items-center gap-1.5'>Product <SortIcon col='title' sortCol={sortCol} sortDir={sortDir} /></span>
+                    <th
+                      className={thClass('title')}
+                      onClick={() => handleSort('title')}
+                    >
+                      <span className='flex items-center gap-1.5'>
+                        Product{' '}
+                        <SortIcon
+                          col='title'
+                          sortCol={sortCol}
+                          sortDir={sortDir}
+                        />
+                      </span>
                     </th>
-                    <th className={thClass('price')} onClick={() => handleSort('price')}>
-                      <span className='flex items-center gap-1.5'>Price <SortIcon col='price' sortCol={sortCol} sortDir={sortDir} /></span>
+                    <th
+                      className={thClass('price')}
+                      onClick={() => handleSort('price')}
+                    >
+                      <span className='flex items-center gap-1.5'>
+                        Price{' '}
+                        <SortIcon
+                          col='price'
+                          sortCol={sortCol}
+                          sortDir={sortDir}
+                        />
+                      </span>
                     </th>
-                    <th className={thClass('stock')} onClick={() => handleSort('stock')}>
-                      <span className='flex items-center gap-1.5'>Stock <SortIcon col='stock' sortCol={sortCol} sortDir={sortDir} /></span>
+                    <th
+                      className={thClass('stock')}
+                      onClick={() => handleSort('stock')}
+                    >
+                      <span className='flex items-center gap-1.5'>
+                        Stock{' '}
+                        <SortIcon
+                          col='stock'
+                          sortCol={sortCol}
+                          sortDir={sortDir}
+                        />
+                      </span>
                     </th>
-                    <th className='px-4 py-3 text-left text-xs font-semibold uppercase tracking-widest text-stone-500'>Images</th>
-                    <th className='px-4 py-3 text-left text-xs font-semibold uppercase tracking-widest text-stone-500'>Actions</th>
+                    <th className='px-4 py-3 text-left text-xs font-semibold uppercase tracking-widest text-stone-500'>
+                      Images
+                    </th>
+                    <th className='px-4 py-3 text-left text-xs font-semibold uppercase tracking-widest text-stone-500'>
+                      Actions
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
@@ -487,15 +617,31 @@ const ProductListings = () => {
                     >
                       <td className='px-4 py-3'>
                         <div className='flex items-center gap-3'>
-                          <Thumb filename={p.main_image} title={p.title} />
+                          <div
+                            onClick={() => openProduct(p.id)}
+                            className='cursor-pointer'
+                          >
+                            <Thumb filename={p.main_image} title={p.title} />
+                          </div>
                           <div className='min-w-0'>
-                            <p className='text-sm font-semibold text-stone-100 truncate max-w-[200px]'>{p.title}</p>
-                            <p className='text-xs text-stone-500 font-mono'>#{p.id}</p>
+                            <p
+                              onClick={() => openProduct(p.id)}
+                              className='text-sm font-semibold text-stone-100 truncate max-w-[200px] cursor-pointer hover:text-rose-400'
+                            >
+                              {p.title}
+                            </p>
+                            <p className='text-xs text-stone-500 font-mono'>
+                              #{p.id}
+                            </p>
                           </div>
                         </div>
                       </td>
-                      <td className='px-4 py-3 text-sm font-semibold text-stone-200'>₹{Number(p.price).toFixed(2)}</td>
-                      <td className='px-4 py-3'><StockBadge stock={p.stock} /></td>
+                      <td className='px-4 py-3 text-sm font-semibold text-stone-200'>
+                        ₹{Number(p.price).toFixed(2)}
+                      </td>
+                      <td className='px-4 py-3'>
+                        <StockBadge stock={p.stock} />
+                      </td>
                       <td className='px-4 py-3'>
                         <div className='flex items-center gap-1.5'>
                           {(p.images || []).slice(0, 3).map((img, j) => (
@@ -508,7 +654,9 @@ const ProductListings = () => {
                             />
                           ))}
                           {(p.images || []).length > 3 && (
-                            <span className='text-xs text-stone-500'>+{p.images.length - 3}</span>
+                            <span className='text-xs text-stone-500'>
+                              +{p.images.length - 3}
+                            </span>
                           )}
                         </div>
                       </td>
@@ -539,7 +687,10 @@ const ProductListings = () => {
           {!loading && !error && filtered.length > 0 && (
             <div className='flex flex-wrap items-center justify-between gap-3 px-5 py-4 border-t border-stone-800 bg-stone-900/30'>
               <p className='text-xs text-stone-500'>
-                Showing {Math.min((safePage - 1) * PAGE_SIZE + 1, filtered.length)}–{Math.min(safePage * PAGE_SIZE, filtered.length)} of {filtered.length}
+                Showing{' '}
+                {Math.min((safePage - 1) * PAGE_SIZE + 1, filtered.length)}–
+                {Math.min(safePage * PAGE_SIZE, filtered.length)} of{' '}
+                {filtered.length}
               </p>
               <div className='flex items-center gap-1.5'>
                 <button
@@ -551,7 +702,12 @@ const ProductListings = () => {
                 </button>
                 {pageNums.map((n, i) =>
                   n === '…' ? (
-                    <span key={`ellipsis-${i}`} className='px-2 text-stone-600 text-xs'>…</span>
+                    <span
+                      key={`ellipsis-${i}`}
+                      className='px-2 text-stone-600 text-xs'
+                    >
+                      …
+                    </span>
                   ) : (
                     <button
                       key={n}
@@ -564,7 +720,7 @@ const ProductListings = () => {
                     >
                       {n}
                     </button>
-                  )
+                  ),
                 )}
                 <button
                   onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
@@ -580,8 +736,20 @@ const ProductListings = () => {
       </div>
 
       {/* Modals */}
-      {editProduct && <EditModal product={editProduct} onSave={handleSaveEdit} onClose={() => setEditProduct(null)} />}
-      {deleteProduct && <DeleteModal product={deleteProduct} onConfirm={handleConfirmDelete} onClose={() => setDeleteProduct(null)} />}
+      {editProduct && (
+        <EditModal
+          product={editProduct}
+          onSave={handleSaveEdit}
+          onClose={() => setEditProduct(null)}
+        />
+      )}
+      {deleteProduct && (
+        <DeleteModal
+          product={deleteProduct}
+          onConfirm={handleConfirmDelete}
+          onClose={() => setDeleteProduct(null)}
+        />
+      )}
 
       {/* Toast */}
       {toast && <Toast message={toast} onDone={() => setToast('')} />}
