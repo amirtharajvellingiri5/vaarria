@@ -22,6 +22,13 @@ const uid = () => Math.random().toString(36).slice(2)
 // ── Sub-components ────────────────────────────────────────────────────────────
 const Select = ({ label, options, value, onChange, required }) => {
   const [open, setOpen] = useState(false)
+  const [search, setSearch] = useState('')
+
+  const filteredOptions = options.filter(
+    (o) =>
+      typeof o === 'string' && o.toLowerCase().includes(search.toLowerCase()),
+  )
+
   return (
     <div className='relative'>
       {label && (
@@ -29,6 +36,8 @@ const Select = ({ label, options, value, onChange, required }) => {
           {label} {required && <span className='text-rose-500'>*</span>}
         </label>
       )}
+
+      {/* Trigger */}
       <button
         type='button'
         onClick={() => setOpen(!open)}
@@ -42,23 +51,47 @@ const Select = ({ label, options, value, onChange, required }) => {
           className={`transition-transform ${open ? 'rotate-180' : ''}`}
         />
       </button>
+
+      {/* Dropdown */}
       {open && (
         <div className='absolute z-[9999] mt-1 w-full bg-stone-900 border border-stone-700 rounded-xl shadow-2xl overflow-hidden'>
-          {options.map((o) => (
-            <button
-              key={o}
-              type='button'
-              onClick={() => {
-                onChange(o)
-                setOpen(false)
-              }}
-              className='w-full text-left px-4 py-2.5 text-sm text-stone-300 hover:bg-rose-500/10 hover:text-rose-400 transition-colors flex items-center gap-2'
-            >
-              {value === o && <Check size={12} className='text-rose-400' />}
-              {value !== o && <span className='w-3' />}
-              {o}
-            </button>
-          ))}
+          {/* Search box */}
+          <div className='p-2 border-b border-stone-800'>
+            <input
+              ref={searchRef}
+              type='text'
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder='Search...'
+              className='w-full px-3 py-2 bg-stone-800 border border-stone-700 rounded-lg text-sm text-stone-100 placeholder-stone-500 focus:outline-none focus:border-rose-500'
+            />
+          </div>
+
+          {/* Options */}
+          <div className='max-h-60 overflow-y-auto'>
+            {filteredOptions.length > 0 ? (
+              filteredOptions.map((o) => (
+                <button
+                  key={o}
+                  type='button'
+                  onClick={() => {
+                    onChange(o)
+                    setOpen(false)
+                    setSearch('')
+                  }}
+                  className='w-full text-left px-4 py-2.5 text-sm text-stone-300 hover:bg-rose-500/10 hover:text-rose-400 transition-colors flex items-center gap-2'
+                >
+                  {value === o && <Check size={12} className='text-rose-400' />}
+                  {value !== o && <span className='w-3' />}
+                  {o}
+                </button>
+              ))
+            ) : (
+              <div className='px-4 py-3 text-sm text-stone-500'>
+                No results found
+              </div>
+            )}
+          </div>
         </div>
       )}
     </div>
@@ -184,6 +217,15 @@ const ProductUpload = () => {
   const [activeTab, setActiveTab] = useState('edit')
   const [submitting, setSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState('')
+  const searchRef = useRef(null)
+
+  useEffect(() => {
+    if (open) {
+      setTimeout(() => {
+        searchRef.current?.focus()
+      }, 0)
+    }
+  }, [open])
 
   // ── Variant field helpers ─────────────────────────────────────────────────
   const setVariantField = (variantId, field, val) =>
@@ -354,9 +396,9 @@ const ProductUpload = () => {
       discounts: {
         discount_type: discountType,
         value: parseFloat(discountValue) || 0,
-      }
+      },
     },
-    
+
     inventory: {
       variants: variants.map((v) => ({
         color: v.color,
@@ -792,16 +834,14 @@ const ProductUpload = () => {
                     value={neck}
                     onChange={setNeck}
                     options={[
-                      [
-                        'Round Neck',
-                        'V-Neck',
-                        'Boat Neck',
-                        'Mandarin Collar',
-                        'Collared Neck',
-                        'Square Neck',
-                        'Sweetheart Neck',
-                        'Keyhole Neck',
-                      ],
+                      'Round Neck',
+                      'V-Neck',
+                      'Boat Neck',
+                      'Mandarin Collar',
+                      'Collared Neck',
+                      'Square Neck',
+                      'Sweetheart Neck',
+                      'Keyhole Neck',
                     ]}
                   />
                   <Select
