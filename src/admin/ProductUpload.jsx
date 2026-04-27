@@ -111,7 +111,7 @@ const Section = ({ icon: Icon, title, subtitle, children }) => (
 
 const emptyVariant = () => ({
   id: uid(),
-  color: '',
+  color: 'Red',
   sizes: ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL', '4XL', 'Free Size'].map(
     (s) => ({ size: s, quantity: '' }),
   ),
@@ -126,27 +126,54 @@ const emptyVariant = () => ({
   other_image_files: [],
 })
 
+const categories = [
+  { category_id: 4, name: 'Kurtas & Suits' },
+  { category_id: 5, name: 'Kurtis, Tunics & Tops' },
+  { category_id: 6, name: 'Sarees' },
+  { category_id: 7, name: 'Leggings, Salwars & Churidars' },
+  { category_id: 8, name: 'Skirts & Palazzos' },
+  { category_id: 9, name: 'Dress Materials' },
+  { category_id: 10, name: 'Lehenga Cholis' },
+  { category_id: 11, name: 'Dupattas & Shawls' },
+  { category_id: 12, name: 'Jackets' },
+
+  { category_id: 13, name: 'Dresses' },
+  { category_id: 14, name: 'Tops & T-Shirts' },
+  { category_id: 15, name: 'Jeans & Jeggings' },
+  { category_id: 16, name: 'Trousers & Pants' },
+  { category_id: 17, name: 'Skirts' },
+  { category_id: 18, name: 'Shorts' },
+  { category_id: 19, name: 'Jumpsuits' },
+  { category_id: 20, name: 'Co-ords' },
+  { category_id: 21, name: 'Blazers & Waistcoats' },
+  { category_id: 22, name: 'Shrugs & Capes' },
+]
+
 // ── Main Component ────────────────────────────────────────────────────────────
 const ProductUpload = () => {
   // Basic Info
-  const [title, setTitle] = useState('')
-  const [brandName, setBrandName] = useState('')
-  const [catalogueId, setCatalogueId] = useState('')
+  const [title, setTitle] = useState(
+    'Black Floral Printed V-Neck Thread Work Pure Cotton Straight Kurta',
+  )
+  const [brandName, setBrandName] = useState('Jansya')
+  const [catalogueId, setCatalogueId] = useState('123')
 
   // Category
-  const [categoryName, setCategoryName] = useState('')
+  const [categoryId, setCategoryId] = useState(4) // default Kurtas & Suits
 
   // Description attributes
-  const [material, setMaterial] = useState('')
-  const [sleeveLength, setSleeveLength] = useState('')
-  const [neck, setNeck] = useState('')
-  const [designStyling, setDesignStyling] = useState('')
+  const [material, setMaterial] = useState('Cotton')
+  const [sleeveLength, setSleeveLength] = useState('Half Sleeves')
+  const [neck, setNeck] = useState('Round Neck')
+  const [designStyling, setDesignStyling] = useState('Regular')
 
   // Pricing
-  const [mrp, setMrp] = useState('')
-  const [salePrice, setSalePrice] = useState('')
-  const [buyPrice, setBuyPrice] = useState('')
-  const [gst, setGst] = useState('')
+  const [mrp, setMrp] = useState('2799')
+  const [salePrice, setSalePrice] = useState('1399')
+  const [buyPrice, setBuyPrice] = useState('900')
+  const [gst, setGst] = useState('5')
+  const [discountType, setDiscountType] = useState('FLAT')
+  const [discountValue, setDiscountValue] = useState('300')
 
   // Variants
   const [variants, setVariants] = useState([emptyVariant()])
@@ -309,7 +336,10 @@ const ProductUpload = () => {
   const buildPayload = () => ({
     title, // ✅ was missing in failing payload
     brand: { name: brandName, catalogue_id: catalogueId },
-    category: { category_id: 2, category_name: categoryName },
+    category: {
+      category_id: categoryId,
+      category_name: categories.find((c) => c.category_id === categoryId)?.name,
+    },
     description: {
       Material: material,
       'Sleeve Length': sleeveLength,
@@ -321,6 +351,10 @@ const ProductUpload = () => {
       sale_price: parseFloat(salePrice) || 0,
       buy_price: parseFloat(buyPrice) || 0,
       gst: parseFloat(gst) || 0,
+    },
+    discounts: {
+      discount_type: discountType,
+      value: parseFloat(discountValue) || 0,
     },
     inventory: {
       variants: variants.map((v) => ({
@@ -429,7 +463,7 @@ const ProductUpload = () => {
   const checks = [
     { label: 'Title filled', done: title.length > 2 },
     { label: 'Brand name set', done: brandName.length > 0 },
-    { label: 'Category selected', done: categoryName.length > 0 },
+    { label: 'Category selected', done: categoryId.length > 0 },
     { label: 'MRP set', done: !!mrp },
     { label: 'Sale price set', done: !!salePrice },
     {
@@ -482,9 +516,9 @@ const ProductUpload = () => {
             )}
           </div>
           <div className='p-4'>
-            {categoryName && (
+            {categoryId && (
               <span className='text-xs text-rose-500 font-semibold uppercase tracking-wider'>
-                {categoryName}
+                {categoryId}
               </span>
             )}
             <h4 className='font-bold text-gray-800 mt-1 text-base leading-tight'>
@@ -688,15 +722,14 @@ const ProductUpload = () => {
                 <Select
                   label='Category'
                   required
-                  value={categoryName}
-                  onChange={setCategoryName}
-                  options={[
-                    'Kurtas & Suits',
-                    'Sarees',
-                    'Lehengas',
-                    'Dupattas',
-                    'Accessories',
-                  ]}
+                  value={
+                    categories.find((c) => c.category_id === categoryId)?.name
+                  }
+                  onChange={(val) => {
+                    const selected = categories.find((c) => c.name === val)
+                    setCategoryId(selected.category_id)
+                  }}
+                  options={categories.map((c) => c.name)}
                 />
               </Section>
 
@@ -706,22 +739,51 @@ const ProductUpload = () => {
                 subtitle='Fabric, sleeve, neck, styling'
               >
                 <div className='grid grid-cols-1 sm:grid-cols-2 gap-5'>
-                  <Field label='Material'>
-                    <Input
-                      value={material}
-                      onChange={setMaterial}
-                      placeholder='e.g. Cotton Silk'
-                    />
-                  </Field>
+                  <Select
+                    label='Material'
+                    value={material}
+                    onChange={setMaterial}
+                    options={[
+                      'Cotton',
+                      'Polyester',
+                      'Cotton Blend',
+                      'Rayon',
+                      'Viscose',
+                      'Poly Cotton',
+                      'Georgette',
+                      'Chiffon',
+                      'Silk',
+                      'Art Silk',
+                      'Cotton Silk',
+                      'Linen',
+                      'Linen Blend',
+                      'Khadi',
+                      'Chanderi',
+                      'Banarasi Silk',
+                      'Satin',
+                      'Organza',
+                      'Velvet',
+                      'Denim',
+                      'Knitted',
+                      'Spandex',
+                      'Lycra',
+                      'Rayon Blend',
+                      'Silk Blend',
+                    ]}
+                  />
                   <Select
                     label='Sleeve Length'
                     value={sleeveLength}
                     onChange={setSleeveLength}
                     options={[
-                      'Short Sleeves',
-                      'Long Sleeves',
-                      '3/4 Sleeves',
                       'Sleeveless',
+                      'Short Sleeves',
+                      'Half Sleeves',
+                      '3/4 Sleeves',
+                      'Long Sleeves',
+                      'Cap Sleeves',
+                      'Bell Sleeves',
+                      'Puff Sleeves',
                     ]}
                   />
                   <Select
@@ -729,11 +791,16 @@ const ProductUpload = () => {
                     value={neck}
                     onChange={setNeck}
                     options={[
-                      'Mandarin Collar',
-                      'Round Neck',
-                      'V-Neck',
-                      'Boat Neck',
-                      'Sweetheart',
+                      [
+                        'Round Neck',
+                        'V-Neck',
+                        'Boat Neck',
+                        'Mandarin Collar',
+                        'Collared Neck',
+                        'Square Neck',
+                        'Sweetheart Neck',
+                        'Keyhole Neck',
+                      ],
                     ]}
                   />
                   <Select
@@ -742,10 +809,13 @@ const ProductUpload = () => {
                     onChange={setDesignStyling}
                     options={[
                       'Regular',
-                      'A-Line',
                       'Straight',
+                      'A-Line',
                       'Flared',
+                      'Anarkali',
                       'Asymmetric',
+                      'Layered',
+                      'Panelled',
                     ]}
                   />
                 </div>
@@ -792,6 +862,23 @@ const ProductUpload = () => {
                       placeholder='e.g. 5.2'
                     />
                   </Field>
+                  <div className='grid grid-cols-1 sm:grid-cols-2 gap-5 mt-4'>
+                    <Select
+                      label='Discount Type'
+                      value={discountType}
+                      onChange={setDiscountType}
+                      options={['FLAT', 'PERCENTAGE']}
+                    />
+
+                    <Field label='Discount Value'>
+                      <Input
+                        value={discountValue}
+                        onChange={setDiscountValue}
+                        type='number'
+                        placeholder='Enter value'
+                      />
+                    </Field>
+                  </div>
                 </div>
 
                 {mrp && salePrice && buyPrice && (
@@ -1013,17 +1100,47 @@ const VariantCard = ({
           value={variant.color}
           onChange={onColorChange}
           options={[
-            'Red',
-            'Blue',
-            'Green',
-            'Yellow',
-            'Pink',
-            'Purple',
-            'Gold',
             'Black',
             'White',
-            'Orange',
+            'Off White',
+            'Beige',
+            'Grey',
+            'Navy Blue',
+            'Brown',
+            'Red',
             'Maroon',
+            'Wine',
+            'Pink',
+            'Fuchsia',
+            'Peach',
+            'Rose',
+            'Sky Blue',
+            'Royal Blue',
+            'Teal',
+            'Turquoise',
+            'Denim Blue',
+            'Green',
+            'Olive',
+            'Mint',
+            'Emerald',
+            'Bottle Green',
+            'Yellow',
+            'Mustard',
+            'Golden',
+            'Orange',
+            'Rust',
+            'Purple',
+            'Lavender',
+            'Lilac',
+            'Plum',
+            'Violet',
+            'Pastel Pink',
+            'Baby Blue',
+            'Multicolor',
+            'Printed',
+            'Floral',
+            'Striped',
+            'Checked',
           ]}
         />
 

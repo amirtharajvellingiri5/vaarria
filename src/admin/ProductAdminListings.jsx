@@ -14,6 +14,7 @@ import {
   Package,
   Image as ImageIcon,
   Loader2,
+  RefreshCw,
 } from 'lucide-react'
 
 const CDN = 'https://cdn.aarria.com/app/images/'
@@ -266,6 +267,7 @@ const ProductListings = () => {
   const [editProduct, setEditProduct] = useState(null)
   const [deleteProduct, setDeleteProduct] = useState(null)
   const [toast, setToast] = useState('')
+  const [syncing, setSyncing] = useState(false)
 
   useEffect(() => {
     fetchListings()
@@ -282,6 +284,23 @@ const ProductListings = () => {
       setError('Failed to load products. Please try again.')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleSync = async () => {
+    setSyncing(true)
+    try {
+      const res = await fetch(
+        'https://8184radc92.execute-api.ap-south-1.amazonaws.com/prod//sync/products',
+        { method: 'POST' }
+      )
+      if (!res.ok) throw new Error(`Error ${res.status}`)
+      setToast('Products synced successfully')
+      await fetchListings()
+    } catch {
+      setToast('Sync failed. Please try again.')
+    } finally {
+      setSyncing(false)
     }
   }
 
@@ -363,12 +382,22 @@ const ProductListings = () => {
             </h1>
             <p className='text-xs text-stone-500'>Women's Ethnic Wear Store</p>
           </div>
-          <button
-            onClick={() => window.open('/admin/products/new', '_blank')}
-            className='flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold bg-gradient-to-r from-rose-500 to-pink-600 text-white hover:from-rose-600 hover:to-pink-700 transition-all shadow-lg shadow-rose-500/20'
-          >
-            <Plus size={15} /> Add Product
-          </button>
+          <div className='flex items-center gap-3'>
+            <button
+              onClick={handleSync}
+              disabled={syncing}
+              className='flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold border border-stone-700 text-stone-300 hover:border-stone-500 hover:text-stone-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors'
+            >
+              {syncing ? <Loader2 size={14} className='animate-spin' /> : <RefreshCw size={14} />}
+              {syncing ? 'Syncing…' : 'Sync'}
+            </button>
+            <button
+              onClick={() => window.open('/admin/products/new', '_blank')}
+              className='flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold bg-gradient-to-r from-rose-500 to-pink-600 text-white hover:from-rose-600 hover:to-pink-700 transition-all shadow-lg shadow-rose-500/20'
+            >
+              <Plus size={15} /> Add Product
+            </button>
+          </div>
         </div>
       </div>
 

@@ -21,54 +21,126 @@ import {
 import logo from './assets/logo.png'
 import { useParams } from 'react-router-dom'
 
-
 // ─── Navbar ───────────────────────────────────────────────────────────────────
 const Navbar = ({ cartCount = 0 }) => {
   const [isOpen, setIsOpen] = useState(false)
   const [activeMenu, setActiveMenu] = useState(null)
 
   const menuItems = [
-    { name: 'Sarees', submenu: ['Silk Sarees', 'Cotton Sarees', 'Designer Sarees', 'Banarasi Sarees', 'Kanjivaram Sarees'] },
-    { name: 'Lehengas', submenu: ['Bridal Lehengas', 'Party Wear', 'Designer Lehengas', 'Silk Lehengas'] },
-    { name: 'Suits', submenu: ['Anarkali Suits', 'Palazzo Suits', 'Salwar Suits', 'Churidar Suits'] },
-    { name: 'Kurtis', submenu: ['Cotton Kurtis', 'Designer Kurtis', 'Printed Kurtis', 'Long Kurtis'] },
+    {
+      name: 'Sarees',
+      submenu: [
+        'Silk Sarees',
+        'Cotton Sarees',
+        'Designer Sarees',
+        'Banarasi Sarees',
+        'Kanjivaram Sarees',
+      ],
+    },
+    {
+      name: 'Lehengas',
+      submenu: [
+        'Bridal Lehengas',
+        'Party Wear',
+        'Designer Lehengas',
+        'Silk Lehengas',
+      ],
+    },
+    {
+      name: 'Suits',
+      submenu: [
+        'Anarkali Suits',
+        'Palazzo Suits',
+        'Salwar Suits',
+        'Churidar Suits',
+      ],
+    },
+    {
+      name: 'Kurtis',
+      submenu: [
+        'Cotton Kurtis',
+        'Designer Kurtis',
+        'Printed Kurtis',
+        'Long Kurtis',
+      ],
+    },
   ]
 
   return (
     <nav className='bg-white shadow-sm sticky top-0 z-50 border-b border-pink-100'>
-      <div style={{ maxWidth: 1440, margin: '0 auto', padding: '0 clamp(16px, 6%, 86px)' }}>
+      <div
+        style={{
+          maxWidth: 1440,
+          margin: '0 auto',
+          padding: '0 clamp(16px, 6%, 86px)',
+        }}
+      >
         <div className='flex justify-between items-center h-16'>
           <div className='flex items-center'>
-            <button onClick={() => setIsOpen(!isOpen)} className='md:hidden mr-4 text-gray-700 hover:text-pink-600 transition'>
+            <button
+              onClick={() => setIsOpen(!isOpen)}
+              className='md:hidden mr-4 text-gray-700 hover:text-pink-600 transition'
+            >
               {isOpen ? <X size={24} /> : <Menu size={24} />}
             </button>
-            <a href='/'><img src={logo} alt='Logo' className='h-20 md:h-24 object-contain' /></a>
+            <a href='/'>
+              <img
+                src={logo}
+                alt='Logo'
+                className='h-20 md:h-24 object-contain'
+              />
+            </a>
           </div>
           <div className='hidden md:flex space-x-6 relative'>
             {menuItems.map((item) => (
-              <div key={item.name} className='relative' onMouseEnter={() => setActiveMenu(item.name)} onMouseLeave={() => setActiveMenu(null)}>
+              <div
+                key={item.name}
+                className='relative'
+                onMouseEnter={() => setActiveMenu(item.name)}
+                onMouseLeave={() => setActiveMenu(null)}
+              >
                 <button className='text-gray-700 hover:text-pink-600 transition font-medium flex items-center gap-1 text-sm'>
-                  {item.name}<ChevronDown size={14} />
+                  {item.name}
+                  <ChevronDown size={14} />
                 </button>
                 {activeMenu === item.name && (
                   <div className='absolute top-full left-0 mt-2 bg-white shadow-xl rounded-xl py-2 min-w-48 border border-pink-100 z-50'>
                     {item.submenu.map((sub) => (
-                      <a key={sub} href='#' className='block px-4 py-2 text-sm text-gray-700 hover:bg-pink-50 hover:text-pink-600 transition'>{sub}</a>
+                      <a
+                        key={sub}
+                        href='#'
+                        className='block px-4 py-2 text-sm text-gray-700 hover:bg-pink-50 hover:text-pink-600 transition'
+                      >
+                        {sub}
+                      </a>
                     ))}
                   </div>
                 )}
               </div>
             ))}
-            <a href='#' className='text-pink-600 hover:text-pink-700 transition font-bold text-sm'>Sale</a>
+            <a
+              href='#'
+              className='text-pink-600 hover:text-pink-700 transition font-bold text-sm'
+            >
+              Sale
+            </a>
           </div>
           <div className='flex items-center space-x-4'>
-            <button className='text-gray-700 hover:text-pink-600 transition'><Search size={20} /></button>
-            <button className='text-gray-700 hover:text-pink-600 transition'><Heart size={20} /></button>
-            <button className='text-gray-700 hover:text-pink-600 transition'><User size={20} /></button>
+            <button className='text-gray-700 hover:text-pink-600 transition'>
+              <Search size={20} />
+            </button>
+            <button className='text-gray-700 hover:text-pink-600 transition'>
+              <Heart size={20} />
+            </button>
+            <button className='text-gray-700 hover:text-pink-600 transition'>
+              <User size={20} />
+            </button>
             <button className='relative text-gray-700 hover:text-pink-600 transition'>
               <ShoppingBag size={20} />
               {cartCount > 0 && (
-                <span className='absolute -top-2 -right-2 bg-pink-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center'>{cartCount}</span>
+                <span className='absolute -top-2 -right-2 bg-pink-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center'>
+                  {cartCount}
+                </span>
               )}
             </button>
           </div>
@@ -79,10 +151,20 @@ const Navbar = ({ cartCount = 0 }) => {
           <div className='px-4 pt-2 pb-3 space-y-1 bg-pink-50/50'>
             {menuItems.map((item) => (
               <div key={item.name}>
-                <a href='#' className='block px-3 py-2 text-gray-700 hover:bg-pink-100 rounded font-medium text-sm'>{item.name}</a>
+                <a
+                  href='#'
+                  className='block px-3 py-2 text-gray-700 hover:bg-pink-100 rounded font-medium text-sm'
+                >
+                  {item.name}
+                </a>
               </div>
             ))}
-            <a href='#' className='block px-3 py-2 text-pink-600 hover:bg-pink-100 rounded font-bold text-sm'>Sale</a>
+            <a
+              href='#'
+              className='block px-3 py-2 text-pink-600 hover:bg-pink-100 rounded font-bold text-sm'
+            >
+              Sale
+            </a>
           </div>
         </div>
       )}
@@ -94,82 +176,82 @@ const Navbar = ({ cartCount = 0 }) => {
 // This is the raw JSON that would come from the product API endpoint.
 const MOCK_PRODUCT_API_RESPONSE = {
   id: 3,
-  title: "Kurta Set Classic",
+  title: 'Kurta Set Classic',
   brand: {
-    name: "Sangria",
-    catalogue_id: "BRAND-SANGRIA-1"
+    name: 'Sangria',
+    catalogue_id: 'BRAND-SANGRIA-1',
   },
   category: {
     category_id: 2,
-    category_name: "Kurtas"
+    category_name: 'Kurtas',
   },
   description: {
-    Material: "Viscose Rayon",
-    "Sleeve Length": "Three-Quarter Sleeves",
-    Neck: "V-Neck",
-    "Design Styling": "Straight",
+    Material: 'Viscose Rayon',
+    'Sleeve Length': 'Three-Quarter Sleeves',
+    Neck: 'V-Neck',
+    'Design Styling': 'Straight',
     // ADDED NEW: missing fields needed for product details table
-    Occasion: "Ethnic, Casual",
-    "Fabric Care": "Gentle Machine Wash / Hand Wash",
-    Pattern: "Embroidered",
-    "Length Type": "Regular",
-    "Fit Type": "Straight",
-    Color: "Navy Blue",
-    "Country of Origin": "India",
+    Occasion: 'Ethnic, Casual',
+    'Fabric Care': 'Gentle Machine Wash / Hand Wash',
+    Pattern: 'Embroidered',
+    'Length Type': 'Regular',
+    'Fit Type': 'Straight',
+    Color: 'Navy Blue',
+    'Country of Origin': 'India',
     // ADDED NEW: short product blurb shown above the details table
-    product_blurb: "Crafted from premium viscose rayon, this Sangria kurta features intricate ethnic motif embroidery with detailed thread work at the yoke and hem.",
+    product_blurb:
+      'Crafted from premium viscose rayon, this Sangria kurta features intricate ethnic motif embroidery with detailed thread work at the yoke and hem.',
     // ADDED NEW: bullet highlights shown in the description accordion
     highlights: [
-      "Premium Viscose Rayon fabric",
-      "Intricate ethnic motif embroidery",
-      "Thread work detailing at yoke & hem",
-      "Straight fit silhouette",
-      "Three-quarter sleeves",
-      "V-neck with button detail"
-    ]
+      'Premium Viscose Rayon fabric',
+      'Intricate ethnic motif embroidery',
+      'Thread work detailing at yoke & hem',
+      'Straight fit silhouette',
+      'Three-quarter sleeves',
+      'V-neck with button detail',
+    ],
   },
   pricing: {
     mrp: 2999.0,
     sale_price: 1199.0,
     buy_price: 800.0,
-    gst: 5.0
+    gst: 5.0,
   },
   inventory: {
     variants: [
       {
-        color: "Navy Blue",
+        color: 'Navy Blue',
         // ADDED NEW: hex code for the colour swatch
-        color_hex: "#1a237e",
+        color_hex: '#1a237e',
         sizes: [
-          { size: "XS", quantity: 0 },  // quantity 0 => unavailable
-          { size: "S",  quantity: 10 },
-          { size: "M",  quantity: 8 },
-          { size: "L",  quantity: 6 },
-          { size: "XL", quantity: 4 },
-          { size: "XXL", quantity: 0 }  // ADDED NEW: XXL added as out-of-stock
+          { size: 'XS', quantity: 0 }, // quantity 0 => unavailable
+          { size: 'S', quantity: 10 },
+          { size: 'M', quantity: 8 },
+          { size: 'L', quantity: 6 },
+          { size: 'XL', quantity: 4 },
+          { size: 'XXL', quantity: 0 }, // ADDED NEW: XXL added as out-of-stock
         ],
-        main_image: "https://cdn.aarria.com/app/images/IMG-20220416-WA0000.jpg",
+        main_image: 'https://cdn.aarria.com/app/images/IMG-20220416-WA0000.jpg',
         other_images: [
-          "https://cdn.aarria.com/app/images/IMG-20220416-WA0001.jpg",
-          "https://cdn.aarria.com/app/images/IMG-20220416-WA0002.jpg",
-          "https://cdn.aarria.com/app/images/IMG-20220416-WA0005.jpg",
-          "https://cdn.aarria.com/app/images/IMG-20220416-WA0006.jpg"
-        ]
-      }
-    ]
+          'https://cdn.aarria.com/app/images/IMG-20220416-WA0001.jpg',
+          'https://cdn.aarria.com/app/images/IMG-20220416-WA0002.jpg',
+          'https://cdn.aarria.com/app/images/IMG-20220416-WA0005.jpg',
+          'https://cdn.aarria.com/app/images/IMG-20220416-WA0006.jpg',
+        ],
+      },
+    ],
   },
   // ADDED NEW: style code for product details table
-  style_code: "SNG-KRT-24386",
+  style_code: 'SNG-KRT-24386',
   // ADDED NEW: delivery info block
   delivery: {
-    days: "2-3 Business Days",
-    cod: true
+    days: '2-3 Business Days',
+    cod: true,
   },
   ratings: {
     average_rating: 4.3,
     review_count: 312,
-    
-  }
+  },
 }
 
 // ─── Mock Ratings API Response ────────────────────────────────────────────────
@@ -182,41 +264,41 @@ const MOCK_RATINGS_API_RESPONSE = {
   review_count: 312,
   // Breakdown percentages per star level
   breakdown: [
-    { label: "5 ★", pct: 55 },
-    { label: "4 ★", pct: 22 },
-    { label: "3 ★", pct: 12 },
-    { label: "2 ★", pct: 6 },
-    { label: "1 ★", pct: 5 }
+    { label: '5 ★', pct: 55 },
+    { label: '4 ★', pct: 22 },
+    { label: '3 ★', pct: 12 },
+    { label: '2 ★', pct: 6 },
+    { label: '1 ★', pct: 5 },
   ],
   reviews: [
     {
       id: 1,
-      user: "Priya M.",
+      user: 'Priya M.',
       rating: 5,
-      date: "Nov 2024",
-      title: "Absolutely stunning!",
-      body: "The embroidery work is exquisite and the fabric is super soft. Fits perfectly as a straight kurta. Highly recommend!",
-      helpful: 42
+      date: 'Nov 2024',
+      title: 'Absolutely stunning!',
+      body: 'The embroidery work is exquisite and the fabric is super soft. Fits perfectly as a straight kurta. Highly recommend!',
+      helpful: 42,
     },
     {
       id: 2,
-      user: "Ananya S.",
+      user: 'Ananya S.',
       rating: 4,
-      date: "Oct 2024",
-      title: "Good quality, great colour",
-      body: "The navy blue is rich and deep, exactly as shown. Stitching quality is excellent. Slightly long but wearable.",
-      helpful: 28
+      date: 'Oct 2024',
+      title: 'Good quality, great colour',
+      body: 'The navy blue is rich and deep, exactly as shown. Stitching quality is excellent. Slightly long but wearable.',
+      helpful: 28,
     },
     {
       id: 3,
-      user: "Deepa R.",
+      user: 'Deepa R.',
       rating: 5,
-      date: "Oct 2024",
-      title: "Worth every rupee!",
+      date: 'Oct 2024',
+      title: 'Worth every rupee!',
       body: "Got compliments from everyone at the function. The thread work looks premium and doesn't feel cheap at all.",
-      helpful: 19
-    }
-  ]
+      helpful: 19,
+    },
+  ],
 }
 
 // ─── API Functions ────────────────────────────────────────────────────────────
@@ -228,7 +310,7 @@ const MOCK_RATINGS_API_RESPONSE = {
  */
 async function fetchProduct(productId) {
   const res = await fetch(
-    `https://products-api.chatoyantvortex.workers.dev/product?id=${productId}`
+    `https://products-api.chatoyantvortex.workers.dev/product?id=${productId}`,
   )
   const raw = await res.json()
 
@@ -237,7 +319,7 @@ async function fetchProduct(productId) {
   // Images are just filenames — build full CDN URLs
   const allImages = [variant.main_image, ...variant.other_images]
   const images = allImages.map(
-    (img) => `https://cdn.aarria.com/app/images/${img}`
+    (img) => `https://cdn.aarria.com/app/images/${img}`,
   )
 
   const sizes = variant.sizes.map((s) => s.size)
@@ -254,7 +336,7 @@ async function fetchProduct(productId) {
   }
 
   const discount = Math.round(
-    ((raw.pricing.mrp - raw.pricing.sale_price) / raw.pricing.mrp) * 100
+    ((raw.pricing.mrp - raw.pricing.sale_price) / raw.pricing.mrp) * 100,
   )
 
   return {
@@ -265,7 +347,8 @@ async function fetchProduct(productId) {
 
     images,
     placeholderImages: images.map(
-      (_, i) => `https://placehold.co/1080x1440/ec4899/ffffff?text=Image+${i + 1}`
+      (_, i) =>
+        `https://placehold.co/1080x1440/ec4899/ffffff?text=Image+${i + 1}`,
     ),
 
     price: raw.pricing.sale_price,
@@ -287,16 +370,30 @@ async function fetchProduct(productId) {
 
     // Real API has no blurb/highlights — fallback gracefully
     description: raw.description?.product_blurb ?? raw.title,
-    highlights: raw.description?.highlights ?? Object.entries(desc).map(([k, v]) => `${k}: ${v}`),
+    highlights:
+      raw.description?.highlights ??
+      Object.entries(desc).map(([k, v]) => `${k}: ${v}`),
     details,
 
     // Real API has no delivery block — fallback
     deliveryInfo: raw.delivery ?? { days: '3-5 Business Days', cod: true },
 
     offers: [
-      { icon: '💳', title: 'Bank Offer', desc: '10% off on HDFC Bank Credit Cards' },
-      { icon: '🎁', title: 'Special Price', desc: 'Get extra 5% off (price inclusive of discount)' },
-      { icon: '🔄', title: 'Easy Returns', desc: '30-day return policy. No questions asked.' },
+      {
+        icon: '💳',
+        title: 'Bank Offer',
+        desc: '10% off on HDFC Bank Credit Cards',
+      },
+      {
+        icon: '🎁',
+        title: 'Special Price',
+        desc: 'Get extra 5% off (price inclusive of discount)',
+      },
+      {
+        icon: '🔄',
+        title: 'Easy Returns',
+        desc: '7-day return policy. No questions asked.',
+      },
     ],
   }
 }
@@ -318,8 +415,14 @@ function ImageSlider({ images, placeholderImages, initialIndex, onClose }) {
   const [current, setCurrent] = useState(initialIndex)
   const [imgErrors, setImgErrors] = useState({})
 
-  const prev = useCallback(() => setCurrent((c) => (c - 1 + images.length) % images.length), [images.length])
-  const next = useCallback(() => setCurrent((c) => (c + 1) % images.length), [images.length])
+  const prev = useCallback(
+    () => setCurrent((c) => (c - 1 + images.length) % images.length),
+    [images.length],
+  )
+  const next = useCallback(
+    () => setCurrent((c) => (c + 1) % images.length),
+    [images.length],
+  )
 
   useEffect(() => {
     const handleKey = (e) => {
@@ -333,34 +436,172 @@ function ImageSlider({ images, placeholderImages, initialIndex, onClose }) {
 
   const getImg = (i) =>
     imgErrors[i]
-      ? placeholderImages[i] || `https://placehold.co/1080x1440/ec4899/ffffff?text=Image+${i + 1}`
+      ? placeholderImages[i] ||
+        `https://placehold.co/1080x1440/ec4899/ffffff?text=Image+${i + 1}`
       : images[i]
 
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex', flexDirection: 'column', background: 'rgba(0,0,0,0.97)' }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 20px', flexShrink: 0 }}>
-        <span style={{ color: '#aaa', fontSize: 13 }}>{current + 1} / {images.length}</span>
-        <button onClick={onClose} style={{ width: 38, height: 38, borderRadius: '50%', background: 'rgba(255,255,255,0.1)', border: 'none', color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+    <div
+      style={{
+        position: 'fixed',
+        inset: 0,
+        zIndex: 50,
+        display: 'flex',
+        flexDirection: 'column',
+        background: 'rgba(0,0,0,0.97)',
+      }}
+    >
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: '12px 20px',
+          flexShrink: 0,
+        }}
+      >
+        <span style={{ color: '#aaa', fontSize: 13 }}>
+          {current + 1} / {images.length}
+        </span>
+        <button
+          onClick={onClose}
+          style={{
+            width: 38,
+            height: 38,
+            borderRadius: '50%',
+            background: 'rgba(255,255,255,0.1)',
+            border: 'none',
+            color: '#fff',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
           <X size={20} />
         </button>
       </div>
-      <div style={{ flex: 1, display: 'flex', overflow: 'hidden', minHeight: 0 }}>
-        <div style={{ width: 88, flexShrink: 0, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 6, padding: '0 12px 12px', scrollbarWidth: 'none' }}>
+      <div
+        style={{ flex: 1, display: 'flex', overflow: 'hidden', minHeight: 0 }}
+      >
+        <div
+          style={{
+            width: 88,
+            flexShrink: 0,
+            overflowY: 'auto',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 6,
+            padding: '0 12px 12px',
+            scrollbarWidth: 'none',
+          }}
+        >
           {images.map((_, i) => {
             const src = imgErrors[i]
-              ? placeholderImages[i] || `https://placehold.co/100x140/ec4899/ffffff?text=${i + 1}`
+              ? placeholderImages[i] ||
+                `https://placehold.co/100x140/ec4899/ffffff?text=${i + 1}`
               : images[i]
             return (
-              <button key={i} onClick={() => setCurrent(i)} style={{ width: 64, height: 86, flexShrink: 0, border: i === current ? '2px solid #ec4899' : '2px solid rgba(255,255,255,0.15)', borderRadius: 4, overflow: 'hidden', cursor: 'pointer', background: 'none', padding: 0, opacity: i === current ? 1 : 0.5, transition: 'all 0.15s' }}>
-                <img src={src} alt='' onError={() => setImgErrors((e) => ({ ...e, [i]: true }))} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+              <button
+                key={i}
+                onClick={() => setCurrent(i)}
+                style={{
+                  width: 64,
+                  height: 86,
+                  flexShrink: 0,
+                  border:
+                    i === current
+                      ? '2px solid #ec4899'
+                      : '2px solid rgba(255,255,255,0.15)',
+                  borderRadius: 4,
+                  overflow: 'hidden',
+                  cursor: 'pointer',
+                  background: 'none',
+                  padding: 0,
+                  opacity: i === current ? 1 : 0.5,
+                  transition: 'all 0.15s',
+                }}
+              >
+                <img
+                  src={src}
+                  alt=''
+                  onError={() => setImgErrors((e) => ({ ...e, [i]: true }))}
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'cover',
+                    display: 'block',
+                  }}
+                />
               </button>
             )
           })}
         </div>
-        <div style={{ flex: 1, position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: 0 }}>
-          <button onClick={prev} style={{ position: 'absolute', left: 12, zIndex: 10, width: 44, height: 44, borderRadius: '50%', background: 'rgba(255,255,255,0.15)', border: 'none', color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(4px)' }}><ChevronLeft size={22} /></button>
-          <img key={current} src={getImg(current)} alt={`view ${current + 1}`} onError={() => setImgErrors((e) => ({ ...e, [current]: true }))} style={{ maxHeight: '100%', maxWidth: '100%', objectFit: 'contain', display: 'block', animation: 'sliderFadeIn 0.2s ease' }} />
-          <button onClick={next} style={{ position: 'absolute', right: 12, zIndex: 10, width: 44, height: 44, borderRadius: '50%', background: 'rgba(255,255,255,0.15)', border: 'none', color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(4px)' }}><ChevronRight size={22} /></button>
+        <div
+          style={{
+            flex: 1,
+            position: 'relative',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            minWidth: 0,
+          }}
+        >
+          <button
+            onClick={prev}
+            style={{
+              position: 'absolute',
+              left: 12,
+              zIndex: 10,
+              width: 44,
+              height: 44,
+              borderRadius: '50%',
+              background: 'rgba(255,255,255,0.15)',
+              border: 'none',
+              color: '#fff',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              backdropFilter: 'blur(4px)',
+            }}
+          >
+            <ChevronLeft size={22} />
+          </button>
+          <img
+            key={current}
+            src={getImg(current)}
+            alt={`view ${current + 1}`}
+            onError={() => setImgErrors((e) => ({ ...e, [current]: true }))}
+            style={{
+              maxHeight: '100%',
+              maxWidth: '100%',
+              objectFit: 'contain',
+              display: 'block',
+              animation: 'sliderFadeIn 0.2s ease',
+            }}
+          />
+          <button
+            onClick={next}
+            style={{
+              position: 'absolute',
+              right: 12,
+              zIndex: 10,
+              width: 44,
+              height: 44,
+              borderRadius: '50%',
+              background: 'rgba(255,255,255,0.15)',
+              border: 'none',
+              color: '#fff',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              backdropFilter: 'blur(4px)',
+            }}
+          >
+            <ChevronRight size={22} />
+          </button>
         </div>
       </div>
       <style>{`@keyframes sliderFadeIn { from { opacity:0; transform:scale(0.98); } to { opacity:1; transform:scale(1); } }::-webkit-scrollbar { display: none; }`}</style>
@@ -373,10 +614,29 @@ function RatingBar({ label, pct }) {
   return (
     <div className='flex items-center gap-3 mb-1.5'>
       <span style={{ minWidth: 32, fontSize: 12, color: '#888' }}>{label}</span>
-      <div className='flex-1 rounded-full overflow-hidden' style={{ height: 5, background: '#f0f0f0' }}>
-        <div className='h-full rounded-full' style={{ width: `${pct}%`, background: pct > 50 ? '#10b981' : pct > 25 ? '#f59e0b' : '#f43f5e', transition: 'width 0.6s ease' }} />
+      <div
+        className='flex-1 rounded-full overflow-hidden'
+        style={{ height: 5, background: '#f0f0f0' }}
+      >
+        <div
+          className='h-full rounded-full'
+          style={{
+            width: `${pct}%`,
+            background: pct > 50 ? '#10b981' : pct > 25 ? '#f59e0b' : '#f43f5e',
+            transition: 'width 0.6s ease',
+          }}
+        />
       </div>
-      <span style={{ minWidth: 30, fontSize: 12, color: '#888', textAlign: 'right' }}>{pct}%</span>
+      <span
+        style={{
+          minWidth: 30,
+          fontSize: 12,
+          color: '#888',
+          textAlign: 'right',
+        }}
+      >
+        {pct}%
+      </span>
     </div>
   )
 }
@@ -408,90 +668,158 @@ function SkeletonLoader() {
         .pdp-accordion-item { border-top: 1px solid #f3f4f6; }
         .pdp-accordion-trigger { display: flex; justify-content: space-between; align-items: center; padding: 16px 0; cursor: pointer; user-select: none; background: none; border: none; width: 100%; font-family: 'DM Sans', sans-serif; text-align: left; }
       `}</style>
-      <div className="pdp-page">
+      <div className='pdp-page'>
         <Navbar />
-        <div className="pdp-breadcrumb">
+        <div className='pdp-breadcrumb'>
           {[40, 50, 70, 45, 60].map((w, i) => (
-            <span key={i} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              <div className="skeleton" style={{ width: w, height: 12 }} />
+            <span
+              key={i}
+              style={{ display: 'flex', alignItems: 'center', gap: 6 }}
+            >
+              <div className='skeleton' style={{ width: w, height: 12 }} />
               {i < 4 && <span style={{ color: '#d1d5db' }}>›</span>}
             </span>
           ))}
         </div>
-        <div className="pdp-outer">
-          <div className="pdp-images-col">
+        <div className='pdp-outer'>
+          <div className='pdp-images-col'>
             {[...Array(5)].map((_, i) => (
-              <div key={i} className="pdp-img-item">
-                <div className="skeleton" style={{ width: '100%', height: '100%' }} />
+              <div key={i} className='pdp-img-item'>
+                <div
+                  className='skeleton'
+                  style={{ width: '100%', height: '100%' }}
+                />
               </div>
             ))}
           </div>
-          <div className="pdp-info-col">
+          <div className='pdp-info-col'>
             <div style={{ marginBottom: 10 }}>
-              <div className="skeleton" style={{ width: 160, height: 26, marginBottom: 6 }} />
-              <div className="skeleton" style={{ width: '85%', height: 16, marginBottom: 4 }} />
-              <div className="skeleton" style={{ width: '60%', height: 16 }} />
+              <div
+                className='skeleton'
+                style={{ width: 160, height: 26, marginBottom: 6 }}
+              />
+              <div
+                className='skeleton'
+                style={{ width: '85%', height: 16, marginBottom: 4 }}
+              />
+              <div className='skeleton' style={{ width: '60%', height: 16 }} />
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 12 }}>
-              <div className="skeleton" style={{ width: 42, height: 20, borderRadius: 4 }} />
-              <div className="skeleton" style={{ width: 90, height: 14 }} />
-              <div className="skeleton" style={{ width: 70, height: 14 }} />
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 10,
+                marginTop: 12,
+              }}
+            >
+              <div
+                className='skeleton'
+                style={{ width: 42, height: 20, borderRadius: 4 }}
+              />
+              <div className='skeleton' style={{ width: 90, height: 14 }} />
+              <div className='skeleton' style={{ width: 70, height: 14 }} />
             </div>
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: 14, marginTop: 18 }}>
-              <div className="skeleton" style={{ width: 100, height: 30 }} />
-              <div className="skeleton" style={{ width: 60, height: 16 }} />
-              <div className="skeleton" style={{ width: 70, height: 16 }} />
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'baseline',
+                gap: 14,
+                marginTop: 18,
+              }}
+            >
+              <div className='skeleton' style={{ width: 100, height: 30 }} />
+              <div className='skeleton' style={{ width: 60, height: 16 }} />
+              <div className='skeleton' style={{ width: 70, height: 16 }} />
             </div>
-            <div className="skeleton" style={{ width: 140, height: 11, marginTop: 4 }} />
-            <div className="pdp-hr" />
-            <div className="skeleton" style={{ width: 120, height: 14, marginBottom: 10 }} />
+            <div
+              className='skeleton'
+              style={{ width: 140, height: 11, marginTop: 4 }}
+            />
+            <div className='pdp-hr' />
+            <div
+              className='skeleton'
+              style={{ width: 120, height: 14, marginBottom: 10 }}
+            />
             {[...Array(3)].map((_, i) => (
-              <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: 8, borderRadius: 8, background: '#fffbf5', border: '1px solid #fef3c7', marginBottom: 7 }}>
-                <div className="skeleton" style={{ width: 18, height: 18, borderRadius: 4 }} />
+              <div
+                key={i}
+                style={{
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  gap: 10,
+                  padding: 8,
+                  borderRadius: 8,
+                  background: '#fffbf5',
+                  border: '1px solid #fef3c7',
+                  marginBottom: 7,
+                }}
+              >
+                <div
+                  className='skeleton'
+                  style={{ width: 18, height: 18, borderRadius: 4 }}
+                />
                 <div style={{ flex: 1 }}>
-                  <div className="skeleton" style={{ width: 110, height: 13, marginBottom: 4 }} />
-                  <div className="skeleton" style={{ width: '75%', height: 12 }} />
+                  <div
+                    className='skeleton'
+                    style={{ width: 110, height: 13, marginBottom: 4 }}
+                  />
+                  <div
+                    className='skeleton'
+                    style={{ width: '75%', height: 12 }}
+                  />
                 </div>
               </div>
             ))}
-            <div className="pdp-hr" />
-            <div className="pdp-size-header">
-              <div className="skeleton" style={{ width: 90, height: 14 }} />
-              <div className="skeleton" style={{ width: 70, height: 14 }} />
+            <div className='pdp-hr' />
+            <div className='pdp-size-header'>
+              <div className='skeleton' style={{ width: 90, height: 14 }} />
+              <div className='skeleton' style={{ width: 70, height: 14 }} />
             </div>
-            <div className="pdp-sizes">
+            <div className='pdp-sizes'>
               {[...Array(6)].map((_, i) => (
-                <div key={i} className="pdp-size-btn">
-                  <div className="skeleton" style={{ width: 20, height: 12 }} />
+                <div key={i} className='pdp-size-btn'>
+                  <div className='skeleton' style={{ width: 20, height: 12 }} />
                 </div>
               ))}
             </div>
-            <div className="pdp-cta">
-              <div className="skeleton" style={{ flex: 1, height: 54 }} />
-              <div className="skeleton" style={{ width: 54, height: 54 }} />
+            <div className='pdp-cta'>
+              <div className='skeleton' style={{ flex: 1, height: 54 }} />
+              <div className='skeleton' style={{ width: 54, height: 54 }} />
             </div>
-            <div className="pdp-trust">
+            <div className='pdp-trust'>
               {[...Array(3)].map((_, i) => (
-                <div key={i} className="pdp-trust-item">
-                  <div className="skeleton" style={{ width: 24, height: 24 }} />
-                  <div className="skeleton" style={{ width: 70, height: 10 }} />
+                <div key={i} className='pdp-trust-item'>
+                  <div className='skeleton' style={{ width: 24, height: 24 }} />
+                  <div className='skeleton' style={{ width: 70, height: 10 }} />
                 </div>
               ))}
             </div>
-            <div className="pdp-delivery">
-              <div className="skeleton" style={{ width: 140, height: 14, marginBottom: 10 }} />
-              <div className="pdp-pincode-row">
-                <div className="skeleton" style={{ flex: 1, height: 36 }} />
-                <div className="skeleton" style={{ width: 60, height: 36 }} />
+            <div className='pdp-delivery'>
+              <div
+                className='skeleton'
+                style={{ width: 140, height: 14, marginBottom: 10 }}
+              />
+              <div className='pdp-pincode-row'>
+                <div className='skeleton' style={{ flex: 1, height: 36 }} />
+                <div className='skeleton' style={{ width: 60, height: 36 }} />
               </div>
-              <div className="skeleton" style={{ width: 220, height: 12, marginTop: 10 }} />
+              <div
+                className='skeleton'
+                style={{ width: 220, height: 12, marginTop: 10 }}
+              />
             </div>
-            <div className="pdp-accordion">
+            <div className='pdp-accordion'>
               {[...Array(3)].map((_, i) => (
-                <div key={i} className="pdp-accordion-item">
-                  <div className="pdp-accordion-trigger">
-                    <div className="skeleton" style={{ width: 160, height: 14 }} />
-                    <div className="skeleton" style={{ width: 16, height: 16 }} />
+                <div key={i} className='pdp-accordion-item'>
+                  <div className='pdp-accordion-trigger'>
+                    <div
+                      className='skeleton'
+                      style={{ width: 160, height: 14 }}
+                    />
+                    <div
+                      className='skeleton'
+                      style={{ width: 16, height: 16 }}
+                    />
                   </div>
                 </div>
               ))}
@@ -505,33 +833,44 @@ function SkeletonLoader() {
 
 // ─── Main Product Detail Page ─────────────────────────────────────────────────
 export default function ProductDetail() {
-  const { id:productId } = useParams()
-  const [product, setProduct]             = useState(null)
-  const [ratingsData, setRatingsData]     = useState(null)
-  const [loading, setLoading]             = useState(true)
-  const [sliderOpen, setSliderOpen]       = useState(false)
-  const [sliderIndex, setSliderIndex]     = useState(0)
-  const [selectedSize, setSelectedSize]   = useState(null)
-  const [wishlist, setWishlist]           = useState(false)
+  const { id: productId } = useParams()
+  const [product, setProduct] = useState(null)
+  const [ratingsData, setRatingsData] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [sliderOpen, setSliderOpen] = useState(false)
+  const [sliderIndex, setSliderIndex] = useState(0)
+  const [selectedSize, setSelectedSize] = useState(null)
+  const [wishlist, setWishlist] = useState(false)
   const [expandedSection, setExpandedSection] = useState('description')
-  const [pincode, setPincode]             = useState('560001')
-  const [imgErrors, setImgErrors]         = useState({})
-  const [addedToBag, setAddedToBag]       = useState(false)
+  const [pincode, setPincode] = useState('560001')
+  const [imgErrors, setImgErrors] = useState({})
+  const [addedToBag, setAddedToBag] = useState(false)
+  const [sizeError, setSizeError] = useState(false)
 
   useEffect(() => {
     setLoading(true)
     // Fire both API calls in parallel
-    Promise.all([fetchProduct(productId), fetchRatings(productId)]).then(([prod, ratings]) => {
-      setProduct(prod)
-      setRatingsData(ratings)
-      setLoading(false)
-    })
+    Promise.all([fetchProduct(productId), fetchRatings(productId)]).then(
+      ([prod, ratings]) => {
+        setProduct(prod)
+        setRatingsData(ratings)
+        setLoading(false)
+      },
+    )
   }, [productId])
 
-  const openSlider = (index) => { setSliderIndex(index); setSliderOpen(true) }
+  const openSlider = (index) => {
+    setSliderIndex(index)
+    setSliderOpen(true)
+  }
 
   const handleAddToBag = () => {
-    if (!selectedSize) return
+    if (!selectedSize) {
+      setSizeError(true)
+      return
+    }
+
+    setSizeError(false)
     setAddedToBag(true)
     setTimeout(() => setAddedToBag(false), 2000)
   }
@@ -539,7 +878,8 @@ export default function ProductDetail() {
   const getImg = (index) => {
     if (!product) return ''
     return imgErrors[index]
-      ? product.placeholderImages[index] || `https://placehold.co/1080x1440/ec4899/ffffff?text=Image+${index + 1}`
+      ? product.placeholderImages[index] ||
+          `https://placehold.co/1080x1440/ec4899/ffffff?text=Image+${index + 1}`
       : product.images[index]
   }
 
@@ -555,15 +895,41 @@ export default function ProductDetail() {
       label: 'Product Description',
       content: (
         <>
-          <p style={{ fontSize: 13.5, color: '#555', lineHeight: 1.75, marginBottom: 14 }}>
+          <p
+            style={{
+              fontSize: 13.5,
+              color: '#555',
+              lineHeight: 1.75,
+              marginBottom: 14,
+            }}
+          >
             {product.description}
           </p>
-          <p style={{ fontSize: 12, fontWeight: 700, color: '#374151', textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: 8 }}>
+          <p
+            style={{
+              fontSize: 12,
+              fontWeight: 700,
+              color: '#374151',
+              textTransform: 'uppercase',
+              letterSpacing: '0.6px',
+              marginBottom: 8,
+            }}
+          >
             Product Highlights
           </p>
           <ul style={{ paddingLeft: 18, margin: 0 }}>
             {product.highlights.map((h, i) => (
-              <li key={i} style={{ fontSize: 13.5, color: '#555', marginBottom: 5, lineHeight: 1.65 }}>{h}</li>
+              <li
+                key={i}
+                style={{
+                  fontSize: 13.5,
+                  color: '#555',
+                  marginBottom: 5,
+                  lineHeight: 1.65,
+                }}
+              >
+                {h}
+              </li>
             ))}
           </ul>
         </>
@@ -577,8 +943,27 @@ export default function ProductDetail() {
           <tbody>
             {Object.entries(product.details).map(([k, v]) => (
               <tr key={k} style={{ borderBottom: '1px solid #fdf2f8' }}>
-                <td style={{ padding: '7px 0', fontSize: 13, color: '#9ca3af', width: '42%', verticalAlign: 'top' }}>{k}</td>
-                <td style={{ padding: '7px 0', fontSize: 13, color: '#374151', fontWeight: 500 }}>{v}</td>
+                <td
+                  style={{
+                    padding: '7px 0',
+                    fontSize: 13,
+                    color: '#9ca3af',
+                    width: '42%',
+                    verticalAlign: 'top',
+                  }}
+                >
+                  {k}
+                </td>
+                <td
+                  style={{
+                    padding: '7px 0',
+                    fontSize: 13,
+                    color: '#374151',
+                    fontWeight: 500,
+                  }}
+                >
+                  {v}
+                </td>
               </tr>
             ))}
           </tbody>
@@ -591,15 +976,49 @@ export default function ProductDetail() {
       label: `Ratings & Reviews (${ratingsData ? ratingsData.rating_count.toLocaleString() : '—'})`,
       content: ratingsData ? (
         <>
-          <div style={{ display: 'flex', gap: 32, alignItems: 'center', marginBottom: 20, paddingBottom: 20, borderBottom: '1px solid #fdf2f8' }}>
+          <div
+            style={{
+              display: 'flex',
+              gap: 32,
+              alignItems: 'center',
+              marginBottom: 20,
+              paddingBottom: 20,
+              borderBottom: '1px solid #fdf2f8',
+            }}
+          >
             <div style={{ textAlign: 'center', minWidth: 80 }}>
-              <div style={{ fontSize: 48, fontWeight: 800, color: '#1f2937', lineHeight: 1 }}>{ratingsData.overall}</div>
-              <div style={{ display: 'flex', justifyContent: 'center', gap: 2, marginTop: 6 }}>
+              <div
+                style={{
+                  fontSize: 48,
+                  fontWeight: 800,
+                  color: '#1f2937',
+                  lineHeight: 1,
+                }}
+              >
+                {ratingsData.overall}
+              </div>
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'center',
+                  gap: 2,
+                  marginTop: 6,
+                }}
+              >
                 {[1, 2, 3, 4, 5].map((s) => (
-                  <Star key={s} size={13} fill={s <= Math.round(ratingsData.overall) ? '#fbbf24' : 'none'} color='#fbbf24' />
+                  <Star
+                    key={s}
+                    size={13}
+                    fill={
+                      s <= Math.round(ratingsData.overall) ? '#fbbf24' : 'none'
+                    }
+                    color='#fbbf24'
+                  />
                 ))}
               </div>
-              <div style={{ fontSize: 11, color: '#9ca3af', marginTop: 4 }}>{ratingsData.rating_count.toLocaleString()} ratings</div>
+              <div style={{ fontSize: 11, color: '#9ca3af', marginTop: 4 }}>
+                {ratingsData.rating_count.toLocaleString()} ratings
+              </div>
             </div>
             <div style={{ flex: 1 }}>
               {ratingsData.breakdown.map((b) => (
@@ -608,16 +1027,56 @@ export default function ProductDetail() {
             </div>
           </div>
           {ratingsData.reviews.map((r) => (
-            <div key={r.id} style={{ paddingBottom: 16, marginBottom: 16, borderBottom: '1px solid #fdf2f8' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
-                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, background: 'linear-gradient(135deg,#10b981,#059669)', color: '#fff', borderRadius: 10, padding: '2px 9px', fontSize: 12, fontWeight: 600 }}>
+            <div
+              key={r.id}
+              style={{
+                paddingBottom: 16,
+                marginBottom: 16,
+                borderBottom: '1px solid #fdf2f8',
+              }}
+            >
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 10,
+                  marginBottom: 6,
+                }}
+              >
+                <span
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 3,
+                    background: 'linear-gradient(135deg,#10b981,#059669)',
+                    color: '#fff',
+                    borderRadius: 10,
+                    padding: '2px 9px',
+                    fontSize: 12,
+                    fontWeight: 600,
+                  }}
+                >
                   <Star size={10} fill='#fff' strokeWidth={0} /> {r.rating}
                 </span>
-                <span style={{ fontSize: 14, fontWeight: 600, color: '#1f2937' }}>{r.title}</span>
+                <span
+                  style={{ fontSize: 14, fontWeight: 600, color: '#1f2937' }}
+                >
+                  {r.title}
+                </span>
               </div>
-              <p style={{ fontSize: 13.5, color: '#6b7280', lineHeight: 1.65, margin: 0 }}>{r.body}</p>
+              <p
+                style={{
+                  fontSize: 13.5,
+                  color: '#6b7280',
+                  lineHeight: 1.65,
+                  margin: 0,
+                }}
+              >
+                {r.body}
+              </p>
               <p style={{ fontSize: 11, color: '#9ca3af', marginTop: 6 }}>
-                {r.user} · {r.date} &nbsp;|&nbsp; {r.helpful} people found this helpful
+                {r.user} · {r.date} &nbsp;|&nbsp; {r.helpful} people found this
+                helpful
               </p>
             </div>
           ))}
@@ -723,48 +1182,78 @@ export default function ProductDetail() {
         </div>
 
         <div className='pdp-outer'>
-
           {/* ─ LEFT: vertical image stack — images from API variant ─ */}
           <div className='pdp-images-col'>
             {product.images.map((img, i) => (
-              <div key={i} className='pdp-img-item' onClick={() => openSlider(i)}>
+              <div
+                key={i}
+                className='pdp-img-item'
+                onClick={() => openSlider(i)}
+              >
                 <img
                   src={getImg(i)}
                   alt={`${product.name} — view ${i + 1}`}
                   onError={() => setImgErrors((e) => ({ ...e, [i]: true }))}
                 />
-                {i === 0 && <div className='pdp-img-counter'>1 / {product.images.length}</div>}
-                <div className='pdp-img-zoom-badge'><ZoomIn size={16} color='#ec4899' /></div>
+                {i === 0 && (
+                  <div className='pdp-img-counter'>
+                    1 / {product.images.length}
+                  </div>
+                )}
+                <div className='pdp-img-zoom-badge'>
+                  <ZoomIn size={16} color='#ec4899' />
+                </div>
               </div>
             ))}
           </div>
 
           {/* ─ RIGHT: sticky info panel ─ */}
           <div className='pdp-info-col'>
-
             {/* Brand (from API brand.name) + product title */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'flex-start',
+              }}
+            >
               <div style={{ flex: 1, paddingRight: 16 }}>
                 <div className='pdp-brand-name'>{product.brand}</div>
                 <div className='pdp-product-subtitle'>{product.name}</div>
               </div>
-              <button style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px', flexShrink: 0 }}>
+              <button
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  padding: '4px',
+                  flexShrink: 0,
+                }}
+              >
                 <Share2 size={18} color='#9ca3af' />
               </button>
             </div>
 
             {/* Rating — from fetchProduct (which reads ratings from product API) */}
             <div className='pdp-rating-row'>
-              <span className='pdp-rating-pill'><Star size={11} fill='#fff' strokeWidth={0} /> {product.rating}</span>
+              <span className='pdp-rating-pill'>
+                <Star size={11} fill='#fff' strokeWidth={0} /> {product.rating}
+              </span>
               <span className='pdp-rating-sep'>|</span>
-              <span className='pdp-rating-meta'>{product.ratingCount.toLocaleString()} Ratings</span>
+              <span className='pdp-rating-meta'>
+                {product.ratingCount.toLocaleString()} Ratings
+              </span>
               <span className='pdp-rating-sep'>|</span>
-              <span className='pdp-rating-meta'>{product.reviewCount} Reviews</span>
+              <span className='pdp-rating-meta'>
+                {product.reviewCount} Reviews
+              </span>
             </div>
 
             {/* Price — from API pricing block */}
             <div className='pdp-price-row'>
-              <span className='pdp-price'>₹{product.price.toLocaleString()}</span>
+              <span className='pdp-price'>
+                ₹{product.price.toLocaleString()}
+              </span>
               <span className='pdp-mrp'>₹{product.mrp.toLocaleString()}</span>
               <span className='pdp-discount'>({product.discount}% OFF)</span>
             </div>
@@ -806,14 +1295,14 @@ export default function ProductDetail() {
                 )
               })}
             </div>
-            {!selectedSize && <div className='pdp-size-warn'>Please select a size to continue</div>}
+            {sizeError && <div className='pdp-size-warn'>Please select a size to continue</div>}
 
             {/* CTA */}
             <div className='pdp-cta'>
               <button
                 className={`pdp-btn-bag ${addedToBag ? 'added' : ''}`}
                 onClick={handleAddToBag}
-                disabled={!selectedSize}
+                
               >
                 <ShoppingBag size={18} />
                 {addedToBag ? '✓ Added to Bag' : 'Add to Bag'}
@@ -822,25 +1311,43 @@ export default function ProductDetail() {
                 className={`pdp-btn-wishlist ${wishlist ? 'active' : ''}`}
                 onClick={() => setWishlist((w) => !w)}
               >
-                <Heart size={20} color={wishlist ? '#ec4899' : '#6b7280'} fill={wishlist ? '#ec4899' : 'none'} />
+                <Heart
+                  size={20}
+                  color={wishlist ? '#ec4899' : '#6b7280'}
+                  fill={wishlist ? '#ec4899' : 'none'}
+                />
               </button>
             </div>
 
             {/* Trust badges — static */}
             <div className='pdp-trust'>
-              <div className='pdp-trust-item'><Truck size={18} color='#10b981' /><span className='pdp-trust-label'>Free Delivery</span></div>
-              <div className='pdp-trust-item'><RefreshCw size={18} color='#f59e0b' /><span className='pdp-trust-label'>30-Day Returns</span></div>
-              <div className='pdp-trust-item'><Shield size={18} color='#8b5cf6' /><span className='pdp-trust-label'>100% Genuine</span></div>
+              <div className='pdp-trust-item'>
+                <Truck size={18} color='#10b981' />
+                <span className='pdp-trust-label'>Free Delivery</span>
+              </div>
+              <div className='pdp-trust-item'>
+                <RefreshCw size={18} color='#f59e0b' />
+                <span className='pdp-trust-label'>7-Day Returns</span>
+              </div>
+              <div className='pdp-trust-item'>
+                <Shield size={18} color='#8b5cf6' />
+                <span className='pdp-trust-label'>100% Genuine</span>
+              </div>
             </div>
 
             {/* Delivery — days & COD from API delivery block */}
             <div className='pdp-delivery'>
-              <div className='pdp-delivery-title'><Truck size={14} color='#ec4899' />Delivery Options</div>
+              <div className='pdp-delivery-title'>
+                <Truck size={14} color='#ec4899' />
+                Delivery Options
+              </div>
               <div className='pdp-pincode-row'>
                 <input
                   className='pdp-pincode-input'
                   value={pincode}
-                  onChange={(e) => setPincode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                  onChange={(e) =>
+                    setPincode(e.target.value.replace(/\D/g, '').slice(0, 6))
+                  }
                   placeholder='Enter pincode'
                   maxLength={6}
                 />
@@ -858,13 +1365,18 @@ export default function ProductDetail() {
                 <div key={sec.key} className='pdp-accordion-item'>
                   <button
                     className='pdp-accordion-trigger'
-                    onClick={() => setExpandedSection(expandedSection === sec.key ? null : sec.key)}
+                    onClick={() =>
+                      setExpandedSection(
+                        expandedSection === sec.key ? null : sec.key,
+                      )
+                    }
                   >
                     <span className='pdp-accordion-label'>{sec.label}</span>
-                    {expandedSection === sec.key
-                      ? <ChevronUp size={16} color='#ec4899' />
-                      : <ChevronDown size={16} color='#9ca3af' />
-                    }
+                    {expandedSection === sec.key ? (
+                      <ChevronUp size={16} color='#ec4899' />
+                    ) : (
+                      <ChevronDown size={16} color='#9ca3af' />
+                    )}
                   </button>
                   {expandedSection === sec.key && (
                     <div className='pdp-accordion-body'>{sec.content}</div>
@@ -872,7 +1384,6 @@ export default function ProductDetail() {
                 </div>
               ))}
             </div>
-
           </div>
         </div>
       </div>
