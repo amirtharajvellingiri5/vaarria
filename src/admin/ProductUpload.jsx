@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 import {
   Upload,
   X,
@@ -23,6 +23,15 @@ const uid = () => Math.random().toString(36).slice(2)
 const Select = ({ label, options, value, onChange, required }) => {
   const [open, setOpen] = useState(false)
   const [search, setSearch] = useState('')
+  const searchRef = useRef(null)
+
+  useEffect(() => {
+    if (open) {
+      setTimeout(() => {
+        searchRef.current?.focus()
+      }, 0)
+    }
+  }, [open])
 
   const filteredOptions = options.filter(
     (o) =>
@@ -217,16 +226,31 @@ const ProductUpload = () => {
   const [activeTab, setActiveTab] = useState('edit')
   const [submitting, setSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState('')
-  const searchRef = useRef(null)
 
-  useEffect(() => {
-    if (open) {
-      setTimeout(() => {
-        searchRef.current?.focus()
-      }, 0)
+  const calculateFinalPrice = () => {
+    const base = parseFloat(salePrice) || 0
+    const d = parseFloat(discountValue) || 0
+
+    if (!base) return { finalPrice: 0, discountAmount: 0, percent: 0 }
+
+    let discountAmount = 0
+    let percent = 0
+
+    if (discountType === 'PERCENTAGE') {
+      percent = Math.round(d) // ← round the input %
+      discountAmount = parseFloat(((base * d) / 100).toFixed(2))
+    } else {
+      // FLAT
+      discountAmount = Math.min(d, base)
+      percent = base > 0 ? Math.round((discountAmount / base) * 100) : 0
     }
-  }, [open])
 
+    const finalPrice = parseFloat((base - discountAmount).toFixed(2))
+
+    return { finalPrice, discountAmount, percent }
+  }
+
+  const discountData = calculateFinalPrice()
   // ── Variant field helpers ─────────────────────────────────────────────────
   const setVariantField = (variantId, field, val) =>
     setVariants((prev) =>
@@ -495,18 +519,13 @@ const ProductUpload = () => {
     setTimeout(() => setSaved(false), 3000)
   }
 
-  const discount =
-    mrp && salePrice
-      ? Math.round(
-          ((parseFloat(mrp) - parseFloat(salePrice)) / parseFloat(mrp)) * 100,
-        )
-      : null
+  const discount = discountData.percent
 
   // ── Checklist ──────────────────────────────────────────────────────────────
   const checks = [
     { label: 'Title filled', done: title.length > 2 },
     { label: 'Brand name set', done: brandName.length > 0 },
-    { label: 'Category selected', done: categoryId.length > 0 },
+    { label: 'Category selected', done: !!categoryId },
     { label: 'MRP set', done: !!mrp },
     { label: 'Sale price set', done: !!salePrice },
     {
@@ -552,16 +571,16 @@ const ProductUpload = () => {
                 <p className='text-xs'>No image</p>
               </div>
             )}
-            {discount > 0 && (
+            {discountData.percent > 0 && (
               <div className='absolute top-3 left-3 bg-rose-500 text-white text-xs font-bold px-2 py-1 rounded-full'>
-                -{discount}%
+                -{discountData.percent}%
               </div>
             )}
           </div>
           <div className='p-4'>
             {categoryId && (
               <span className='text-xs text-rose-500 font-semibold uppercase tracking-wider'>
-                {categoryId}
+                {categories.find((c) => c.category_id === categoryId)?.name}
               </span>
             )}
             <h4 className='font-bold text-gray-800 mt-1 text-base leading-tight'>
@@ -573,7 +592,7 @@ const ProductUpload = () => {
             <div className='flex items-center gap-2 mt-3'>
               {salePrice && (
                 <span className='text-xl font-bold text-rose-600'>
-                  ₹{parseFloat(salePrice).toLocaleString()}
+                  ₹{discountData.finalPrice.toLocaleString()}
                 </span>
               )}
               {mrp &&
@@ -925,11 +944,18 @@ const ProductUpload = () => {
                 {mrp && salePrice && buyPrice && (
                   <div className='flex items-center gap-4 p-4 bg-stone-900 rounded-xl border border-stone-800 text-sm flex-wrap'>
                     <div>
+                      <p className='text-stone-500 text-xs'>Final Price</p>
+                      <p className='font-bold text-blue-400'>
+                        ₹{discountData.finalPrice.toLocaleString()}
+                      </p>
+                    </div>
+                    <div className='w-px h-8 bg-stone-700' />
+                    <div>
                       <p className='text-stone-500 text-xs'>Margin</p>
                       <p className='font-bold text-emerald-400'>
                         ₹
                         {(
-                          parseFloat(salePrice) - parseFloat(buyPrice)
+                          discountData.finalPrice - parseFloat(buyPrice)
                         ).toLocaleString()}
                       </p>
                     </div>
@@ -937,17 +963,18 @@ const ProductUpload = () => {
                     <div>
                       <p className='text-stone-500 text-xs'>Margin %</p>
                       <p className='font-bold text-emerald-400'>
-                        {parseFloat(salePrice) > 0
+                        {discountData.finalPrice > 0
                           ? Math.round(
-                              ((parseFloat(salePrice) - parseFloat(buyPrice)) /
-                                parseFloat(salePrice)) *
+                              ((discountData.finalPrice -
+                                parseFloat(buyPrice)) /
+                                discountData.finalPrice) *
                                 100,
                             )
                           : 0}
                         %
                       </p>
                     </div>
-                    {discount > 0 && (
+                    {discountData.percent > 0 && (
                       <>
                         <div className='w-px h-8 bg-stone-700' />
                         <div>
@@ -955,7 +982,7 @@ const ProductUpload = () => {
                             Discount shown
                           </p>
                           <p className='font-bold text-rose-400'>
-                            {discount}% off
+                            {discountData.percent}% off
                           </p>
                         </div>
                       </>
