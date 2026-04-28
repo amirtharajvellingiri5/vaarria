@@ -3,6 +3,7 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { createBrowserRouter, RouterProvider } from 'react-router-dom'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'  // ← add
 
 import './index.css'
 import Home from './Home.jsx'
@@ -10,36 +11,23 @@ import Products from './ProductsListing.jsx'
 import ProductUpload from './admin/ProductUpload.jsx'
 import ProductDetail from './ProductDetail.jsx'
 import ProductListings from './admin/ProductAdminListings.jsx'
+import { BagPage } from './Bag.jsx'
+
+const queryClient = new QueryClient()  // ← add
 
 const router = createBrowserRouter([
-  {
-    path: '/',
-    element: <Home />,
-  },
-  {
-    path: '/product/:id',
-    element: <ProductDetail />,
-  },
-  {
-    path: '/products',
-    element: <Products />,
-  },
-  {
-    path: '/admin/products/new',
-    element: <ProductUpload />,
-  },
-  {
-    path: '/admin/products',
-    element: <ProductListings />,
-  }
-  // {
-  //   path: '/cart',
-  //   element: <Cart />,
-  // },
+  { path: '/', element: <Home /> },
+  { path: '/product/:id', element: <ProductDetail /> },
+  { path: '/products', element: <Products /> },
+  { path: '/bag', element: <BagPage /> },
+  { path: '/admin/products/new', element: <ProductUpload /> },
+  { path: '/admin/products', element: <ProductListings /> },
 ])
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
-    <RouterProvider router={router} />
+    <QueryClientProvider client={queryClient}>  {/* ← wrap */}
+      <RouterProvider router={router} />
+    </QueryClientProvider>
   </StrictMode>
 )

@@ -19,6 +19,51 @@ import {
 
 import logo from './assets/logo.png'
 
+import { COLOR_MAP, formatColorLabel } from './constants/colors'
+
+
+// ── Swatch helper ─────────────────────────────────────────────────────────────
+const ColorSwatch = ({ name, size = 14 }) => {
+  const hex = COLOR_MAP[name?.trim().toLowerCase()]
+
+  if (!hex) {
+    return (
+      <span
+        style={{
+          display: 'inline-block',
+          width: size,
+          height: size,
+          borderRadius: '50%',
+          background: 'conic-gradient(red, yellow, lime, cyan, blue, magenta, red)',
+          border: '1px solid rgba(255,255,255,0.2)',
+          flexShrink: 0,
+        }}
+      />
+    )
+  }
+
+  const isLight = [
+    '#ffffff', '#f5f0e8', '#f8bbd0', '#bbdefb',
+    '#ffcba4', '#fdd835', '#a5d6a7', '#81d4fa', '#ce93d8'
+  ].includes(hex)
+
+  return (
+    <span
+      style={{
+        display: 'inline-block',
+        width: size,
+        height: size,
+        borderRadius: '50%',
+        background: hex,
+        border: isLight
+          ? '1px solid rgba(0,0,0,0.2)'
+          : '1px solid rgba(255,255,255,0.15)',
+        flexShrink: 0,
+      }}
+    />
+  )
+}
+
 // Zustand Store
 const useCartStore = create((set) => ({
   cart: [],
@@ -300,6 +345,10 @@ const FilterSidebar = ({
                 }
                 className='w-4 h-4 text-pink-600 rounded focus:ring-pink-500'
               />
+              {filterKey === 'color' && (
+              <ColorSwatch name={item} />
+            )}
+
               <span className='text-sm text-gray-700'>{item}</span>
             </label>
           ))}

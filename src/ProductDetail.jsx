@@ -16,6 +16,8 @@ import {
   Search,
   User,
   Menu,
+  Gift,
+  CreditCard,
 } from 'lucide-react'
 
 import logo from './assets/logo.png'
@@ -314,6 +316,8 @@ async function fetchProduct(productId) {
   )
   const raw = await res.json()
 
+  const discountMeta = raw.pricing?.discounts
+
   const variant = raw.inventory.variants[0]
 
   // Images are just filenames — build full CDN URLs
@@ -338,6 +342,49 @@ async function fetchProduct(productId) {
   const discount = Math.round(
     ((raw.pricing.mrp - raw.pricing.sale_price) / raw.pricing.mrp) * 100,
   )
+
+  let bankOffer = {
+    icon: <Gift size={16} />,
+
+    title: 'Special Price',
+    desc: 'No bank offers available',
+  }
+
+  if (discountMeta) {
+    const { discount_type, value } = discountMeta
+    if (discount_type === 'FLAT') {
+      bankOffer = {
+        icon: <Gift size={16} />,
+
+        title: 'Special Price',
+        desc: (
+          <>
+            Flat{' '}
+            <span style={{ color: '#10b981', fontWeight: 700 }}>
+              ₹{value} OFF
+            </span>{' '}
+            - Use code TRENDY{value}
+          </>
+        ),
+      }
+    }
+
+    if (discount_type === 'PERCENTAGE') {
+      bankOffer = {
+        icon: <Gift size={16} />,
+
+        title: 'Special Price',
+        desc: (
+          <>
+            <span style={{ color: '#10b981', fontWeight: 700 }}>
+              {value}% OFF{' '}
+            </span>{' '}
+            Use Code TRENDY{value}
+          </>
+        ),
+      }
+    }
+  }
 
   return {
     id: raw.product_id,
@@ -379,18 +426,16 @@ async function fetchProduct(productId) {
     deliveryInfo: raw.delivery ?? { days: '3-5 Business Days', cod: true },
 
     offers: [
+      bankOffer,
       {
-        icon: '💳',
-        title: 'Bank Offer',
-        desc: '10% off on HDFC Bank Credit Cards',
+        icon: <CreditCard size={16} />,
+
+        title: 'Max spends offer',
+        desc: 'Get 15% off on spends more than Rs.10000 (price inclusive of discount)',
       },
       {
-        icon: '🎁',
-        title: 'Special Price',
-        desc: 'Get extra 5% off (price inclusive of discount)',
-      },
-      {
-        icon: '🔄',
+        icon: <RefreshCw size={16} />,
+
         title: 'Easy Returns',
         desc: '7-day return policy. No questions asked.',
       },
@@ -1123,7 +1168,7 @@ export default function ProductDetail() {
         .pdp-tax { font-size: 11px; color: #9ca3af; margin-top: 3px; }
         .pdp-hr { height: 1px; background: #f3f4f6; margin: 20px 0; }
         .pdp-offers-title { font-size: 13px; font-weight: 700; color: #374151; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.5px; }
-        .pdp-offer-row { display: flex; align-items: flex-start; gap: 10px; padding: 8px 12px; border-radius: 8px; background: #fffbf5; border: 1px solid #fef3c7; margin-bottom: 7px; }
+        .pdp-offer-row { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 8px; background: #fffbf5; border: 1px solid #fef3c7; margin-bottom: 7px; }
         .pdp-offer-icon { font-size: 15px; margin-top: 1px; flex-shrink: 0; }
         .pdp-offer-title-text { font-size: 13px; font-weight: 600; color: #374151; }
         .pdp-offer-desc { font-size: 12px; color: #6b7280; }
@@ -1295,14 +1340,17 @@ export default function ProductDetail() {
                 )
               })}
             </div>
-            {sizeError && <div className='pdp-size-warn'>Please select a size to continue</div>}
+            {sizeError && (
+              <div className='pdp-size-warn'>
+                Please select a size to continue
+              </div>
+            )}
 
             {/* CTA */}
             <div className='pdp-cta'>
               <button
                 className={`pdp-btn-bag ${addedToBag ? 'added' : ''}`}
                 onClick={handleAddToBag}
-                
               >
                 <ShoppingBag size={18} />
                 {addedToBag ? '✓ Added to Bag' : 'Add to Bag'}

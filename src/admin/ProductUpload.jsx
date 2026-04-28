@@ -17,6 +17,11 @@ import {
   Loader2,
 } from 'lucide-react'
 
+import { COLOR_MAP, formatColorLabel } from '../constants/colors'
+
+const COLOR_OPTIONS = Object.keys(COLOR_MAP).map(formatColorLabel)
+
+
 const uid = () => Math.random().toString(36).slice(2)
 
 // ── Sub-components ────────────────────────────────────────────────────────────
@@ -1167,49 +1172,8 @@ const VariantCard = ({
           required
           value={variant.color}
           onChange={onColorChange}
-          options={[
-            'Black',
-            'White',
-            'Off White',
-            'Beige',
-            'Grey',
-            'Navy Blue',
-            'Brown',
-            'Red',
-            'Maroon',
-            'Wine',
-            'Pink',
-            'Fuchsia',
-            'Peach',
-            'Rose',
-            'Sky Blue',
-            'Royal Blue',
-            'Teal',
-            'Turquoise',
-            'Denim Blue',
-            'Green',
-            'Olive',
-            'Mint',
-            'Emerald',
-            'Bottle Green',
-            'Yellow',
-            'Mustard',
-            'Golden',
-            'Orange',
-            'Rust',
-            'Purple',
-            'Lavender',
-            'Lilac',
-            'Plum',
-            'Violet',
-            'Pastel Pink',
-            'Baby Blue',
-            'Multicolor',
-            'Printed',
-            'Floral',
-            'Striped',
-            'Checked',
-          ]}
+          options={COLOR_OPTIONS}
+
         />
 
         {/* Sizes */}
