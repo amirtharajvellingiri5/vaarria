@@ -17,6 +17,7 @@ import {
   Loader2,
   RefreshCw,
 } from 'lucide-react'
+import { useParams } from 'react-router-dom'
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 // Replace with your actual import: import { COLOR_MAP, formatColorLabel } from '../constants/colors'
@@ -191,11 +192,11 @@ const mapApiToState = (product) => {
     }),
     // Existing server images shown as preview URLs
     main_image_preview: v.main_image
-      ? { id: uid(), src: `https://aarria-image-upload.chatoyantvortex.workers.dev/${v.main_image}`, name: v.main_image }
+      ? { id: uid(), src: `https://cdn.aarria.com/app/images/${v.main_image}`, name: v.main_image }
       : null,
     other_image_previews: (v.other_images || []).map((key) => ({
       id: uid(),
-      src: `https://aarria-image-upload.chatoyantvortex.workers.dev/${key}`,
+      src: `https://cdn.aarria.com/app/images/${key}`,
       name: key,
     })),
     // Keep server filenames so unchanged images don't get re-uploaded
@@ -211,10 +212,10 @@ const mapApiToState = (product) => {
     brandName: product.brand?.name || '',
     catalogueId: product.brand?.catalogue_id || '',
     categoryId: product.category?.category_id || 4,
-    material: product.description?.Material || '',
-    sleeveLength: product.description?.['Sleeve Length'] || '',
-    neck: product.description?.Neck || '',
-    designStyling: product.description?.['Design Styling'] || '',
+    material: product.description?.description?.Material || '',
+    sleeveLength: product.description?.description?.['Sleeve Length'] || '',
+    neck: product.description?.description?.Neck || '',
+    designStyling: product.description?.description?.['Design Styling'] || '',
     mrp: String(product.pricing?.mrp || ''),
     salePrice: String(product.pricing?.sale_price || ''),
     buyPrice: String(product.pricing?.buy_price || ''),
@@ -243,8 +244,9 @@ const emptyVariant = () => ({
  *   productId  – string/number, the ID of the product to edit
  *   onBack     – optional callback for the ← button
  */
-const ProductEdit = ({ productId, onBack }) => {
+const ProductEdit = ({ onBack }) => {
   // ── Fetch state
+  const { id: productId } = useParams()   // get from URL
   const [loading, setLoading] = useState(true)
   const [fetchError, setFetchError] = useState('')
   const [originalRatings, setOriginalRatings] = useState({ average_rating: 0, review_count: 0 })
@@ -279,7 +281,7 @@ const ProductEdit = ({ productId, onBack }) => {
     setFetchError('')
     try {
       const res = await fetch(
-        `https://8184radc92.execute-api.ap-south-1.amazonaws.com/prod/products/${productId}`,
+        `https://products-api.chatoyantvortex.workers.dev/product?id=${productId}`,
       )
       if (!res.ok) throw new Error(`Failed to fetch product (${res.status})`)
       const data = await res.json()
