@@ -411,11 +411,16 @@ const ProductListings = () => {
     out: allProducts.filter((p) => p.stock === 0).length,
   }
 
-  const openProduct = (id) => {
-      window.open(`/product/${id}`, '_blank')
+const openProduct = (id) => {
+  window.open(`/product/${id}`, '_blank')
+}
 
-  }
-
+const openEditProduct = (id) => {
+  window.open(
+    `http://localhost:5173/admin/products/edit/${id}`,
+    '_blank',
+  )
+}
   const pageNums = (() => {
     const nums = []
     for (let i = 1; i <= totalPages; i++) {
@@ -452,6 +457,14 @@ const ProductListings = () => {
               Product Listings
             </h1>
             <p className='text-xs text-stone-500'>Women's Ethnic Wear Store</p>
+          </div>
+          <div>
+            <h1
+              className='font-bold text-stone-100'
+              style={{ fontFamily: "'Playfair Display', serif", fontSize: 18 }}
+            >
+              <a href="/products">Go to Store</a>
+            </h1>
           </div>
           <div className='flex items-center gap-3'>
             <button
@@ -663,7 +676,7 @@ const ProductListings = () => {
                       <td className='px-4 py-3'>
                         <div className='flex items-center gap-2'>
                           <button
-                            onClick={() => setEditProduct(p)}
+  onClick={() => openEditProduct(p.id)}
                             className='flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border border-stone-700 text-stone-300 hover:border-rose-500/50 hover:text-rose-400 hover:bg-rose-500/5 transition-all'
                           >
                             <Edit2 size={12} /> Edit

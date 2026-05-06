@@ -205,6 +205,7 @@ const mapApiToState = (product) => {
     // Files are null — only set when the user picks a NEW file
     main_image_file: null,
     other_image_files: [],
+    product_id: product.id,
   }))
 
   return {
@@ -223,6 +224,7 @@ const mapApiToState = (product) => {
     discountType: product.pricing?.discounts?.discount_type || 'FLAT',
     discountValue: String(product.pricing?.discounts?.value || ''),
     variants: variants.length > 0 ? variants : [emptyVariant()],
+    product_id: product.id,
   }
 }
 
@@ -281,7 +283,7 @@ const ProductEdit = ({ onBack }) => {
     setFetchError('')
     try {
       const res = await fetch(
-        `https://products-api.chatoyantvortex.workers.dev/product?id=${productId}`,
+        `https://api.aarria.com/product/${productId}`,
       )
       if (!res.ok) throw new Error(`Failed to fetch product (${res.status})`)
       const data = await res.json()
@@ -434,6 +436,7 @@ const ProductEdit = ({ onBack }) => {
 
   // ── Build payload ──────────────────────────────────────────────────────────
   const buildPayload = (updatedVariants) => ({
+    product_id: productId,
     title,
     brand: { name: brandName, catalogue_id: catalogueId },
     category: {
