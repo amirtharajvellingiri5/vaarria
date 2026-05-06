@@ -209,44 +209,44 @@ const MENU_DATA = [
       },
     ],
   },
-  {
-    name: 'Beauty',
-    columns: [
-      {
-        sections: [
-          {
-            title: 'Makeup',
-            links: ['Lipstick', 'Foundation', 'Mascara', 'Eyeshadow', 'Blush & Highlighter'],
-          },
-        ],
-      },
-      {
-        sections: [
-          {
-            title: 'Skincare',
-            links: ['Moisturiser', 'Serum', 'Sunscreen', 'Face Wash', 'Toner'],
-          },
-        ],
-      },
-      {
-        sections: [
-          {
-            title: 'Hair Care',
-            links: ['Shampoo', 'Conditioner', 'Hair Oil', 'Hair Masks'],
-          },
-        ],
-      },
-      {
-        sections: [
-          {
-            title: 'Fragrances',
-            links: ['Perfume', 'Body Mist', 'Deodorant'],
-          },
-          { title: 'Premium Beauty', links: [] },
-        ],
-      },
-    ],
-  },
+  // {
+  //   name: 'Beauty',
+  //   columns: [
+  //     {
+  //       sections: [
+  //         {
+  //           title: 'Makeup',
+  //           links: ['Lipstick', 'Foundation', 'Mascara', 'Eyeshadow', 'Blush & Highlighter'],
+  //         },
+  //       ],
+  //     },
+  //     {
+  //       sections: [
+  //         {
+  //           title: 'Skincare',
+  //           links: ['Moisturiser', 'Serum', 'Sunscreen', 'Face Wash', 'Toner'],
+  //         },
+  //       ],
+  //     },
+  //     {
+  //       sections: [
+  //         {
+  //           title: 'Hair Care',
+  //           links: ['Shampoo', 'Conditioner', 'Hair Oil', 'Hair Masks'],
+  //         },
+  //       ],
+  //     },
+  //     {
+  //       sections: [
+  //         {
+  //           title: 'Fragrances',
+  //           links: ['Perfume', 'Body Mist', 'Deodorant'],
+  //         },
+  //         { title: 'Premium Beauty', links: [] },
+  //       ],
+  //     },
+  //   ],
+  // },
   { name: 'GenZ', columns: [] },
   { name: 'Studio', isNew: true, columns: [] },
 ]
@@ -333,7 +333,7 @@ const Navbar = () => {
         }}
       >
         {/* Logo */}
-        <a href='/'>
+        <a href='/' style={{ marginRight: '5%' }}>
               <img
                 src={logo}
                 alt='Logo'
@@ -436,7 +436,7 @@ const Navbar = () => {
           <Search size={16} color="#94969f" />
           <input
             type="text"
-            placeholder="Search for products, brands and more"
+            placeholder="Search for products"
             value={searchValue}
             onChange={(e) => setSearchValue(e.target.value)}
             style={{

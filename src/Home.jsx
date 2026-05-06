@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { create } from 'zustand'
+import { useCartStore } from './store/cartStore'
+
 import {
   ShoppingBag,
   Search,
@@ -13,31 +14,8 @@ import {
   Menu,
   X,
 } from 'lucide-react'
-
+import Navbar from './Navbar'
 import logo from './assets/logo.png'
-
-// Zustand Store
-const useCartStore = create((set) => ({
-  cart: [],
-  addToCart: (product) =>
-    set((state) => {
-      const existing = state.cart.find((item) => item.id === product.id)
-      if (existing) {
-        return {
-          cart: state.cart.map((item) =>
-            item.id === product.id
-              ? { ...item, quantity: item.quantity + 1 }
-              : item
-          ),
-        }
-      }
-      return { cart: [...state.cart, { ...product, quantity: 1 }] }
-    }),
-  removeFromCart: (id) =>
-    set((state) => ({
-      cart: state.cart.filter((item) => item.id !== id),
-    })),
-}))
 
 // Mock API
 const fetchProducts = async () => {
@@ -202,127 +180,6 @@ const HeroSlider = () => {
         ))}
       </div>
     </div>
-  )
-}
-
-// Navbar
-const Navbar = () => {
-  const [isOpen, setIsOpen] = useState(false)
-  const cart = useCartStore((state) => state.cart)
-  const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0)
-
-  return (
-    <nav className='bg-white shadow-sm sticky top-0 z-50 border-b border-pink-100'>
-      <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8'>
-        <div className='flex justify-between items-center h-16'>
-          <div className='flex items-center'>
-            <button
-              onClick={() => setIsOpen(!isOpen)}
-              className='md:hidden mr-4'
-            >
-              {isOpen ? <X size={24} /> : <Menu size={24} />}
-            </button>
-            <a href=''>
-              <img
-                src={logo}
-                alt='Logo'
-                className='h-20 md:h-24 object-contain'
-              />
-            </a>
-          </div>
-
-          <div className='hidden md:flex space-x-8'>
-            <a
-              href='/products'
-              className='text-gray-700 hover:text-pink-600 transition font-medium'
-            >
-              Sarees
-            </a>
-            <a
-              href='#'
-              className='text-gray-700 hover:text-pink-600 transition font-medium'
-            >
-              Lehengas
-            </a>
-            <a
-              href='#'
-              className='text-gray-700 hover:text-pink-600 transition font-medium'
-            >
-              Suits
-            </a>
-            <a
-              href='#'
-              className='text-gray-700 hover:text-pink-600 transition font-medium'
-            >
-              Kurtis
-            </a>
-            <a
-              href='#'
-              className='text-gray-700 hover:text-pink-600 transition font-medium'
-            >
-              Sale
-            </a>
-          </div>
-
-          <div className='flex items-center space-x-4'>
-            <button className='text-gray-700 hover:text-pink-600 transition'>
-              <Search size={20} />
-            </button>
-            <button className='text-gray-700 hover:text-pink-600 transition'>
-              <Heart size={20} />
-            </button>
-            <button className='text-gray-700 hover:text-pink-600 transition'>
-              <User size={20} />
-            </button>
-            <button className='relative text-gray-700 hover:text-pink-600 transition'>
-              <ShoppingBag size={20} />
-              {cartCount > 0 && (
-                <span className='absolute -top-2 -right-2 bg-pink-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center'>
-                  {cartCount}
-                </span>
-              )}
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {isOpen && (
-        <div className='md:hidden border-t border-pink-100'>
-          <div className='px-4 pt-2 pb-3 space-y-1 bg-pink-50/50'>
-            <a
-              href='#'
-              className='block px-3 py-2 text-gray-700 hover:bg-pink-100 rounded font-medium'
-            >
-              Sarees
-            </a>
-            <a
-              href='#'
-              className='block px-3 py-2 text-gray-700 hover:bg-pink-100 rounded font-medium'
-            >
-              Lehengas
-            </a>
-            <a
-              href='#'
-              className='block px-3 py-2 text-gray-700 hover:bg-pink-100 rounded font-medium'
-            >
-              Suits
-            </a>
-            <a
-              href='#'
-              className='block px-3 py-2 text-gray-700 hover:bg-pink-100 rounded font-medium'
-            >
-              Kurtis
-            </a>
-            <a
-              href='#'
-              className='block px-3 py-2 text-pink-600 hover:bg-pink-100 rounded font-medium'
-            >
-              Sale
-            </a>
-          </div>
-        </div>
-      )}
-    </nav>
   )
 }
 
