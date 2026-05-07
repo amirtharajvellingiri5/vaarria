@@ -14,7 +14,7 @@ const MENU_DATA = [
           {
             title: 'Indian & Fusion Wear',
             links: [
-              { name: 'Kurtas & Suits', url: '/men/kurtas-suits' },
+              { name: 'Kurtas & Suits', url: '/products' },
               { name: 'Sherwanis', url: '/men/sherwanis' },
               { name: 'Men Mojaris', url: '/men/mojaris' },
               { name: 'Nehru Jackets', url: '/men/nehru-jackets' },
