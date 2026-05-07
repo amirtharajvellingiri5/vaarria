@@ -13,36 +13,24 @@ import {
   ZoomIn,
   ChevronDown,
   ChevronUp,
-  Search,
-  User,
-  Menu,
+  Play,
   Gift,
   CreditCard,
 } from 'lucide-react'
 import Navbar from './Navbar'
-
-import logo from './assets/logo.png'
 import { useParams } from 'react-router-dom'
 
 // ─── Mock API Response ────────────────────────────────────────────────────────
-// This is the raw JSON that would come from the product API endpoint.
 const MOCK_PRODUCT_API_RESPONSE = {
   id: 3,
   title: 'Kurta Set Classic',
-  brand: {
-    name: 'Sangria',
-    catalogue_id: 'BRAND-SANGRIA-1',
-  },
-  category: {
-    category_id: 2,
-    category_name: 'Kurtas',
-  },
+  brand: { name: 'Sangria', catalogue_id: 'BRAND-SANGRIA-1' },
+  category: { category_id: 2, category_name: 'Kurtas' },
   description: {
     Material: 'Viscose Rayon',
     'Sleeve Length': 'Three-Quarter Sleeves',
     Neck: 'V-Neck',
     'Design Styling': 'Straight',
-    // ADDED NEW: missing fields needed for product details table
     Occasion: 'Ethnic, Casual',
     'Fabric Care': 'Gentle Machine Wash / Hand Wash',
     Pattern: 'Embroidered',
@@ -50,10 +38,8 @@ const MOCK_PRODUCT_API_RESPONSE = {
     'Fit Type': 'Straight',
     Color: 'Navy Blue',
     'Country of Origin': 'India',
-    // ADDED NEW: short product blurb shown above the details table
     product_blurb:
       'Crafted from premium viscose rayon, this Sangria kurta features intricate ethnic motif embroidery with detailed thread work at the yoke and hem.',
-    // ADDED NEW: bullet highlights shown in the description accordion
     highlights: [
       'Premium Viscose Rayon fabric',
       'Intricate ethnic motif embroidery',
@@ -63,58 +49,40 @@ const MOCK_PRODUCT_API_RESPONSE = {
       'V-neck with button detail',
     ],
   },
-  pricing: {
-    mrp: 2999.0,
-    sale_price: 1199.0,
-    buy_price: 800.0,
-    gst: 5.0,
-  },
+  pricing: { mrp: 2999.0, sale_price: 1199.0, buy_price: 800.0, gst: 5.0 },
   inventory: {
     variants: [
       {
         color: 'Navy Blue',
-        // ADDED NEW: hex code for the colour swatch
         color_hex: '#1a237e',
         sizes: [
-          { size: 'XS', quantity: 0 }, // quantity 0 => unavailable
+          { size: 'XS', quantity: 0 },
           { size: 'S', quantity: 10 },
           { size: 'M', quantity: 8 },
           { size: 'L', quantity: 6 },
           { size: 'XL', quantity: 4 },
-          { size: 'XXL', quantity: 0 }, // ADDED NEW: XXL added as out-of-stock
+          { size: 'XXL', quantity: 0 },
         ],
-        main_image: 'https://cdn.aarria.com/app/images/IMG-20220416-WA0000.jpg',
+        main_image: 'IMG-20220416-WA0000.jpg',
         other_images: [
-          'https://cdn.aarria.com/app/images/IMG-20220416-WA0001.jpg',
-          'https://cdn.aarria.com/app/images/IMG-20220416-WA0002.jpg',
-          'https://cdn.aarria.com/app/images/IMG-20220416-WA0005.jpg',
-          'https://cdn.aarria.com/app/images/IMG-20220416-WA0006.jpg',
+          'IMG-20220416-WA0001.jpg',
+          'IMG-20220416-WA0002.jpg',
+          'IMG-20220416-WA0005.jpg',
+          'IMG-20220416-WA0006.jpg',
         ],
       },
     ],
   },
-  // ADDED NEW: style code for product details table
   style_code: 'SNG-KRT-24386',
-  // ADDED NEW: delivery info block
-  delivery: {
-    days: '2-3 Business Days',
-    cod: true,
-  },
-  ratings: {
-    average_rating: 4.3,
-    review_count: 312,
-  },
+  delivery: { days: '2-3 Business Days', cod: true },
+  ratings: { average_rating: 4.3, review_count: 312 },
 }
 
-// ─── Mock Ratings API Response ────────────────────────────────────────────────
-// Separate endpoint: /api/products/:id/ratings
-// Returns breakdown bars + user reviews.
 const MOCK_RATINGS_API_RESPONSE = {
   product_id: 3,
   overall: 4.3,
   rating_count: 2847,
   review_count: 312,
-  // Breakdown percentages per star level
   breakdown: [
     { label: '5 ★', pct: 55 },
     { label: '4 ★', pct: 22 },
@@ -153,13 +121,20 @@ const MOCK_RATINGS_API_RESPONSE = {
   ],
 }
 
-// ─── API Functions ────────────────────────────────────────────────────────────
+// ─── Media items: images + YouTube videos ─────────────────────────────────────
+// Each item is { type: 'image'|'video', src, thumb, youtubeId? }
+const PRODUCT_YOUTUBE_VIDEOS = [
+  {
+    youtubeId: 'KR0g-1hnQPA', // replace with real product video IDs
+    title: 'Styling the Kurta Set',
+  },
+  {
+    youtubeId: 'tgbNymZ7vqY',
+    title: 'Fabric & Embroidery Close-up',
+  },
+]
 
-/**
- * fetchProduct: Fetches and normalises product data.
- * All shape transformations live here so the component works
- * with a clean, predictable object regardless of API shape changes.
- */
+// ─── API Functions ────────────────────────────────────────────────────────────
 async function fetchProduct(productId) {
   const res = await fetch(
     `https://products-api.chatoyantvortex.workers.dev/product?id=${productId}`,
@@ -167,71 +142,53 @@ async function fetchProduct(productId) {
   const raw = await res.json()
 
   const discountMeta = raw.pricing?.discounts
-
   const variant = raw.inventory.variants[0]
 
-  // Images are just filenames — build full CDN URLs
-  const allImages = [variant.main_image, ...variant.other_images]
-  const images = allImages.map(
+  const allImageFilenames = [variant.main_image, ...variant.other_images]
+  const images = allImageFilenames.map(
     (img) => `https://cdn.aarria.com/app/images/${img}`,
   )
 
+  // Build combined media list: images first, then videos
+  const mediaItems = [
+    ...images.map((src, i) => ({
+      type: 'image',
+      src,
+      thumb: src,
+      placeholder: `https://placehold.co/1080x1440/ec4899/ffffff?text=Image+${i + 1}`,
+    })),
+    ...PRODUCT_YOUTUBE_VIDEOS.map((v) => ({
+      type: 'video',
+      youtubeId: v.youtubeId,
+      title: v.title,
+      src: `https://www.youtube.com/embed/${v.youtubeId}`,
+      thumb: `https://img.youtube.com/vi/${v.youtubeId}/mqdefault.jpg`,
+      placeholder: `https://img.youtube.com/vi/${v.youtubeId}/mqdefault.jpg`,
+    })),
+  ]
+
   const sizes = variant.sizes.map((s) => s.size)
-  const availableSizes = variant.sizes
-    .filter((s) => s.quantity > 0)
-    .map((s) => s.size)
+  const availableSizes = variant.sizes.filter((s) => s.quantity > 0).map((s) => s.size)
 
-  // Real API nests description under description.description
   const desc = raw.description?.description ?? {}
+  const details = { 'Style Code': raw.style_code ?? '—', ...desc }
+  const discount = Math.round(((raw.pricing.mrp - raw.pricing.sale_price) / raw.pricing.mrp) * 100)
 
-  const details = {
-    'Style Code': raw.style_code ?? '—',
-    ...desc,
-  }
-
-  const discount = Math.round(
-    ((raw.pricing.mrp - raw.pricing.sale_price) / raw.pricing.mrp) * 100,
-  )
-
-  let bankOffer = {
-    icon: <Gift size={16} />,
-
-    title: 'Special Price',
-    desc: 'No bank offers available',
-  }
-
+  let bankOffer = { icon: <Gift size={16} />, title: 'Special Price', desc: 'No bank offers available' }
   if (discountMeta) {
     const { discount_type, value } = discountMeta
     if (discount_type === 'FLAT') {
       bankOffer = {
         icon: <Gift size={16} />,
-
         title: 'Special Price',
-        desc: (
-          <>
-            Flat{' '}
-            <span style={{ color: '#10b981', fontWeight: 700 }}>
-              ₹{value} OFF
-            </span>{' '}
-            - Use code TRENDY{value}
-          </>
-        ),
+        desc: (<>Flat <span style={{ color: '#10b981', fontWeight: 700 }}>₹{value} OFF</span> - Use code TRENDY{value}</>),
       }
     }
-
     if (discount_type === 'PERCENTAGE') {
       bankOffer = {
         icon: <Gift size={16} />,
-
         title: 'Special Price',
-        desc: (
-          <>
-            <span style={{ color: '#10b981', fontWeight: 700 }}>
-              {value}% OFF{' '}
-            </span>{' '}
-            Use Code TRENDY{value}
-          </>
-        ),
+        desc: (<><span style={{ color: '#10b981', fontWeight: 700 }}>{value}% OFF </span> Use Code TRENDY{value}</>),
       }
     }
   }
@@ -241,51 +198,33 @@ async function fetchProduct(productId) {
     brand: raw.brand.name,
     name: raw.title,
     category: raw.category.category_name,
-
-    images,
-    placeholderImages: images.map(
-      (_, i) =>
-        `https://placehold.co/1080x1440/ec4899/ffffff?text=Image+${i + 1}`,
-    ),
-
+    mediaItems,
     price: raw.pricing.sale_price,
     mrp: raw.pricing.mrp,
     discount,
-
     rating: raw.ratings.average_rating,
     ratingCount: raw.ratings.rating_count ?? raw.ratings.review_count ?? 0,
     reviewCount: raw.ratings.review_count ?? 0,
-
     sizes,
     availableSizes,
-
     colors: raw.inventory.variants.map((v) => ({
       name: v.color,
       hex: v.color_hex ?? '#cccccc',
       active: v.color === variant.color,
     })),
-
-    // Real API has no blurb/highlights — fallback gracefully
     description: raw.description?.product_blurb ?? raw.title,
-    highlights:
-      raw.description?.highlights ??
-      Object.entries(desc).map(([k, v]) => `${k}: ${v}`),
+    highlights: raw.description?.highlights ?? Object.entries(desc).map(([k, v]) => `${k}: ${v}`),
     details,
-
-    // Real API has no delivery block — fallback
     deliveryInfo: raw.delivery ?? { days: '3-5 Business Days', cod: true },
-
     offers: [
       bankOffer,
       {
         icon: <CreditCard size={16} />,
-
         title: 'Max spends offer',
         desc: 'Get 15% off on spends more than Rs.10000 (price inclusive of discount)',
       },
       {
         icon: <RefreshCw size={16} />,
-
         title: 'Easy Returns',
         desc: '7-day return policy. No questions asked.',
       },
@@ -293,30 +232,23 @@ async function fetchProduct(productId) {
   }
 }
 
-/**
- * fetchRatings: Separate endpoint for ratings breakdown + reviews.
- * Keeps the ratings data decoupled from core product data.
- */
 async function fetchRatings(productId) {
   await new Promise((r) => setTimeout(r, 400))
-
-  // In production: const res = await fetch(`/api/products/${productId}/ratings`)
-  //                return res.json()
   return MOCK_RATINGS_API_RESPONSE
 }
 
-// ─── Full-screen Image Slider ─────────────────────────────────────────────────
-function ImageSlider({ images, placeholderImages, initialIndex, onClose }) {
+// ─── Full-screen Media Slider ─────────────────────────────────────────────────
+function MediaSlider({ mediaItems, initialIndex, onClose }) {
   const [current, setCurrent] = useState(initialIndex)
   const [imgErrors, setImgErrors] = useState({})
 
   const prev = useCallback(
-    () => setCurrent((c) => (c - 1 + images.length) % images.length),
-    [images.length],
+    () => setCurrent((c) => (c - 1 + mediaItems.length) % mediaItems.length),
+    [mediaItems.length],
   )
   const next = useCallback(
-    () => setCurrent((c) => (c + 1) % images.length),
-    [images.length],
+    () => setCurrent((c) => (c + 1) % mediaItems.length),
+    [mediaItems.length],
   )
 
   useEffect(() => {
@@ -329,169 +261,185 @@ function ImageSlider({ images, placeholderImages, initialIndex, onClose }) {
     return () => window.removeEventListener('keydown', handleKey)
   }, [prev, next, onClose])
 
-  const getImg = (i) =>
-    imgErrors[i]
-      ? placeholderImages[i] ||
-        `https://placehold.co/1080x1440/ec4899/ffffff?text=Image+${i + 1}`
-      : images[i]
+  const item = mediaItems[current]
 
   return (
     <div
       style={{
         position: 'fixed',
         inset: 0,
-        zIndex: 50,
+        zIndex: 200,
         display: 'flex',
         flexDirection: 'column',
         background: 'rgba(0,0,0,0.97)',
       }}
     >
-      <div
+      {/* Close button — fixed center-top, always visible */}
+      <button
+        onClick={onClose}
         style={{
+          position: 'fixed',
+          top: 16,
+          left: '50%',
+          transform: 'translateX(-50%)',
+          zIndex: 999,
           display: 'flex',
           alignItems: 'center',
-          justifyContent: 'space-between',
-          padding: '12px 20px',
-          flexShrink: 0,
+          gap: 8,
+          padding: '8px 20px',
+          borderRadius: 999,
+          background: 'rgba(255,255,255,0.15)',
+          border: '1px solid rgba(255,255,255,0.35)',
+          color: '#fff',
+          fontSize: 13,
+          fontWeight: 600,
+          cursor: 'pointer',
+          backdropFilter: 'blur(8px)',
+          fontFamily: "'DM Sans', sans-serif",
+          letterSpacing: '0.3px',
         }}
       >
-        <span style={{ color: '#aaa', fontSize: 13 }}>
-          {current + 1} / {images.length}
-        </span>
-        <button
-          onClick={onClose}
-          style={{
-            width: 38,
-            height: 38,
-            borderRadius: '50%',
-            background: 'rgba(255,255,255,0.1)',
-            border: 'none',
-            color: '#fff',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
-          <X size={20} />
-        </button>
-      </div>
+        <X size={15} />
+        Close Preview
+      </button>
+
+      {/* Counter — top left */}
       <div
-        style={{ flex: 1, display: 'flex', overflow: 'hidden', minHeight: 0 }}
+        style={{
+          position: 'fixed',
+          top: 22,
+          left: 24,
+          zIndex: 999,
+          color: '#aaa',
+          fontSize: 13,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 8,
+        }}
       >
+        {current + 1} / {mediaItems.length}
+        {item.type === 'video' && (
+          <span style={{ color: '#ec4899', fontWeight: 600, fontSize: 11 }}>▶ VIDEO</span>
+        )}
+      </div>
+
+      <div style={{ flex: 1, display: 'flex', overflow: 'hidden', minHeight: 0 }}>
+        {/* Left thumbnail strip */}
         <div
           style={{
-            width: 88,
-            flexShrink: 0,
-            overflowY: 'auto',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 6,
-            padding: '0 12px 12px',
-            scrollbarWidth: 'none',
+            width: 88, flexShrink: 0, overflowY: 'auto',
+            display: 'flex', flexDirection: 'column', gap: 6,
+            padding: '0 12px 12px', scrollbarWidth: 'none',
           }}
         >
-          {images.map((_, i) => {
-            const src = imgErrors[i]
-              ? placeholderImages[i] ||
-                `https://placehold.co/100x140/ec4899/ffffff?text=${i + 1}`
-              : images[i]
-            return (
-              <button
-                key={i}
-                onClick={() => setCurrent(i)}
-                style={{
-                  width: 64,
-                  height: 86,
-                  flexShrink: 0,
-                  border:
-                    i === current
-                      ? '2px solid #ec4899'
-                      : '2px solid rgba(255,255,255,0.15)',
-                  borderRadius: 4,
-                  overflow: 'hidden',
-                  cursor: 'pointer',
-                  background: 'none',
-                  padding: 0,
-                  opacity: i === current ? 1 : 0.5,
-                  transition: 'all 0.15s',
-                }}
-              >
-                <img
-                  src={src}
-                  alt=''
-                  onError={() => setImgErrors((e) => ({ ...e, [i]: true }))}
+          {mediaItems.map((m, i) => (
+            <button
+              key={i}
+              onClick={() => setCurrent(i)}
+              style={{
+                width: 64, height: 86, flexShrink: 0,
+                border: i === current ? '2px solid #ec4899' : '2px solid rgba(255,255,255,0.15)',
+                borderRadius: 4, overflow: 'hidden', cursor: 'pointer',
+                background: '#111', padding: 0,
+                opacity: i === current ? 1 : 0.5,
+                transition: 'all 0.15s', position: 'relative',
+              }}
+            >
+              <img
+                src={imgErrors[i] ? m.placeholder : m.thumb}
+                alt=''
+                onError={() => setImgErrors((e) => ({ ...e, [i]: true }))}
+                style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+              />
+              {m.type === 'video' && (
+                <div
                   style={{
-                    width: '100%',
-                    height: '100%',
-                    objectFit: 'cover',
-                    display: 'block',
+                    position: 'absolute', inset: 0,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    background: 'rgba(0,0,0,0.45)',
                   }}
-                />
-              </button>
-            )
-          })}
+                >
+                  <div
+                    style={{
+                      width: 22, height: 22, borderRadius: '50%',
+                      background: 'rgba(236,72,153,0.9)',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    }}
+                  >
+                    <Play size={10} fill='#fff' color='#fff' style={{ marginLeft: 1 }} />
+                  </div>
+                </div>
+              )}
+            </button>
+          ))}
         </div>
+
+        {/* Main viewer */}
         <div
           style={{
-            flex: 1,
-            position: 'relative',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
+            flex: 1, position: 'relative',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
             minWidth: 0,
           }}
         >
           <button
             onClick={prev}
             style={{
-              position: 'absolute',
-              left: 12,
-              zIndex: 10,
-              width: 44,
-              height: 44,
-              borderRadius: '50%',
-              background: 'rgba(255,255,255,0.15)',
-              border: 'none',
-              color: '#fff',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
+              position: 'absolute', left: 12, zIndex: 10,
+              width: 44, height: 44, borderRadius: '50%',
+              background: 'rgba(255,255,255,0.15)', border: 'none',
+              color: '#fff', cursor: 'pointer',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
               backdropFilter: 'blur(4px)',
             }}
           >
             <ChevronLeft size={22} />
           </button>
-          <img
-            key={current}
-            src={getImg(current)}
-            alt={`view ${current + 1}`}
-            onError={() => setImgErrors((e) => ({ ...e, [current]: true }))}
-            style={{
-              maxHeight: '100%',
-              maxWidth: '100%',
-              objectFit: 'contain',
-              display: 'block',
-              animation: 'sliderFadeIn 0.2s ease',
-            }}
-          />
+
+          {item.type === 'image' ? (
+            <img
+              key={current}
+              src={imgErrors[current] ? item.placeholder : item.src}
+              alt={`view ${current + 1}`}
+              onError={() => setImgErrors((e) => ({ ...e, [current]: true }))}
+              style={{
+                maxHeight: '100%', maxWidth: '100%',
+                objectFit: 'contain', display: 'block',
+                animation: 'sliderFadeIn 0.2s ease',
+              }}
+            />
+          ) : (
+            <div
+              key={current}
+              style={{
+                width: '100%', maxWidth: 900,
+                aspectRatio: '16/9',
+                padding: '0 60px',
+                animation: 'sliderFadeIn 0.2s ease',
+              }}
+            >
+              <iframe
+                src={`https://www.youtube.com/embed/${item.youtubeId}?autoplay=1&rel=0&modestbranding=1`}
+                title={item.title}
+                allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture'
+                allowFullScreen
+                style={{
+                  width: '100%', height: '100%',
+                  border: 'none', borderRadius: 8,
+                  display: 'block',
+                }}
+              />
+            </div>
+          )}
+
           <button
             onClick={next}
             style={{
-              position: 'absolute',
-              right: 12,
-              zIndex: 10,
-              width: 44,
-              height: 44,
-              borderRadius: '50%',
-              background: 'rgba(255,255,255,0.15)',
-              border: 'none',
-              color: '#fff',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
+              position: 'absolute', right: 12, zIndex: 10,
+              width: 44, height: 44, borderRadius: '50%',
+              background: 'rgba(255,255,255,0.15)', border: 'none',
+              color: '#fff', cursor: 'pointer',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
               backdropFilter: 'blur(4px)',
             }}
           >
@@ -499,7 +447,196 @@ function ImageSlider({ images, placeholderImages, initialIndex, onClose }) {
           </button>
         </div>
       </div>
-      <style>{`@keyframes sliderFadeIn { from { opacity:0; transform:scale(0.98); } to { opacity:1; transform:scale(1); } }::-webkit-scrollbar { display: none; }`}</style>
+
+      <style>{`
+        @keyframes sliderFadeIn { from { opacity:0; transform:scale(0.98); } to { opacity:1; transform:scale(1); } }
+        ::-webkit-scrollbar { display: none; }
+      `}</style>
+    </div>
+  )
+}
+
+// ─── Product Image Gallery with Thumbnail Strip ───────────────────────────────
+function ProductGallery({ mediaItems, onOpenSlider }) {
+  const [activeIndex, setActiveIndex] = useState(0)
+  const [imgErrors, setImgErrors] = useState({})
+
+  const active = mediaItems[activeIndex]
+
+  return (
+    <div style={{ display: 'flex', gap: 0, width: '100%' }}>
+      {/* Left thumbnail strip */}
+      <div
+        style={{
+          width: 76, flexShrink: 0,
+          display: 'flex', flexDirection: 'column', gap: 4,
+          paddingRight: 8, maxHeight: '80vh', overflowY: 'auto',
+          scrollbarWidth: 'none',
+        }}
+      >
+        {mediaItems.map((item, i) => (
+          <button
+            key={i}
+            onMouseEnter={() => setActiveIndex(i)}
+            onClick={() => onOpenSlider(i)}
+            style={{
+              width: 64, height: 84, flexShrink: 0,
+              border: i === activeIndex ? '2px solid #ec4899' : '2px solid #e5e7eb',
+              borderRadius: 4, overflow: 'hidden',
+              cursor: 'pointer', background: '#f9f9f9',
+              padding: 0, position: 'relative',
+              transition: 'border-color 0.15s, opacity 0.15s',
+              opacity: i === activeIndex ? 1 : 0.75,
+            }}
+          >
+            <img
+              src={imgErrors[`thumb-${i}`] ? item.placeholder : item.thumb}
+              alt={`thumbnail ${i + 1}`}
+              onError={() => setImgErrors((e) => ({ ...e, [`thumb-${i}`]: true }))}
+              style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+            />
+            {item.type === 'video' && (
+              <div
+                style={{
+                  position: 'absolute', inset: 0,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  background: 'rgba(0,0,0,0.35)',
+                }}
+              >
+                <div
+                  style={{
+                    width: 24, height: 24, borderRadius: '50%',
+                    background: 'rgba(236,72,153,0.92)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
+                  }}
+                >
+                  <Play size={11} fill='#fff' color='#fff' style={{ marginLeft: 1 }} />
+                </div>
+              </div>
+            )}
+          </button>
+        ))}
+      </div>
+
+      {/* Main display area */}
+      <div
+        style={{ flex: 1, minWidth: 0, position: 'relative', cursor: 'zoom-in' }}
+        onClick={() => onOpenSlider(activeIndex)}
+      >
+        {active.type === 'image' ? (
+          <div
+            style={{
+              width: '100%', aspectRatio: '3/4',
+              overflow: 'hidden', background: '#f9f9f9', position: 'relative',
+            }}
+          >
+            <img
+              key={activeIndex}
+              src={imgErrors[`main-${activeIndex}`] ? active.placeholder : active.src}
+              alt='product view'
+              onError={() => setImgErrors((e) => ({ ...e, [`main-${activeIndex}`]: true }))}
+              style={{
+                width: '100%', height: '100%', objectFit: 'cover',
+                display: 'block', transition: 'opacity 0.2s ease',
+                animation: 'galleryFadeIn 0.18s ease',
+              }}
+            />
+            {/* Zoom badge */}
+            <div
+              style={{
+                position: 'absolute', bottom: 14, right: 14,
+                background: 'rgba(255,255,255,0.92)', borderRadius: '50%',
+                width: 36, height: 36,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                boxShadow: '0 2px 10px rgba(0,0,0,0.12)',
+              }}
+            >
+              <ZoomIn size={16} color='#ec4899' />
+            </div>
+            {/* Counter */}
+            <div
+              style={{
+                position: 'absolute', top: 14, right: 14,
+                background: 'rgba(255,255,255,0.88)',
+                backdropFilter: 'blur(4px)', borderRadius: 20,
+                padding: '3px 10px', fontSize: 11, fontWeight: 600, color: '#374151',
+              }}
+            >
+              {activeIndex + 1} / {mediaItems.length}
+            </div>
+          </div>
+        ) : (
+          /* Video preview — shows thumbnail with big play button; click opens full slider */
+          <div
+            style={{
+              width: '100%', aspectRatio: '3/4',
+              background: '#0a0a0a', position: 'relative',
+              display: 'flex', flexDirection: 'column',
+              alignItems: 'center', justifyContent: 'center',
+              overflow: 'hidden',
+            }}
+          >
+            {/* Blurred thumbnail bg */}
+            <img
+              src={active.thumb}
+              alt=''
+              style={{
+                position: 'absolute', inset: 0,
+                width: '100%', height: '100%',
+                objectFit: 'cover', filter: 'blur(12px) brightness(0.45)',
+                transform: 'scale(1.08)',
+              }}
+            />
+            {/* YouTube thumbnail */}
+            <img
+              src={active.thumb}
+              alt={active.title}
+              style={{
+                position: 'relative', zIndex: 1,
+                maxWidth: '90%', maxHeight: '65%',
+                objectFit: 'contain', borderRadius: 6,
+                boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
+              }}
+            />
+            {/* Play button */}
+            <div
+              style={{
+                position: 'absolute', zIndex: 2,
+                width: 64, height: 64, borderRadius: '50%',
+                background: 'linear-gradient(135deg,#ec4899,#f43f5e)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                boxShadow: '0 8px 24px rgba(236,72,153,0.5)',
+              }}
+            >
+              <Play size={26} fill='#fff' color='#fff' style={{ marginLeft: 3 }} />
+            </div>
+            {/* Video label */}
+            <div
+              style={{
+                position: 'absolute', bottom: 20, left: 0, right: 0, zIndex: 2,
+                textAlign: 'center', color: '#fff', fontSize: 13, fontWeight: 600,
+                padding: '0 20px',
+                textShadow: '0 1px 4px rgba(0,0,0,0.6)',
+              }}
+            >
+              {active.title}
+            </div>
+            {/* Counter */}
+            <div
+              style={{
+                position: 'absolute', top: 14, right: 14, zIndex: 2,
+                background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(4px)',
+                borderRadius: 20, padding: '3px 10px',
+                fontSize: 11, fontWeight: 600, color: '#fff',
+              }}
+            >
+              {activeIndex + 1} / {mediaItems.length}
+            </div>
+          </div>
+        )}
+        <style>{`@keyframes galleryFadeIn { from { opacity:0.6; } to { opacity:1; } }`}</style>
+      </div>
     </div>
   )
 }
@@ -509,10 +646,7 @@ function RatingBar({ label, pct }) {
   return (
     <div className='flex items-center gap-3 mb-1.5'>
       <span style={{ minWidth: 32, fontSize: 12, color: '#888' }}>{label}</span>
-      <div
-        className='flex-1 rounded-full overflow-hidden'
-        style={{ height: 5, background: '#f0f0f0' }}
-      >
+      <div className='flex-1 rounded-full overflow-hidden' style={{ height: 5, background: '#f0f0f0' }}>
         <div
           className='h-full rounded-full'
           style={{
@@ -522,16 +656,7 @@ function RatingBar({ label, pct }) {
           }}
         />
       </div>
-      <span
-        style={{
-          minWidth: 30,
-          fontSize: 12,
-          color: '#888',
-          textAlign: 'right',
-        }}
-      >
-        {pct}%
-      </span>
+      <span style={{ minWidth: 30, fontSize: 12, color: '#888', textAlign: 'right' }}>{pct}%</span>
     </div>
   )
 }
@@ -547,30 +672,14 @@ function SkeletonLoader() {
         .pdp-breadcrumb { padding: 11px clamp(16px, 6%, 86px); font-size: 12px; color: #9ca3af; display: flex; gap: 6px; align-items: center; border-bottom: 1px solid #fff; background: #fff; max-width: 1440px; margin: 0 auto; box-sizing: border-box; width: 100%; }
         .pdp-outer { display: flex; align-items: flex-start; max-width: 1440px; margin: 0 auto; padding: 0 clamp(16px, 6%, 86px); }
         .pdp-images-col { width: 52%; min-width: 0; }
-        .pdp-img-item { position: relative; width: 100%; aspect-ratio: 3 / 4; overflow: hidden; cursor: zoom-in; background: #f9f9f9; display: block; }
-        .pdp-img-item + .pdp-img-item { margin-top: 2px; }
         .pdp-info-col { width: 48%; min-width: 0; position: sticky; top: 64px; height: calc(100vh - 64px); overflow-y: auto; padding: 0px 48px 48px 40px; border-left: 1px solid #f3f4f6; background: #fff; }
         .pdp-hr { height: 1px; background: #f3f4f6; margin: 20px 0; }
-        .pdp-size-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
-        .pdp-sizes { display: flex; flex-wrap: wrap; gap: 10px; }
-        .pdp-size-btn { width: 56px; height: 56px; border-radius: 50%; border: 1.5px solid #e5e7eb; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 500; color: #374151; cursor: pointer; transition: all 0.15s; background: #fff; font-family: 'DM Sans', sans-serif; }
-        .pdp-cta { display: flex; gap: 10px; margin: 22px 0 18px; }
-        .pdp-trust { display: flex; border: 1px solid #f3f4f6; border-radius: 8px; overflow: hidden; margin-bottom: 20px; }
-        .pdp-trust-item { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 5px; padding: 14px 8px; border-right: 1px solid #f3f4f6; text-align: center; background: #fafafa; }
-        .pdp-delivery { border: 1px solid #f3f4f6; border-radius: 8px; padding: 16px; margin-bottom: 20px; background: #fafafa; }
-        .pdp-pincode-row { display: flex; gap: 8px; align-items: center; }
-        .pdp-accordion { margin-top: 8px; }
-        .pdp-accordion-item { border-top: 1px solid #f3f4f6; }
-        .pdp-accordion-trigger { display: flex; justify-content: space-between; align-items: center; padding: 16px 0; cursor: pointer; user-select: none; background: none; border: none; width: 100%; font-family: 'DM Sans', sans-serif; text-align: left; }
       `}</style>
       <div className='pdp-page'>
         <Navbar />
         <div className='pdp-breadcrumb'>
           {[40, 50, 70, 45, 60].map((w, i) => (
-            <span
-              key={i}
-              style={{ display: 'flex', alignItems: 'center', gap: 6 }}
-            >
+            <span key={i} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
               <div className='skeleton' style={{ width: w, height: 12 }} />
               {i < 4 && <span style={{ color: '#d1d5db' }}>›</span>}
             </span>
@@ -578,147 +687,18 @@ function SkeletonLoader() {
         </div>
         <div className='pdp-outer'>
           <div className='pdp-images-col'>
-            {[...Array(5)].map((_, i) => (
-              <div key={i} className='pdp-img-item'>
-                <div
-                  className='skeleton'
-                  style={{ width: '100%', height: '100%' }}
-                />
+            <div style={{ display: 'flex', gap: 8 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                {[...Array(6)].map((_, i) => (
+                  <div key={i} className='skeleton' style={{ width: 64, height: 84 }} />
+                ))}
               </div>
-            ))}
+              <div className='skeleton' style={{ flex: 1, aspectRatio: '3/4' }} />
+            </div>
           </div>
-          <div className='pdp-info-col'>
-            <div style={{ marginBottom: 10 }}>
-              <div
-                className='skeleton'
-                style={{ width: 160, height: 26, marginBottom: 6 }}
-              />
-              <div
-                className='skeleton'
-                style={{ width: '85%', height: 16, marginBottom: 4 }}
-              />
-              <div className='skeleton' style={{ width: '60%', height: 16 }} />
-            </div>
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 10,
-                marginTop: 12,
-              }}
-            >
-              <div
-                className='skeleton'
-                style={{ width: 42, height: 20, borderRadius: 4 }}
-              />
-              <div className='skeleton' style={{ width: 90, height: 14 }} />
-              <div className='skeleton' style={{ width: 70, height: 14 }} />
-            </div>
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'baseline',
-                gap: 14,
-                marginTop: 18,
-              }}
-            >
-              <div className='skeleton' style={{ width: 100, height: 30 }} />
-              <div className='skeleton' style={{ width: 60, height: 16 }} />
-              <div className='skeleton' style={{ width: 70, height: 16 }} />
-            </div>
-            <div
-              className='skeleton'
-              style={{ width: 140, height: 11, marginTop: 4 }}
-            />
-            <div className='pdp-hr' />
-            <div
-              className='skeleton'
-              style={{ width: 120, height: 14, marginBottom: 10 }}
-            />
-            {[...Array(3)].map((_, i) => (
-              <div
-                key={i}
-                style={{
-                  display: 'flex',
-                  alignItems: 'flex-start',
-                  gap: 10,
-                  padding: 8,
-                  borderRadius: 8,
-                  background: '#fffbf5',
-                  border: '1px solid #fef3c7',
-                  marginBottom: 7,
-                }}
-              >
-                <div
-                  className='skeleton'
-                  style={{ width: 18, height: 18, borderRadius: 4 }}
-                />
-                <div style={{ flex: 1 }}>
-                  <div
-                    className='skeleton'
-                    style={{ width: 110, height: 13, marginBottom: 4 }}
-                  />
-                  <div
-                    className='skeleton'
-                    style={{ width: '75%', height: 12 }}
-                  />
-                </div>
-              </div>
-            ))}
-            <div className='pdp-hr' />
-            <div className='pdp-size-header'>
-              <div className='skeleton' style={{ width: 90, height: 14 }} />
-              <div className='skeleton' style={{ width: 70, height: 14 }} />
-            </div>
-            <div className='pdp-sizes'>
-              {[...Array(6)].map((_, i) => (
-                <div key={i} className='pdp-size-btn'>
-                  <div className='skeleton' style={{ width: 20, height: 12 }} />
-                </div>
-              ))}
-            </div>
-            <div className='pdp-cta'>
-              <div className='skeleton' style={{ flex: 1, height: 54 }} />
-              <div className='skeleton' style={{ width: 54, height: 54 }} />
-            </div>
-            <div className='pdp-trust'>
-              {[...Array(3)].map((_, i) => (
-                <div key={i} className='pdp-trust-item'>
-                  <div className='skeleton' style={{ width: 24, height: 24 }} />
-                  <div className='skeleton' style={{ width: 70, height: 10 }} />
-                </div>
-              ))}
-            </div>
-            <div className='pdp-delivery'>
-              <div
-                className='skeleton'
-                style={{ width: 140, height: 14, marginBottom: 10 }}
-              />
-              <div className='pdp-pincode-row'>
-                <div className='skeleton' style={{ flex: 1, height: 36 }} />
-                <div className='skeleton' style={{ width: 60, height: 36 }} />
-              </div>
-              <div
-                className='skeleton'
-                style={{ width: 220, height: 12, marginTop: 10 }}
-              />
-            </div>
-            <div className='pdp-accordion'>
-              {[...Array(3)].map((_, i) => (
-                <div key={i} className='pdp-accordion-item'>
-                  <div className='pdp-accordion-trigger'>
-                    <div
-                      className='skeleton'
-                      style={{ width: 160, height: 14 }}
-                    />
-                    <div
-                      className='skeleton'
-                      style={{ width: 16, height: 16 }}
-                    />
-                  </div>
-                </div>
-              ))}
-            </div>
+          <div className='pdp-info-col' style={{ padding: '20px 48px 48px 40px' }}>
+            <div className='skeleton' style={{ width: 160, height: 26, marginBottom: 6 }} />
+            <div className='skeleton' style={{ width: '85%', height: 16 }} />
           </div>
         </div>
       </div>
@@ -738,13 +718,11 @@ export default function ProductDetail() {
   const [wishlist, setWishlist] = useState(false)
   const [expandedSection, setExpandedSection] = useState('description')
   const [pincode, setPincode] = useState('560001')
-  const [imgErrors, setImgErrors] = useState({})
   const [addedToBag, setAddedToBag] = useState(false)
   const [sizeError, setSizeError] = useState(false)
 
   useEffect(() => {
     setLoading(true)
-    // Fire both API calls in parallel
     Promise.all([fetchProduct(productId), fetchRatings(productId)]).then(
       ([prod, ratings]) => {
         setProduct(prod)
@@ -760,71 +738,29 @@ export default function ProductDetail() {
   }
 
   const handleAddToBag = () => {
-    if (!selectedSize) {
-      setSizeError(true)
-      return
-    }
-
+    if (!selectedSize) { setSizeError(true); return }
     setSizeError(false)
     setAddedToBag(true)
     setTimeout(() => setAddedToBag(false), 2000)
   }
 
-  const getImg = (index) => {
-    if (!product) return ''
-    return imgErrors[index]
-      ? product.placeholderImages[index] ||
-          `https://placehold.co/1080x1440/ec4899/ffffff?text=Image+${index + 1}`
-      : product.images[index]
-  }
-
   if (loading) return <SkeletonLoader />
 
-  // ── Accordion sections ──────────────────────────────────────────────────────
-  // Product Description — driven by product.description (blurb) + product.highlights
-  // Product Details     — driven by product.details (normalised from API description object)
-  // Ratings & Reviews   — driven by ratingsData (separate API)
   const accordionSections = [
     {
       key: 'description',
       label: 'Product Description',
       content: (
         <>
-          <p
-            style={{
-              fontSize: 13.5,
-              color: '#555',
-              lineHeight: 1.75,
-              marginBottom: 14,
-            }}
-          >
+          <p style={{ fontSize: 13.5, color: '#555', lineHeight: 1.75, marginBottom: 14 }}>
             {product.description}
           </p>
-          <p
-            style={{
-              fontSize: 12,
-              fontWeight: 700,
-              color: '#374151',
-              textTransform: 'uppercase',
-              letterSpacing: '0.6px',
-              marginBottom: 8,
-            }}
-          >
+          <p style={{ fontSize: 12, fontWeight: 700, color: '#374151', textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: 8 }}>
             Product Highlights
           </p>
           <ul style={{ paddingLeft: 18, margin: 0 }}>
             {product.highlights.map((h, i) => (
-              <li
-                key={i}
-                style={{
-                  fontSize: 13.5,
-                  color: '#555',
-                  marginBottom: 5,
-                  lineHeight: 1.65,
-                }}
-              >
-                {h}
-              </li>
+              <li key={i} style={{ fontSize: 13.5, color: '#555', marginBottom: 5, lineHeight: 1.65 }}>{h}</li>
             ))}
           </ul>
         </>
@@ -838,27 +774,8 @@ export default function ProductDetail() {
           <tbody>
             {Object.entries(product.details).map(([k, v]) => (
               <tr key={k} style={{ borderBottom: '1px solid #fdf2f8' }}>
-                <td
-                  style={{
-                    padding: '7px 0',
-                    fontSize: 13,
-                    color: '#9ca3af',
-                    width: '42%',
-                    verticalAlign: 'top',
-                  }}
-                >
-                  {k}
-                </td>
-                <td
-                  style={{
-                    padding: '7px 0',
-                    fontSize: 13,
-                    color: '#374151',
-                    fontWeight: 500,
-                  }}
-                >
-                  {v}
-                </td>
+                <td style={{ padding: '7px 0', fontSize: 13, color: '#9ca3af', width: '42%', verticalAlign: 'top' }}>{k}</td>
+                <td style={{ padding: '7px 0', fontSize: 13, color: '#374151', fontWeight: 500 }}>{v}</td>
               </tr>
             ))}
           </tbody>
@@ -867,118 +784,37 @@ export default function ProductDetail() {
     },
     {
       key: 'ratings',
-      // Uses ratingsData.review_count from the separate ratings API
       label: `Ratings & Reviews (${ratingsData ? ratingsData.rating_count.toLocaleString() : '—'})`,
       content: ratingsData ? (
         <>
-          <div
-            style={{
-              display: 'flex',
-              gap: 32,
-              alignItems: 'center',
-              marginBottom: 20,
-              paddingBottom: 20,
-              borderBottom: '1px solid #fdf2f8',
-            }}
-          >
+          <div style={{ display: 'flex', gap: 32, alignItems: 'center', marginBottom: 20, paddingBottom: 20, borderBottom: '1px solid #fdf2f8' }}>
             <div style={{ textAlign: 'center', minWidth: 80 }}>
-              <div
-                style={{
-                  fontSize: 48,
-                  fontWeight: 800,
-                  color: '#1f2937',
-                  lineHeight: 1,
-                }}
-              >
-                {ratingsData.overall}
-              </div>
-              <div
-                style={{
-                  display: 'flex',
-                  justifyContent: 'center',
-                  gap: 2,
-                  marginTop: 6,
-                }}
-              >
+              <div style={{ fontSize: 48, fontWeight: 800, color: '#1f2937', lineHeight: 1 }}>{ratingsData.overall}</div>
+              <div style={{ display: 'flex', justifyContent: 'center', gap: 2, marginTop: 6 }}>
                 {[1, 2, 3, 4, 5].map((s) => (
-                  <Star
-                    key={s}
-                    size={13}
-                    fill={
-                      s <= Math.round(ratingsData.overall) ? '#fbbf24' : 'none'
-                    }
-                    color='#fbbf24'
-                  />
+                  <Star key={s} size={13} fill={s <= Math.round(ratingsData.overall) ? '#fbbf24' : 'none'} color='#fbbf24' />
                 ))}
               </div>
-              <div style={{ fontSize: 11, color: '#9ca3af', marginTop: 4 }}>
-                {ratingsData.rating_count.toLocaleString()} ratings
-              </div>
+              <div style={{ fontSize: 11, color: '#9ca3af', marginTop: 4 }}>{ratingsData.rating_count.toLocaleString()} ratings</div>
             </div>
             <div style={{ flex: 1 }}>
-              {ratingsData.breakdown.map((b) => (
-                <RatingBar key={b.label} label={b.label} pct={b.pct} />
-              ))}
+              {ratingsData.breakdown.map((b) => <RatingBar key={b.label} label={b.label} pct={b.pct} />)}
             </div>
           </div>
           {ratingsData.reviews.map((r) => (
-            <div
-              key={r.id}
-              style={{
-                paddingBottom: 16,
-                marginBottom: 16,
-                borderBottom: '1px solid #fdf2f8',
-              }}
-            >
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 10,
-                  marginBottom: 6,
-                }}
-              >
-                <span
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: 3,
-                    background: 'linear-gradient(135deg,#10b981,#059669)',
-                    color: '#fff',
-                    borderRadius: 10,
-                    padding: '2px 9px',
-                    fontSize: 12,
-                    fontWeight: 600,
-                  }}
-                >
+            <div key={r.id} style={{ paddingBottom: 16, marginBottom: 16, borderBottom: '1px solid #fdf2f8' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, background: 'linear-gradient(135deg,#10b981,#059669)', color: '#fff', borderRadius: 10, padding: '2px 9px', fontSize: 12, fontWeight: 600 }}>
                   <Star size={10} fill='#fff' strokeWidth={0} /> {r.rating}
                 </span>
-                <span
-                  style={{ fontSize: 14, fontWeight: 600, color: '#1f2937' }}
-                >
-                  {r.title}
-                </span>
+                <span style={{ fontSize: 14, fontWeight: 600, color: '#1f2937' }}>{r.title}</span>
               </div>
-              <p
-                style={{
-                  fontSize: 13.5,
-                  color: '#6b7280',
-                  lineHeight: 1.65,
-                  margin: 0,
-                }}
-              >
-                {r.body}
-              </p>
-              <p style={{ fontSize: 11, color: '#9ca3af', marginTop: 6 }}>
-                {r.user} · {r.date} &nbsp;|&nbsp; {r.helpful} people found this
-                helpful
-              </p>
+              <p style={{ fontSize: 13.5, color: '#6b7280', lineHeight: 1.65, margin: 0 }}>{r.body}</p>
+              <p style={{ fontSize: 11, color: '#9ca3af', marginTop: 6 }}>{r.user} · {r.date} &nbsp;|&nbsp; {r.helpful} people found this helpful</p>
             </div>
           ))}
         </>
-      ) : (
-        <p style={{ fontSize: 13, color: '#9ca3af' }}>Loading ratings…</p>
-      ),
+      ) : <p style={{ fontSize: 13, color: '#9ca3af' }}>Loading ratings…</p>,
     },
   ]
 
@@ -994,14 +830,7 @@ export default function ProductDetail() {
         .pdp-breadcrumb-sep { color: #d1d5db; font-size: 10px; }
         .pdp-breadcrumb-current { color: #374151; font-weight: 500; }
         .pdp-outer { display: flex; align-items: flex-start; max-width: 1440px; margin: 0 auto; padding: 0 clamp(16px, 6%, 86px); }
-        .pdp-images-col { width: 52%; min-width: 0; }
-        .pdp-img-item { position: relative; width: 100%; aspect-ratio: 3 / 4; overflow: hidden; cursor: zoom-in; background: #f9f9f9; display: block; }
-        .pdp-img-item + .pdp-img-item { margin-top: 2px; }
-        .pdp-img-item img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94); }
-        .pdp-img-item:hover img { transform: scale(1.04); }
-        .pdp-img-zoom-badge { position: absolute; bottom: 14px; right: 14px; background: rgba(255,255,255,0.92); border-radius: 50%; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.2s; box-shadow: 0 2px 10px rgba(0,0,0,0.12); }
-        .pdp-img-item:hover .pdp-img-zoom-badge { opacity: 1; }
-        .pdp-img-counter { position: absolute; top: 14px; right: 14px; background: rgba(255,255,255,0.88); backdrop-filter: blur(4px); border-radius: 20px; padding: 3px 10px; font-size: 11px; font-weight: 600; color: #374151; }
+        .pdp-images-col { width: 52%; min-width: 0; padding-top: 12px; }
         .pdp-info-col { width: 48%; min-width: 0; position: sticky; top: 64px; height: calc(100vh - 64px); overflow-y: auto; padding: 0px 48px 48px 40px; border-left: 1px solid #f3f4f6; background: #fff; scrollbar-width: thin; scrollbar-color: #fce7f3 transparent; }
         .pdp-info-col::-webkit-scrollbar { width: 4px; }
         .pdp-info-col::-webkit-scrollbar-thumb { background: #fce7f3; border-radius: 4px; }
@@ -1063,7 +892,6 @@ export default function ProductDetail() {
       <div className='pdp-page'>
         <Navbar />
 
-        {/* Breadcrumb — category comes from API */}
         <div className='pdp-breadcrumb'>
           <a href='#'>Home</a>
           <span className='pdp-breadcrumb-sep'>›</span>
@@ -1077,78 +905,38 @@ export default function ProductDetail() {
         </div>
 
         <div className='pdp-outer'>
-          {/* ─ LEFT: vertical image stack — images from API variant ─ */}
+          {/* ─ LEFT: Gallery with thumbnail strip ─ */}
           <div className='pdp-images-col'>
-            {product.images.map((img, i) => (
-              <div
-                key={i}
-                className='pdp-img-item'
-                onClick={() => openSlider(i)}
-              >
-                <img
-                  src={getImg(i)}
-                  alt={`${product.name} — view ${i + 1}`}
-                  onError={() => setImgErrors((e) => ({ ...e, [i]: true }))}
-                />
-                {i === 0 && (
-                  <div className='pdp-img-counter'>
-                    1 / {product.images.length}
-                  </div>
-                )}
-                <div className='pdp-img-zoom-badge'>
-                  <ZoomIn size={16} color='#ec4899' />
-                </div>
-              </div>
-            ))}
+            <ProductGallery
+              mediaItems={product.mediaItems}
+              onOpenSlider={openSlider}
+            />
           </div>
 
           {/* ─ RIGHT: sticky info panel ─ */}
           <div className='pdp-info-col'>
-            {/* Brand (from API brand.name) + product title */}
-            <div
-              style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'flex-start',
-              }}
-            >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
               <div style={{ flex: 1, paddingRight: 16 }}>
                 <div className='pdp-brand-name'>{product.brand}</div>
                 <div className='pdp-product-subtitle'>{product.name}</div>
               </div>
-              <button
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  cursor: 'pointer',
-                  padding: '4px',
-                  flexShrink: 0,
-                }}
-              >
+              <button style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px', flexShrink: 0 }}>
                 <Share2 size={18} color='#9ca3af' />
               </button>
             </div>
 
-            {/* Rating — from fetchProduct (which reads ratings from product API) */}
             <div className='pdp-rating-row'>
               <span className='pdp-rating-pill'>
                 <Star size={11} fill='#fff' strokeWidth={0} /> {product.rating}
               </span>
               <span className='pdp-rating-sep'>|</span>
-              <span className='pdp-rating-meta'>
-                {product.ratingCount.toLocaleString()} Ratings
-              </span>
+              <span className='pdp-rating-meta'>{product.ratingCount.toLocaleString()} Ratings</span>
               <span className='pdp-rating-sep'>|</span>
-              <span className='pdp-rating-meta'>
-                {product.reviewCount} Reviews
-              </span>
+              <span className='pdp-rating-meta'>{product.reviewCount} Reviews</span>
             </div>
 
-            {/* Price — from API pricing block */}
             <div className='pdp-price-row'>
-              <span className='pdp-price'>
-                ₹{product.price.toLocaleString()}
-              </span>
+              <span className='pdp-price'>₹{product.price.toLocaleString()}</span>
               <span className='pdp-mrp'>₹{product.mrp.toLocaleString()}</span>
               <span className='pdp-discount'>({product.discount}% OFF)</span>
             </div>
@@ -1156,7 +944,6 @@ export default function ProductDetail() {
 
             <div className='pdp-hr' />
 
-            {/* Offers — static, intentionally not API-driven */}
             <div className='pdp-offers-title'>Available Offers</div>
             {product.offers.map((o, i) => (
               <div key={i} className='pdp-offer-row'>
@@ -1170,7 +957,6 @@ export default function ProductDetail() {
 
             <div className='pdp-hr' />
 
-            {/* Size selector — sizes & availability from API inventory.variants[].sizes */}
             <div className='pdp-size-header'>
               <span className='pdp-section-label'>Select Size</span>
               <span className='pdp-size-guide'>Size Guide</span>
@@ -1190,13 +976,8 @@ export default function ProductDetail() {
                 )
               })}
             </div>
-            {sizeError && (
-              <div className='pdp-size-warn'>
-                Please select a size to continue
-              </div>
-            )}
+            {sizeError && <div className='pdp-size-warn'>Please select a size to continue</div>}
 
-            {/* CTA */}
             <div className='pdp-cta'>
               <button
                 className={`pdp-btn-bag ${addedToBag ? 'added' : ''}`}
@@ -1209,15 +990,10 @@ export default function ProductDetail() {
                 className={`pdp-btn-wishlist ${wishlist ? 'active' : ''}`}
                 onClick={() => setWishlist((w) => !w)}
               >
-                <Heart
-                  size={20}
-                  color={wishlist ? '#ec4899' : '#6b7280'}
-                  fill={wishlist ? '#ec4899' : 'none'}
-                />
+                <Heart size={20} color={wishlist ? '#ec4899' : '#6b7280'} fill={wishlist ? '#ec4899' : 'none'} />
               </button>
             </div>
 
-            {/* Trust badges — static */}
             <div className='pdp-trust'>
               <div className='pdp-trust-item'>
                 <Truck size={18} color='#10b981' />
@@ -1233,7 +1009,6 @@ export default function ProductDetail() {
               </div>
             </div>
 
-            {/* Delivery — days & COD from API delivery block */}
             <div className='pdp-delivery'>
               <div className='pdp-delivery-title'>
                 <Truck size={14} color='#ec4899' />
@@ -1243,9 +1018,7 @@ export default function ProductDetail() {
                 <input
                   className='pdp-pincode-input'
                   value={pincode}
-                  onChange={(e) =>
-                    setPincode(e.target.value.replace(/\D/g, '').slice(0, 6))
-                  }
+                  onChange={(e) => setPincode(e.target.value.replace(/\D/g, '').slice(0, 6))}
                   placeholder='Enter pincode'
                   maxLength={6}
                 />
@@ -1257,24 +1030,17 @@ export default function ProductDetail() {
               </div>
             </div>
 
-            {/* Accordion — description & details from product API; ratings from ratings API */}
             <div className='pdp-accordion'>
               {accordionSections.map((sec) => (
                 <div key={sec.key} className='pdp-accordion-item'>
                   <button
                     className='pdp-accordion-trigger'
-                    onClick={() =>
-                      setExpandedSection(
-                        expandedSection === sec.key ? null : sec.key,
-                      )
-                    }
+                    onClick={() => setExpandedSection(expandedSection === sec.key ? null : sec.key)}
                   >
                     <span className='pdp-accordion-label'>{sec.label}</span>
-                    {expandedSection === sec.key ? (
-                      <ChevronUp size={16} color='#ec4899' />
-                    ) : (
-                      <ChevronDown size={16} color='#9ca3af' />
-                    )}
+                    {expandedSection === sec.key
+                      ? <ChevronUp size={16} color='#ec4899' />
+                      : <ChevronDown size={16} color='#9ca3af' />}
                   </button>
                   {expandedSection === sec.key && (
                     <div className='pdp-accordion-body'>{sec.content}</div>
@@ -1286,17 +1052,15 @@ export default function ProductDetail() {
         </div>
       </div>
 
-      {/* Image slider modal */}
+      {/* Full-screen media slider */}
       {sliderOpen && (
-        <ImageSlider
-          images={product.images}
-          placeholderImages={product.placeholderImages}
+        <MediaSlider
+          mediaItems={product.mediaItems}
           initialIndex={sliderIndex}
           onClose={() => setSliderOpen(false)}
         />
       )}
 
-      {/* Toast */}
       {addedToBag && <div className='pdp-toast'>✓ Added to your bag!</div>}
     </>
   )
