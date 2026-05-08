@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, useEffect } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import { create } from 'zustand'
@@ -19,6 +19,7 @@ import {
   Truck,
   Minus,
   Plus,
+  Trash2,
 } from 'lucide-react'
 
 import logo from './assets/logo.png'
@@ -29,58 +30,13 @@ import AddressModal from './modals/AddressModal'
 
 // ─── Zustand Store ────────────────────────────────────────────────────────────
 const useBagStore = create((set, get) => ({
-  items: [
-    {
-      id: 1,
-      brand: 'ARAVALII',
-      name: 'Women Floral Printed Shirt Style Top',
-      seller: 'ARAVALII ECOMMERCE INDIA PRIVATE LTD.',
-      size: 'L',
-      qty: 1,
-      price: 899,
-      mrp: 1999,
-      couponDiscount: 93,
-      returnDays: 14,
-      color: '#fce4ec',
-      accent: '#e91e8c',
-      selected: true,
-    },
-    {
-      id: 2,
-      brand: 'Keitra',
-      name: 'Women Floral Printed Regular Pure Cotton Kurta with Dupatta',
-      seller: 'SHREE RAM CREATION',
-      size: 'XL',
-      qty: 1,
-      price: 585,
-      mrp: 2999,
-      couponDiscount: 124,
-      returnDays: 14,
-      color: '#e8f5e9',
-      accent: '#2e7d32',
-      selected: true,
-    },
-    {
-      id: 3,
-      brand: 'FLOWERVELLY',
-      name: 'Women Printed Pure Cotton Kurta with Pyjamas',
-      seller: 'KRUPA TRADING',
-      size: 'M',
-      qty: 1,
-      price: 908,
-      mrp: 3199,
-      couponDiscount: 184,
-      returnDays: 7,
-      color: '#fce4ec',
-      accent: '#ad1457',
-      selected: true,
-    },
-  ],
+  items: [],
   couponsApplied: 2,
   couponSavings: 401,
   platformFee: 23,
   donationAmount: 0,
   mobileMenuOpen: false,
+  setItems: (items) => set({ items }),
 
   toggleSelected: (id) =>
     set((s) => ({
@@ -96,6 +52,7 @@ const useBagStore = create((set, get) => ({
         i.id === id ? { ...i, qty: Math.max(1, i.qty + delta) } : i,
       ),
     })),
+
   setDonation: (amt) =>
     set((s) => ({ donationAmount: s.donationAmount === amt ? 0 : amt })),
   toggleMobileMenu: () => set((s) => ({ mobileMenuOpen: !s.mobileMenuOpen })),
@@ -149,8 +106,7 @@ function Navbar() {
 function PinBar() {
   const [pin, setPin] = useState('')
   const [submitted, setSubmitted] = useState(false)
-    const [openAddress, setOpenAddress] = useState(false)
-
+  const [openAddress, setOpenAddress] = useState(false)
 
   const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ['pin', pin],
@@ -189,129 +145,282 @@ function PinBar() {
         </span>
       )}
       <button
-  style={styles.addressCheckBtn}
-  onClick={() => setOpenAddress(true)}
->
-  Add Address
-</button>
-<AddressModal
-  open={openAddress}
-  onClose={() => setOpenAddress(false)}
-/>
+        style={styles.addressCheckBtn}
+        onClick={() => setOpenAddress(true)}
+      >
+        Add Address
+      </button>
+      <AddressModal open={openAddress} onClose={() => setOpenAddress(false)} />
     </div>
   )
 }
 
 function ItemCard({ item }) {
-  const { toggleSelected, removeItem, updateQty } = useBagStore()
+  const { items, toggleSelected, updateQty, setItems } = useBagStore()
+
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [deleting, setDeleting] = useState(false)
+
+  const deleteBagItem = async () => {
+    try {
+      setDeleting(true)
+
+      const response = await fetch(
+        `https://api.aarria.com/api/bags/${item.id}?customer_id=1`,
+        {
+          method: 'DELETE',
+        },
+      )
+
+      if (!response.ok) {
+        throw new Error('Failed')
+      }
+
+      setItems(items.filter((x) => x.id !== item.id))
+
+      setShowDeleteConfirm(false)
+    } catch (error) {
+      alert('Unable to delete item')
+    } finally {
+      setDeleting(false)
+    }
+  }
 
   return (
-    <div
-      style={{
-        ...styles.itemCard,
-        opacity: item.selected ? 1 : 0.55,
-      }}
-    >
-      {/* Checkbox */}
-      <button
-        onClick={() => toggleSelected(item.id)}
+    <>
+      <div
         style={{
-          ...styles.checkbox,
-          background: item.selected ? '#e91e8c' : 'transparent',
-          borderColor: item.selected ? '#e91e8c' : '#bbb',
+          ...styles.itemCard,
+          opacity: item.selected ? 1 : 0.55,
         }}
-        aria-label='toggle item'
       >
-        {item.selected && (
-          <svg width='10' height='8' viewBox='0 0 10 8' fill='none'>
-            <path
-              d='M1 4l3 3 5-6'
-              stroke='white'
-              strokeWidth='1.8'
-              strokeLinecap='round'
-              strokeLinejoin='round'
+        {/* Checkbox */}
+        <button
+          onClick={() => toggleSelected(item.id)}
+          style={{
+            ...styles.checkbox,
+            background: item.selected ? '#e91e8c' : 'transparent',
+            borderColor: item.selected ? '#e91e8c' : '#bbb',
+          }}
+          aria-label='toggle item'
+        >
+          {item.selected && (
+            <svg width='10' height='8' viewBox='0 0 10 8' fill='none'>
+              <path
+                d='M1 4l3 3 5-6'
+                stroke='white'
+                strokeWidth='1.8'
+                strokeLinecap='round'
+                strokeLinejoin='round'
+              />
+            </svg>
+          )}
+        </button>
+
+        {/* Image */}
+        <a
+          href={`/product/${item.productId}`}
+          target='_blank'
+          rel='noopener noreferrer'
+          style={{
+            textDecoration: 'none',
+            flexShrink: 0,
+          }}
+        >
+          <div style={{ ...styles.itemThumb, background: item.color }}>
+            <img
+              src={`https://cdn.aarria.com/app/images/${item.image}`}
+              alt={item.name}
+              style={{
+                width: '100%',
+                height: '100%',
+                objectFit: 'cover',
+              }}
             />
-          </svg>
-        )}
-      </button>
+          </div>
+        </a>
 
-      {/* Image placeholder */}
-      <div style={{ ...styles.itemThumb, background: item.color }} aria-hidden>
-        <svg width='48' height='64' viewBox='0 0 48 64'>
-          <rect
-            x='10'
-            y='4'
-            width='28'
-            height='42'
-            rx='5'
-            fill={item.accent}
-            opacity='0.25'
-          />
-          <rect
-            x='14'
-            y='44'
-            width='20'
-            height='16'
-            rx='3'
-            fill={item.accent}
-            opacity='0.15'
-          />
-          <circle cx='24' cy='20' r='6' fill={item.accent} opacity='0.3' />
-        </svg>
+        {/* Details */}
+        <div style={styles.itemBody}>
+          <a
+            href={`https://aarria.com/product/${item.productId}`}
+            target='_blank'
+            rel='noopener noreferrer'
+            style={{
+              textDecoration: 'none',
+              color: 'inherit',
+            }}
+          >
+            <div style={styles.itemName}>{item.name}</div>
+          </a>
+
+          <div style={styles.itemAttrs}>
+            <span style={styles.attrPill}>
+              Size: {item.size} <ChevronDown size={11} />
+            </span>
+
+            <div style={styles.qtyControl}>
+              <button
+                style={styles.qtyBtn}
+                onClick={() => updateQty(item.id, -1)}
+              >
+                <Minus size={11} />
+              </button>
+
+              <span style={styles.qtyNum}>{item.qty}</span>
+
+              <button
+                style={styles.qtyBtn}
+                onClick={() => updateQty(item.id, 1)}
+              >
+                <Plus size={11} />
+              </button>
+            </div>
+          </div>
+
+          <div style={styles.pricingRow}>
+            <span style={styles.priceFinal}>₹{item.price * item.qty}</span>
+
+            <span style={styles.priceMrp}>₹{item.mrp}</span>
+
+            <span style={styles.priceOff}>₹{item.mrp - item.price} OFF</span>
+          </div>
+
+          {item.couponDiscount > 0 && (
+            <div style={styles.couponLine}>
+              <Tag size={11} style={{ marginRight: 4 }} />
+              Coupon Discount: ₹{item.couponDiscount}
+            </div>
+          )}
+
+          <div style={styles.returnLine}>
+            <RotateCcw size={11} style={{ marginRight: 4 }} />
+            {item.returnDays} days return available
+          </div>
+        </div>
+
+        {/* Delete */}
+        <button
+          style={{
+            ...styles.removeBtn,
+            color: '#ff3f6c',
+          }}
+          onClick={() => setShowDeleteConfirm(true)}
+          aria-label='remove item'
+        >
+          <Trash2 size={18} />
+        </button>
       </div>
 
-      {/* Details */}
-      <div style={styles.itemBody}>
-        <div style={styles.itemBrand}>{item.brand}</div>
-        <div style={styles.itemName}>{item.name}</div>
-        <div style={styles.itemSeller}>Sold by: {item.seller}</div>
-
-        <div style={styles.itemAttrs}>
-          <span style={styles.attrPill}>
-            Size: {item.size} <ChevronDown size={11} />
-          </span>
-          <div style={styles.qtyControl}>
-            <button
-              style={styles.qtyBtn}
-              onClick={() => updateQty(item.id, -1)}
+      {/* Delete Modal */}
+      {showDeleteConfirm && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0,0,0,0.45)',
+            zIndex: 9999,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: 16,
+          }}
+        >
+          <div
+            style={{
+              width: '100%',
+              maxWidth: 340,
+              background: '#fff',
+              borderRadius: 20,
+              padding: 20,
+            }}
+          >
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+              }}
             >
-              <Minus size={11} />
-            </button>
-            <span style={styles.qtyNum}>{item.qty}</span>
-            <button style={styles.qtyBtn} onClick={() => updateQty(item.id, 1)}>
-              <Plus size={11} />
-            </button>
+              <h3
+                style={{
+                  margin: 0,
+                  fontSize: 18,
+                  fontWeight: 700,
+                }}
+              >
+                Remove Item
+              </h3>
+
+              <button
+                onClick={() => setShowDeleteConfirm(false)}
+                style={{
+                  border: 'none',
+                  background: 'none',
+                  cursor: 'pointer',
+                }}
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <p
+              style={{
+                fontSize: 14,
+                color: '#666',
+                marginTop: 14,
+                lineHeight: 1.5,
+              }}
+            >
+              Are you sure you want to remove this item from your bag?
+            </p>
+
+            <div
+              style={{
+                display: 'flex',
+                gap: 10,
+                marginTop: 22,
+              }}
+            >
+              <button
+                onClick={() => setShowDeleteConfirm(false)}
+                style={{
+                  flex: 1,
+                  height: 44,
+                  borderRadius: 10,
+                  border: '1px solid #ddd',
+                  background: '#fff',
+                  cursor: 'pointer',
+                  fontWeight: 600,
+                }}
+              >
+                Cancel
+              </button>
+
+              <button
+                onClick={deleteBagItem}
+                disabled={deleting}
+                style={{
+                  flex: 1,
+                  height: 44,
+                  borderRadius: 12,
+                  border: '1px solid #ff3f6c',
+                  background: '#fff0f4',
+                  color: '#ff3f6c',
+                  cursor: 'pointer',
+                  fontWeight: 700,
+                  fontSize: 15,
+                  transition: 'all 0.2s ease',
+                  opacity: deleting ? 0.6 : 1,
+                }}
+              >
+                {deleting ? 'Removing...' : 'Remove'}
+              </button>
+            </div>
           </div>
         </div>
-
-        <div style={styles.pricingRow}>
-          <span style={styles.priceFinal}>₹{item.price * item.qty}</span>
-          <span style={styles.priceMrp}>₹{item.mrp}</span>
-          <span style={styles.priceOff}>₹{item.mrp - item.price} OFF</span>
-        </div>
-
-        {item.couponDiscount > 0 && (
-          <div style={styles.couponLine}>
-            <Tag size={11} style={{ marginRight: 4 }} />
-            Coupon Discount: ₹{item.couponDiscount}
-          </div>
-        )}
-
-        <div style={styles.returnLine}>
-          <RotateCcw size={11} style={{ marginRight: 4 }} />
-          {item.returnDays} days return available
-        </div>
-      </div>
-
-      {/* Remove */}
-      <button
-        style={styles.removeBtn}
-        onClick={() => removeItem(item.id)}
-        aria-label='remove item'
-      >
-        <XCircle size={18} />
-      </button>
-    </div>
+      )}
+    </>
   )
 }
 
@@ -446,9 +555,53 @@ function PriceRow({ label, value, green }) {
 
 // ─── Main BagPage ─────────────────────────────────────────────────────────────
 function BagPage() {
-  const { items, toggleSelected } = useBagStore()
+  const { items, toggleSelected, setItems } = useBagStore()
   const selectedCount = items.filter((i) => i.selected).length
   const allSelected = selectedCount === items.length
+
+  useEffect(() => {
+    const fetchBagItems = async () => {
+      try {
+        const response = await fetch('https://api.aarria.com/customers/1/bag')
+
+        const data = await response.json()
+
+        const mappedItems = (data.items || []).map((item) => ({
+          id: item.bag_id,
+          productId: item.product_id,
+          brand: '',
+          name: item.title,
+          seller: '',
+          image: item.image_url,
+          size: item.size,
+          qty: item.quantity,
+          price: item.price,
+          mrp: item.mrp,
+          couponDiscount: item.coupon_discount,
+          returnDays: item.return_days,
+          colorName: item.color,
+          color:
+            item.color?.toLowerCase() === 'red'
+              ? '#ffebee'
+              : item.color?.toLowerCase() === 'blue'
+                ? '#e3f2fd'
+                : '#f5f5f5',
+          accent:
+            item.color?.toLowerCase() === 'red'
+              ? '#d32f2f'
+              : item.color?.toLowerCase() === 'blue'
+                ? '#1976d2'
+                : '#e91e8c',
+          selected: item.selected,
+        }))
+        setItems(mappedItems)
+      } catch (error) {
+        console.error('Failed to fetch bag items', error)
+      }
+    }
+
+    fetchBagItems()
+  }, [setItems])
 
   return (
     <div style={styles.root}>
@@ -927,14 +1080,14 @@ const styles = {
     transition: 'background 0.15s',
   },
   addressCheckBtn: {
-  border: 'none',
-  background: 'none',
-  color: '#ff3f6c',
-  fontSize: 16,
-  fontWeight: 700,
-  cursor: 'pointer',
-  whiteSpace: 'nowrap',
-},
+    border: 'none',
+    background: 'none',
+    color: '#ff3f6c',
+    fontSize: 16,
+    fontWeight: 700,
+    cursor: 'pointer',
+    whiteSpace: 'nowrap',
+  },
 }
 
 // Use this component inside your existing <QueryClientProvider> + <BrowserRouter> tree.
