@@ -12,6 +12,7 @@ import ProductUpload from './admin/ProductUpload.jsx'
 import ProductDetail from './ProductDetail.jsx'
 import ProductListings from './admin/ProductAdminListings.jsx'
 import { BagPage } from './Bag.jsx'
+import LoginPage from './LoginPage.jsx'
 import ProductEdit from './admin/ProductEdit.jsx'
 
 const queryClient = new QueryClient()  // ← add
@@ -20,6 +21,7 @@ const router = createBrowserRouter([
   { path: '/', element: <Home /> },
   { path: '/product/:id', element: <ProductDetail /> },
   { path: '/products', element: <Products /> },
+  { path: '/login', element: <LoginPage /> },
   { path: '/bag', element: <BagPage /> },
   { path: '/admin/products/new', element: <ProductUpload /> },
   { path: '/admin/', element: <ProductListings /> },
