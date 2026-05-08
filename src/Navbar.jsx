@@ -4,6 +4,13 @@ import { useCartStore } from './store/cartStore'
 
 import logo from './assets/logo.png'
 
+const PAGE_CONTAINER = {
+  maxWidth: '1400px',
+  margin: '0 auto',
+  padding: '0 24px',
+  width: '100%',
+}
+
 const MENU_DATA = [
   {
     name: 'Men',
@@ -181,9 +188,7 @@ const Navbar = () => {
       {/* ── Desktop Nav ── */}
       <div
         style={{
-          maxWidth: '1400px',
-          margin: '0 auto',
-          padding: '0 24px',
+          ...PAGE_CONTAINER,
           display: 'flex',
           alignItems: 'center',
           height: '60px',
@@ -395,16 +400,18 @@ const Navbar = () => {
             }}
             className='icon-btn'
           >
-            <ShoppingBag size={20} />
-            <span
-              style={{
-                fontSize: '10px',
-                fontWeight: 600,
-                letterSpacing: '0.03em',
-              }}
-            >
-              Bag
-            </span>
+            <a href='/bag'>
+              <ShoppingBag size={20} />
+              <span
+                style={{
+                  fontSize: '10px',
+                  fontWeight: 600,
+                  letterSpacing: '0.03em',
+                }}
+              >
+                Bag
+              </span>
+            </a>
             {cartCount > 0 && (
               <span
                 style={{

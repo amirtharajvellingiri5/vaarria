@@ -1,7 +1,7 @@
-import React, { useState, useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
-import { create } from "zustand";
+import React, { useState, useMemo } from 'react'
+import { useQuery } from '@tanstack/react-query'
+import { useNavigate } from 'react-router-dom'
+import { create } from 'zustand'
 import {
   ShoppingBag,
   Search,
@@ -19,59 +19,60 @@ import {
   Truck,
   Minus,
   Plus,
-} from "lucide-react";
+} from 'lucide-react'
 
 import logo from './assets/logo.png'
-import "./constants/global.css"
+import './constants/global.css'
 
-import CouponModal from "./modals/CouponModal";
+import CouponModal from './modals/CouponModal'
+import AddressModal from './modals/AddressModal'
 
 // ─── Zustand Store ────────────────────────────────────────────────────────────
 const useBagStore = create((set, get) => ({
   items: [
     {
       id: 1,
-      brand: "ARAVALII",
-      name: "Women Floral Printed Shirt Style Top",
-      seller: "ARAVALII ECOMMERCE INDIA PRIVATE LTD.",
-      size: "L",
+      brand: 'ARAVALII',
+      name: 'Women Floral Printed Shirt Style Top',
+      seller: 'ARAVALII ECOMMERCE INDIA PRIVATE LTD.',
+      size: 'L',
       qty: 1,
       price: 899,
       mrp: 1999,
       couponDiscount: 93,
       returnDays: 14,
-      color: "#fce4ec",
-      accent: "#e91e8c",
+      color: '#fce4ec',
+      accent: '#e91e8c',
       selected: true,
     },
     {
       id: 2,
-      brand: "Keitra",
-      name: "Women Floral Printed Regular Pure Cotton Kurta with Dupatta",
-      seller: "SHREE RAM CREATION",
-      size: "XL",
+      brand: 'Keitra',
+      name: 'Women Floral Printed Regular Pure Cotton Kurta with Dupatta',
+      seller: 'SHREE RAM CREATION',
+      size: 'XL',
       qty: 1,
       price: 585,
       mrp: 2999,
       couponDiscount: 124,
       returnDays: 14,
-      color: "#e8f5e9",
-      accent: "#2e7d32",
+      color: '#e8f5e9',
+      accent: '#2e7d32',
       selected: true,
     },
     {
       id: 3,
-      brand: "FLOWERVELLY",
-      name: "Women Printed Pure Cotton Kurta with Pyjamas",
-      seller: "KRUPA TRADING",
-      size: "M",
+      brand: 'FLOWERVELLY',
+      name: 'Women Printed Pure Cotton Kurta with Pyjamas',
+      seller: 'KRUPA TRADING',
+      size: 'M',
       qty: 1,
       price: 908,
       mrp: 3199,
       couponDiscount: 184,
       returnDays: 7,
-      color: "#fce4ec",
-      accent: "#ad1457",
+      color: '#fce4ec',
+      accent: '#ad1457',
       selected: true,
     },
   ],
@@ -84,7 +85,7 @@ const useBagStore = create((set, get) => ({
   toggleSelected: (id) =>
     set((s) => ({
       items: s.items.map((i) =>
-        i.id === id ? { ...i, selected: !i.selected } : i
+        i.id === id ? { ...i, selected: !i.selected } : i,
       ),
     })),
   removeItem: (id) =>
@@ -92,31 +93,32 @@ const useBagStore = create((set, get) => ({
   updateQty: (id, delta) =>
     set((s) => ({
       items: s.items.map((i) =>
-        i.id === id ? { ...i, qty: Math.max(1, i.qty + delta) } : i
+        i.id === id ? { ...i, qty: Math.max(1, i.qty + delta) } : i,
       ),
     })),
   setDonation: (amt) =>
     set((s) => ({ donationAmount: s.donationAmount === amt ? 0 : amt })),
-  toggleMobileMenu: () =>
-    set((s) => ({ mobileMenuOpen: !s.mobileMenuOpen })),
-}));
+  toggleMobileMenu: () => set((s) => ({ mobileMenuOpen: !s.mobileMenuOpen })),
+}))
 
 // ─── Mock fetch (TanStack Query) ──────────────────────────────────────────────
 const fetchPinDetails = async (pin) => {
-  await new Promise((r) => setTimeout(r, 600));
-  if (!pin || pin.length < 6) throw new Error("Invalid PIN");
-  return { city: "Bengaluru", deliveryDate: "Thu, 1 May", express: true };
-};
+  await new Promise((r) => setTimeout(r, 600))
+  if (!pin || pin.length < 6) throw new Error('Invalid PIN')
+  return { city: 'Bengaluru', deliveryDate: 'Thu, 1 May', express: true }
+}
 
 // ─── Sub-components ──────────────────────────────────────────────────────────
 
 function Navbar() {
-  const { mobileMenuOpen, toggleMobileMenu } = useBagStore();
+  const { mobileMenuOpen, toggleMobileMenu } = useBagStore()
   return (
     <nav style={styles.navbar}>
       <div style={styles.navLogo}>
-  <img src={logo} alt="logo" style={styles.logoImg} />
-</div>
+        <a href='/'>
+          <img src={logo} alt='logo' style={styles.logoImg} />
+        </a>
+      </div>
       <div style={styles.navSteps}>
         <span style={{ ...styles.step, ...styles.stepActive }}>
           <ShoppingBag size={13} style={{ marginRight: 4 }} />
@@ -129,70 +131,79 @@ function Navbar() {
       </div>
       <div style={styles.navRight}>
         <div style={styles.navSecure}>
-          <ShieldCheck size={15} color="#4caf50" />
+          <ShieldCheck size={15} color='#4caf50' />
           <span>100% SECURE</span>
         </div>
         <button
           onClick={toggleMobileMenu}
           style={styles.mobileMenuBtn}
-          aria-label="menu"
+          aria-label='menu'
         >
           {mobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
         </button>
       </div>
     </nav>
-  );
+  )
 }
 
 function PinBar() {
-  const [pin, setPin] = useState("");
-  const [submitted, setSubmitted] = useState(false);
+  const [pin, setPin] = useState('')
+  const [submitted, setSubmitted] = useState(false)
+    const [openAddress, setOpenAddress] = useState(false)
+
 
   const { data, isLoading, isError, refetch } = useQuery({
-    queryKey: ["pin", pin],
+    queryKey: ['pin', pin],
     queryFn: () => fetchPinDetails(pin),
     enabled: submitted && pin.length === 6,
     retry: false,
-  });
+  })
 
   const handleCheck = () => {
-    if (pin.length === 6) setSubmitted(true);
-  };
+    if (pin.length === 6) setSubmitted(true)
+  }
 
   return (
     <div style={styles.pinBar}>
-      <Truck size={16} style={{ color: "#e91e8c", flexShrink: 0 }} />
+      <Truck size={16} style={{ color: '#e91e8c', flexShrink: 0 }} />
       <input
         style={styles.pinInput}
-        placeholder="Enter PIN code"
+        placeholder='Enter PIN code'
         value={pin}
         maxLength={6}
         onChange={(e) => {
-          setPin(e.target.value.replace(/\D/, ""));
-          setSubmitted(false);
+          setPin(e.target.value.replace(/\D/, ''))
+          setSubmitted(false)
         }}
-        onKeyDown={(e) => e.key === "Enter" && handleCheck()}
+        onKeyDown={(e) => e.key === 'Enter' && handleCheck()}
       />
       {isLoading && <span style={styles.pinStatus}>Checking…</span>}
       {data && (
-        <span style={{ ...styles.pinStatus, color: "#2e7d32" }}>
+        <span style={{ ...styles.pinStatus, color: '#2e7d32' }}>
           ✓ Delivery by {data.deliveryDate}, {data.city}
         </span>
       )}
       {isError && (
-        <span style={{ ...styles.pinStatus, color: "#c62828" }}>
+        <span style={{ ...styles.pinStatus, color: '#c62828' }}>
           Invalid PIN
         </span>
       )}
-      <button style={styles.pinBtn} onClick={handleCheck}>
-        CHECK
-      </button>
+      <button
+  style={styles.addressCheckBtn}
+  onClick={() => setOpenAddress(true)}
+>
+  Add Address
+</button>
+<AddressModal
+  open={openAddress}
+  onClose={() => setOpenAddress(false)}
+/>
     </div>
-  );
+  )
 }
 
 function ItemCard({ item }) {
-  const { toggleSelected, removeItem, updateQty } = useBagStore();
+  const { toggleSelected, removeItem, updateQty } = useBagStore()
 
   return (
     <div
@@ -206,33 +217,46 @@ function ItemCard({ item }) {
         onClick={() => toggleSelected(item.id)}
         style={{
           ...styles.checkbox,
-          background: item.selected ? "#e91e8c" : "transparent",
-          borderColor: item.selected ? "#e91e8c" : "#bbb",
+          background: item.selected ? '#e91e8c' : 'transparent',
+          borderColor: item.selected ? '#e91e8c' : '#bbb',
         }}
-        aria-label="toggle item"
+        aria-label='toggle item'
       >
         {item.selected && (
-          <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
+          <svg width='10' height='8' viewBox='0 0 10 8' fill='none'>
             <path
-              d="M1 4l3 3 5-6"
-              stroke="white"
-              strokeWidth="1.8"
-              strokeLinecap="round"
-              strokeLinejoin="round"
+              d='M1 4l3 3 5-6'
+              stroke='white'
+              strokeWidth='1.8'
+              strokeLinecap='round'
+              strokeLinejoin='round'
             />
           </svg>
         )}
       </button>
 
       {/* Image placeholder */}
-      <div
-        style={{ ...styles.itemThumb, background: item.color }}
-        aria-hidden
-      >
-        <svg width="48" height="64" viewBox="0 0 48 64">
-          <rect x="10" y="4" width="28" height="42" rx="5" fill={item.accent} opacity="0.25" />
-          <rect x="14" y="44" width="20" height="16" rx="3" fill={item.accent} opacity="0.15" />
-          <circle cx="24" cy="20" r="6" fill={item.accent} opacity="0.3" />
+      <div style={{ ...styles.itemThumb, background: item.color }} aria-hidden>
+        <svg width='48' height='64' viewBox='0 0 48 64'>
+          <rect
+            x='10'
+            y='4'
+            width='28'
+            height='42'
+            rx='5'
+            fill={item.accent}
+            opacity='0.25'
+          />
+          <rect
+            x='14'
+            y='44'
+            width='20'
+            height='16'
+            rx='3'
+            fill={item.accent}
+            opacity='0.15'
+          />
+          <circle cx='24' cy='20' r='6' fill={item.accent} opacity='0.3' />
         </svg>
       </div>
 
@@ -254,10 +278,7 @@ function ItemCard({ item }) {
               <Minus size={11} />
             </button>
             <span style={styles.qtyNum}>{item.qty}</span>
-            <button
-              style={styles.qtyBtn}
-              onClick={() => updateQty(item.id, 1)}
-            >
+            <button style={styles.qtyBtn} onClick={() => updateQty(item.id, 1)}>
               <Plus size={11} />
             </button>
           </div>
@@ -266,9 +287,7 @@ function ItemCard({ item }) {
         <div style={styles.pricingRow}>
           <span style={styles.priceFinal}>₹{item.price * item.qty}</span>
           <span style={styles.priceMrp}>₹{item.mrp}</span>
-          <span style={styles.priceOff}>
-            ₹{item.mrp - item.price} OFF
-          </span>
+          <span style={styles.priceOff}>₹{item.mrp - item.price} OFF</span>
         </div>
 
         {item.couponDiscount > 0 && (
@@ -288,24 +307,24 @@ function ItemCard({ item }) {
       <button
         style={styles.removeBtn}
         onClick={() => removeItem(item.id)}
-        aria-label="remove item"
+        aria-label='remove item'
       >
         <XCircle size={18} />
       </button>
     </div>
-  );
+  )
 }
 
 function CouponPanel() {
-  const { couponsApplied, couponSavings } = useBagStore();
-    const [showCoupon, setShowCoupon] = useState(false)
+  const { couponsApplied, couponSavings } = useBagStore()
+  const [showCoupon, setShowCoupon] = useState(false)
 
   return (
     <div style={styles.panelCard}>
       <div style={styles.panelLabel}>COUPONS</div>
       <div style={styles.couponRow}>
-        <div style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
-          <Tag size={18} color="#e91e8c" style={{ marginTop: 2 }} />
+        <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+          <Tag size={18} color='#e91e8c' style={{ marginTop: 2 }} />
           <div>
             <div style={styles.couponApplied}>
               {couponsApplied} Coupons applied
@@ -315,59 +334,58 @@ function CouponPanel() {
             </div>
           </div>
         </div>
-        <button style={styles.editBtn} onClick={() => setShowCoupon(true)}>APPLY</button>
+        <button style={styles.editBtn} onClick={() => setShowCoupon(true)}>
+          APPLY
+        </button>
         <CouponModal
-        isOpen={showCoupon}
-        onClose={() => setShowCoupon(false)}
-        onApply={(selectedIds) => console.log('Applied coupon IDs:', selectedIds)}
-      />
+          isOpen={showCoupon}
+          onClose={() => setShowCoupon(false)}
+          onApply={(selectedIds) =>
+            console.log('Applied coupon IDs:', selectedIds)
+          }
+        />
       </div>
     </div>
-  );
+  )
 }
 
 function PricePanel() {
-  const navigate = useNavigate();
-  const { items, couponSavings, platformFee, donationAmount } = useBagStore();
+  const navigate = useNavigate()
+  const { items, couponSavings, platformFee, donationAmount } = useBagStore()
 
-  const selected = items.filter((i) => i.selected);
+  const selected = items.filter((i) => i.selected)
   const totalMrp = useMemo(
     () => selected.reduce((s, i) => s + i.mrp * i.qty, 0),
-    [selected]
-  );
+    [selected],
+  )
   const totalPrice = useMemo(
     () => selected.reduce((s, i) => s + i.price * i.qty, 0),
-    [selected]
-  );
-  const discountOnMrp = totalMrp - totalPrice;
-  const total = totalPrice - couponSavings + platformFee + donationAmount;
+    [selected],
+  )
+  const discountOnMrp = totalMrp - totalPrice
+  const total = totalPrice - couponSavings + platformFee + donationAmount
 
   return (
     <div style={styles.panelCard}>
       <div style={styles.panelLabel}>
-        PRICE DETAILS ({selected.length} Item{selected.length !== 1 ? "s" : ""})
+        PRICE DETAILS ({selected.length} Item{selected.length !== 1 ? 's' : ''})
       </div>
       <div style={styles.priceRows}>
-        <PriceRow label="Total MRP" value={`₹${totalMrp.toLocaleString()}`} />
+        <PriceRow label='Total MRP' value={`₹${totalMrp.toLocaleString()}`} />
         <PriceRow
-          label="Discount on MRP"
+          label='Discount on MRP'
           value={`- ₹${discountOnMrp.toLocaleString()}`}
           green
         />
-        <PriceRow
-          label="Coupon Discount"
-          value={`- ₹${couponSavings}`}
-          green
-        />
+        <PriceRow label='Coupon Discount' value={`- ₹${couponSavings}`} green />
         <div style={styles.priceRow}>
           <span style={styles.priceLabel}>
-            Platform Fee{" "}
-            <span style={styles.knowMoreInline}>Know More</span>
+            Platform Fee <span style={styles.knowMoreInline}>Know More</span>
           </span>
           <span style={styles.priceValue}>₹{platformFee}</span>
         </div>
         {donationAmount > 0 && (
-          <PriceRow label="Donation" value={`₹${donationAmount}`} />
+          <PriceRow label='Donation' value={`₹${donationAmount}`} />
         )}
       </div>
 
@@ -379,44 +397,58 @@ function PricePanel() {
       </div>
 
       <p style={styles.terms}>
-        By placing the order, you agree to Myntra's{" "}
-        <a href="#" style={styles.termsLink}>Terms of Use</a> and{" "}
-        <a href="#" style={styles.termsLink}>Privacy Policy</a>
+        By placing the order, you agree to Myntra's{' '}
+        <a href='#' style={styles.termsLink}>
+          Terms of Use
+        </a>{' '}
+        and{' '}
+        <a href='#' style={styles.termsLink}>
+          Privacy Policy
+        </a>
       </p>
 
       <button
         style={styles.placeBtn}
-        onClick={() => navigate("/checkout/address")}
+        onClick={() => navigate('/checkout/address')}
         disabled={selected.length === 0}
       >
         PLACE ORDER
       </button>
 
       {selected.length === 0 && (
-        <p style={{ fontSize: 11, color: "#e91e8c", textAlign: "center", marginTop: 8 }}>
+        <p
+          style={{
+            fontSize: 11,
+            color: '#e91e8c',
+            textAlign: 'center',
+            marginTop: 8,
+          }}
+        >
           Select at least one item to proceed
         </p>
       )}
     </div>
-  );
+  )
 }
 
 function PriceRow({ label, value, green }) {
   return (
     <div style={styles.priceRow}>
       <span style={styles.priceLabel}>{label}</span>
-      <span style={{ ...styles.priceValue, ...(green ? styles.priceGreen : {}) }}>
+      <span
+        style={{ ...styles.priceValue, ...(green ? styles.priceGreen : {}) }}
+      >
         {value}
       </span>
     </div>
-  );
+  )
 }
 
 // ─── Main BagPage ─────────────────────────────────────────────────────────────
 function BagPage() {
-  const { items, toggleSelected } = useBagStore();
-  const selectedCount = items.filter((i) => i.selected).length;
-  const allSelected = selectedCount === items.length;
+  const { items, toggleSelected } = useBagStore()
+  const selectedCount = items.filter((i) => i.selected).length
+  const allSelected = selectedCount === items.length
 
   return (
     <div style={styles.root}>
@@ -428,20 +460,30 @@ function BagPage() {
           {/* Items header */}
           <div style={styles.itemsHeader}>
             <button
-              onClick={() =>
+              onClick={() => {
+                const shouldSelectAll = !allSelected
+
                 items.forEach((i) => {
-                  if (i.selected !== allSelected) toggleSelected(i.id);
+                  if (i.selected !== shouldSelectAll) {
+                    toggleSelected(i.id)
+                  }
                 })
-              }
+              }}
               style={{
                 ...styles.checkbox,
-                background: allSelected ? "#e91e8c" : "transparent",
-                borderColor: allSelected ? "#e91e8c" : "#bbb",
+                background: allSelected ? '#e91e8c' : 'transparent',
+                borderColor: allSelected ? '#e91e8c' : '#bbb',
               }}
             >
               {allSelected && (
-                <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
-                  <path d="M1 4l3 3 5-6" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                <svg width='10' height='8' viewBox='0 0 10 8' fill='none'>
+                  <path
+                    d='M1 4l3 3 5-6'
+                    stroke='white'
+                    strokeWidth='1.8'
+                    strokeLinecap='round'
+                    strokeLinejoin='round'
+                  />
                 </svg>
               )}
             </button>
@@ -450,7 +492,7 @@ function BagPage() {
             </span>
             <div style={styles.itemsActions}>
               <span style={styles.actionBtn}>REMOVE</span>
-              <span style={{ color: "#ddd" }}>|</span>
+              <span style={{ color: '#ddd' }}>|</span>
               <span style={styles.actionBtn}>
                 <Heart size={12} style={{ marginRight: 4 }} />
                 WISHLIST
@@ -461,8 +503,11 @@ function BagPage() {
           {/* Item cards */}
           {items.length === 0 ? (
             <div style={styles.emptyState}>
-              <ShoppingBag size={48} style={{ color: "#ddd", marginBottom: 12 }} />
-              <p style={{ color: "#aaa", fontSize: 15 }}>Your bag is empty</p>
+              <ShoppingBag
+                size={48}
+                style={{ color: '#ddd', marginBottom: 12 }}
+              />
+              <p style={{ color: '#aaa', fontSize: 15 }}>Your bag is empty</p>
             </div>
           ) : (
             items.map((item) => <ItemCard key={item.id} item={item} />)
@@ -475,400 +520,423 @@ function BagPage() {
         </div>
       </div>
     </div>
-  );
+  )
 }
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
-const PINK = "#e91e8c";
+const PINK = '#e91e8c'
 
 const styles = {
   root: {
-  minHeight: "100vh",
-  background: "#f7f7f7",
-  fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif",
-  color: "#222",
-  WebkitFontSmoothing: "antialiased", // Better font rendering
-  MozOsxFontSmoothing: "grayscale",
-},
+    minHeight: '100vh',
+    background: '#f7f7f7',
+    fontFamily:
+      "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif",
+    color: '#222',
+    WebkitFontSmoothing: 'antialiased', // Better font rendering
+    MozOsxFontSmoothing: 'grayscale',
+  },
   logoImg: {
-  height: "auto",
-  width: 100, // Force a specific width
-  maxWidth: 100,
-  minWidth: 100,
-  objectFit: "contain",
-  display: "block", // Ensures proper rendering
-
-},
+    height: 'auto',
+    width: 100, // Force a specific width
+    maxWidth: 100,
+    minWidth: 100,
+    objectFit: 'contain',
+    display: 'block', // Ensures proper rendering
+  },
   navbar: {
-    background: "#fff",
-    borderBottom: "0.5px solid #eee",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    padding: "0 24px",
+    background: '#fff',
+    borderBottom: '0.5px solid #eee',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: '0 24px',
     height: 56,
-    position: "sticky",
+    position: 'sticky',
     top: 0,
     zIndex: 100,
   },
   navLogo: {
-  display: "flex",
-  alignItems: "center",
-  height: "100%",
-  minWidth: 100,
-  paddingLeft: 40
-
-},
+    display: 'flex',
+    alignItems: 'center',
+    height: '100%',
+    minWidth: 100,
+    paddingLeft: 40,
+  },
   logoM: {
     fontSize: 28,
     fontWeight: 700,
-    background: "linear-gradient(135deg, #ff6b6b, #e91e8c, #f5a623)",
-    WebkitBackgroundClip: "text",
-    WebkitTextFillColor: "transparent",
+    background: 'linear-gradient(135deg, #ff6b6b, #e91e8c, #f5a623)',
+    WebkitBackgroundClip: 'text',
+    WebkitTextFillColor: 'transparent',
     lineHeight: 1,
   },
-  logoyntra: { fontSize: 20, fontWeight: 600, color: "#222", letterSpacing: -0.5 },
+  logoyntra: {
+    fontSize: 20,
+    fontWeight: 600,
+    color: '#222',
+    letterSpacing: -0.5,
+  },
   navSteps: {
-    display: "flex",
-    alignItems: "center",
+    display: 'flex',
+    alignItems: 'center',
     gap: 6,
     fontSize: 12,
-    color: "#aaa",
+    color: '#aaa',
     letterSpacing: 0.5,
   },
-  step: { display: "flex", alignItems: "center" },
+  step: { display: 'flex', alignItems: 'center' },
   stepActive: {
     color: PINK,
     fontWeight: 600,
     borderBottom: `2px solid ${PINK}`,
     paddingBottom: 2,
   },
-  stepDivider: { color: "#ddd", fontSize: 10 },
-  navRight: { display: "flex", alignItems: "center", gap: 16 },
+  stepDivider: { color: '#ddd', fontSize: 10 },
+  navRight: { display: 'flex', alignItems: 'center', gap: 16 },
   navSecure: {
-    display: "flex",
-    alignItems: "center",
+    display: 'flex',
+    alignItems: 'center',
     gap: 5,
     fontSize: 12,
-    color: "#555",
+    color: '#555',
     fontWeight: 500,
   },
   mobileMenuBtn: {
-    display: "none",
-    background: "none",
-    border: "none",
-    cursor: "pointer",
+    display: 'none',
+    background: 'none',
+    border: 'none',
+    cursor: 'pointer',
     padding: 4,
   },
   container: {
     maxWidth: 1080,
-    margin: "0 auto",
-    padding: "20px 16px",
-    display: "grid",
-    gridTemplateColumns: "1fr 340px",
+    margin: '0 auto',
+    padding: '20px 16px',
+    display: 'grid',
+    gridTemplateColumns: '1fr 340px',
     gap: 20,
-    alignItems: "start",
+    alignItems: 'start',
   },
   leftCol: {},
-  rightCol: { display: "flex", flexDirection: "column", gap: 12 },
+  rightCol: { display: 'flex', flexDirection: 'column', gap: 12 },
 
   pinBar: {
-    background: "#fff",
-    border: "0.5px solid #eee",
+    background: '#fff',
+    border: '0.5px solid #eee',
     borderRadius: 10,
-    padding: "10px 14px",
-    display: "flex",
-    alignItems: "center",
+    padding: '10px 14px',
+    display: 'flex',
+    alignItems: 'center',
     gap: 10,
     marginBottom: 14,
   },
   pinInput: {
     flex: 1,
-    border: "none",
-    outline: "none",
+    border: 'none',
+    outline: 'none',
     fontSize: 13,
-    color: "#333",
-    background: "transparent",
+    color: '#333',
+    background: 'transparent',
     minWidth: 0,
   },
-  pinStatus: { fontSize: 12, color: "#888", whiteSpace: "nowrap" },
+  pinStatus: { fontSize: 12, color: '#888', whiteSpace: 'nowrap' },
   pinBtn: {
     fontSize: 12,
     fontWeight: 600,
     color: PINK,
-    background: "none",
+    background: 'none',
     border: `1.5px solid ${PINK}`,
     borderRadius: 6,
-    padding: "5px 14px",
-    cursor: "pointer",
+    padding: '5px 14px',
+    cursor: 'pointer',
     letterSpacing: 0.5,
     flexShrink: 0,
   },
 
   itemsHeader: {
-    display: "flex",
-    alignItems: "center",
+    display: 'flex',
+    alignItems: 'center',
     gap: 10,
-    padding: "8px 0 12px",
-    borderBottom: "0.5px solid #eee",
+    padding: '8px 0 12px',
+    borderBottom: '0.5px solid #eee',
     marginBottom: 12,
   },
   itemsCount: { fontSize: 13, fontWeight: 600, flex: 1 },
   itemsActions: {
-    display: "flex",
-    alignItems: "center",
+    display: 'flex',
+    alignItems: 'center',
     gap: 10,
     fontSize: 11,
     fontWeight: 600,
-    color: "#888",
+    color: '#888',
   },
   actionBtn: {
-    display: "flex",
-    alignItems: "center",
-    cursor: "pointer",
+    display: 'flex',
+    alignItems: 'center',
+    cursor: 'pointer',
     letterSpacing: 0.3,
   },
 
   itemCard: {
-    background: "#fff",
-    border: "0.5px solid #eee",
+    background: '#fff',
+    border: '0.5px solid #eee',
     borderRadius: 12,
-    padding: "14px 12px",
+    padding: '14px 12px',
     marginBottom: 10,
-    display: "flex",
-    alignItems: "flex-start",
+    display: 'flex',
+    alignItems: 'flex-start',
     gap: 12,
-    position: "relative",
-    transition: "opacity 0.2s",
+    position: 'relative',
+    transition: 'opacity 0.2s',
   },
   checkbox: {
     width: 18,
     height: 18,
-    border: "1.5px solid #bbb",
+    border: '1.5px solid #bbb',
     borderRadius: 4,
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    cursor: "pointer",
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    cursor: 'pointer',
     flexShrink: 0,
     marginTop: 2,
-    transition: "all 0.15s",
-    background: "transparent",
+    transition: 'all 0.15s',
+    background: 'transparent',
   },
   itemThumb: {
     width: 88,
     height: 110,
     borderRadius: 8,
     flexShrink: 0,
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    overflow: "hidden",
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
   },
   itemBody: { flex: 1, minWidth: 0 },
-  itemBrand: { fontSize: 13, fontWeight: 700, letterSpacing: 0.3, color: "#111" },
+  itemBrand: {
+    fontSize: 13,
+    fontWeight: 700,
+    letterSpacing: 0.3,
+    color: '#111',
+  },
   itemName: {
     fontSize: 12,
-    color: "#666",
+    color: '#666',
     marginTop: 2,
     lineHeight: 1.4,
-    overflow: "hidden",
-    display: "-webkit-box",
+    overflow: 'hidden',
+    display: '-webkit-box',
     WebkitLineClamp: 2,
-    WebkitBoxOrient: "vertical",
+    WebkitBoxOrient: 'vertical',
   },
-  itemSeller: { fontSize: 11, color: "#aaa", marginTop: 2 },
+  itemSeller: { fontSize: 11, color: '#aaa', marginTop: 2 },
   itemAttrs: {
-    display: "flex",
-    alignItems: "center",
+    display: 'flex',
+    alignItems: 'center',
     gap: 8,
     marginTop: 8,
-    flexWrap: "wrap",
+    flexWrap: 'wrap',
   },
   attrPill: {
     fontSize: 11,
-    border: "0.5px solid #ddd",
+    border: '0.5px solid #ddd',
     borderRadius: 6,
-    padding: "4px 10px",
-    color: "#555",
-    display: "flex",
-    alignItems: "center",
+    padding: '4px 10px',
+    color: '#555',
+    display: 'flex',
+    alignItems: 'center',
     gap: 3,
-    cursor: "pointer",
+    cursor: 'pointer',
   },
   qtyControl: {
-    display: "flex",
-    alignItems: "center",
-    border: "0.5px solid #ddd",
+    display: 'flex',
+    alignItems: 'center',
+    border: '0.5px solid #ddd',
     borderRadius: 6,
-    overflow: "hidden",
+    overflow: 'hidden',
   },
   qtyBtn: {
-    border: "none",
-    background: "#f7f7f7",
-    padding: "4px 8px",
-    cursor: "pointer",
-    display: "flex",
-    alignItems: "center",
-    color: "#555",
+    border: 'none',
+    background: '#f7f7f7',
+    padding: '4px 8px',
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    color: '#555',
   },
-  qtyNum: { padding: "2px 10px", fontSize: 12, fontWeight: 600 },
+  qtyNum: { padding: '2px 10px', fontSize: 12, fontWeight: 600 },
   pricingRow: {
-    display: "flex",
-    alignItems: "baseline",
+    display: 'flex',
+    alignItems: 'baseline',
     gap: 6,
     marginTop: 8,
-    flexWrap: "wrap",
+    flexWrap: 'wrap',
   },
-  priceFinal: { fontSize: 15, fontWeight: 700, color: "#111" },
-  priceMrp: { fontSize: 12, color: "#bbb", textDecoration: "line-through" },
-  priceOff: { fontSize: 11, color: "#2e7d32", fontWeight: 600 },
+  priceFinal: { fontSize: 15, fontWeight: 700, color: '#111' },
+  priceMrp: { fontSize: 12, color: '#bbb', textDecoration: 'line-through' },
+  priceOff: { fontSize: 11, color: '#2e7d32', fontWeight: 600 },
   couponLine: {
     fontSize: 11,
     color: PINK,
     marginTop: 4,
     fontWeight: 500,
-    display: "flex",
-    alignItems: "center",
+    display: 'flex',
+    alignItems: 'center',
   },
   returnLine: {
     fontSize: 11,
-    color: "#888",
+    color: '#888',
     marginTop: 5,
-    display: "flex",
-    alignItems: "center",
+    display: 'flex',
+    alignItems: 'center',
   },
   removeBtn: {
-    background: "none",
-    border: "none",
-    cursor: "pointer",
-    color: "#ccc",
+    background: 'none',
+    border: 'none',
+    cursor: 'pointer',
+    color: '#ccc',
     padding: 0,
     flexShrink: 0,
-    display: "flex",
-    alignItems: "center",
-    transition: "color 0.15s",
+    display: 'flex',
+    alignItems: 'center',
+    transition: 'color 0.15s',
   },
   emptyState: {
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    padding: "60px 0",
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    padding: '60px 0',
   },
 
   panelCard: {
-    background: "#fff",
-    border: "0.5px solid #eee",
+    background: '#fff',
+    border: '0.5px solid #eee',
     borderRadius: 12,
-    padding: "16px",
+    padding: '16px',
   },
   panelLabel: {
     fontSize: 10,
     fontWeight: 700,
     letterSpacing: 1,
-    color: "#888",
+    color: '#888',
     marginBottom: 12,
-    textTransform: "uppercase",
+    textTransform: 'uppercase',
   },
   couponRow: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
     gap: 8,
   },
-  couponApplied: { fontSize: 13, fontWeight: 600, color: "#111" },
-  couponSaved: { fontSize: 12, color: "#2e7d32", marginTop: 3 },
+  couponApplied: { fontSize: 13, fontWeight: 600, color: '#111' },
+  couponSaved: { fontSize: 12, color: '#2e7d32', marginTop: 3 },
   editBtn: {
     fontSize: 11,
     fontWeight: 700,
     color: PINK,
     border: `1.5px solid ${PINK}`,
     borderRadius: 6,
-    padding: "4px 12px",
-    background: "none",
-    cursor: "pointer",
+    padding: '4px 12px',
+    background: 'none',
+    cursor: 'pointer',
     letterSpacing: 0.5,
     flexShrink: 0,
   },
 
-  donateRow: { display: "flex", alignItems: "center", gap: 8, marginBottom: 12 },
+  donateRow: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 12,
+  },
   donateCheck: {
     width: 18,
     height: 18,
-    border: "1.5px solid #bbb",
+    border: '1.5px solid #bbb',
     borderRadius: 3,
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    cursor: "pointer",
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    cursor: 'pointer',
     flexShrink: 0,
-    transition: "all 0.15s",
+    transition: 'all 0.15s',
   },
-  donateLabel: { fontSize: 13, color: "#333" },
-  donateAmounts: { display: "flex", gap: 8, flexWrap: "wrap" },
+  donateLabel: { fontSize: 13, color: '#333' },
+  donateAmounts: { display: 'flex', gap: 8, flexWrap: 'wrap' },
   amtPill: {
     fontSize: 12,
-    border: "1px solid #ddd",
+    border: '1px solid #ddd',
     borderRadius: 999,
-    padding: "5px 14px",
-    cursor: "pointer",
-    background: "none",
-    transition: "all 0.15s",
+    padding: '5px 14px',
+    cursor: 'pointer',
+    background: 'none',
+    transition: 'all 0.15s',
     fontWeight: 500,
   },
   knowMore: {
     fontSize: 12,
     color: PINK,
-    background: "none",
-    border: "none",
-    cursor: "pointer",
+    background: 'none',
+    border: 'none',
+    cursor: 'pointer',
     marginTop: 10,
     padding: 0,
     fontWeight: 500,
-    display: "block",
+    display: 'block',
   },
 
-  priceRows: { display: "flex", flexDirection: "column", gap: 10 },
+  priceRows: { display: 'flex', flexDirection: 'column', gap: 10 },
   priceRow: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     fontSize: 13,
   },
-  priceLabel: { color: "#666" },
-  priceValue: { color: "#111", fontWeight: 500 },
-  priceGreen: { color: "#2e7d32" },
-  knowMoreInline: { fontSize: 11, color: PINK, cursor: "pointer" },
+  priceLabel: { color: '#666' },
+  priceValue: { color: '#111', fontWeight: 500 },
+  priceGreen: { color: '#2e7d32' },
+  knowMoreInline: { fontSize: 11, color: PINK, cursor: 'pointer' },
   priceDivider: {
-    border: "none",
-    borderTop: "0.5px solid #eee",
-    margin: "12px 0",
+    border: 'none',
+    borderTop: '0.5px solid #eee',
+    margin: '12px 0',
   },
   totalRow: {
-    display: "flex",
-    justifyContent: "space-between",
+    display: 'flex',
+    justifyContent: 'space-between',
     fontSize: 15,
     fontWeight: 700,
-    color: "#111",
+    color: '#111',
   },
-  terms: { fontSize: 11, color: "#aaa", marginTop: 12, lineHeight: 1.5 },
-  termsLink: { color: PINK, textDecoration: "none" },
+  terms: { fontSize: 11, color: '#aaa', marginTop: 12, lineHeight: 1.5 },
+  termsLink: { color: PINK, textDecoration: 'none' },
   placeBtn: {
-    width: "100%",
+    width: '100%',
     background: PINK,
-    color: "#fff",
-    border: "none",
-    padding: "14px",
+    color: '#fff',
+    border: 'none',
+    padding: '14px',
     borderRadius: 8,
     fontSize: 14,
     fontWeight: 700,
     letterSpacing: 1.5,
-    cursor: "pointer",
+    cursor: 'pointer',
     marginTop: 14,
-    transition: "background 0.15s",
+    transition: 'background 0.15s',
   },
-};
+  addressCheckBtn: {
+  border: 'none',
+  background: 'none',
+  color: '#ff3f6c',
+  fontSize: 16,
+  fontWeight: 700,
+  cursor: 'pointer',
+  whiteSpace: 'nowrap',
+},
+}
 
 // Use this component inside your existing <QueryClientProvider> + <BrowserRouter> tree.
-export default BagPage;
-export { BagPage };
+export default BagPage
+export { BagPage }
