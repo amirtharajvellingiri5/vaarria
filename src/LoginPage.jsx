@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react'
 import Navbar from './Navbar'
 
 // ─── MSG91 Config — replace with your real values ─────────────────────────────
-const MSG91_WIDGET_ID  = '36656862353439323630303030'  // widgetId from MSG91 dashboard
+const MSG91_WIDGET_ID  = '366568623534393236303030'  // widgetId from MSG91 dashboard
 const MSG91_TOKEN_AUTH = '147259Txua8xfclqV69fd54e9P1'              // tokenAuth from MSG91 dashboard
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
@@ -244,9 +244,29 @@ function useMSG91Script() {
     if (window.initSendOTP) { setReady(true); return }
 
     const script = document.createElement('script')
-    script.src   = 'https://control.msg91.com/app/assets/otp-provider/otp-provider.js'
+    script.src = 'https://verify.msg91.com/otp-provider.js'
     script.async = true
-    script.onload  = () => setReady(true)
+    script.onload = () => {
+  window.initSendOTP({
+    widgetId: MSG91_WIDGET_ID,
+    tokenAuth: MSG91_TOKEN_AUTH,
+    exposeMethods: true,
+
+    success: (data) => {
+      console.log('[MSG91] success', data)
+    },
+
+    failure: (err) => {
+      console.log('[MSG91] failure', err)
+    }
+  })
+
+  setReady(true)
+  console.log('initSendOTP', window.initSendOTP)
+console.log('sendOtp', window.sendOtp)
+console.log('verifyOtp', window.verifyOtp)
+console.log('retryOtp', window.retryOtp)
+}
     script.onerror = () => console.error('[MSG91] Script load failed')
     document.body.appendChild(script)
 
@@ -281,35 +301,42 @@ function OtpScreen({ phone, onBack, onVerified }) {
 
   // ── MSG91 verify ──
   // MSG91's initSendOTP also handles verification when `otp` is passed in config
-  const verifyOtp = useCallback((otpValue) => {
-    if (!window.initSendOTP) { setError('OTP service not ready. Refresh and try again.'); return }
-    setVerifying(true)
-    setError('')
+const verifyOtp = useCallback((otpValue) => {
+  setVerifying(true)
+  setError('')
 
-    window.initSendOTP({
-      widgetId:   MSG91_WIDGET_ID,
-      tokenAuth:  MSG91_TOKEN_AUTH,
-      identifier: `91${phone}`,     // E.164 without '+'
-      otp:        otpValue,          // pass digits to verify
-      success: (data) => {
-        setVerifying(false)
-        setDigitState('success')
-        // data.message = access token from MSG91
-        onVerified?.(data.message, phone)
-      },
-      failure: (err) => {
-        setVerifying(false)
-        setDigitState('shake')
-        setTimeout(() => {
-          setDigitState('idle')
-          setDigits(['', '', '', ''])
-          refs[0].current?.focus()
-        }, 400)
-        setError(err?.message || err?.description || 'Invalid OTP. Please try again.')
-        console.error('[MSG91] Verify failed:', err)
-      },
-    })
-  }, [phone, onVerified])
+  window.verifyOtp(
+    otpValue,
+
+    (data) => {
+      console.log('[MSG91] verified', data)
+
+      setVerifying(false)
+      setDigitState('success')
+
+      onVerified?.(data.message, phone)
+    },
+
+    (err) => {
+      console.log('[MSG91] verify failed', err)
+
+      setVerifying(false)
+      setDigitState('shake')
+
+      setTimeout(() => {
+        setDigitState('idle')
+        setDigits(['', '', '', ''])
+        refs[0].current?.focus()
+      }, 400)
+
+      setError(
+        err?.message ||
+        err?.description ||
+        'Invalid OTP'
+      )
+    }
+  )
+}, [phone, onVerified])
 
   // ── Input change ──
   const handleChange = (i, val) => {
@@ -333,32 +360,40 @@ function OtpScreen({ phone, onBack, onVerified }) {
     const otp = digits.join('')
     if (otp.length === 4 && !verifying) verifyOtp(otp)
   }
+const handleResend = useCallback(() => {
+  if (resending) return
 
-  // ── Resend OTP ──
-  const handleResend = useCallback(() => {
-    if (!window.initSendOTP || resending) return
-    setResending(true)
-    setError('')
-    setDigits(['', '', '', ''])
-    setDigitState('idle')
+  setResending(true)
+  setError('')
+  setDigits(['', '', '', ''])
+  setDigitState('idle')
 
-    window.initSendOTP({
-      widgetId:   MSG91_WIDGET_ID,
-      tokenAuth:  MSG91_TOKEN_AUTH,
-      identifier: `91${phone}`,
-      success: () => {
-        setResending(false)
-        setCanResend(false)
-        setSeconds(30)
-        refs[0].current?.focus()
-      },
-      failure: (err) => {
-        setResending(false)
-        setError('Could not resend OTP. Please try again.')
-        console.error('[MSG91] Resend failed:', err)
-      },
-    })
-  }, [phone, resending])
+  window.retryOtp(
+    null,
+
+    (data) => {
+      console.log('[MSG91] OTP resent', data)
+
+      setResending(false)
+      setCanResend(false)
+      setSeconds(30)
+
+      refs[0].current?.focus()
+    },
+
+    (err) => {
+      console.log('[MSG91] resend failed', err)
+
+      setResending(false)
+
+      setError(
+        err?.message ||
+        err?.description ||
+        'Could not resend OTP'
+      )
+    }
+  )
+}, [resending])
 
   const allFilled = digits.every(d => d !== '')
 
@@ -450,25 +485,34 @@ function LoginScreen({ onContinue }) {
 
   // ── Send OTP via MSG91 ──
   const handleContinue = () => {
-    if (!isReady) return
-    setLoading(true)
-    setError('')
+  if (!isReady) return
 
-    window.initSendOTP({
-      widgetId:   MSG91_WIDGET_ID,
-      tokenAuth:  MSG91_TOKEN_AUTH,
-      identifier: `91${phone}`,   // country code + number, no '+'
-      success: () => {
-        setLoading(false)
-        onContinue(phone)          // switch to OTP screen
-      },
-      failure: (err) => {
-        setLoading(false)
-        setError(err?.message || err?.description || 'Failed to send OTP. Try again.')
-        console.error('[MSG91] Send failed:', err)
-      },
-    })
-  }
+  setLoading(true)
+  setError('')
+
+  window.sendOtp(
+    `91${phone}`,
+
+    (data) => {
+      console.log('[MSG91] OTP sent', data)
+
+      setLoading(false)
+      onContinue(phone)
+    },
+
+    (err) => {
+      console.log('[MSG91] Send failed', err)
+
+      setLoading(false)
+
+      setError(
+        err?.message ||
+        err?.description ||
+        'Failed to send OTP'
+      )
+    }
+  )
+}
 
   return (
     <>
