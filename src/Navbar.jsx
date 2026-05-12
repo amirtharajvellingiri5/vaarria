@@ -101,6 +101,15 @@ const MENU_DATA = [
     columns: [],
   },
 ]
+
+const menuItemStyle = {
+  display: 'block',
+  padding: '10px 0',
+  fontSize: '13px',
+  color: '#282c3f',
+  textDecoration: 'none',
+}
+
 // ── MegaMenu Component ────────────────────────────────────────────────────────
 const MegaMenu = ({ columns }) => {
   if (!columns || columns.length === 0) return null
@@ -171,6 +180,12 @@ const Navbar = () => {
   const [activeMenu, setActiveMenu] = useState(null)
   const [mobileOpen, setMobileOpen] = useState(false)
   const [searchValue, setSearchValue] = useState('')
+  const [profileOpen, setProfileOpen] = useState(false)
+
+const token = localStorage.getItem('jwt_token')
+const customer = localStorage.getItem('customer')
+const customerData = customer ? JSON.parse(customer) : null
+const isLoggedIn = !!token
   const cart = useCartStore((state) => state.cart)
   const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0)
 
@@ -338,30 +353,100 @@ const Navbar = () => {
             marginLeft: '20px',
           }}
         >
-          <button
-            style={{
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              color: '#282c3f',
-              display: 'flex',
-              alignItems: 'center',
-              flexDirection: 'column',
-              gap: '2px',
-            }}
-            className='icon-btn'
-          >
-            <User size={20} />
-            <span
-              style={{
-                fontSize: '10px',
-                fontWeight: 600,
-                letterSpacing: '0.03em',
-              }}
-            >
-              Profile
-            </span>
-          </button>
+          <div
+  style={{ position: 'relative' }}
+  onMouseEnter={() => isLoggedIn && setProfileOpen(true)}
+  onMouseLeave={() => setProfileOpen(false)}
+>
+  <button
+    style={{
+      background: 'none',
+      border: 'none',
+      cursor: 'pointer',
+      color: '#282c3f',
+      display: 'flex',
+      alignItems: 'center',
+      flexDirection: 'column',
+      gap: '2px',
+    }}
+    className='icon-btn'
+  >
+    <User size={20} />
+    <span
+      style={{
+        fontSize: '10px',
+        fontWeight: 600,
+        letterSpacing: '0.03em',
+      }}
+    >
+      {isLoggedIn ? customerData?.name || 'Profile' : 'Profile'}
+    </span>
+  </button>
+
+  {isLoggedIn && profileOpen && (
+    <div
+      style={{
+        position: 'absolute',
+        top: '100%',
+        right: 0,
+        width: '260px',
+        background: '#fff',
+        border: '1px solid #eaeaec',
+        boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+        borderRadius: '4px',
+        padding: '16px',
+        zIndex: 999,
+      }}
+    >
+      <div
+        style={{
+          fontSize: '14px',
+          fontWeight: 700,
+          color: '#282c3f',
+          marginBottom: '4px',
+        }}
+      >
+        Hello {customerData?.name}
+      </div>
+
+      <div
+        style={{
+          fontSize: '12px',
+          color: '#696b79',
+          marginBottom: '14px',
+        }}
+      >
+        {customerData?.mobile_no}
+      </div>
+
+      <hr style={{ border: 'none', borderTop: '1px solid #f0f0f0' }} />
+
+      <div style={{ paddingTop: '12px' }}>
+        <a href="/orders" style={menuItemStyle}>Orders</a>
+        <a href="/wishlist" style={menuItemStyle}>Wishlist</a>
+        <a href="/profile" style={menuItemStyle}>Profile</a>
+
+        <button
+          onClick={() => {
+            localStorage.removeItem('jwt_token')
+            localStorage.removeItem('customer')
+            window.location.href = '/'
+          }}
+          style={{
+            ...menuItemStyle,
+            background: 'none',
+            border: 'none',
+            width: '100%',
+            textAlign: 'left',
+            cursor: 'pointer',
+          }}
+        >
+          Logout
+        </button>
+      </div>
+    </div>
+  )}
+</div>
           <button
             style={{
               background: 'none',
