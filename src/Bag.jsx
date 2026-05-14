@@ -205,14 +205,26 @@ function PinBar() {
   const [shouldRefetch, setShouldRefetch] = useState(0)
 
   const [defaultAddress, setDefaultAddress] = useState(null)
+const [addresses, setAddresses] = useState([])
   const [loadingAddress, setLoadingAddress] = useState(false)
   const [validationError, setValidationError] = useState('')
 
   const token = localStorage.getItem('jwt_token')
   const customer = JSON.parse(localStorage.getItem('customer') || 'null')
 
+  
+
   const isLoggedIn = !!token && !!customer
   const customerId = customer?.customer_id
+
+  const handleDeleteSuccess = () => {
+  setShouldRefetch((c) => c + 1)
+}
+
+  const handleSelectAddress = (address) => {
+  setDefaultAddress(address)
+  setOpenAddress(false)
+}
 
   const handleCloseAddress = () => {
   setOpenAddress(false)
@@ -238,11 +250,14 @@ useEffect(() => {
       const data = await response.json()
 
       if (data?.items?.length > 0) {
-        const primary = data.items.find((a) => a.is_default)
-        setDefaultAddress(primary || data.items[0])
-      } else {
-        setDefaultAddress(null)
-      }
+  setAddresses(data.items)
+
+  const primary = data.items.find((a) => a.is_default)
+  setDefaultAddress(primary || data.items[0])
+} else {
+  setAddresses([])
+  setDefaultAddress(null)
+}
     } catch (error) {
       console.error(error)
     } finally {
@@ -412,8 +427,14 @@ if (isLoggedIn) {
           )}
         </div>
       </div>
-
-      <AddressModal open={openAddress} onClose={handleCloseAddress} />
+<AddressModal
+  open={openAddress}
+  onClose={handleCloseAddress}
+  addresses={addresses}
+  selectedAddress={defaultAddress}
+  onSelectAddress={handleSelectAddress}
+  onDeleteSuccess={handleDeleteSuccess}
+/>
     </>
   )
 }
