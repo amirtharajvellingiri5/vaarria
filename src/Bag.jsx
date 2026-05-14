@@ -31,6 +31,65 @@ import './constants/global.css'
 import CouponModal from './modals/CouponModal'
 import AddressModal from './modals/AddressModal'
 
+function SkeletonPulse({ style = {} }) {
+  return (
+    <div
+      style={{
+        background:
+          'linear-gradient(90deg, #f1f2f4 25%, #e7e8eb 37%, #f1f2f4 63%)',
+        backgroundSize: '400% 100%',
+        animation: 'skeleton-loading 1.4s ease infinite',
+        borderRadius: 6,
+        ...style,
+      }}
+    />
+  )
+}
+
+function BagItemSkeleton() {
+  return (
+    <div style={styles.itemCard}>
+      <div style={{ ...styles.checkbox, background: '#f1f2f4', borderColor: '#f1f2f4' }} />
+      <div style={styles.itemThumb}>
+        <SkeletonPulse style={{ width: '100%', height: '100%', borderRadius: 8 }} />
+      </div>
+      <div style={styles.itemBody}>
+        <SkeletonPulse style={{ width: '82%', height: 14 }} />
+        <SkeletonPulse style={{ width: '65%', height: 12, marginTop: 8 }} />
+        <div style={styles.itemAttrs}>
+          <SkeletonPulse style={{ width: 72, height: 28, borderRadius: 6 }} />
+          <SkeletonPulse style={{ width: 94, height: 28, borderRadius: 6 }} />
+        </div>
+        <div style={styles.pricingRow}>
+          <SkeletonPulse style={{ width: 72, height: 18 }} />
+          <SkeletonPulse style={{ width: 52, height: 12 }} />
+          <SkeletonPulse style={{ width: 62, height: 12 }} />
+        </div>
+        <SkeletonPulse style={{ width: 120, height: 12, marginTop: 8 }} />
+        <SkeletonPulse style={{ width: 150, height: 12, marginTop: 8 }} />
+      </div>
+      <SkeletonPulse style={{ width: 20, height: 20, borderRadius: 4 }} />
+    </div>
+  )
+}
+
+function PricePanelSkeleton() {
+  return (
+    <div style={styles.panelCard}>
+      <SkeletonPulse style={{ width: 100, height: 10, marginBottom: 16 }} />
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <SkeletonPulse style={{ width: '100%', height: 14 }} />
+        <SkeletonPulse style={{ width: '100%', height: 14 }} />
+        <SkeletonPulse style={{ width: '100%', height: 14 }} />
+        <SkeletonPulse style={{ width: '100%', height: 14 }} />
+      </div>
+      <div style={styles.priceDivider} />
+      <SkeletonPulse style={{ width: '100%', height: 18 }} />
+      <SkeletonPulse style={{ width: '100%', height: 48, borderRadius: 8, marginTop: 18 }} />
+    </div>
+  )
+}
+
 // ─── Zustand Store ────────────────────────────────────────────────────────────
 const useBagStore = create((set, get) => ({
   items: [],
@@ -819,12 +878,14 @@ function PriceRow({ label, value, green }) {
 // ─── Main BagPage ─────────────────────────────────────────────────────────────
 function BagPage() {
   const { items, toggleSelected, setItems } = useBagStore()
+  const [loading, setLoading] = useState(true)
   const selectedCount = items.filter((i) => i.selected).length
   const allSelected = selectedCount === items.length
 
   useEffect(() => {
     const fetchBagItems = async () => {
       try {
+        setLoading(true)
         const response = await fetch('https://api.aarria.com/customers/1/bag')
 
         const data = await response.json()
@@ -860,6 +921,8 @@ function BagPage() {
         setItems(mappedItems)
       } catch (error) {
         console.error('Failed to fetch bag items', error)
+      } finally {
+        setLoading(false)
       }
     }
 
@@ -868,6 +931,12 @@ function BagPage() {
 
   return (
     <div style={styles.root}>
+      <style>{`
+        @keyframes skeleton-loading {
+          0% { background-position: 100% 50%; }
+          100% { background-position: 0 50%; }
+        }
+      `}</style>
       <Navbar />
       <div style={styles.container}>
         <div style={styles.leftCol}>
@@ -917,7 +986,13 @@ function BagPage() {
           </div>
 
           {/* Item cards */}
-          {items.length === 0 ? (
+          {loading ? (
+            <>
+              <BagItemSkeleton />
+              <BagItemSkeleton />
+              <BagItemSkeleton />
+            </>
+          ) : items.length === 0 ? (
             <div style={styles.emptyState}>
               <ShoppingBag
                 size={48}
@@ -931,8 +1006,17 @@ function BagPage() {
         </div>
 
         <div style={styles.rightCol}>
-          <CouponPanel />
-          <PricePanel />
+          {loading ? (
+            <>
+              <PricePanelSkeleton />
+              <PricePanelSkeleton />
+            </>
+          ) : (
+            <>
+              <CouponPanel />
+              <PricePanel />
+            </>
+          )}
         </div>
       </div>
     </div>
@@ -951,6 +1035,7 @@ const styles = {
     color: '#222',
     WebkitFontSmoothing: 'antialiased', // Better font rendering
     MozOsxFontSmoothing: 'grayscale',
+    position: 'relative',
   },
   logoImg: {
     height: 'auto',
