@@ -156,10 +156,56 @@ function PinBar() {
 }
 
 function ItemCard({ item }) {
-  const { items, toggleSelected, updateQty, setItems } = useBagStore()
+  const { items, toggleSelected, setItems } = useBagStore()
 
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [deleting, setDeleting] = useState(false)
+
+    const updateBagQuantity = async (delta) => {
+    const newQty = item.qty + delta
+
+    if (newQty < 1) {
+      return
+    }
+
+    try {
+      const response = await fetch(
+        `https://api.aarria.com/api/bags/${item.id}`,
+        {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            address_id: item.address_id ?? null,
+            size: item.size,
+            color: item.colorName,
+            quantity: newQty,
+            selected: item.selected,
+          }),
+        },
+      )
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.detail || 'Failed to update quantity')
+      }
+
+      setItems(
+        items.map((x) =>
+          x.id === item.id
+            ? {
+                ...x,
+                qty: newQty,
+              }
+            : x,
+        ),
+      )
+    } catch (error) {
+      alert(error.message)
+    }
+  }
 
   const deleteBagItem = async () => {
     try {
@@ -262,7 +308,7 @@ function ItemCard({ item }) {
             <div style={styles.qtyControl}>
               <button
                 style={styles.qtyBtn}
-                onClick={() => updateQty(item.id, -1)}
+                onClick={() => updateBagQuantity(-1)}
               >
                 <Minus size={11} />
               </button>
@@ -271,7 +317,7 @@ function ItemCard({ item }) {
 
               <button
                 style={styles.qtyBtn}
-                onClick={() => updateQty(item.id, 1)}
+                onClick={() => updateBagQuantity(1)}
               >
                 <Plus size={11} />
               </button>

@@ -355,7 +355,7 @@ const isLoggedIn = !!token
         >
           <div
   style={{ position: 'relative' }}
-  onMouseEnter={() => isLoggedIn && setProfileOpen(true)}
+  onMouseEnter={() => setProfileOpen(true)}
   onMouseLeave={() => setProfileOpen(false)}
 >
   <button
@@ -383,7 +383,7 @@ const isLoggedIn = !!token
     </span>
   </button>
 
-  {isLoggedIn && profileOpen && (
+  {profileOpen && (
     <div
       style={{
         position: 'absolute',
@@ -398,52 +398,82 @@ const isLoggedIn = !!token
         zIndex: 999,
       }}
     >
-      <div
-        style={{
-          fontSize: '14px',
-          fontWeight: 700,
-          color: '#282c3f',
-          marginBottom: '4px',
-        }}
-      >
-        Hello {customerData?.name}
-      </div>
+      {isLoggedIn ? (
+        <>
+          <div style={{ fontSize: '14px', fontWeight: 700 }}>
+            Hello {customerData?.name}
+          </div>
 
-      <div
-        style={{
-          fontSize: '12px',
-          color: '#696b79',
-          marginBottom: '14px',
-        }}
-      >
-        {customerData?.mobile_no}
-      </div>
+          <div
+            style={{
+              fontSize: '12px',
+              color: '#696b79',
+              marginBottom: '14px',
+            }}
+          >
+            {customerData?.mobile_no}
+          </div>
 
-      <hr style={{ border: 'none', borderTop: '1px solid #f0f0f0' }} />
+          <hr style={{ border: 'none', borderTop: '1px solid #f0f0f0' }} />
 
-      <div style={{ paddingTop: '12px' }}>
-        <a href="/orders" style={menuItemStyle}>Orders</a>
-        <a href="/wishlist" style={menuItemStyle}>Wishlist</a>
-        <a href="/profile" style={menuItemStyle}>Profile</a>
+          <div style={{ paddingTop: '12px' }}>
+            <a href="/orders" style={menuItemStyle}>Orders</a>
+            <a href="/wishlist" style={menuItemStyle}>Wishlist</a>
+            <a href="/profile" style={menuItemStyle}>Profile</a>
 
-        <button
-          onClick={() => {
-            localStorage.removeItem('jwt_token')
-            localStorage.removeItem('customer')
-            window.location.href = '/'
-          }}
-          style={{
-            ...menuItemStyle,
-            background: 'none',
-            border: 'none',
-            width: '100%',
-            textAlign: 'left',
-            cursor: 'pointer',
-          }}
-        >
-          Logout
-        </button>
-      </div>
+            <button
+              onClick={() => {
+                localStorage.removeItem('jwt_token')
+                localStorage.removeItem('customer')
+                window.location.href = '/'
+              }}
+              style={{
+                ...menuItemStyle,
+                background: 'none',
+                border: 'none',
+                width: '100%',
+                textAlign: 'left',
+                cursor: 'pointer',
+              }}
+            >
+              Logout
+            </button>
+          </div>
+        </>
+      ) : (
+        <>
+          <div style={{ fontSize: '14px', fontWeight: 700 }}>
+            Welcome
+          </div>
+
+          <div
+            style={{
+              fontSize: '12px',
+              color: '#696b79',
+              margin: '8px 0 14px',
+            }}
+          >
+            To access account and manage orders
+          </div>
+
+          <a
+            href="/login"
+            style={{
+              display: 'inline-block',
+              border: '1px solid #ff3f6c',
+              color: '#ff3f6c',
+              padding: '10px 18px',
+              fontSize: '12px',
+              fontWeight: 700,
+              textDecoration: 'none',
+              borderRadius: '4px',
+              marginBottom: '14px',
+            }}
+          >
+            LOGIN / SIGNUP
+          </a>
+        </>
+      )}
     </div>
   )}
 </div>

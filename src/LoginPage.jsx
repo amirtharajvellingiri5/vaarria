@@ -360,7 +360,7 @@ const [redirectSeconds, setRedirectSeconds] = useState(null)
         localStorage.setItem('customer', JSON.stringify(data.customer))
 
         setVerifying(true)
-setRedirectSeconds(5)
+setRedirectSeconds(3)
       } catch (err) {
         setDigitState('shake')
 
