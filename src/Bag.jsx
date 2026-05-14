@@ -60,11 +60,45 @@ const useBagStore = create((set, get) => ({
 
 // ─── Mock fetch (TanStack Query) ──────────────────────────────────────────────
 const fetchPinDetails = async (pin) => {
-  await new Promise((r) => setTimeout(r, 600))
-  if (!pin || pin.length < 6) throw new Error('Invalid PIN')
-  return { city: 'Bengaluru', deliveryDate: 'Thu, 1 May', express: true }
-}
+  if (!/^\d{6}$/.test(pin)) {
+    throw new Error('Please enter a valid 6-digit PIN code')
+  }
 
+  const response = await fetch(
+    `https://api.postalpincode.in/pincode/${pin}`,
+  )
+
+  if (!response.ok) {
+    throw new Error('Unable to check delivery')
+  }
+
+  const data = await response.json()
+
+  if (
+    !Array.isArray(data) ||
+    !data[0] ||
+    data[0].Status !== 'Success' ||
+    !data[0].PostOffice ||
+    data[0].PostOffice.length === 0
+  ) {
+    throw new Error('Sorry, this PIN code is not serviceable')
+  }
+
+  const office = data[0].PostOffice[0]
+
+  const deliveryDate = new Date()
+  deliveryDate.setDate(deliveryDate.getDate() + 4)
+
+  return {
+    city: office.District,
+    state: office.State,
+    deliveryDate: deliveryDate.toLocaleDateString('en-IN', {
+      weekday: 'short',
+      day: 'numeric',
+      month: 'short',
+    }),
+  }
+}
 // ─── Sub-components ──────────────────────────────────────────────────────────
 
 function Navbar() {
@@ -107,62 +141,133 @@ function PinBar() {
   const [pin, setPin] = useState('')
   const [submitted, setSubmitted] = useState(false)
   const [openAddress, setOpenAddress] = useState(false)
+  const [validationError, setValidationError] = useState('')
   const isLoggedIn = !!localStorage.getItem('token')
 
-  const { data, isLoading, isError, refetch } = useQuery({
+  const { data, isLoading, isError, error } = useQuery({
     queryKey: ['pin', pin],
     queryFn: () => fetchPinDetails(pin),
-    enabled: submitted && pin.length === 6,
+    enabled: submitted,
     retry: false,
   })
 
   const handleCheck = () => {
-    if (pin.length === 6) setSubmitted(true)
+    if (!pin.trim()) {
+      setValidationError('Enter PIN code')
+      return
+    }
+
+    if (!/^\d{6}$/.test(pin)) {
+      setValidationError('Enter valid 6-digit PIN code')
+      return
+    }
+
+    setValidationError('')
+    setSubmitted(true)
   }
 
   return (
-    <div style={styles.pinBar}>
-      <Truck size={16} style={{ color: '#e91e8c', flexShrink: 0 }} />
-      <input
-        style={styles.pinInput}
-        placeholder='Enter PIN code'
-        value={pin}
-        maxLength={6}
-        onChange={(e) => {
-          setPin(e.target.value.replace(/\D/, ''))
-          setSubmitted(false)
+    <div
+      style={{
+        ...styles.pinBar,
+        flexDirection: 'column',
+        alignItems: 'stretch',
+        gap: 8,
+      }}
+    >
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 10,
         }}
-        onKeyDown={(e) => e.key === 'Enter' && handleCheck()}
-      />
-      {isLoading && <span style={styles.pinStatus}>Checking…</span>}
+      >
+        <Truck size={16} style={{ color: '#ff3f6c', flexShrink: 0 }} />
+
+        <input
+          style={styles.pinInput}
+          placeholder='Enter PIN code'
+          value={pin}
+          maxLength={6}
+          inputMode='numeric'
+          onChange={(e) => {
+            const value = e.target.value.replace(/\D/g, '')
+            setPin(value)
+            setSubmitted(false)
+            setValidationError('')
+          }}
+          onKeyDown={(e) => e.key === 'Enter' && handleCheck()}
+        />
+
+        <button
+          style={styles.addressCheckBtn}
+          onClick={() => {
+            if (isLoggedIn) {
+              setOpenAddress(true)
+            } else {
+              handleCheck()
+            }
+          }}
+        >
+          {isLoggedIn ? 'Add Address' : 'CHECK'}
+        </button>
+      </div>
+
+      {validationError && (
+        <div
+          style={{
+            fontSize: 12,
+            color: '#d32f2f',
+            paddingLeft: 26,
+          }}
+        >
+          {validationError}
+        </div>
+      )}
+
+      {isLoading && (
+        <div
+          style={{
+            fontSize: 12,
+            color: '#666',
+            paddingLeft: 26,
+          }}
+        >
+          Checking delivery availability...
+        </div>
+      )}
+
       {data && (
-        <span style={{ ...styles.pinStatus, color: '#2e7d32' }}>
-          ✓ Delivery by {data.deliveryDate}, {data.city}
-        </span>
+        <div
+          style={{
+            fontSize: 12,
+            color: '#2e7d32',
+            paddingLeft: 26,
+            fontWeight: 600,
+          }}
+        >
+          Deliver to {data.city}, {data.state} by {data.deliveryDate}
+        </div>
       )}
-      {isError && (
-        <span style={{ ...styles.pinStatus, color: '#c62828' }}>
-          Invalid PIN
-        </span>
+
+      {isError && !validationError && (
+        <div
+          style={{
+            fontSize: 12,
+            color: '#d32f2f',
+            paddingLeft: 26,
+          }}
+        >
+          {error.message}
+        </div>
       )}
-      <button
-  style={styles.addressCheckBtn}
-  onClick={() => {
-    if (isLoggedIn) {
-      setOpenAddress(true)
-    } else {
-      handleCheck()
-    }
-  }}
->
-  {isLoggedIn ? 'Add Address' : 'Check Pincode'}
-</button>
+
       {isLoggedIn && (
-  <AddressModal
-    open={openAddress}
-    onClose={() => setOpenAddress(false)}
-  />
-)}
+        <AddressModal
+          open={openAddress}
+          onClose={() => setOpenAddress(false)}
+        />
+      )}
     </div>
   )
 }
