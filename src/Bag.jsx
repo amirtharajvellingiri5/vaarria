@@ -218,40 +218,41 @@ function PinBar() {
   setOpenAddress(false)
   setShouldRefetch(c => c + 1)  // only increments on close, not open
 }
+useEffect(() => {
+  const fetchDefaultAddress = async () => {
+    if (!isLoggedIn || !customerId) return
 
-  useEffect(() => {
-    const fetchDefaultAddress = async () => {
-      if (!isLoggedIn || !customerId) return
-
-      try {
+    try {
+      if (!defaultAddress) {
         setLoadingAddress(true)
-
-        const response = await fetch(
-          `https://api.aarria.com/api/addresses?customer_id=${customerId}`,
-        )
-
-        if (!response.ok) {
-          throw new Error('Failed to fetch address')
-        }
-
-        const data = await response.json()
-
-        if (data?.items?.length > 0) {
-          const primary = data.items.find((a) => a.is_default)
-          setDefaultAddress(primary || data.items[0])
-        } else {
-          setDefaultAddress(null)
-        }
-      } catch (error) {
-        console.error(error)
-        setDefaultAddress(null)
-      } finally {
-        setLoadingAddress(false)
       }
-    }
 
-    fetchDefaultAddress()
-  }, [isLoggedIn, customerId, shouldRefetch])
+      const response = await fetch(
+        `https://api.aarria.com/api/addresses?customer_id=${customerId}`,
+      )
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch address')
+      }
+
+      const data = await response.json()
+
+      if (data?.items?.length > 0) {
+        const primary = data.items.find((a) => a.is_default)
+        setDefaultAddress(primary || data.items[0])
+      } else {
+        setDefaultAddress(null)
+      }
+    } catch (error) {
+      console.error(error)
+    } finally {
+      setLoadingAddress(false)
+    }
+  }
+
+  fetchDefaultAddress()
+}, [isLoggedIn, customerId, shouldRefetch])
+
 
   const { data, isLoading, isError, error } = useQuery({
     queryKey: ['pin', pin],
@@ -278,12 +279,13 @@ if (isLoggedIn) {
   return (
     <>
       <div style={{
-        background: '#fff',
-        border: '1px solid #ebecef',
-        borderRadius: 4,
-        marginBottom: 14,
-        overflow: 'hidden',
-      }}>
+  background: '#fff',
+  border: '1px solid #ebecef',
+  borderRadius: 4,
+  marginBottom: 14,
+  overflow: 'hidden',
+  minHeight: 110,
+}}>
         {/* Header strip */}
         <div style={{
           display: 'flex',
@@ -324,10 +326,53 @@ if (isLoggedIn) {
         {/* Body */}
         <div style={{ padding: '12px 16px' }}>
           {loadingAddress ? (
-            <div style={{ fontSize: 13, color: '#94969f', padding: '4px 0' }}>
-              Loading...
-            </div>
-          ) : defaultAddress ? (
+  <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+    <SkeletonPulse
+      style={{
+        width: 16,
+        height: 16,
+        borderRadius: '50%',
+        marginTop: 4,
+        flexShrink: 0,
+      }}
+    />
+
+    <div style={{ flex: 1 }}>
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 8,
+          marginBottom: 8,
+        }}
+      >
+        <SkeletonPulse style={{ width: 140, height: 20 }} />
+        <SkeletonPulse
+          style={{
+            width: 52,
+            height: 24,
+            borderRadius: 4,
+          }}
+        />
+      </div>
+
+      <SkeletonPulse
+        style={{
+          width: '95%',
+          height: 16,
+          marginBottom: 8,
+        }}
+      />
+
+      <SkeletonPulse
+        style={{
+          width: '72%',
+          height: 16,
+        }}
+      />
+    </div>
+  </div>
+) : defaultAddress ? (
             <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
               <MapPin size={16} color='#ff3f6c' style={{ marginTop: 2, flexShrink: 0 }} />
               <div>
