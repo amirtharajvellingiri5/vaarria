@@ -17,6 +17,7 @@ import {
   XCircle,
 } from 'lucide-react'
 import Navbar from './Navbar'
+import Footer from './Footer'
 
 import logo from './assets/logo.png'
 
@@ -674,7 +675,7 @@ if (productsLoading || filtersLoading) {
           </div>
         </div>
       </div>
-
+      <Footer />
     </div>
   )
 }

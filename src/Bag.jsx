@@ -178,8 +178,6 @@ function Navbar() {
           BAG
         </span>
         <span style={styles.stepDivider}>············</span>
-        <span style={styles.step}>ADDRESS</span>
-        <span style={styles.stepDivider}>············</span>
         <span style={styles.step}>PAYMENT</span>
       </div>
       <div style={styles.navRight}>
@@ -205,53 +203,69 @@ function PinBar() {
   const [shouldRefetch, setShouldRefetch] = useState(0)
 
   const [defaultAddress, setDefaultAddress] = useState(null)
+const [addresses, setAddresses] = useState([])
   const [loadingAddress, setLoadingAddress] = useState(false)
   const [validationError, setValidationError] = useState('')
 
   const token = localStorage.getItem('jwt_token')
   const customer = JSON.parse(localStorage.getItem('customer') || 'null')
 
+  
+
   const isLoggedIn = !!token && !!customer
   const customerId = customer?.customer_id
+
+  const handleDeleteSuccess = () => {
+  setShouldRefetch((c) => c + 1)
+}
+
+  const handleSelectAddress = (address) => {
+  setDefaultAddress(address)
+  setOpenAddress(false)
+}
 
   const handleCloseAddress = () => {
   setOpenAddress(false)
   setShouldRefetch(c => c + 1)  // only increments on close, not open
 }
+useEffect(() => {
+  const fetchDefaultAddress = async () => {
+    if (!isLoggedIn || !customerId) return
 
-  useEffect(() => {
-    const fetchDefaultAddress = async () => {
-      if (!isLoggedIn || !customerId) return
-
-      try {
+    try {
+      if (!defaultAddress) {
         setLoadingAddress(true)
-
-        const response = await fetch(
-          `https://api.aarria.com/api/addresses?customer_id=${customerId}`,
-        )
-
-        if (!response.ok) {
-          throw new Error('Failed to fetch address')
-        }
-
-        const data = await response.json()
-
-        if (data?.items?.length > 0) {
-          const primary = data.items.find((a) => a.is_default)
-          setDefaultAddress(primary || data.items[0])
-        } else {
-          setDefaultAddress(null)
-        }
-      } catch (error) {
-        console.error(error)
-        setDefaultAddress(null)
-      } finally {
-        setLoadingAddress(false)
       }
-    }
 
-    fetchDefaultAddress()
-  }, [isLoggedIn, customerId, shouldRefetch])
+      const response = await fetch(
+        `https://api.aarria.com/api/addresses?customer_id=${customerId}`,
+      )
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch address')
+      }
+
+      const data = await response.json()
+
+      if (data?.items?.length > 0) {
+  setAddresses(data.items)
+
+  const primary = data.items.find((a) => a.is_default)
+  setDefaultAddress(primary || data.items[0])
+} else {
+  setAddresses([])
+  setDefaultAddress(null)
+}
+    } catch (error) {
+      console.error(error)
+    } finally {
+      setLoadingAddress(false)
+    }
+  }
+
+  fetchDefaultAddress()
+}, [isLoggedIn, customerId, shouldRefetch])
+
 
   const { data, isLoading, isError, error } = useQuery({
     queryKey: ['pin', pin],
@@ -278,12 +292,13 @@ if (isLoggedIn) {
   return (
     <>
       <div style={{
-        background: '#fff',
-        border: '1px solid #ebecef',
-        borderRadius: 4,
-        marginBottom: 14,
-        overflow: 'hidden',
-      }}>
+  background: '#fff',
+  border: '1px solid #ebecef',
+  borderRadius: 4,
+  marginBottom: 14,
+  overflow: 'hidden',
+  minHeight: 110,
+}}>
         {/* Header strip */}
         <div style={{
           display: 'flex',
@@ -324,10 +339,53 @@ if (isLoggedIn) {
         {/* Body */}
         <div style={{ padding: '12px 16px' }}>
           {loadingAddress ? (
-            <div style={{ fontSize: 13, color: '#94969f', padding: '4px 0' }}>
-              Loading...
-            </div>
-          ) : defaultAddress ? (
+  <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+    <SkeletonPulse
+      style={{
+        width: 16,
+        height: 16,
+        borderRadius: '50%',
+        marginTop: 4,
+        flexShrink: 0,
+      }}
+    />
+
+    <div style={{ flex: 1 }}>
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 8,
+          marginBottom: 8,
+        }}
+      >
+        <SkeletonPulse style={{ width: 140, height: 20 }} />
+        <SkeletonPulse
+          style={{
+            width: 52,
+            height: 24,
+            borderRadius: 4,
+          }}
+        />
+      </div>
+
+      <SkeletonPulse
+        style={{
+          width: '95%',
+          height: 16,
+          marginBottom: 8,
+        }}
+      />
+
+      <SkeletonPulse
+        style={{
+          width: '72%',
+          height: 16,
+        }}
+      />
+    </div>
+  </div>
+) : defaultAddress ? (
             <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
               <MapPin size={16} color='#ff3f6c' style={{ marginTop: 2, flexShrink: 0 }} />
               <div>
@@ -367,8 +425,14 @@ if (isLoggedIn) {
           )}
         </div>
       </div>
-
-      <AddressModal open={openAddress} onClose={handleCloseAddress} />
+<AddressModal
+  open={openAddress}
+  onClose={handleCloseAddress}
+  addresses={addresses}
+  selectedAddress={defaultAddress}
+  onSelectAddress={handleSelectAddress}
+  onDeleteSuccess={handleDeleteSuccess}
+/>
     </>
   )
 }
@@ -408,7 +472,7 @@ if (isLoggedIn) {
           style={styles.addressCheckBtn}
           onClick={handleCheck}
         >
-          CHECK
+          check
         </button>
       </div>
 
@@ -782,7 +846,7 @@ function CouponPanel() {
 
 function PricePanel() {
   const navigate = useNavigate()
-  const { items, couponSavings, platformFee, donationAmount } = useBagStore()
+  const { items, couponSavings, donationAmount } = useBagStore()
 
   const selected = items.filter((i) => i.selected)
   const totalMrp = useMemo(
@@ -794,7 +858,21 @@ function PricePanel() {
     [selected],
   )
   const discountOnMrp = totalMrp - totalPrice
-  const total = totalPrice - couponSavings + platformFee + donationAmount
+  const total = totalPrice - couponSavings + donationAmount
+
+  const handlePlaceOrder = () => {
+    if (selected.length === 0) return
+
+    const token = localStorage.getItem('jwt_token')
+    const customer = JSON.parse(localStorage.getItem('customer') || 'null')
+    const isLoggedIn = !!token && !!customer
+
+    if (isLoggedIn) {
+      navigate('/checkout/address')
+    } else {
+      navigate('/login?redirect=/checkout/address')
+    }
+  }
 
   return (
     <div style={styles.panelCard}>
@@ -809,12 +887,6 @@ function PricePanel() {
           green
         />
         <PriceRow label='Coupon Discount' value={`- ₹${couponSavings}`} green />
-        <div style={styles.priceRow}>
-          <span style={styles.priceLabel}>
-            Platform Fee <span style={styles.knowMoreInline}>Know More</span>
-          </span>
-          <span style={styles.priceValue}>₹{platformFee}</span>
-        </div>
         {donationAmount > 0 && (
           <PriceRow label='Donation' value={`₹${donationAmount}`} />
         )}
@@ -828,7 +900,7 @@ function PricePanel() {
       </div>
 
       <p style={styles.terms}>
-        By placing the order, you agree to Myntra's{' '}
+        By placing the order, you agree to our{' '}
         <a href='#' style={styles.termsLink}>
           Terms of Use
         </a>{' '}
@@ -840,7 +912,7 @@ function PricePanel() {
 
       <button
         style={styles.placeBtn}
-        onClick={() => navigate('/checkout/address')}
+        onClick={handlePlaceOrder}
         disabled={selected.length === 0}
       >
         PLACE ORDER
@@ -1432,7 +1504,7 @@ const styles = {
     background: 'none',
     color: '#ff3f6c',
     fontSize: 16,
-    fontWeight: 700,
+    fontWeight: 100,
     cursor: 'pointer',
     whiteSpace: 'nowrap',
   },

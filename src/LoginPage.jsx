@@ -541,7 +541,7 @@ setRedirectSeconds(3)
 
 // ─── Login Screen ─────────────────────────────────────────────────────────────
 function LoginScreen({ onContinue }) {
-  const [phone, setPhone] = useState('')
+  const [phone, setPhone] = useState('9876543210')
   const [agreed, setAgreed] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
