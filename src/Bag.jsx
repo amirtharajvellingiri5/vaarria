@@ -20,6 +20,9 @@ import {
   Minus,
   Plus,
   Trash2,
+  MapPin,
+  Home,
+  Edit3,
 } from 'lucide-react'
 
 import logo from './assets/logo.png'
@@ -27,6 +30,65 @@ import './constants/global.css'
 
 import CouponModal from './modals/CouponModal'
 import AddressModal from './modals/AddressModal'
+
+function SkeletonPulse({ style = {} }) {
+  return (
+    <div
+      style={{
+        background:
+          'linear-gradient(90deg, #f1f2f4 25%, #e7e8eb 37%, #f1f2f4 63%)',
+        backgroundSize: '400% 100%',
+        animation: 'skeleton-loading 1.4s ease infinite',
+        borderRadius: 6,
+        ...style,
+      }}
+    />
+  )
+}
+
+function BagItemSkeleton() {
+  return (
+    <div style={styles.itemCard}>
+      <div style={{ ...styles.checkbox, background: '#f1f2f4', borderColor: '#f1f2f4' }} />
+      <div style={styles.itemThumb}>
+        <SkeletonPulse style={{ width: '100%', height: '100%', borderRadius: 8 }} />
+      </div>
+      <div style={styles.itemBody}>
+        <SkeletonPulse style={{ width: '82%', height: 14 }} />
+        <SkeletonPulse style={{ width: '65%', height: 12, marginTop: 8 }} />
+        <div style={styles.itemAttrs}>
+          <SkeletonPulse style={{ width: 72, height: 28, borderRadius: 6 }} />
+          <SkeletonPulse style={{ width: 94, height: 28, borderRadius: 6 }} />
+        </div>
+        <div style={styles.pricingRow}>
+          <SkeletonPulse style={{ width: 72, height: 18 }} />
+          <SkeletonPulse style={{ width: 52, height: 12 }} />
+          <SkeletonPulse style={{ width: 62, height: 12 }} />
+        </div>
+        <SkeletonPulse style={{ width: 120, height: 12, marginTop: 8 }} />
+        <SkeletonPulse style={{ width: 150, height: 12, marginTop: 8 }} />
+      </div>
+      <SkeletonPulse style={{ width: 20, height: 20, borderRadius: 4 }} />
+    </div>
+  )
+}
+
+function PricePanelSkeleton() {
+  return (
+    <div style={styles.panelCard}>
+      <SkeletonPulse style={{ width: 100, height: 10, marginBottom: 16 }} />
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <SkeletonPulse style={{ width: '100%', height: 14 }} />
+        <SkeletonPulse style={{ width: '100%', height: 14 }} />
+        <SkeletonPulse style={{ width: '100%', height: 14 }} />
+        <SkeletonPulse style={{ width: '100%', height: 14 }} />
+      </div>
+      <div style={styles.priceDivider} />
+      <SkeletonPulse style={{ width: '100%', height: 18 }} />
+      <SkeletonPulse style={{ width: '100%', height: 48, borderRadius: 8, marginTop: 18 }} />
+    </div>
+  )
+}
 
 // ─── Zustand Store ────────────────────────────────────────────────────────────
 const useBagStore = create((set, get) => ({
@@ -60,11 +122,45 @@ const useBagStore = create((set, get) => ({
 
 // ─── Mock fetch (TanStack Query) ──────────────────────────────────────────────
 const fetchPinDetails = async (pin) => {
-  await new Promise((r) => setTimeout(r, 600))
-  if (!pin || pin.length < 6) throw new Error('Invalid PIN')
-  return { city: 'Bengaluru', deliveryDate: 'Thu, 1 May', express: true }
-}
+  if (!/^\d{6}$/.test(pin)) {
+    throw new Error('Please enter a valid 6-digit PIN code')
+  }
 
+  const response = await fetch(
+    `https://api.postalpincode.in/pincode/${pin}`,
+  )
+
+  if (!response.ok) {
+    throw new Error('Unable to check delivery')
+  }
+
+  const data = await response.json()
+
+  if (
+    !Array.isArray(data) ||
+    !data[0] ||
+    data[0].Status !== 'Success' ||
+    !data[0].PostOffice ||
+    data[0].PostOffice.length === 0
+  ) {
+    throw new Error('Sorry, this PIN code is not serviceable')
+  }
+
+  const office = data[0].PostOffice[0]
+
+  const deliveryDate = new Date()
+  deliveryDate.setDate(deliveryDate.getDate() + 4)
+
+  return {
+    city: office.District,
+    state: office.State,
+    deliveryDate: deliveryDate.toLocaleDateString('en-IN', {
+      weekday: 'short',
+      day: 'numeric',
+      month: 'short',
+    }),
+  }
+}
 // ─── Sub-components ──────────────────────────────────────────────────────────
 
 function Navbar() {
@@ -102,64 +198,290 @@ function Navbar() {
     </nav>
   )
 }
-
 function PinBar() {
   const [pin, setPin] = useState('')
   const [submitted, setSubmitted] = useState(false)
   const [openAddress, setOpenAddress] = useState(false)
+  const [shouldRefetch, setShouldRefetch] = useState(0)
 
-  const { data, isLoading, isError, refetch } = useQuery({
+  const [defaultAddress, setDefaultAddress] = useState(null)
+  const [loadingAddress, setLoadingAddress] = useState(false)
+  const [validationError, setValidationError] = useState('')
+
+  const token = localStorage.getItem('jwt_token')
+  const customer = JSON.parse(localStorage.getItem('customer') || 'null')
+
+  const isLoggedIn = !!token && !!customer
+  const customerId = customer?.customer_id
+
+  const handleCloseAddress = () => {
+  setOpenAddress(false)
+  setShouldRefetch(c => c + 1)  // only increments on close, not open
+}
+
+  useEffect(() => {
+    const fetchDefaultAddress = async () => {
+      if (!isLoggedIn || !customerId) return
+
+      try {
+        setLoadingAddress(true)
+
+        const response = await fetch(
+          `https://api.aarria.com/api/addresses?customer_id=${customerId}`,
+        )
+
+        if (!response.ok) {
+          throw new Error('Failed to fetch address')
+        }
+
+        const data = await response.json()
+
+        if (data?.items?.length > 0) {
+          const primary = data.items.find((a) => a.is_default)
+          setDefaultAddress(primary || data.items[0])
+        } else {
+          setDefaultAddress(null)
+        }
+      } catch (error) {
+        console.error(error)
+        setDefaultAddress(null)
+      } finally {
+        setLoadingAddress(false)
+      }
+    }
+
+    fetchDefaultAddress()
+  }, [isLoggedIn, customerId, shouldRefetch])
+
+  const { data, isLoading, isError, error } = useQuery({
     queryKey: ['pin', pin],
     queryFn: () => fetchPinDetails(pin),
-    enabled: submitted && pin.length === 6,
+    enabled: submitted && !isLoggedIn,
     retry: false,
   })
 
   const handleCheck = () => {
-    if (pin.length === 6) setSubmitted(true)
-  }
+    if (!pin.trim()) {
+      setValidationError('Enter PIN code')
+      return
+    }
 
+    if (!/^\d{6}$/.test(pin)) {
+      setValidationError('Enter valid 6-digit PIN code')
+      return
+    }
+
+    setValidationError('')
+    setSubmitted(true)
+  }
+if (isLoggedIn) {
   return (
-    <div style={styles.pinBar}>
-      <Truck size={16} style={{ color: '#e91e8c', flexShrink: 0 }} />
-      <input
-        style={styles.pinInput}
-        placeholder='Enter PIN code'
-        value={pin}
-        maxLength={6}
-        onChange={(e) => {
-          setPin(e.target.value.replace(/\D/, ''))
-          setSubmitted(false)
+    <>
+      <div style={{
+        background: '#fff',
+        border: '1px solid #ebecef',
+        borderRadius: 4,
+        marginBottom: 14,
+        overflow: 'hidden',
+      }}>
+        {/* Header strip */}
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: '10px 16px',
+          borderBottom: '1px solid #f0f0f0',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <Truck size={14} color='#ff3f6c' />
+            <span style={{
+              fontSize: 11,
+              fontWeight: 700,
+              letterSpacing: 1,
+              color: '#282c3f',
+              textTransform: 'uppercase',
+            }}>
+              Delivery Address
+            </span>
+          </div>
+          <button
+            onClick={() => setOpenAddress(true)}
+            style={{
+              fontSize: 12,
+              fontWeight: 700,
+              color: '#ff3f6c',
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              letterSpacing: 0.5,
+              padding: 0,
+            }}
+          >
+            {defaultAddress ? 'CHANGE' : 'ADD ADDRESS'}
+          </button>
+        </div>
+
+        {/* Body */}
+        <div style={{ padding: '12px 16px' }}>
+          {loadingAddress ? (
+            <div style={{ fontSize: 13, color: '#94969f', padding: '4px 0' }}>
+              Loading...
+            </div>
+          ) : defaultAddress ? (
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+              <MapPin size={16} color='#ff3f6c' style={{ marginTop: 2, flexShrink: 0 }} />
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                  <span style={{ fontSize: 14, fontWeight: 700, color: '#282c3f' }}>
+                    {defaultAddress.full_name}
+                  </span>
+                  <span style={{
+                    fontSize: 10,
+                    fontWeight: 700,
+                    color: '#ff3f6c',
+                    border: '1px solid #ff3f6c',
+                    borderRadius: 2,
+                    padding: '1px 6px',
+                    letterSpacing: 0.5,
+                  }}>
+                    {defaultAddress.address_type?.toUpperCase() || 'HOME'}
+                  </span>
+                </div>
+                <div style={{ fontSize: 13, color: '#535766', lineHeight: 1.5 }}>
+                  {defaultAddress.address_line_1}
+                  {defaultAddress.address_line_2 ? `, ${defaultAddress.address_line_2}` : ''},&nbsp;
+                  {defaultAddress.city}, {defaultAddress.state} — {' '}
+                  <span style={{ fontWeight: 700, color: '#282c3f' }}>
+                    {defaultAddress.pincode}
+                  </span>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <MapPin size={15} color='#94969f' />
+              <span style={{ fontSize: 13, color: '#94969f' }}>
+                No address saved. Add one to continue.
+              </span>
+            </div>
+          )}
+        </div>
+      </div>
+
+      <AddressModal open={openAddress} onClose={handleCloseAddress} />
+    </>
+  )
+}
+  return (
+    <div
+      style={{
+        ...styles.pinBar,
+        flexDirection: 'column',
+        alignItems: 'stretch',
+        gap: 8,
+      }}
+    >
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 10,
         }}
-        onKeyDown={(e) => e.key === 'Enter' && handleCheck()}
-      />
-      {isLoading && <span style={styles.pinStatus}>Checking…</span>}
+      >
+        <Truck size={16} style={{ color: '#ff3f6c' }} />
+
+        <input
+          style={styles.pinInput}
+          placeholder='Enter PIN code'
+          value={pin}
+          maxLength={6}
+          inputMode='numeric'
+          onChange={(e) => {
+            setPin(e.target.value.replace(/\D/g, ''))
+            setSubmitted(false)
+            setValidationError('')
+          }}
+          onKeyDown={(e) => e.key === 'Enter' && handleCheck()}
+        />
+
+        <button
+          style={styles.addressCheckBtn}
+          onClick={handleCheck}
+        >
+          CHECK
+        </button>
+      </div>
+
+      {isLoading && <div style={{ paddingLeft: 28, fontSize: 12 }}>Checking...</div>}
       {data && (
-        <span style={{ ...styles.pinStatus, color: '#2e7d32' }}>
-          ✓ Delivery by {data.deliveryDate}, {data.city}
-        </span>
+        <div style={{ paddingLeft: 28, fontSize: 12, color: '#2e7d32' }}>
+          Deliver to {data.city} by {data.deliveryDate}
+        </div>
+      )}
+      {validationError && (
+        <div style={{ paddingLeft: 28, fontSize: 12, color: '#d32f2f' }}>
+          {validationError}
+        </div>
       )}
       {isError && (
-        <span style={{ ...styles.pinStatus, color: '#c62828' }}>
-          Invalid PIN
-        </span>
+        <div style={{ paddingLeft: 28, fontSize: 12, color: '#d32f2f' }}>
+          {error.message}
+        </div>
       )}
-      <button
-        style={styles.addressCheckBtn}
-        onClick={() => setOpenAddress(true)}
-      >
-        Add Address
-      </button>
-      <AddressModal open={openAddress} onClose={() => setOpenAddress(false)} />
     </div>
   )
 }
-
 function ItemCard({ item }) {
-  const { items, toggleSelected, updateQty, setItems } = useBagStore()
+  const { items, toggleSelected, setItems } = useBagStore()
 
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [deleting, setDeleting] = useState(false)
+
+    const updateBagQuantity = async (delta) => {
+    const newQty = item.qty + delta
+
+    if (newQty < 1) {
+      return
+    }
+
+    try {
+      const response = await fetch(
+        `https://api.aarria.com/api/bags/${item.id}`,
+        {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            address_id: item.address_id ?? null,
+            size: item.size,
+            color: item.colorName,
+            quantity: newQty,
+            selected: item.selected,
+          }),
+        },
+      )
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.detail || 'Failed to update quantity')
+      }
+
+      setItems(
+        items.map((x) =>
+          x.id === item.id
+            ? {
+                ...x,
+                qty: newQty,
+              }
+            : x,
+        ),
+      )
+    } catch (error) {
+      alert(error.message)
+    }
+  }
 
   const deleteBagItem = async () => {
     try {
@@ -262,7 +584,7 @@ function ItemCard({ item }) {
             <div style={styles.qtyControl}>
               <button
                 style={styles.qtyBtn}
-                onClick={() => updateQty(item.id, -1)}
+                onClick={() => updateBagQuantity(-1)}
               >
                 <Minus size={11} />
               </button>
@@ -271,7 +593,7 @@ function ItemCard({ item }) {
 
               <button
                 style={styles.qtyBtn}
-                onClick={() => updateQty(item.id, 1)}
+                onClick={() => updateBagQuantity(1)}
               >
                 <Plus size={11} />
               </button>
@@ -556,12 +878,14 @@ function PriceRow({ label, value, green }) {
 // ─── Main BagPage ─────────────────────────────────────────────────────────────
 function BagPage() {
   const { items, toggleSelected, setItems } = useBagStore()
+  const [loading, setLoading] = useState(true)
   const selectedCount = items.filter((i) => i.selected).length
   const allSelected = selectedCount === items.length
 
   useEffect(() => {
     const fetchBagItems = async () => {
       try {
+        setLoading(true)
         const response = await fetch('https://api.aarria.com/customers/1/bag')
 
         const data = await response.json()
@@ -597,6 +921,8 @@ function BagPage() {
         setItems(mappedItems)
       } catch (error) {
         console.error('Failed to fetch bag items', error)
+      } finally {
+        setLoading(false)
       }
     }
 
@@ -605,6 +931,12 @@ function BagPage() {
 
   return (
     <div style={styles.root}>
+      <style>{`
+        @keyframes skeleton-loading {
+          0% { background-position: 100% 50%; }
+          100% { background-position: 0 50%; }
+        }
+      `}</style>
       <Navbar />
       <div style={styles.container}>
         <div style={styles.leftCol}>
@@ -644,17 +976,23 @@ function BagPage() {
               {selectedCount}/{items.length} ITEMS SELECTED
             </span>
             <div style={styles.itemsActions}>
-              <span style={styles.actionBtn}>REMOVE</span>
-              <span style={{ color: '#ddd' }}>|</span>
+              {/* <span style={styles.actionBtn}>REMOVE</span> */}
+              {/* <span style={{ color: '#ddd' }}>|</span>
               <span style={styles.actionBtn}>
                 <Heart size={12} style={{ marginRight: 4 }} />
                 WISHLIST
-              </span>
+              </span> */}
             </div>
           </div>
 
           {/* Item cards */}
-          {items.length === 0 ? (
+          {loading ? (
+            <>
+              <BagItemSkeleton />
+              <BagItemSkeleton />
+              <BagItemSkeleton />
+            </>
+          ) : items.length === 0 ? (
             <div style={styles.emptyState}>
               <ShoppingBag
                 size={48}
@@ -668,8 +1006,17 @@ function BagPage() {
         </div>
 
         <div style={styles.rightCol}>
-          <CouponPanel />
-          <PricePanel />
+          {loading ? (
+            <>
+              <PricePanelSkeleton />
+              <PricePanelSkeleton />
+            </>
+          ) : (
+            <>
+              <CouponPanel />
+              <PricePanel />
+            </>
+          )}
         </div>
       </div>
     </div>
@@ -688,6 +1035,7 @@ const styles = {
     color: '#222',
     WebkitFontSmoothing: 'antialiased', // Better font rendering
     MozOsxFontSmoothing: 'grayscale',
+    position: 'relative',
   },
   logoImg: {
     height: 'auto',

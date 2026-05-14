@@ -927,6 +927,8 @@ export default function ProductDetail() {
   const [sizeError, setSizeError] = useState(false)
   const [bagError, setBagError] = useState('')
   const [addingToBag, setAddingToBag] = useState(false)
+  const isOutOfStock =
+    !product?.sizes?.length || !product?.availableSizes?.length
 
   useEffect(() => {
     setLoading(true)
@@ -945,10 +947,14 @@ export default function ProductDetail() {
   }
 
   const handleAddToBag = async () => {
-    if (!selectedSize) {
-      setSizeError(true)
-      return
-    }
+    if (isOutOfStock) {
+  return
+}
+
+if (!selectedSize) {
+  setSizeError(true)
+  return
+}
 
     setSizeError(false)
     setBagError('')
@@ -1375,7 +1381,20 @@ export default function ProductDetail() {
                 )
               })}
             </div>
-            {sizeError && (
+            {isOutOfStock && (
+              <div
+                style={{
+                  fontSize: 12,
+                  color: '#ef4444',
+                  marginTop: 8,
+                  fontWeight: 600,
+                }}
+              >
+                Out of stock
+              </div>
+            )}
+
+            {sizeError && !isOutOfStock && (
               <div className='pdp-size-warn'>
                 Please select a size to continue
               </div>
@@ -1398,13 +1417,16 @@ export default function ProductDetail() {
               <button
                 className={`pdp-btn-bag ${addedToBag ? 'added' : ''}`}
                 onClick={handleAddToBag}
+                disabled={addingToBag || isOutOfStock}
               >
                 <ShoppingBag size={18} />
-                {addingToBag
-                  ? 'ADDING...'
-                  : addedToBag
-                    ? '✓ Added to Bag'
-                    : 'Add to Bag'}
+                {isOutOfStock
+                  ? 'OUT OF STOCK'
+                  : addingToBag
+                    ? 'ADDING...'
+                    : addedToBag
+                      ? '✓ Added to Bag'
+                      : 'Add to Bag'}
               </button>
               <button
                 className={`pdp-btn-wishlist ${wishlist ? 'active' : ''}`}

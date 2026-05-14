@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import Navbar from './Navbar'
 
 // ─── MSG91 Config — replace with your real values ─────────────────────────────
-const MSG91_WIDGET_ID  = '36656862353439323630303030'  // widgetId from MSG91 dashboard
-const MSG91_TOKEN_AUTH = '147259Txua8xfclqV69fd54e9P1'              // tokenAuth from MSG91 dashboard
+const MSG91_WIDGET_ID = '366568623534393236303030' // widgetId from MSG91 dashboard
+const MSG91_TOKEN_AUTH = '147259Txua8xfclqV69fd54e9P1' // tokenAuth from MSG91 dashboard
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
 const styles = `
@@ -238,19 +239,46 @@ const styles = `
 // ─── useMSG91Script ───────────────────────────────────────────────────────────
 // Injects the MSG91 OTP provider script once and exposes a `ready` flag
 function useMSG91Script() {
-  const [ready, setReady] = useState(() => typeof window !== 'undefined' && !!window.initSendOTP)
+  const [ready, setReady] = useState(
+    () => typeof window !== 'undefined' && !!window.initSendOTP,
+  )
 
   useEffect(() => {
-    if (window.initSendOTP) { setReady(true); return }
+    if (window.initSendOTP) {
+      setReady(true)
+      return
+    }
 
     const script = document.createElement('script')
-    script.src   = 'https://control.msg91.com/app/assets/otp-provider/otp-provider.js'
+    script.src = 'https://verify.msg91.com/otp-provider.js'
     script.async = true
-    script.onload  = () => setReady(true)
+    script.onload = () => {
+      window.initSendOTP({
+        widgetId: MSG91_WIDGET_ID,
+        tokenAuth: MSG91_TOKEN_AUTH,
+        exposeMethods: true,
+
+        success: (data) => {
+          console.log('[MSG91] success', data)
+        },
+
+        failure: (err) => {
+          console.log('[MSG91] failure', err)
+        },
+      })
+
+      setReady(true)
+      console.log('initSendOTP', window.initSendOTP)
+      console.log('sendOtp', window.sendOtp)
+      console.log('verifyOtp', window.verifyOtp)
+      console.log('retryOtp', window.retryOtp)
+    }
     script.onerror = () => console.error('[MSG91] Script load failed')
     document.body.appendChild(script)
 
-    return () => { if (document.body.contains(script)) document.body.removeChild(script) }
+    return () => {
+      if (document.body.contains(script)) document.body.removeChild(script)
+    }
   }, [])
 
   return ready
@@ -258,58 +286,97 @@ function useMSG91Script() {
 
 // ─── OTP Screen ───────────────────────────────────────────────────────────────
 function OtpScreen({ phone, onBack, onVerified }) {
-  const [digits, setDigits]         = useState(['', '', '', ''])
-  const [seconds, setSeconds]       = useState(30)
-  const [canResend, setCanResend]   = useState(false)
-  const [verifying, setVerifying]   = useState(false)
-  const [resending, setResending]   = useState(false)
-  const [error, setError]           = useState('')
+  const [digits, setDigits] = useState(['', '', '', ''])
+  const [seconds, setSeconds] = useState(30)
+const [redirectSeconds, setRedirectSeconds] = useState(null)
+  const [canResend, setCanResend] = useState(false)
+  const [verifying, setVerifying] = useState(false)
+  const [resending, setResending] = useState(false)
+  const [error, setError] = useState('')
   const [digitState, setDigitState] = useState('idle') // 'idle' | 'shake' | 'success'
 
   const refs = [useRef(), useRef(), useRef(), useRef()]
 
-  useEffect(() => { refs[0].current?.focus() }, [])
+  useEffect(() => {
+    refs[0].current?.focus()
+  }, [])
 
   // Countdown
   useEffect(() => {
-    if (seconds <= 0) { setCanResend(true); return }
-    const t = setTimeout(() => setSeconds(s => s - 1), 1000)
+    if (seconds <= 0) {
+      setCanResend(true)
+      return
+    }
+    const t = setTimeout(() => setSeconds((s) => s - 1), 1000)
     return () => clearTimeout(t)
   }, [seconds])
 
-  const pad = n => String(n).padStart(2, '0')
+  useEffect(() => {
+  if (redirectSeconds === null) return
+  if (redirectSeconds <= 0) {
+    onVerified?.()
+    return
+  }
+
+  const timer = setTimeout(() => {
+    setRedirectSeconds((s) => s - 1)
+  }, 1000)
+
+  return () => clearTimeout(timer)
+}, [redirectSeconds, onVerified])
+
+  const pad = (n) => String(n).padStart(2, '0')
 
   // ── MSG91 verify ──
   // MSG91's initSendOTP also handles verification when `otp` is passed in config
-  const verifyOtp = useCallback((otpValue) => {
-    if (!window.initSendOTP) { setError('OTP service not ready. Refresh and try again.'); return }
-    setVerifying(true)
-    setError('')
+  const verifyOtp = useCallback(
+    async (otpValue) => {
+      setVerifying(true)
+      setError('')
 
-    window.initSendOTP({
-      widgetId:   MSG91_WIDGET_ID,
-      tokenAuth:  MSG91_TOKEN_AUTH,
-      identifier: `91${phone}`,     // E.164 without '+'
-      otp:        otpValue,          // pass digits to verify
-      success: (data) => {
-        setVerifying(false)
+      try {
+        const response = await fetch(
+          'https://api.aarria.com/api/auth/verify-otp',
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              mobile_no: phone,
+              otp: otpValue,
+            }),
+          },
+        )
+
+        const data = await response.json()
+        if (!response.ok) {
+          throw new Error(data.detail || 'Invalid OTP')
+        }
+
         setDigitState('success')
-        // data.message = access token from MSG91
-        onVerified?.(data.message, phone)
-      },
-      failure: (err) => {
-        setVerifying(false)
+
+        localStorage.setItem('jwt_token', data.token)
+        localStorage.setItem('customer', JSON.stringify(data.customer))
+
+        setVerifying(true)
+setRedirectSeconds(3)
+      } catch (err) {
         setDigitState('shake')
+
         setTimeout(() => {
           setDigitState('idle')
           setDigits(['', '', '', ''])
           refs[0].current?.focus()
         }, 400)
-        setError(err?.message || err?.description || 'Invalid OTP. Please try again.')
-        console.error('[MSG91] Verify failed:', err)
-      },
-    })
-  }, [phone, onVerified])
+
+        setError(err.message)
+      } finally {
+        setVerifying(false)
+      }
+    },
+    [phone, onVerified],
+  )
 
   // ── Input change ──
   const handleChange = (i, val) => {
@@ -325,7 +392,8 @@ function OtpScreen({ phone, onBack, onVerified }) {
   }
 
   const handleKeyDown = (i, e) => {
-    if (e.key === 'Backspace' && !digits[i] && i > 0) refs[i - 1].current?.focus()
+    if (e.key === 'Backspace' && !digits[i] && i > 0)
+      refs[i - 1].current?.focus()
   }
 
   // ── Manual verify (fallback button) ──
@@ -333,184 +401,237 @@ function OtpScreen({ phone, onBack, onVerified }) {
     const otp = digits.join('')
     if (otp.length === 4 && !verifying) verifyOtp(otp)
   }
+  const handleResend = useCallback(async () => {
+    if (resending) return
 
-  // ── Resend OTP ──
-  const handleResend = useCallback(() => {
-    if (!window.initSendOTP || resending) return
     setResending(true)
     setError('')
     setDigits(['', '', '', ''])
     setDigitState('idle')
 
-    window.initSendOTP({
-      widgetId:   MSG91_WIDGET_ID,
-      tokenAuth:  MSG91_TOKEN_AUTH,
-      identifier: `91${phone}`,
-      success: () => {
-        setResending(false)
-        setCanResend(false)
-        setSeconds(30)
-        refs[0].current?.focus()
-      },
-      failure: (err) => {
-        setResending(false)
-        setError('Could not resend OTP. Please try again.')
-        console.error('[MSG91] Resend failed:', err)
-      },
-    })
-  }, [phone, resending])
+    try {
+      const response = await fetch(
+        'https://api.aarria.com/api/auth/generate-otp',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            mobile_no: phone,
+          }),
+        },
+      )
 
-  const allFilled = digits.every(d => d !== '')
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.detail || 'Could not resend OTP')
+      }
+
+      setCanResend(false)
+      setSeconds(30)
+      refs[0].current?.focus()
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setResending(false)
+    }
+  }, [resending, phone])
+
+  const allFilled = digits.every((d) => d !== '')
 
   const digitClass = (d) => {
     let cls = 'lp-otp-digit'
     if (d || digitState === 'success') cls += ' filled'
-    if (digitState === 'shake')   cls += ' shake'
+    if (digitState === 'shake') cls += ' shake'
     if (digitState === 'success') cls += ' success'
     return cls
   }
 
   return (
-    <div className="lp-otp-body">
-      <div className="lp-otp-icon">📱</div>
-      <h2 className="lp-otp-title">Verify with OTP</h2>
-      <p className="lp-otp-subtitle">
+    <div className='lp-otp-body'>
+      <div className='lp-otp-icon'>📱</div>
+      <h2 className='lp-otp-title'>Verify with OTP</h2>
+      <p className='lp-otp-subtitle'>
         Sent to <span>+91 {phone}</span>
       </p>
 
       {/* 4-digit boxes */}
-      <div className="lp-otp-inputs">
+      <div className='lp-otp-inputs'>
         {digits.map((d, i) => (
           <input
             key={i}
             ref={refs[i]}
             className={digitClass(d)}
-            type="tel"
-            inputMode="numeric"
+            type='tel'
+            inputMode='numeric'
             maxLength={1}
             value={d}
             disabled={verifying || digitState === 'success'}
-            onChange={e => handleChange(i, e.target.value)}
-            onKeyDown={e => handleKeyDown(i, e)}
+            onChange={(e) => handleChange(i, e.target.value)}
+            onKeyDown={(e) => handleKeyDown(i, e)}
           />
         ))}
       </div>
 
       {/* Feedback */}
-      {error
-        ? <p className="lp-error">{error}</p>
-        : digitState === 'success'
-          ? <p className="lp-success">✓ Verified successfully!</p>
-          : <div style={{ minHeight: 18 }} />
-      }
+      {error ? (
+        <p className='lp-error'>{error}</p>
+      ) : digitState === 'success' ? (
+    <p className='lp-success'>
+  ✓ Verified successfully! Redirecting in {redirectSeconds}s...
+</p>
+      ) : (
+        <div style={{ minHeight: 18 }} />
+      )}
 
       {/* Verify button — auto-fires on last digit but kept as a manual fallback */}
       <button
-        className={`lp-btn-verify${allFilled && !verifying ? ' active' : ''}${verifying ? ' loading' : ''}`}
+        className={`lp-btn-verify${
+  allFilled && !verifying && digitState !== 'success' ? ' active' : ''
+}${verifying ? ' loading' : ''}`}
         onClick={handleVerifyClick}
-        disabled={!allFilled || verifying || digitState === 'success'}
+        disabled={
+  !allFilled ||
+  verifying ||
+  digitState === 'success' ||
+  redirectSeconds !== null
+}
       >
-        {verifying
-          ? <><span className="lp-spinner" />Verifying…</>
-          : 'VERIFY OTP'
-        }
+        {verifying ? (
+          <>
+            <span className='lp-spinner' />
+            Verifying…
+          </>
+        ) : (
+          'VERIFY OTP'
+        )}
       </button>
 
       {/* Resend row */}
-      <div className="lp-resend">
+      <div className='lp-resend'>
         {canResend ? (
-          <button className="lp-resend-btn" onClick={handleResend} disabled={resending}>
+          <button
+            className='lp-resend-btn'
+            onClick={handleResend}
+            disabled={resending}
+          >
             {resending ? 'Sending…' : 'Resend OTP'}
           </button>
         ) : (
-          <>Resend OTP in: <strong>{pad(Math.floor(seconds / 60))}:{pad(seconds % 60)}</strong></>
+          <>
+            Resend OTP in:{' '}
+            <strong>
+              {pad(Math.floor(seconds / 60))}:{pad(seconds % 60)}
+            </strong>
+          </>
         )}
       </div>
 
-      <p className="lp-help">Having trouble logging in? <a href="#">Get help</a></p>
-      <button className="lp-back-btn" onClick={onBack}>← Change number</button>
+      <p className='lp-help'>
+        Having trouble logging in? <a href='#'>Get help</a>
+      </p>
+      <button className='lp-back-btn' onClick={onBack}>
+        ← Change number
+      </button>
     </div>
   )
 }
 
 // ─── Login Screen ─────────────────────────────────────────────────────────────
 function LoginScreen({ onContinue }) {
-  const [phone, setPhone]     = useState('')
-  const [agreed, setAgreed]   = useState(false)
+  const [phone, setPhone] = useState('')
+  const [agreed, setAgreed] = useState(false)
   const [loading, setLoading] = useState(false)
-  const [error, setError]     = useState('')
-  const msg91Ready = useMSG91Script()
+  const [error, setError] = useState('')
+  const msg91Ready = true
 
   const isReady = phone.length === 10 && agreed && msg91Ready
 
-  const handlePhone = e => {
+  const handlePhone = (e) => {
     setError('')
     setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))
   }
 
   // ── Send OTP via MSG91 ──
-  const handleContinue = () => {
+  const handleContinue = async () => {
     if (!isReady) return
+
     setLoading(true)
     setError('')
 
-    window.initSendOTP({
-      widgetId:   MSG91_WIDGET_ID,
-      tokenAuth:  MSG91_TOKEN_AUTH,
-      identifier: `91${phone}`,   // country code + number, no '+'
-      success: () => {
-        setLoading(false)
-        onContinue(phone)          // switch to OTP screen
-      },
-      failure: (err) => {
-        setLoading(false)
-        setError(err?.message || err?.description || 'Failed to send OTP. Try again.')
-        console.error('[MSG91] Send failed:', err)
-      },
-    })
-  }
+    try {
+      const response = await fetch(
+        'https://api.aarria.com/api/auth/generate-otp',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            mobile_no: phone,
+          }),
+        },
+      )
 
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.detail || 'Failed to send OTP')
+      }
+
+      onContinue(phone)
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setLoading(false)
+    }
+  }
   return (
     <>
       {/* Promo Banner */}
-      <div className="lp-promo">
-        <div className="lp-promo-text">
+      <div className='lp-promo'>
+        <div className='lp-promo-text'>
           <h2>FLAT ₹300 OFF</h2>
           <p>On your 1st order + exciting offers*</p>
-          <span className="lp-promo-code">CODE: TRENDY300</span>
+          <span className='lp-promo-code'>CODE: TRENDY300</span>
         </div>
-        <div className="lp-promo-badge"><strong>₹300</strong>OFF</div>
+        <div className='lp-promo-badge'>
+          <strong>₹300</strong>OFF
+        </div>
       </div>
 
       {/* Form */}
-      <div className="lp-form-body">
-        <p className="lp-title"><strong>Login</strong> or <strong>Signup</strong></p>
+      <div className='lp-form-body'>
+        <p className='lp-title'>
+          <strong>Login</strong> or <strong>Signup</strong>
+        </p>
 
-        <div className="lp-phone-wrap">
-          <div className="lp-phone-code">+91</div>
+        <div className='lp-phone-wrap'>
+          <div className='lp-phone-code'>+91</div>
           <input
-            className="lp-phone-input"
-            type="tel"
-            inputMode="numeric"
-            placeholder="Mobile Number*"
+            className='lp-phone-input'
+            type='tel'
+            inputMode='numeric'
+            placeholder='Mobile Number*'
             value={phone}
             onChange={handlePhone}
             disabled={loading}
           />
         </div>
 
-        <div className="lp-checkbox-row">
+        <div className='lp-checkbox-row'>
           <input
-            type="checkbox"
-            id="lp-terms"
+            type='checkbox'
+            id='lp-terms'
             checked={agreed}
-            onChange={e => setAgreed(e.target.checked)}
+            onChange={(e) => setAgreed(e.target.checked)}
             disabled={loading}
           />
-          <label htmlFor="lp-terms">
-            By continuing, I agree to the{' '}
-            <a href="#">Terms of Use</a> &amp; <a href="#">Privacy Policy</a>{' '}
-            and I am above 18 years old.
+          <label htmlFor='lp-terms'>
+            By continuing, I agree to the <a href='#'>Terms of Use</a> &amp;{' '}
+            <a href='#'>Privacy Policy</a> and I am above 18 years old.
           </label>
         </div>
 
@@ -519,52 +640,54 @@ function LoginScreen({ onContinue }) {
           onClick={handleContinue}
           disabled={!isReady || loading}
         >
-          {loading      ? <><span className="lp-spinner" />Sending OTP…</> :
-           !msg91Ready  ? 'Loading…' :
-                          'CONTINUE'}
+          {loading ? (
+            <>
+              <span className='lp-spinner' />
+              Sending OTP…
+            </>
+          ) : !msg91Ready ? (
+            'Loading…'
+          ) : (
+            'CONTINUE'
+          )}
         </button>
 
-        {error && <p className="lp-error">{error}</p>}
+        {error && <p className='lp-error'>{error}</p>}
 
-        <p className="lp-help">Have trouble logging in? <a href="#">Get help</a></p>
+        <p className='lp-help'>
+          Have trouble logging in? <a href='#'>Get help</a>
+        </p>
       </div>
     </>
   )
 }
 
-// ─── LoginPage (main export) ──────────────────────────────────────────────────
 export default function LoginPage() {
-  const [screen, setScreen] = useState('login')  // 'login' | 'otp'
-  const [phone, setPhone]   = useState('')
+  const [screen, setScreen] = useState('login')
+  const [phone, setPhone] = useState('')
+  const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
 
-  /**
-   * Called after MSG91 confirms the OTP.
-   * @param {string} accessToken - MSG91 access token (data.message from success callback)
-   * @param {string} verifiedPhone - the phone number that was verified
-   *
-   * Send this token to your backend to issue a session:
-   *   POST /api/auth/verify-msg91  { access_token: accessToken }
-   */
-  const handleVerified = (accessToken, verifiedPhone) => {
-    console.log('[Auth] Phone verified:', verifiedPhone)
-    console.log('[Auth] MSG91 token:', accessToken)
+  const handleVerified = (data) => {
+    const redirectTo = searchParams.get('redirect') || '/'
 
-    // TODO: call your backend here
-    // fetch('/api/auth/verify-msg91', {
-    //   method: 'POST',
-    //   headers: { 'Content-Type': 'application/json' },
-    //   body: JSON.stringify({ access_token: accessToken }),
-    // }).then(r => r.json()).then(() => navigate('/'))
+    // token already stored in localStorage by OtpScreen
+    navigate(redirectTo, { replace: true })
   }
 
   return (
     <>
       <style>{styles}</style>
       <Navbar />
-      <div className="login-page">
-        <div className="lp-card">
+      <div className='login-page'>
+        <div className='lp-card'>
           {screen === 'login' ? (
-            <LoginScreen onContinue={p => { setPhone(p); setScreen('otp') }} />
+            <LoginScreen
+              onContinue={(p) => {
+                setPhone(p)
+                setScreen('otp')
+              }}
+            />
           ) : (
             <OtpScreen
               phone={phone}
