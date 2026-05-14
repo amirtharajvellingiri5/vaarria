@@ -474,7 +474,7 @@ if (isLoggedIn) {
           style={styles.addressCheckBtn}
           onClick={handleCheck}
         >
-          CHECK
+          check
         </button>
       </div>
 
@@ -1498,7 +1498,7 @@ const styles = {
     background: 'none',
     color: '#ff3f6c',
     fontSize: 16,
-    fontWeight: 700,
+    fontWeight: 100,
     cursor: 'pointer',
     whiteSpace: 'nowrap',
   },

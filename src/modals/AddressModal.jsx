@@ -13,6 +13,7 @@ onDeleteSuccess,
   const [loading, setLoading] = useState(false)
   const [showSuccess, setShowSuccess] = useState(false)
   const [deletingId, setDeletingId] = useState(null)
+  const [deleteTarget, setDeleteTarget] = useState(null)
 
   const handleDeleteAddress = async (addressId) => {
   try {
@@ -218,10 +219,29 @@ onDeleteSuccess,
                           </div>
 
                           <div className='mt-5 flex items-center justify-between'>
-                            <button
-  onClick={() => {
-    if (!isSelected && onSelectAddress) {
+                           <button
+  onClick={async () => {
+    if (isSelected || !onSelectAddress) return
+
+    try {
+      const customer = JSON.parse(
+        localStorage.getItem('customer') || 'null',
+      )
+
+      const response = await fetch(
+        `https://api.aarria.com/api/addresses/${address.address_id}/select?customer_id=${customer.customer_id}`,
+        {
+          method: 'PUT',
+        },
+      )
+
+      if (!response.ok) {
+        throw new Error('Failed to select address')
+      }
+
       onSelectAddress(address)
+    } catch (error) {
+      alert(error.message)
     }
   }}
   className={`rounded-md px-4 py-2 text-[10px] font-bold uppercase ${
@@ -232,14 +252,13 @@ onDeleteSuccess,
 >
   {isSelected ? 'Delivering Here' : 'Deliver Here'}
 </button>
-
-                            <button
-  onClick={() => handleDeleteAddress(address.address_id)}
+                           <button
+  onClick={() => setDeleteTarget(address)}
   disabled={deletingId === address.address_id}
-  className='flex h-9 w-9 items-center justify-center rounded-md border border-[#1d2433] bg-white disabled:opacity-50'
+  className='flex h-9 w-9 items-center justify-center rounded-md border border-[#1d2433] bg-white transition hover:bg-gray-50 disabled:opacity-50'
 >
   {deletingId === address.address_id ? (
-    <span className='text-[10px]'>...</span>
+    <span className='text-[10px] font-bold'>...</span>
   ) : (
     <Trash2 className='h-4 w-4 text-black' />
   )}
@@ -315,6 +334,68 @@ onDeleteSuccess,
           </div>
         </div>
       )}
+
+      {deleteTarget && (
+  <div className='fixed inset-0 z-[80] flex items-center justify-center bg-black/40 p-3'>
+    <div className='w-full max-w-sm rounded-lg bg-white shadow-2xl'>
+      <div className='flex items-center justify-between border-b border-gray-200 px-5 py-4'>
+        <h3 className='text-lg font-bold text-[#1d2433]'>
+          Delete Address
+        </h3>
+
+        <button
+          onClick={() => setDeleteTarget(null)}
+          className='flex h-8 w-8 items-center justify-center rounded-full hover:bg-gray-100'
+        >
+          <X className='h-5 w-5 text-black' />
+        </button>
+      </div>
+
+      <div className='px-5 py-5'>
+        <p className='text-sm leading-6 text-gray-600'>
+          Are you sure you want to delete this address?
+        </p>
+
+        <div className='mt-3 rounded-md border border-gray-200 bg-[#f9f9fa] p-3'>
+          <div className='text-sm font-semibold text-[#1d2433]'>
+            {deleteTarget.full_name}
+          </div>
+
+          <div className='mt-2 text-xs leading-5 text-gray-600'>
+            {deleteTarget.address_line_1}
+            {deleteTarget.address_line_2 && (
+              <> , {deleteTarget.address_line_2}</>
+            )}
+            <br />
+            {deleteTarget.city}, {deleteTarget.state} - {deleteTarget.pincode}
+          </div>
+        </div>
+      </div>
+
+      <div className='flex gap-3 border-t border-gray-200 p-4'>
+        <button
+          onClick={() => setDeleteTarget(null)}
+          className='flex-1 rounded-md border border-gray-300 bg-white py-3 text-sm font-bold uppercase tracking-wide text-[#1d2433]'
+        >
+          Cancel
+        </button>
+
+        <button
+          onClick={async () => {
+            await handleDeleteAddress(deleteTarget.address_id)
+            setDeleteTarget(null)
+          }}
+          disabled={deletingId === deleteTarget.address_id}
+          className='flex-1 rounded-md bg-pink-500 py-3 text-sm font-bold uppercase tracking-wide text-white disabled:opacity-50'
+        >
+          {deletingId === deleteTarget.address_id
+            ? 'Deleting...'
+            : 'Delete'}
+        </button>
+      </div>
+    </div>
+  </div>
+)}
     </>
   )
 }
