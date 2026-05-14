@@ -18,6 +18,7 @@ import {
   CreditCard,
 } from 'lucide-react'
 import Navbar from './Navbar'
+import Footer from './Footer'
 import { useParams } from 'react-router-dom'
 
 // ─── Mock API Response ────────────────────────────────────────────────────────
@@ -1505,6 +1506,8 @@ if (!selectedSize) {
           </div>
         </div>
       </div>
+
+                  <Footer />
 
       {/* Full-screen media slider */}
       {sliderOpen && (

@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { useCartStore } from './store/cartStore'
 
+
 import {
   ShoppingBag,
   Search,
@@ -16,6 +17,8 @@ import {
 } from 'lucide-react'
 import Navbar from './Navbar'
 import logo from './assets/logo.png'
+
+import Footer from './Footer'
 
 // Mock API
 const fetchProducts = async () => {
@@ -338,88 +341,6 @@ const PromoBanner = () => {
         </button>
       </div>
     </div>
-  )
-}
-
-// Footer
-const Footer = () => {
-  return (
-    <footer className='bg-gradient-to-b from-pink-50 to-white border-t border-pink-100 mt-16'>
-      <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12'>
-        <div className='grid grid-cols-1 md:grid-cols-4 gap-8'>
-          <div>
-            <h4 className='text-2xl font-bold bg-gradient-to-r from-pink-500 to-rose-500 bg-clip-text text-transparent mb-4'>
-              Aarria
-            </h4>
-            <p className='text-gray-600'>
-              Celebrating Indian heritage through timeless fashion
-            </p>
-          </div>
-          <div>
-            <h5 className='font-bold text-gray-800 mb-4'>Shop</h5>
-            <ul className='space-y-2 text-gray-600'>
-              <li>
-                <a href='#' className='hover:text-pink-600 transition'>
-                  Sarees
-                </a>
-              </li>
-              <li>
-                <a href='#' className='hover:text-pink-600 transition'>
-                  Lehengas
-                </a>
-              </li>
-              <li>
-                <a href='#' className='hover:text-pink-600 transition'>
-                  Suits
-                </a>
-              </li>
-              <li>
-                <a href='#' className='hover:text-pink-600 transition'>
-                  Kurtis
-                </a>
-              </li>
-            </ul>
-          </div>
-          <div>
-            <h5 className='font-bold text-gray-800 mb-4'>Customer Care</h5>
-            <ul className='space-y-2 text-gray-600'>
-              <li>
-                <a href='#' className='hover:text-pink-600 transition'>
-                  Contact Us
-                </a>
-              </li>
-              <li>
-                <a href='#' className='hover:text-pink-600 transition'>
-                  Track Order
-                </a>
-              </li>
-              <li>
-                <a href='#' className='hover:text-pink-600 transition'>
-                  Returns
-                </a>
-              </li>
-              <li>
-                <a href='#' className='hover:text-pink-600 transition'>
-                  Size Guide
-                </a>
-              </li>
-            </ul>
-          </div>
-          <div>
-            <h5 className='font-bold text-gray-800 mb-4'>Stay Connected</h5>
-            <p className='text-gray-600 mb-4'>Subscribe for exclusive offers</p>
-            <input
-              type='email'
-              placeholder='Your email'
-              className='w-full px-4 py-2 rounded-lg border border-pink-200 focus:outline-none focus:border-pink-400'
-            />
-          </div>
-        </div>
-        <div className='border-t border-pink-100 mt-8 pt-8 text-center text-gray-600'>
-          <p>&copy; 2024 Aarria. Crafted with love for Indian fashion.</p>
-        </div>
-      </div>
-    </footer>
   )
 }
 

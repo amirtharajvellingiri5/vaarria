@@ -178,8 +178,6 @@ function Navbar() {
           BAG
         </span>
         <span style={styles.stepDivider}>············</span>
-        <span style={styles.step}>ADDRESS</span>
-        <span style={styles.stepDivider}>············</span>
         <span style={styles.step}>PAYMENT</span>
       </div>
       <div style={styles.navRight}>
@@ -848,7 +846,7 @@ function CouponPanel() {
 
 function PricePanel() {
   const navigate = useNavigate()
-  const { items, couponSavings, platformFee, donationAmount } = useBagStore()
+  const { items, couponSavings, donationAmount } = useBagStore()
 
   const selected = items.filter((i) => i.selected)
   const totalMrp = useMemo(
@@ -860,7 +858,21 @@ function PricePanel() {
     [selected],
   )
   const discountOnMrp = totalMrp - totalPrice
-  const total = totalPrice - couponSavings + platformFee + donationAmount
+  const total = totalPrice - couponSavings + donationAmount
+
+  const handlePlaceOrder = () => {
+    if (selected.length === 0) return
+
+    const token = localStorage.getItem('jwt_token')
+    const customer = JSON.parse(localStorage.getItem('customer') || 'null')
+    const isLoggedIn = !!token && !!customer
+
+    if (isLoggedIn) {
+      navigate('/checkout/address')
+    } else {
+      navigate('/login?redirect=/checkout/address')
+    }
+  }
 
   return (
     <div style={styles.panelCard}>
@@ -875,12 +887,6 @@ function PricePanel() {
           green
         />
         <PriceRow label='Coupon Discount' value={`- ₹${couponSavings}`} green />
-        <div style={styles.priceRow}>
-          <span style={styles.priceLabel}>
-            Platform Fee <span style={styles.knowMoreInline}>Know More</span>
-          </span>
-          <span style={styles.priceValue}>₹{platformFee}</span>
-        </div>
         {donationAmount > 0 && (
           <PriceRow label='Donation' value={`₹${donationAmount}`} />
         )}
@@ -894,7 +900,7 @@ function PricePanel() {
       </div>
 
       <p style={styles.terms}>
-        By placing the order, you agree to Myntra's{' '}
+        By placing the order, you agree to our{' '}
         <a href='#' style={styles.termsLink}>
           Terms of Use
         </a>{' '}
@@ -906,7 +912,7 @@ function PricePanel() {
 
       <button
         style={styles.placeBtn}
-        onClick={() => navigate('/checkout/address')}
+        onClick={handlePlaceOrder}
         disabled={selected.length === 0}
       >
         PLACE ORDER
