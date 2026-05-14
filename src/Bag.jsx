@@ -107,6 +107,7 @@ function PinBar() {
   const [pin, setPin] = useState('')
   const [submitted, setSubmitted] = useState(false)
   const [openAddress, setOpenAddress] = useState(false)
+  const isLoggedIn = !!localStorage.getItem('token')
 
   const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ['pin', pin],
@@ -145,12 +146,23 @@ function PinBar() {
         </span>
       )}
       <button
-        style={styles.addressCheckBtn}
-        onClick={() => setOpenAddress(true)}
-      >
-        Add Address
-      </button>
-      <AddressModal open={openAddress} onClose={() => setOpenAddress(false)} />
+  style={styles.addressCheckBtn}
+  onClick={() => {
+    if (isLoggedIn) {
+      setOpenAddress(true)
+    } else {
+      handleCheck()
+    }
+  }}
+>
+  {isLoggedIn ? 'Add Address' : 'Check Pincode'}
+</button>
+      {isLoggedIn && (
+  <AddressModal
+    open={openAddress}
+    onClose={() => setOpenAddress(false)}
+  />
+)}
     </div>
   )
 }
@@ -690,12 +702,12 @@ function BagPage() {
               {selectedCount}/{items.length} ITEMS SELECTED
             </span>
             <div style={styles.itemsActions}>
-              <span style={styles.actionBtn}>REMOVE</span>
-              <span style={{ color: '#ddd' }}>|</span>
+              {/* <span style={styles.actionBtn}>REMOVE</span> */}
+              {/* <span style={{ color: '#ddd' }}>|</span>
               <span style={styles.actionBtn}>
                 <Heart size={12} style={{ marginRight: 4 }} />
                 WISHLIST
-              </span>
+              </span> */}
             </div>
           </div>
 
