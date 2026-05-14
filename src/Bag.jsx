@@ -20,6 +20,9 @@ import {
   Minus,
   Plus,
   Trash2,
+  MapPin,
+  Home,
+  Edit3,
 } from 'lucide-react'
 
 import logo from './assets/logo.png'
@@ -136,18 +139,65 @@ function Navbar() {
     </nav>
   )
 }
-
 function PinBar() {
   const [pin, setPin] = useState('')
   const [submitted, setSubmitted] = useState(false)
   const [openAddress, setOpenAddress] = useState(false)
+  const [shouldRefetch, setShouldRefetch] = useState(0)
+
+  const [defaultAddress, setDefaultAddress] = useState(null)
+  const [loadingAddress, setLoadingAddress] = useState(false)
   const [validationError, setValidationError] = useState('')
-  const isLoggedIn = !!localStorage.getItem('token')
+
+  const token = localStorage.getItem('jwt_token')
+  const customer = JSON.parse(localStorage.getItem('customer') || 'null')
+
+  const isLoggedIn = !!token && !!customer
+  const customerId = customer?.customer_id
+
+  const handleCloseAddress = () => {
+  setOpenAddress(false)
+  setShouldRefetch(c => c + 1)  // only increments on close, not open
+}
+
+  useEffect(() => {
+    const fetchDefaultAddress = async () => {
+      if (!isLoggedIn || !customerId) return
+
+      try {
+        setLoadingAddress(true)
+
+        const response = await fetch(
+          `https://api.aarria.com/api/addresses?customer_id=${customerId}`,
+        )
+
+        if (!response.ok) {
+          throw new Error('Failed to fetch address')
+        }
+
+        const data = await response.json()
+
+        if (data?.items?.length > 0) {
+          const primary = data.items.find((a) => a.is_default)
+          setDefaultAddress(primary || data.items[0])
+        } else {
+          setDefaultAddress(null)
+        }
+      } catch (error) {
+        console.error(error)
+        setDefaultAddress(null)
+      } finally {
+        setLoadingAddress(false)
+      }
+    }
+
+    fetchDefaultAddress()
+  }, [isLoggedIn, customerId, shouldRefetch])
 
   const { data, isLoading, isError, error } = useQuery({
     queryKey: ['pin', pin],
     queryFn: () => fetchPinDetails(pin),
-    enabled: submitted,
+    enabled: submitted && !isLoggedIn,
     retry: false,
   })
 
@@ -165,7 +215,104 @@ function PinBar() {
     setValidationError('')
     setSubmitted(true)
   }
+if (isLoggedIn) {
+  return (
+    <>
+      <div style={{
+        background: '#fff',
+        border: '1px solid #ebecef',
+        borderRadius: 4,
+        marginBottom: 14,
+        overflow: 'hidden',
+      }}>
+        {/* Header strip */}
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: '10px 16px',
+          borderBottom: '1px solid #f0f0f0',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <Truck size={14} color='#ff3f6c' />
+            <span style={{
+              fontSize: 11,
+              fontWeight: 700,
+              letterSpacing: 1,
+              color: '#282c3f',
+              textTransform: 'uppercase',
+            }}>
+              Delivery Address
+            </span>
+          </div>
+          <button
+            onClick={() => setOpenAddress(true)}
+            style={{
+              fontSize: 12,
+              fontWeight: 700,
+              color: '#ff3f6c',
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              letterSpacing: 0.5,
+              padding: 0,
+            }}
+          >
+            {defaultAddress ? 'CHANGE' : 'ADD ADDRESS'}
+          </button>
+        </div>
 
+        {/* Body */}
+        <div style={{ padding: '12px 16px' }}>
+          {loadingAddress ? (
+            <div style={{ fontSize: 13, color: '#94969f', padding: '4px 0' }}>
+              Loading...
+            </div>
+          ) : defaultAddress ? (
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+              <MapPin size={16} color='#ff3f6c' style={{ marginTop: 2, flexShrink: 0 }} />
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                  <span style={{ fontSize: 14, fontWeight: 700, color: '#282c3f' }}>
+                    {defaultAddress.full_name}
+                  </span>
+                  <span style={{
+                    fontSize: 10,
+                    fontWeight: 700,
+                    color: '#ff3f6c',
+                    border: '1px solid #ff3f6c',
+                    borderRadius: 2,
+                    padding: '1px 6px',
+                    letterSpacing: 0.5,
+                  }}>
+                    {defaultAddress.address_type?.toUpperCase() || 'HOME'}
+                  </span>
+                </div>
+                <div style={{ fontSize: 13, color: '#535766', lineHeight: 1.5 }}>
+                  {defaultAddress.address_line_1}
+                  {defaultAddress.address_line_2 ? `, ${defaultAddress.address_line_2}` : ''},&nbsp;
+                  {defaultAddress.city}, {defaultAddress.state} — {' '}
+                  <span style={{ fontWeight: 700, color: '#282c3f' }}>
+                    {defaultAddress.pincode}
+                  </span>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <MapPin size={15} color='#94969f' />
+              <span style={{ fontSize: 13, color: '#94969f' }}>
+                No address saved. Add one to continue.
+              </span>
+            </div>
+          )}
+        </div>
+      </div>
+
+      <AddressModal open={openAddress} onClose={handleCloseAddress} />
+    </>
+  )
+}
   return (
     <div
       style={{
@@ -182,7 +329,7 @@ function PinBar() {
           gap: 10,
         }}
       >
-        <Truck size={16} style={{ color: '#ff3f6c', flexShrink: 0 }} />
+        <Truck size={16} style={{ color: '#ff3f6c' }} />
 
         <input
           style={styles.pinInput}
@@ -191,8 +338,7 @@ function PinBar() {
           maxLength={6}
           inputMode='numeric'
           onChange={(e) => {
-            const value = e.target.value.replace(/\D/g, '')
-            setPin(value)
+            setPin(e.target.value.replace(/\D/g, ''))
             setSubmitted(false)
             setValidationError('')
           }}
@@ -201,77 +347,31 @@ function PinBar() {
 
         <button
           style={styles.addressCheckBtn}
-          onClick={() => {
-            if (isLoggedIn) {
-              setOpenAddress(true)
-            } else {
-              handleCheck()
-            }
-          }}
+          onClick={handleCheck}
         >
-          {isLoggedIn ? 'Add Address' : 'CHECK'}
+          CHECK
         </button>
       </div>
 
+      {isLoading && <div style={{ paddingLeft: 28, fontSize: 12 }}>Checking...</div>}
+      {data && (
+        <div style={{ paddingLeft: 28, fontSize: 12, color: '#2e7d32' }}>
+          Deliver to {data.city} by {data.deliveryDate}
+        </div>
+      )}
       {validationError && (
-        <div
-          style={{
-            fontSize: 12,
-            color: '#d32f2f',
-            paddingLeft: 26,
-          }}
-        >
+        <div style={{ paddingLeft: 28, fontSize: 12, color: '#d32f2f' }}>
           {validationError}
         </div>
       )}
-
-      {isLoading && (
-        <div
-          style={{
-            fontSize: 12,
-            color: '#666',
-            paddingLeft: 26,
-          }}
-        >
-          Checking delivery availability...
-        </div>
-      )}
-
-      {data && (
-        <div
-          style={{
-            fontSize: 12,
-            color: '#2e7d32',
-            paddingLeft: 26,
-            fontWeight: 600,
-          }}
-        >
-          Deliver to {data.city}, {data.state} by {data.deliveryDate}
-        </div>
-      )}
-
-      {isError && !validationError && (
-        <div
-          style={{
-            fontSize: 12,
-            color: '#d32f2f',
-            paddingLeft: 26,
-          }}
-        >
+      {isError && (
+        <div style={{ paddingLeft: 28, fontSize: 12, color: '#d32f2f' }}>
           {error.message}
         </div>
-      )}
-
-      {isLoggedIn && (
-        <AddressModal
-          open={openAddress}
-          onClose={() => setOpenAddress(false)}
-        />
       )}
     </div>
   )
 }
-
 function ItemCard({ item }) {
   const { items, toggleSelected, setItems } = useBagStore()
 
