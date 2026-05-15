@@ -105,7 +105,7 @@ const Footer = () => {
               </li>
             </ul>
 
-            <p className='text-gray-600 mb-4'>
+            {/* <p className='text-gray-600 mb-4'>
               Subscribe for exclusive offers
             </p>
 
@@ -113,13 +113,15 @@ const Footer = () => {
               type='email'
               placeholder='Your email'
               className='w-full px-4 py-2 rounded-lg border border-pink-200 focus:outline-none focus:border-pink-400'
-            />
+            /> */}
           </div>
         </div>
-
-        <div className='border-t border-pink-100 mt-8 pt-8 text-center text-gray-600'>
-          <p>&copy; 2026 www.aarria.com crafted with love for Indian fashion.</p>
-        </div>
+<div className='border-t border-pink-100 mt-8 pt-8 text-center text-gray-600'>
+  <p className='text-[0.90rem]'>www.aarria.com &trade; crafted with love for Indian fashion.</p>
+  <p className='mt-2 text-[0.90rem] leading-7 text-white-100'>
+    &copy; 2026 CHATOYANTVORTEX PRIME ENTERPRISES PRIVATE LIMITED
+  </p>
+</div>
       </div>
     </footer>
   )
