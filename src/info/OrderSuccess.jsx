@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { Check } from "lucide-react";
+import { Check, Package } from "lucide-react";
 import logo from "../assets/logo.png";
 
-function OrderSuccess() {
+export default function OrderSuccess() {
   const location = useLocation();
   const navigate = useNavigate();
   const [visible, setVisible] = useState(false);
@@ -19,313 +19,275 @@ function OrderSuccess() {
   if (!order) return null;
 
   return (
-    <div style={styles.page}>
-      <div style={{ ...styles.card, opacity: visible ? 1 : 0, transform: visible ? "translateY(0)" : "translateY(18px)", transition: "opacity 0.45s ease, transform 0.45s ease" }}>
+    <div style={s.page}>
+      <div
+        style={{
+          ...s.card,
+          opacity: visible ? 1 : 0,
+          transform: visible ? "translateY(0)" : "translateY(20px)",
+          transition: "opacity 0.4s ease, transform 0.4s ease",
+        }}
+      >
+        {/* ── Logo ── */}
+        <div style={s.logoArea}>
+          <img src={logo} alt="Aarria" style={s.logo} />
+        </div>
 
-        {/* Dark header */}
-        <div style={styles.headerBand}>
-          <img src={logo} alt="Aarria" style={styles.logo} />
-          <p style={styles.brandTagline}>curated for the modern woman</p>
-
-          {/* Green tick ring */}
-          <div style={styles.tickRing}>
-            <div style={styles.tickInner}>
-              <Check size={30} color="#fff" strokeWidth={2.5} />
-            </div>
+        {/* ── Green tick ── */}
+        <div style={s.tickWrap}>
+          <div style={s.tickCircle}>
+            <Check size={36} color="#fff" strokeWidth={2.8} />
           </div>
         </div>
 
-        {/* Body */}
-        <div style={styles.body}>
-          <h1 style={styles.title}>Order Confirmed</h1>
-          <p style={styles.subtitle}>
-            Your order is on its way to becoming your new favourite.
-            <br />
-            We'll send a confirmation to your email shortly.
+        {/* ── Heading ── */}
+        <h1 style={s.title}>Order Confirmed!</h1>
+        <p style={s.subtitle}>
+          Thank you for shopping with Aarria.{"\n"}
+          A confirmation has been sent to your email.
+        </p>
+
+        {/* ── Divider ── */}
+        <div style={s.dividerRow}>
+          <div style={s.dividerLine} />
+          <span style={s.dividerLabel}>Order Summary</span>
+          <div style={s.dividerLine} />
+        </div>
+
+        {/* ── Info rows ── */}
+        <div style={s.infoBox}>
+          <InfoRow label="Order ID"    value={order.order_id} />
+          <InfoRow label="Payment ID"  value={order.payment_id} />
+          <InfoRow label="Amount Paid" value={`₹${order.amount}`} highlight />
+          <InfoRow label="Delivery By" value={order.estimated_delivery} last />
+        </div>
+
+        {/* ── Delivery notice ── */}
+        <div style={s.deliveryBanner}>
+          <Package size={18} color="#16a34a" strokeWidth={1.8} style={{ flexShrink: 0, marginTop: 1 }} />
+          <p style={s.deliveryText}>
+            Your order is being prepared and will be dispatched soon.
+            You'll receive tracking info via email once it ships.
           </p>
-
-          {/* Divider */}
-          <div style={styles.divider}>
-            <div style={styles.dividerLine} />
-            <div style={styles.dividerDot} />
-            <div style={styles.dividerLine} />
-          </div>
-
-          {/* Info grid */}
-          <div style={styles.infoGrid}>
-            <InfoCell label="Order ID" value={order.order_id} fullWidth />
-            <InfoCell label="Payment ID" value={order.payment_id} />
-            <InfoCell label="Amount Paid" value={`₹${order.amount}`} accent />
-          </div>
-
-          {/* Delivery notice */}
-          <div style={styles.deliveryBox}>
-            <div style={styles.deliveryIconWrap}>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M5 17H3a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11a2 2 0 0 1 2 2v3" />
-                <rect x="9" y="11" width="14" height="10" rx="2" />
-                <circle cx="12" cy="21" r="1" /><circle cx="20" cy="21" r="1" />
-              </svg>
-            </div>
-            <div>
-              <p style={styles.deliveryStrong}>Estimated Delivery: {order.estimated_delivery}</p>
-              <p style={styles.deliveryText}>
-                Thoughtfully packed and on its way to you. Tracking details will be sent once dispatched.
-              </p>
-            </div>
-          </div>
-
-          {/* Actions */}
-          <div style={styles.actions}>
-            <button style={styles.btnPrimary} onClick={() => navigate("/orders")}>
-              View Orders
-            </button>
-            <button style={styles.btnSecondary} onClick={() => navigate("/")}>
-              Keep Shopping
-            </button>
-          </div>
-
-          <p style={styles.footerNote}>Need help? Contact us at support@aarria.in</p>
         </div>
+
+        {/* ── Actions ── */}
+        <div style={s.actions}>
+          <button style={s.btnPrimary}   onClick={() => navigate("/orders")}>
+            View My Orders
+          </button>
+          <button style={s.btnSecondary} onClick={() => navigate("/")}>
+            Continue Shopping
+          </button>
+        </div>
+
+        <p style={s.supportNote}>
+          Questions?&nbsp;
+          <a href="mailto:support@aarria.in" style={s.supportLink}>
+            support@aarria.in
+          </a>
+        </p>
       </div>
     </div>
   );
 }
 
-function InfoCell({ label, value, fullWidth, accent }) {
+function InfoRow({ label, value, highlight, last }) {
   return (
-    <div style={{ ...styles.infoCell, ...(fullWidth ? styles.infoCellFull : {}) }}>
-      <p style={styles.infoLabel}>{label}</p>
-      <p style={{ ...styles.infoValue, ...(accent ? styles.infoValueAccent : {}) }}>{value}</p>
+    <div style={{ ...s.infoRow, ...(last ? { borderBottom: "none" } : {}) }}>
+      <span style={s.infoLabel}>{label}</span>
+      <span style={{ ...s.infoValue, ...(highlight ? s.infoHighlight : {}) }}>
+        {value}
+      </span>
     </div>
   );
 }
 
-const styles = {
+/* ─────────────────────────── Styles ─────────────────────────── */
+const PINK  = "#ff3f6c";
+const GREEN = "#16a34a";
+const BORDER = "#ede8e3";
+
+const s = {
   page: {
     minHeight: "100vh",
-    background: "#f5f4f0",
+    background: "#faf8f6",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
     padding: "2rem 1rem",
-    fontFamily: "'Jost', 'Segoe UI', sans-serif",
+    fontFamily: "'Segoe UI', 'Helvetica Neue', Arial, sans-serif",
   },
 
   card: {
     width: "100%",
-    maxWidth: 560,
-    background: "#fff",
-    borderRadius: 20,
-    overflow: "hidden",
-    boxShadow: "0 8px 48px rgba(0,0,0,0.10)",
-  },
-
-  /* ── Header band ── */
-  headerBand: {
-    background: "#1a1a1a",
-    padding: "2rem 2.5rem 0",
-    textAlign: "center",
+    maxWidth: 520,
+    background: "#ffffff",
+    borderRadius: 16,
+    border: `1px solid ${BORDER}`,
+    boxShadow: "0 4px 32px rgba(0,0,0,0.07)",
+    padding: "36px 36px 28px",
     display: "flex",
     flexDirection: "column",
     alignItems: "center",
+    textAlign: "center",
   },
+
+  logoArea: { marginBottom: 2 },
 
   logo: {
-    height: 56,
+    height: 120,
     width: "auto",
     objectFit: "contain",
-    filter: "brightness(0) invert(1)",   // makes any coloured logo white
   },
 
-  brandTagline: {
-    fontSize: 10,
-    letterSpacing: "0.3em",
-    textTransform: "uppercase",
-    color: "#888",
-    marginTop: 6,
-    marginBottom: 0,
-  },
+  tickWrap: { marginBottom: 0 },
 
-  /* Green tick ring sits half-in / half-out the header */
-  tickRing: {
+  tickCircle: {
     width: 72,
     height: 72,
     borderRadius: "50%",
-    background: "#fff",
+    background: GREEN,
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    marginTop: 24,
-    marginBottom: -36,          // pulls it over the body section
-    zIndex: 2,
-    position: "relative",
-    boxShadow: "0 0 0 6px #1a1a1a",  // matches header so ring looks inset
-  },
-
-  tickInner: {
-    width: 56,
-    height: 56,
-    borderRadius: "50%",
-    background: "#22c55e",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-
-  /* ── Body ── */
-  body: {
-    padding: "3.25rem 2.5rem 2.5rem",   // extra top padding for the overlapping ring
+    boxShadow: "0 0 0 10px #dcfce7",
   },
 
   title: {
-    fontFamily: "'Cormorant Garamond', Georgia, serif",
-    fontSize: 32,
-    fontWeight: 400,
-    color: "#111",
-    textAlign: "center",
-    marginBottom: 8,
+    fontSize: 26,
+    fontWeight: 700,
+    color: "#111827",
+    margin: "0 0 8px",
+    letterSpacing: "-0.3px",
   },
 
   subtitle: {
-    fontSize: 13.5,
+    fontSize: 14,
     color: "#6b7280",
-    textAlign: "center",
     lineHeight: 1.65,
-    fontWeight: 300,
-    marginBottom: 28,
+    whiteSpace: "pre-line",
+    margin: "0 0 28px",
   },
 
-  divider: {
+  dividerRow: {
     display: "flex",
     alignItems: "center",
     gap: 10,
-    marginBottom: 24,
+    width: "100%",
+    marginBottom: 16,
+  },
+  dividerLine: { flex: 1, height: 1, background: BORDER },
+  dividerLabel: {
+    fontSize: 11,
+    fontWeight: 600,
+    letterSpacing: "0.12em",
+    textTransform: "uppercase",
+    color: "#9ca3af",
+    whiteSpace: "nowrap",
   },
 
-  dividerLine: {
-    flex: 1,
-    height: 1,
-    background: "#e5e7eb",
-  },
-
-  dividerDot: {
-    width: 5,
-    height: 5,
-    borderRadius: "50%",
-    background: "#22c55e",
-  },
-
-  /* ── Info cells ── */
-  infoGrid: {
-    display: "grid",
-    gridTemplateColumns: "1fr 1fr",
-    gap: 10,
-    marginBottom: 20,
-  },
-
-  infoCell: {
-    background: "#f9fafb",
-    border: "1px solid #f0f0f0",
+  infoBox: {
+    width: "100%",
+    border: `1px solid ${BORDER}`,
     borderRadius: 12,
-    padding: "14px 16px",
+    overflow: "hidden",
+    marginBottom: 14,
+    background: "#fdfcfb",
   },
 
-  infoCellFull: {
-    gridColumn: "1 / -1",
+  infoRow: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: "13px 18px",
+    borderBottom: `1px solid ${BORDER}`,
   },
 
   infoLabel: {
-    fontSize: 10,
-    letterSpacing: "0.18em",
-    textTransform: "uppercase",
-    color: "#9ca3af",
-    marginBottom: 5,
+    fontSize: 13,
+    color: "#6b7280",
+    fontWeight: 400,
   },
 
   infoValue: {
-    fontSize: 14,
+    fontSize: 13.5,
     fontWeight: 600,
     color: "#111827",
+    maxWidth: "55%",
+    textAlign: "right",
     wordBreak: "break-all",
   },
 
-  infoValueAccent: {
-    color: "#22c55e",
+  infoHighlight: {
+    color: GREEN,
+    fontSize: 15,
   },
 
-  /* ── Delivery notice ── */
-  deliveryBox: {
+  deliveryBanner: {
     display: "flex",
     alignItems: "flex-start",
-    gap: 12,
-    padding: "14px 16px",
-    borderRadius: 12,
+    gap: 10,
+    width: "100%",
     background: "#f0fdf4",
     border: "1px solid #bbf7d0",
+    borderRadius: 10,
+    padding: "12px 16px",
     marginBottom: 24,
-  },
-
-  deliveryIconWrap: {
-    marginTop: 2,
-    flexShrink: 0,
-  },
-
-  deliveryStrong: {
-    fontSize: 13,
-    fontWeight: 600,
-    color: "#15803d",
-    marginBottom: 3,
+    textAlign: "left",
   },
 
   deliveryText: {
     fontSize: 12.5,
-    color: "#4b5563",
-    lineHeight: 1.55,
+    color: "#374151",
+    lineHeight: 1.6,
+    margin: 0,
   },
 
-  /* ── Buttons ── */
   actions: {
-    display: "grid",
-    gridTemplateColumns: "1fr 1fr",
+    display: "flex",
+    flexDirection: "column",
     gap: 10,
+    width: "100%",
     marginBottom: 20,
   },
 
   btnPrimary: {
-    padding: "13px 16px",
-    background: "#1a1a1a",
+    width: "100%",
+    padding: "13px",
+    background: PINK,
     color: "#fff",
     border: "none",
-    borderRadius: 10,
-    fontSize: 11,
-    fontFamily: "'Jost', 'Segoe UI', sans-serif",
-    letterSpacing: "0.18em",
-    textTransform: "uppercase",
-    fontWeight: 600,
+    borderRadius: 8,
+    fontSize: 13.5,
+    fontWeight: 700,
+    letterSpacing: "0.04em",
     cursor: "pointer",
+    fontFamily: "inherit",
   },
 
   btnSecondary: {
-    padding: "13px 16px",
+    width: "100%",
+    padding: "13px",
     background: "#fff",
-    color: "#1a1a1a",
+    color: "#374151",
     border: "1px solid #d1d5db",
-    borderRadius: 10,
-    fontSize: 11,
-    fontFamily: "'Jost', 'Segoe UI', sans-serif",
-    letterSpacing: "0.18em",
-    textTransform: "uppercase",
+    borderRadius: 8,
+    fontSize: 13.5,
     fontWeight: 600,
+    letterSpacing: "0.04em",
     cursor: "pointer",
+    fontFamily: "inherit",
   },
 
-  footerNote: {
-    textAlign: "center",
-    fontSize: 11.5,
+  supportNote: {
+    fontSize: 12,
     color: "#9ca3af",
-    letterSpacing: "0.02em",
+  },
+
+  supportLink: {
+    color: PINK,
+    textDecoration: "none",
+    fontWeight: 500,
   },
 };
-
-export default OrderSuccess;
