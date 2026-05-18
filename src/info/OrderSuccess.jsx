@@ -1,6 +1,7 @@
 import React from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { CheckCircle } from "lucide-react";
+import logo from "../assets/logo.png";
 
 function OrderSuccess() {
   const location = useLocation();
@@ -16,7 +17,14 @@ function OrderSuccess() {
   return (
     <div style={styles.page}>
       <div style={styles.card}>
-        <CheckCircle size={90} color="#22c55e" />
+        {/* Logo */}
+        <a href="/" style={styles.logoLink}>
+          <img src={logo} alt="Logo" style={styles.logo} />
+        </a>
+
+        <div style={styles.tickWrapper}>
+  <CheckCircle size={90} color="#22c55e" />
+</div>
 
         <h1 style={styles.title}>Order Confirmed</h1>
 
@@ -61,6 +69,11 @@ function Row({ label, value }) {
 }
 
 const styles = {
+  tickWrapper: {
+  display: "flex",
+  justifyContent: "center",
+  width: "100%",
+},
   page: {
     minHeight: "100vh",
     background: "#f8fafc",
@@ -78,6 +91,17 @@ const styles = {
     padding: 40,
     boxShadow: "0 20px 60px rgba(0,0,0,0.08)",
     textAlign: "center"
+  },
+
+  logoLink: {
+    display: "inline-block",
+    marginBottom: 0
+  },
+
+  logo: {
+    height: 140,
+    width: "auto",
+    objectFit: "contain"
   },
 
   title: {

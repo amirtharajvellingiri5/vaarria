@@ -18,6 +18,7 @@ import ContactUsPage from './info/ContactUs.jsx'
 import TermsAndConditionsPage from './info/Terms.jsx'
 import RefundPolicyPage from './info/RefundPolicy.jsx'
 import OrderSuccess from './info/OrderSuccess.jsx'
+import PaymentFailed from './info/PaymentFailed.jsx'
 
 const queryClient = new QueryClient()  // ← add
 
@@ -34,6 +35,7 @@ const router = createBrowserRouter([
   { path: '/admin/', element: <ProductListings /> },
   { path: '/admin/products/edit/:id', element: <ProductEdit /> },
   { path: '/order-success', element: <OrderSuccess /> },
+  { path: '/payment-failed', element: <PaymentFailed /> }
 ])
 
 createRoot(document.getElementById('root')).render(

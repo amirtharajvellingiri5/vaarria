@@ -886,6 +886,7 @@ function CouponPanel() {
 function PricePanel() {
   const navigate = useNavigate()
   const { items, couponSavings, donationAmount } = useBagStore()
+  const [paymentError, setPaymentError] = useState('')
 
   const selected = items.filter((i) => i.selected)
   const totalMrp = useMemo(
@@ -951,26 +952,42 @@ function PricePanel() {
           item_count: selected.length,
         },
 
-        handler: async function (response) {
-          await axios.post(`${API_BASE}/payments/verify`, {
-            razorpay_order_id: response.razorpay_order_id,
-            razorpay_payment_id: response.razorpay_payment_id,
-            razorpay_signature: response.razorpay_signature,
-          })
+       handler: async function (response) {
+  try {
+    const verifyResponse = await axios.post(
+      `${API_BASE}/payments/verify`,
+      {
+        razorpay_order_id: response.razorpay_order_id,
+        razorpay_payment_id: response.razorpay_payment_id,
+        razorpay_signature: response.razorpay_signature,
+      }
+    )
 
-          navigate('/order-success', {
-            state: verifyResponse.data.order,
-          })
-        },
+    navigate('/order-success', {
+      state: verifyResponse.data.order,
+    })
+  } catch (error) {
+    console.error('Verification failed:', error)
 
+    setPaymentError('Payment verification failed')
+  }
+},
         modal: {
-          ondismiss: () => {
-            console.log('Payment cancelled')
-          },
-        },
+  ondismiss: () => {
+    setPaymentError('Payment cancelled by user')
+  },
+},
       }
 
-      new window.Razorpay(options).open()
+      const rzp = new window.Razorpay(options)
+
+rzp.on('payment.failed', function (response) {
+  setPaymentError(
+  response.error.description || 'Payment failed'
+)
+})
+
+rzp.open()
     } catch (error) {
       console.error(error)
       alert('Unable to start payment')
@@ -1033,6 +1050,94 @@ function PricePanel() {
           Select at least one item to proceed
         </p>
       )}
+      {paymentError && (
+  <div
+    style={{
+      position: 'fixed',
+      inset: 0,
+      background: 'rgba(0,0,0,0.45)',
+      zIndex: 9999,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: 16,
+    }}
+  >
+    <div
+      style={{
+        width: '100%',
+        maxWidth: 420,
+        background: '#fff',
+        borderRadius: 20,
+        padding: 28,
+        textAlign: 'center',
+      }}
+    >
+      <XCircle size={70} color='#ef4444' />
+
+      <h2
+        style={{
+          marginTop: 16,
+          marginBottom: 10,
+          fontSize: 24,
+          fontWeight: 700,
+        }}
+      >
+        Payment Failed
+      </h2>
+
+      <p
+        style={{
+          color: '#666',
+          fontSize: 14,
+          marginBottom: 24,
+        }}
+      >
+        {paymentError}
+      </p>
+
+      <div
+        style={{
+          display: 'flex',
+          gap: 12,
+          justifyContent: 'center',
+        }}
+      >
+        <button
+          onClick={() => setPaymentError('')}
+          style={{
+            background: '#ff3f6c',
+            color: '#fff',
+            border: 'none',
+            padding: '12px 20px',
+            borderRadius: 10,
+            fontWeight: 700,
+            cursor: 'pointer',
+          }}
+        >
+          TRY AGAIN
+        </button>
+
+        <button
+          onClick={() => {
+            setPaymentError('')
+            navigate('/bag')
+          }}
+          style={{
+            background: '#fff',
+            border: '1px solid #ddd',
+            padding: '12px 20px',
+            borderRadius: 10,
+            fontWeight: 700,
+            cursor: 'pointer',
+          }}
+        >
+          CONTINUE SHOPPING
+        </button>
+      </div>
+    </div>
+  </div>
+)}
     </div>
   )
 }
