@@ -25,6 +25,7 @@ import {
   Edit3,
 } from 'lucide-react'
 
+import axios from 'axios'
 import logo from './assets/logo.png'
 import './constants/global.css'
 
@@ -49,9 +50,17 @@ function SkeletonPulse({ style = {} }) {
 function BagItemSkeleton() {
   return (
     <div style={styles.itemCard}>
-      <div style={{ ...styles.checkbox, background: '#f1f2f4', borderColor: '#f1f2f4' }} />
+      <div
+        style={{
+          ...styles.checkbox,
+          background: '#f1f2f4',
+          borderColor: '#f1f2f4',
+        }}
+      />
       <div style={styles.itemThumb}>
-        <SkeletonPulse style={{ width: '100%', height: '100%', borderRadius: 8 }} />
+        <SkeletonPulse
+          style={{ width: '100%', height: '100%', borderRadius: 8 }}
+        />
       </div>
       <div style={styles.itemBody}>
         <SkeletonPulse style={{ width: '82%', height: 14 }} />
@@ -85,7 +94,9 @@ function PricePanelSkeleton() {
       </div>
       <div style={styles.priceDivider} />
       <SkeletonPulse style={{ width: '100%', height: 18 }} />
-      <SkeletonPulse style={{ width: '100%', height: 48, borderRadius: 8, marginTop: 18 }} />
+      <SkeletonPulse
+        style={{ width: '100%', height: 48, borderRadius: 8, marginTop: 18 }}
+      />
     </div>
   )
 }
@@ -126,9 +137,7 @@ const fetchPinDetails = async (pin) => {
     throw new Error('Please enter a valid 6-digit PIN code')
   }
 
-  const response = await fetch(
-    `https://api.postalpincode.in/pincode/${pin}`,
-  )
+  const response = await fetch(`https://api.postalpincode.in/pincode/${pin}`)
 
   if (!response.ok) {
     throw new Error('Unable to check delivery')
@@ -203,69 +212,66 @@ function PinBar() {
   const [shouldRefetch, setShouldRefetch] = useState(0)
 
   const [defaultAddress, setDefaultAddress] = useState(null)
-const [addresses, setAddresses] = useState([])
+  const [addresses, setAddresses] = useState([])
   const [loadingAddress, setLoadingAddress] = useState(false)
   const [validationError, setValidationError] = useState('')
 
   const token = localStorage.getItem('jwt_token')
   const customer = JSON.parse(localStorage.getItem('customer') || 'null')
 
-  
-
   const isLoggedIn = !!token && !!customer
   const customerId = customer?.customer_id
 
   const handleDeleteSuccess = () => {
-  setShouldRefetch((c) => c + 1)
-}
-
-  const handleSelectAddress = (address) => {
-  setDefaultAddress(address)
-  setOpenAddress(false)
-}
-
-  const handleCloseAddress = () => {
-  setOpenAddress(false)
-  setShouldRefetch(c => c + 1)  // only increments on close, not open
-}
-useEffect(() => {
-  const fetchDefaultAddress = async () => {
-    if (!isLoggedIn || !customerId) return
-
-    try {
-      if (!defaultAddress) {
-        setLoadingAddress(true)
-      }
-
-      const response = await fetch(
-        `https://api.aarria.com/api/addresses?customer_id=${customerId}`,
-      )
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch address')
-      }
-
-      const data = await response.json()
-
-      if (data?.items?.length > 0) {
-  setAddresses(data.items)
-
-  const primary = data.items.find((a) => a.is_default)
-  setDefaultAddress(primary || data.items[0])
-} else {
-  setAddresses([])
-  setDefaultAddress(null)
-}
-    } catch (error) {
-      console.error(error)
-    } finally {
-      setLoadingAddress(false)
-    }
+    setShouldRefetch((c) => c + 1)
   }
 
-  fetchDefaultAddress()
-}, [isLoggedIn, customerId, shouldRefetch])
+  const handleSelectAddress = (address) => {
+    setDefaultAddress(address)
+    setOpenAddress(false)
+  }
 
+  const handleCloseAddress = () => {
+    setOpenAddress(false)
+    setShouldRefetch((c) => c + 1) // only increments on close, not open
+  }
+  useEffect(() => {
+    const fetchDefaultAddress = async () => {
+      if (!isLoggedIn || !customerId) return
+
+      try {
+        if (!defaultAddress) {
+          setLoadingAddress(true)
+        }
+
+        const response = await fetch(
+          `https://api.aarria.com/api/addresses?customer_id=${customerId}`,
+        )
+
+        if (!response.ok) {
+          throw new Error('Failed to fetch address')
+        }
+
+        const data = await response.json()
+
+        if (data?.items?.length > 0) {
+          setAddresses(data.items)
+
+          const primary = data.items.find((a) => a.is_default)
+          setDefaultAddress(primary || data.items[0])
+        } else {
+          setAddresses([])
+          setDefaultAddress(null)
+        }
+      } catch (error) {
+        console.error(error)
+      } finally {
+        setLoadingAddress(false)
+      }
+    }
+
+    fetchDefaultAddress()
+  }, [isLoggedIn, customerId, shouldRefetch])
 
   const { data, isLoading, isError, error } = useQuery({
     queryKey: ['pin', pin],
@@ -288,154 +294,188 @@ useEffect(() => {
     setValidationError('')
     setSubmitted(true)
   }
-if (isLoggedIn) {
-  return (
-    <>
-      <div style={{
-  background: '#fff',
-  border: '1px solid #ebecef',
-  borderRadius: 4,
-  marginBottom: 14,
-  overflow: 'hidden',
-  minHeight: 110,
-}}>
-        {/* Header strip */}
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          padding: '10px 16px',
-          borderBottom: '1px solid #f0f0f0',
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <Truck size={14} color='#ff3f6c' />
-            <span style={{
-              fontSize: 11,
-              fontWeight: 700,
-              letterSpacing: 1,
-              color: '#282c3f',
-              textTransform: 'uppercase',
-            }}>
-              Delivery Address
-            </span>
-          </div>
-          <button
-            onClick={() => setOpenAddress(true)}
+  if (isLoggedIn) {
+    return (
+      <>
+        <div
+          style={{
+            background: '#fff',
+            border: '1px solid #ebecef',
+            borderRadius: 4,
+            marginBottom: 14,
+            overflow: 'hidden',
+            minHeight: 110,
+          }}
+        >
+          {/* Header strip */}
+          <div
             style={{
-              fontSize: 12,
-              fontWeight: 700,
-              color: '#ff3f6c',
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              letterSpacing: 0.5,
-              padding: 0,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              padding: '10px 16px',
+              borderBottom: '1px solid #f0f0f0',
             }}
           >
-            {defaultAddress ? 'CHANGE' : 'ADD ADDRESS'}
-          </button>
-        </div>
-
-        {/* Body */}
-        <div style={{ padding: '12px 16px' }}>
-          {loadingAddress ? (
-  <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
-    <SkeletonPulse
-      style={{
-        width: 16,
-        height: 16,
-        borderRadius: '50%',
-        marginTop: 4,
-        flexShrink: 0,
-      }}
-    />
-
-    <div style={{ flex: 1 }}>
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 8,
-          marginBottom: 8,
-        }}
-      >
-        <SkeletonPulse style={{ width: 140, height: 20 }} />
-        <SkeletonPulse
-          style={{
-            width: 52,
-            height: 24,
-            borderRadius: 4,
-          }}
-        />
-      </div>
-
-      <SkeletonPulse
-        style={{
-          width: '95%',
-          height: 16,
-          marginBottom: 8,
-        }}
-      />
-
-      <SkeletonPulse
-        style={{
-          width: '72%',
-          height: 16,
-        }}
-      />
-    </div>
-  </div>
-) : defaultAddress ? (
-            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
-              <MapPin size={16} color='#ff3f6c' style={{ marginTop: 2, flexShrink: 0 }} />
-              <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-                  <span style={{ fontSize: 14, fontWeight: 700, color: '#282c3f' }}>
-                    {defaultAddress.full_name}
-                  </span>
-                  <span style={{
-                    fontSize: 10,
-                    fontWeight: 700,
-                    color: '#ff3f6c',
-                    border: '1px solid #ff3f6c',
-                    borderRadius: 2,
-                    padding: '1px 6px',
-                    letterSpacing: 0.5,
-                  }}>
-                    {defaultAddress.address_type?.toUpperCase() || 'HOME'}
-                  </span>
-                </div>
-                <div style={{ fontSize: 13, color: '#535766', lineHeight: 1.5 }}>
-                  {defaultAddress.address_line_1}
-                  {defaultAddress.address_line_2 ? `, ${defaultAddress.address_line_2}` : ''},&nbsp;
-                  {defaultAddress.city}, {defaultAddress.state} — {' '}
-                  <span style={{ fontWeight: 700, color: '#282c3f' }}>
-                    {defaultAddress.pincode}
-                  </span>
-                </div>
-              </div>
-            </div>
-          ) : (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <MapPin size={15} color='#94969f' />
-              <span style={{ fontSize: 13, color: '#94969f' }}>
-                No address saved. Add one to continue.
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <Truck size={14} color='#ff3f6c' />
+              <span
+                style={{
+                  fontSize: 11,
+                  fontWeight: 700,
+                  letterSpacing: 1,
+                  color: '#282c3f',
+                  textTransform: 'uppercase',
+                }}
+              >
+                Delivery Address
               </span>
             </div>
-          )}
+            <button
+              onClick={() => setOpenAddress(true)}
+              style={{
+                fontSize: 12,
+                fontWeight: 700,
+                color: '#ff3f6c',
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                letterSpacing: 0.5,
+                padding: 0,
+              }}
+            >
+              {defaultAddress ? 'CHANGE' : 'ADD ADDRESS'}
+            </button>
+          </div>
+
+          {/* Body */}
+          <div style={{ padding: '12px 16px' }}>
+            {loadingAddress ? (
+              <div
+                style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}
+              >
+                <SkeletonPulse
+                  style={{
+                    width: 16,
+                    height: 16,
+                    borderRadius: '50%',
+                    marginTop: 4,
+                    flexShrink: 0,
+                  }}
+                />
+
+                <div style={{ flex: 1 }}>
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 8,
+                      marginBottom: 8,
+                    }}
+                  >
+                    <SkeletonPulse style={{ width: 140, height: 20 }} />
+                    <SkeletonPulse
+                      style={{
+                        width: 52,
+                        height: 24,
+                        borderRadius: 4,
+                      }}
+                    />
+                  </div>
+
+                  <SkeletonPulse
+                    style={{
+                      width: '95%',
+                      height: 16,
+                      marginBottom: 8,
+                    }}
+                  />
+
+                  <SkeletonPulse
+                    style={{
+                      width: '72%',
+                      height: 16,
+                    }}
+                  />
+                </div>
+              </div>
+            ) : defaultAddress ? (
+              <div
+                style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}
+              >
+                <MapPin
+                  size={16}
+                  color='#ff3f6c'
+                  style={{ marginTop: 2, flexShrink: 0 }}
+                />
+                <div>
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 8,
+                      marginBottom: 4,
+                    }}
+                  >
+                    <span
+                      style={{
+                        fontSize: 14,
+                        fontWeight: 700,
+                        color: '#282c3f',
+                      }}
+                    >
+                      {defaultAddress.full_name}
+                    </span>
+                    <span
+                      style={{
+                        fontSize: 10,
+                        fontWeight: 700,
+                        color: '#ff3f6c',
+                        border: '1px solid #ff3f6c',
+                        borderRadius: 2,
+                        padding: '1px 6px',
+                        letterSpacing: 0.5,
+                      }}
+                    >
+                      {defaultAddress.address_type?.toUpperCase() || 'HOME'}
+                    </span>
+                  </div>
+                  <div
+                    style={{ fontSize: 13, color: '#535766', lineHeight: 1.5 }}
+                  >
+                    {defaultAddress.address_line_1}
+                    {defaultAddress.address_line_2
+                      ? `, ${defaultAddress.address_line_2}`
+                      : ''}
+                    ,&nbsp;
+                    {defaultAddress.city}, {defaultAddress.state} —{' '}
+                    <span style={{ fontWeight: 700, color: '#282c3f' }}>
+                      {defaultAddress.pincode}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <MapPin size={15} color='#94969f' />
+                <span style={{ fontSize: 13, color: '#94969f' }}>
+                  No address saved. Add one to continue.
+                </span>
+              </div>
+            )}
+          </div>
         </div>
-      </div>
-<AddressModal
-  open={openAddress}
-  onClose={handleCloseAddress}
-  addresses={addresses}
-  selectedAddress={defaultAddress}
-  onSelectAddress={handleSelectAddress}
-  onDeleteSuccess={handleDeleteSuccess}
-/>
-    </>
-  )
-}
+        <AddressModal
+          open={openAddress}
+          onClose={handleCloseAddress}
+          addresses={addresses}
+          selectedAddress={defaultAddress}
+          onSelectAddress={handleSelectAddress}
+          onDeleteSuccess={handleDeleteSuccess}
+        />
+      </>
+    )
+  }
   return (
     <div
       style={{
@@ -468,15 +508,14 @@ if (isLoggedIn) {
           onKeyDown={(e) => e.key === 'Enter' && handleCheck()}
         />
 
-        <button
-          style={styles.addressCheckBtn}
-          onClick={handleCheck}
-        >
+        <button style={styles.addressCheckBtn} onClick={handleCheck}>
           check
         </button>
       </div>
 
-      {isLoading && <div style={{ paddingLeft: 28, fontSize: 12 }}>Checking...</div>}
+      {isLoading && (
+        <div style={{ paddingLeft: 28, fontSize: 12 }}>Checking...</div>
+      )}
       {data && (
         <div style={{ paddingLeft: 28, fontSize: 12, color: '#2e7d32' }}>
           Deliver to {data.city} by {data.deliveryDate}
@@ -501,7 +540,7 @@ function ItemCard({ item }) {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [deleting, setDeleting] = useState(false)
 
-    const updateBagQuantity = async (delta) => {
+  const updateBagQuantity = async (delta) => {
     const newQty = item.qty + delta
 
     if (newQty < 1) {
@@ -847,6 +886,7 @@ function CouponPanel() {
 function PricePanel() {
   const navigate = useNavigate()
   const { items, couponSavings, donationAmount } = useBagStore()
+  const [paymentError, setPaymentError] = useState('')
 
   const selected = items.filter((i) => i.selected)
   const totalMrp = useMemo(
@@ -859,18 +899,98 @@ function PricePanel() {
   )
   const discountOnMrp = totalMrp - totalPrice
   const total = totalPrice - couponSavings + donationAmount
+  const API_BASE =
+    'https://d8obcfi1ua.execute-api.ap-south-1.amazonaws.com/prod'
 
-  const handlePlaceOrder = () => {
+  const handlePlaceOrder = async () => {
     if (selected.length === 0) return
 
     const token = localStorage.getItem('jwt_token')
     const customer = JSON.parse(localStorage.getItem('customer') || 'null')
-    const isLoggedIn = !!token && !!customer
 
-    if (isLoggedIn) {
-      navigate('/checkout/address')
-    } else {
-      navigate('/login?redirect=/checkout/address')
+    if (!token || !customer) {
+      navigate('/login?redirect=/bag')
+      return
+    }
+
+    if (!window.Razorpay) {
+      alert('Payment system unavailable')
+      return
+    }
+
+    try {
+      const totalAmount = Math.max(0, total)
+
+      const customerName = customer.full_name || customer.name || 'Customer'
+
+      const customerEmail = customer.email || ''
+
+      const customerPhone = customer.mobile || customer.phone || ''
+
+      const { data } = await axios.post(`${API_BASE}/payments/create-order`, {
+        amount: totalAmount,
+        receipt: `order_${Date.now()}`,
+      })
+
+      const options = {
+        key: data.key,
+        amount: data.amount,
+        currency: data.currency,
+        order_id: data.order_id,
+
+        name: 'Aarria',
+        description: 'Order Payment',
+
+        prefill: {
+          name: customerName,
+          email: customerEmail,
+          contact: customerPhone,
+        },
+
+        notes: {
+          customer_id: customer.customer_id,
+          item_count: selected.length,
+        },
+
+       handler: async function (response) {
+  try {
+    const verifyResponse = await axios.post(
+      `${API_BASE}/payments/verify`,
+      {
+        razorpay_order_id: response.razorpay_order_id,
+        razorpay_payment_id: response.razorpay_payment_id,
+        razorpay_signature: response.razorpay_signature,
+      }
+    )
+
+    navigate('/order-success', {
+      state: verifyResponse.data.order,
+    })
+  } catch (error) {
+    console.error('Verification failed:', error)
+
+    setPaymentError('Payment verification failed')
+  }
+},
+        modal: {
+  ondismiss: () => {
+    setPaymentError('Payment cancelled by user')
+  },
+},
+      }
+
+      const rzp = new window.Razorpay(options)
+
+rzp.on('payment.failed', function (response) {
+  setPaymentError(
+  response.error.description || 'Payment failed'
+)
+})
+
+rzp.open()
+    } catch (error) {
+      console.error(error)
+      alert('Unable to start payment')
     }
   }
 
@@ -930,6 +1050,94 @@ function PricePanel() {
           Select at least one item to proceed
         </p>
       )}
+      {paymentError && (
+  <div
+    style={{
+      position: 'fixed',
+      inset: 0,
+      background: 'rgba(0,0,0,0.45)',
+      zIndex: 9999,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: 16,
+    }}
+  >
+    <div
+      style={{
+        width: '100%',
+        maxWidth: 420,
+        background: '#fff',
+        borderRadius: 20,
+        padding: 28,
+        textAlign: 'center',
+      }}
+    >
+      <XCircle size={70} color='#ef4444' />
+
+      <h2
+        style={{
+          marginTop: 16,
+          marginBottom: 10,
+          fontSize: 24,
+          fontWeight: 700,
+        }}
+      >
+        Payment Failed
+      </h2>
+
+      <p
+        style={{
+          color: '#666',
+          fontSize: 14,
+          marginBottom: 24,
+        }}
+      >
+        {paymentError}
+      </p>
+
+      <div
+        style={{
+          display: 'flex',
+          gap: 12,
+          justifyContent: 'center',
+        }}
+      >
+        <button
+          onClick={() => setPaymentError('')}
+          style={{
+            background: '#ff3f6c',
+            color: '#fff',
+            border: 'none',
+            padding: '12px 20px',
+            borderRadius: 10,
+            fontWeight: 700,
+            cursor: 'pointer',
+          }}
+        >
+          TRY AGAIN
+        </button>
+
+        <button
+          onClick={() => {
+            setPaymentError('')
+            navigate('/bag')
+          }}
+          style={{
+            background: '#fff',
+            border: '1px solid #ddd',
+            padding: '12px 20px',
+            borderRadius: 10,
+            fontWeight: 700,
+            cursor: 'pointer',
+          }}
+        >
+          CONTINUE SHOPPING
+        </button>
+      </div>
+    </div>
+  </div>
+)}
     </div>
   )
 }
