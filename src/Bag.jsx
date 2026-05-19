@@ -887,6 +887,7 @@ function PricePanel() {
   const navigate = useNavigate()
   const { items, couponSavings, donationAmount } = useBagStore()
   const [paymentError, setPaymentError] = useState('')
+  const [paymentLoading, setPaymentLoading] = useState(false)
 
   const selected = items.filter((i) => i.selected)
   const totalMrp = useMemo(
@@ -953,6 +954,7 @@ function PricePanel() {
         },
 
        handler: async function (response) {
+  setPaymentLoading(true)
   try {
     const verifyResponse = await axios.post(
       `${API_BASE}/payments/verify`,
@@ -963,32 +965,43 @@ function PricePanel() {
       }
     )
 
+    setPaymentLoading(false)
+
     navigate('/order-success', {
       state: verifyResponse.data.order,
     })
   } catch (error) {
     console.error('Verification failed:', error)
 
+    setPaymentLoading(false)
+
     setPaymentError('Payment verification failed')
   }
 },
         modal: {
   ondismiss: () => {
+    setPaymentLoading(false)
     setPaymentError('Payment cancelled by user')
   },
 },
       }
-
-      const rzp = new window.Razorpay(options)
+const rzp = new window.Razorpay(options)
 
 rzp.on('payment.failed', function (response) {
+  setPaymentLoading(false)
   setPaymentError(
-  response.error.description || 'Payment failed'
-)
+    response.error.description || 'Payment failed'
+  )
 })
 
 rzp.open()
+
+setTimeout(() => {
+  setPaymentLoading(false)
+}, 800)
     } catch (error) {
+        setPaymentLoading(false)
+
       console.error(error)
       alert('Unable to start payment')
     }
@@ -1050,6 +1063,43 @@ rzp.open()
           Select at least one item to proceed
         </p>
       )}
+      {paymentLoading && (
+  <div
+    style={{
+      position: 'fixed',
+      inset: 0,
+      background: 'rgba(255,255,255,0.75)',
+      backdropFilter: 'blur(4px)',
+      zIndex: 9998,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      flexDirection: 'column',
+      gap: 18,
+    }}
+  >
+    <div
+      style={{
+        width: 56,
+        height: 56,
+        border: '4px solid #f3f3f3',
+        borderTop: '4px solid #ff3f6c',
+        borderRadius: '50%',
+        animation: 'spin 0.8s linear infinite',
+      }}
+    />
+
+    <div
+      style={{
+        fontSize: 15,
+        fontWeight: 600,
+        color: '#282c3f',
+      }}
+    >
+      Preparing secure payment...
+    </div>
+  </div>
+)}
       {paymentError && (
   <div
     style={{
