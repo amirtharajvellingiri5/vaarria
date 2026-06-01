@@ -13,7 +13,7 @@ const PAGE_CONTAINER = {
 
 const MENU_DATA = [
   {
-    name: 'Men',
+    name: 'ALL',
     url: '/men',
     columns: [
       {
@@ -34,7 +34,7 @@ const MENU_DATA = [
   },
 
   {
-    name: 'Women',
+    name: 'ETHNIC WEAR',
     url: '/women',
     columns: [
       {
@@ -42,8 +42,10 @@ const MENU_DATA = [
           {
             title: 'Indian & Fusion Wear',
             links: [
+              { name: 'Kurtas & Suits', url: '/women/kurta-suits' },
+              { name: 'Kurtis & Tops', url: '/women/kurta-and-short-tops' },
               { name: 'Sarees', url: '/women/sarees' },
-              { name: 'Lehenga Cholis', url: '/women/lehenga-cholis' },
+              { name: 'Dress Materials', url: '/women/materials   ' },
               { name: 'Dupattas & Shawls', url: '/women/dupattas' },
             ],
           },
@@ -53,7 +55,7 @@ const MENU_DATA = [
   },
 
   {
-    name: 'Kids',
+    name: 'WESTERN',
     url: '/kids',
     columns: [
       {
@@ -71,7 +73,7 @@ const MENU_DATA = [
   },
 
   {
-    name: 'Home',
+    name: 'BOTTOMS',
     url: '/home',
     columns: [
       {
@@ -89,13 +91,13 @@ const MENU_DATA = [
   },
 
   {
-    name: 'GenZ',
+    name: 'DUPATTAS',
     url: '/genz',
     columns: [],
   },
 
   {
-    name: 'Studio',
+    name: 'SALE',
     url: '/studio',
     isNew: true,
     columns: [],
@@ -119,14 +121,13 @@ const MegaMenu = ({ columns }) => {
       style={{
         position: 'absolute',
         top: '100%',
-        left: 0,
-        right: 0,
+        width: 'min(1080px, calc(100% - 48px))',
         backgroundColor: '#fff',
         borderTop: '1px solid #f0f0f0',
-        boxShadow: '0 8px 24px rgba(0,0,0,0.1)',
-        padding: '24px 32px',
+        boxShadow: '0 18px 40px rgba(15, 23, 42, 0.12)',
+        padding: '24px 28px',
         zIndex: 200,
-        animation: 'mmFadeIn 0.15s ease',
+        borderRadius: '0 0 16px 16px',
       }}
     >
       <style>{`
@@ -182,10 +183,10 @@ const Navbar = () => {
   const [searchValue, setSearchValue] = useState('')
   const [profileOpen, setProfileOpen] = useState(false)
 
-const token = localStorage.getItem('jwt_token')
-const customer = localStorage.getItem('customer')
-const customerData = customer ? JSON.parse(customer) : null
-const isLoggedIn = !!token
+  const token = localStorage.getItem('jwt_token')
+  const customer = localStorage.getItem('customer')
+  const customerData = customer ? JSON.parse(customer) : null
+  const isLoggedIn = !!token
   const cart = useCartStore((state) => state.cart)
   const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0)
 
@@ -194,9 +195,13 @@ const isLoggedIn = !!token
       style={{
         background: '#fff',
         borderBottom: '1px solid #e8e8e8',
-        position: 'sticky',
+        position: 'fixed',
         top: 0,
-        zIndex: 100,
+        left: 0,
+        right: 0,
+        zIndex: 1000,
+        boxShadow: '0 14px 40px rgba(15, 23, 42, 0.08)',
+        backdropFilter: 'saturate(180%) blur(16px)',
       }}
       onMouseLeave={() => setActiveMenu(null)}
     >
@@ -206,8 +211,10 @@ const isLoggedIn = !!token
           ...PAGE_CONTAINER,
           display: 'flex',
           alignItems: 'center',
-          height: '60px',
+          height: '72px',
           gap: '0',
+          minHeight: '72px',
+          padding: '0 16px',
         }}
       >
         {/* Logo */}
@@ -221,7 +228,15 @@ const isLoggedIn = !!token
 
         {/* Nav Items */}
         <div
-          style={{ display: 'flex', alignItems: 'center', height: '100%' }}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            height: '100%',
+            gap: '4px',
+            overflowX: 'auto',
+            whiteSpace: 'nowrap',
+            padding: '0 8px',
+          }}
           className='hidden-mobile'
         >
           {MENU_DATA.map((item) => {
@@ -295,10 +310,14 @@ const isLoggedIn = !!token
                 {isActive && item.columns.length > 0 && (
                   <div
                     style={{
-                      position: 'fixed',
-                      top: '60px',
+                      position: 'absolute',
+                      top: '100%',
                       left: 0,
                       right: 0,
+                      zIndex: 200,
+                      display: 'flex',
+                      justifyContent: 'center',
+                      paddingTop: '6px',
                     }}
                   >
                     <MegaMenu columns={item.columns} />
@@ -354,129 +373,137 @@ const isLoggedIn = !!token
           }}
         >
           <div
-  style={{ position: 'relative' }}
-  onMouseEnter={() => setProfileOpen(true)}
-  onMouseLeave={() => setProfileOpen(false)}
->
-  <button
-    style={{
-      background: 'none',
-      border: 'none',
-      cursor: 'pointer',
-      color: '#282c3f',
-      display: 'flex',
-      alignItems: 'center',
-      flexDirection: 'column',
-      gap: '2px',
-    }}
-    className='icon-btn'
-  >
-    <User size={20} />
-    <span
-      style={{
-        fontSize: '10px',
-        fontWeight: 600,
-        letterSpacing: '0.03em',
-      }}
-    >
-      {isLoggedIn ? customerData?.name || 'Profile' : 'Profile'}
-    </span>
-  </button>
-
-  {profileOpen && (
-    <div
-      style={{
-        position: 'absolute',
-        top: '100%',
-        right: 0,
-        width: '260px',
-        background: '#fff',
-        border: '1px solid #eaeaec',
-        boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
-        borderRadius: '4px',
-        padding: '16px',
-        zIndex: 999,
-      }}
-    >
-      {isLoggedIn ? (
-        <>
-          <div style={{ fontSize: '14px', fontWeight: 700 }}>
-            Hello {customerData?.name}
-          </div>
-
-          <div
-            style={{
-              fontSize: '12px',
-              color: '#696b79',
-              marginBottom: '14px',
-            }}
+            style={{ position: 'relative' }}
+            onMouseEnter={() => setProfileOpen(true)}
+            onMouseLeave={() => setProfileOpen(false)}
           >
-            {customerData?.mobile_no}
-          </div>
-
-          <hr style={{ border: 'none', borderTop: '1px solid #f0f0f0' }} />
-
-          <div style={{ paddingTop: '12px' }}>
-            <a href="/orders" style={menuItemStyle}>Orders</a>
-            <a href="/wishlist" style={menuItemStyle}>Wishlist</a>
-            <a href="/profile" style={menuItemStyle}>Profile</a>
-
             <button
-              onClick={() => {
-                localStorage.removeItem('jwt_token')
-                localStorage.removeItem('customer')
-                window.location.href = '/'
-              }}
               style={{
-                ...menuItemStyle,
                 background: 'none',
                 border: 'none',
-                width: '100%',
-                textAlign: 'left',
                 cursor: 'pointer',
+                color: '#282c3f',
+                display: 'flex',
+                alignItems: 'center',
+                flexDirection: 'column',
+                gap: '2px',
               }}
+              className='icon-btn'
             >
-              Logout
+              <User size={20} />
+              <span
+                style={{
+                  fontSize: '10px',
+                  fontWeight: 600,
+                  letterSpacing: '0.03em',
+                }}
+              >
+                {isLoggedIn ? customerData?.name || 'Profile' : 'Profile'}
+              </span>
             </button>
-          </div>
-        </>
-      ) : (
-        <>
-          <div style={{ fontSize: '14px', fontWeight: 700 }}>
-            Welcome
-          </div>
 
-          <div
-            style={{
-              fontSize: '12px',
-              color: '#696b79',
-              margin: '8px 0 14px',
-            }}
-          >
-            To access account and manage orders
-          </div>
+            {profileOpen && (
+              <div
+                style={{
+                  position: 'absolute',
+                  top: '100%',
+                  right: 0,
+                  width: '260px',
+                  background: '#fff',
+                  border: '1px solid #eaeaec',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+                  borderRadius: '4px',
+                  padding: '16px',
+                  zIndex: 999,
+                }}
+              >
+                {isLoggedIn ? (
+                  <>
+                    <div style={{ fontSize: '14px', fontWeight: 700 }}>
+                      Hello {customerData?.name}
+                    </div>
 
-          <a
-            href="/login"
-            style={{
-              display: 'inline-block',
-              border: '1px solid #ff3f6c',
-              color: '#ff3f6c',
-              padding: '10px 18px',
-              fontSize: '12px',
-              fontWeight: 700,
-              textDecoration: 'none',
-              borderRadius: '4px',
-              marginBottom: '14px',
-            }}
-          >
-            LOGIN / SIGNUP
-          </a>
-        </>
-      )}
-    </div>
-  )}
-</div>
+                    <div
+                      style={{
+                        fontSize: '12px',
+                        color: '#696b79',
+                        marginBottom: '14px',
+                      }}
+                    >
+                      {customerData?.mobile_no}
+                    </div>
+
+                    <hr
+                      style={{ border: 'none', borderTop: '1px solid #f0f0f0' }}
+                    />
+
+                    <div style={{ paddingTop: '12px' }}>
+                      <a href='/orders' style={menuItemStyle}>
+                        Orders
+                      </a>
+                      <a href='/wishlist' style={menuItemStyle}>
+                        Wishlist
+                      </a>
+                      <a href='/profile' style={menuItemStyle}>
+                        Profile
+                      </a>
+
+                      <button
+                        onClick={() => {
+                          localStorage.removeItem('jwt_token')
+                          localStorage.removeItem('customer')
+                          window.location.href = '/'
+                        }}
+                        style={{
+                          ...menuItemStyle,
+                          background: 'none',
+                          border: 'none',
+                          width: '100%',
+                          textAlign: 'left',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        Logout
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div style={{ fontSize: '14px', fontWeight: 700 }}>
+                      Welcome
+                    </div>
+
+                    <div
+                      style={{
+                        fontSize: '12px',
+                        color: '#696b79',
+                        margin: '8px 0 14px',
+                      }}
+                    >
+                      To access account and manage orders
+                    </div>
+
+                    <a
+                      href='/login'
+                      style={{
+                        display: 'inline-block',
+                        border: '1px solid #ff3f6c',
+                        color: '#ff3f6c',
+                        padding: '10px 18px',
+                        fontSize: '12px',
+                        fontWeight: 700,
+                        textDecoration: 'none',
+                        borderRadius: '4px',
+                        marginBottom: '14px',
+                      }}
+                    >
+                      LOGIN / SIGNUP
+                    </a>
+                  </>
+                )}
+              </div>
+            )}
+          </div>
           <button
             style={{
               background: 'none',
