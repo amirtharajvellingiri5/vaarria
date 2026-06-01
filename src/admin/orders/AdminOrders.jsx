@@ -23,7 +23,7 @@ import {
 
 const PER_PAGE = 8
 
-function CustomerOrders() {
+function AdminOrders() {
   const [activeTab, setActiveTab] =
     useState('all')
   const [searchQuery, setSearchQuery] =
@@ -511,4 +511,4 @@ function StatCard({
   )
 }
 
-export default CustomerOrders
+export default AdminOrders

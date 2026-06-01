@@ -19,7 +19,8 @@ import TermsAndConditionsPage from './info/Terms.jsx'
 import RefundPolicyPage from './info/RefundPolicy.jsx'
 import OrderSuccess from './info/OrderSuccess.jsx'
 import PaymentFailed from './info/PaymentFailed.jsx'
-import CustomerOrders from './admin/orders/CustomerOrders.jsx'
+import AdminOrders from './admin/orders/AdminOrders.jsx'
+import OrdersPage from './OrdersPage.jsx'
 
 const queryClient = new QueryClient()  // ← add
 
@@ -31,11 +32,12 @@ const router = createBrowserRouter([
   { path: '/bag', element: <BagPage /> },
   { path: '/contact-us', element: <ContactUsPage /> },
   { path: '/terms', element: <TermsAndConditionsPage/> },
+  {path: '/orders', element: <OrdersPage /> },
   { path: '/refund-policy', element: <RefundPolicyPage/> },
   { path: '/admin/products/new', element: <ProductUpload /> },
   { path: '/admin/', element: <ProductListings /> },
   { path: '/admin/products/edit/:id', element: <ProductEdit /> },
-  { path: '/admin/orders', element: <CustomerOrders/> },
+  { path: '/admin/orders', element: <AdminOrders/> },
   { path: '/order-success', element: <OrderSuccess /> },
   { path: '/payment-failed', element: <PaymentFailed /> },
   
