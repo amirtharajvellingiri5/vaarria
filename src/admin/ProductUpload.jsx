@@ -385,10 +385,7 @@ const ProductUpload = () => {
   const buildPayload = () => ({
     title, // ✅ was missing in failing payload
     brand: { name: brandName, catalogue_id: catalogueId },
-    category: {
-      category_id: categoryId,
-      category_name: categories.find((c) => c.category_id === categoryId)?.name,
-    },
+    category_id: categoryId,
     description: {
       Material: material,
       'Sleeve Length': sleeveLength,

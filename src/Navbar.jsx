@@ -30,10 +30,6 @@ const MENU_DATA = [
             title: 'Indian & Fusion Wear',
             links: [
               { name: getCategoryName('Kurtas & Suits'), url: '/products' },
-              { name: 'Sherwanis', url: '/men/sherwanis' },
-              { name: 'Men Mojaris', url: '/men/mojaris' },
-              { name: 'Nehru Jackets', url: '/men/nehru-jackets' },
-              { name: 'Dhotis', url: '/men/dhotis' },
             ],
           },
         ],
