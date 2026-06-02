@@ -12,12 +12,14 @@ const PAGE_CONTAINER = {
   width: '100%',
 }
 
-const getCategoryName = (name) => {
-  const match = CATEGORIES.find(
-    (cat) => cat.name.toLowerCase() === name.toLowerCase(),
-  )
-  return match ? match.name : name
+const getCategoryBySlug = (slug) => CATEGORIES.find((cat) => cat.slug === slug)
+
+const getCategoryNameBySlug = (slug) => {
+  const match = getCategoryBySlug(slug)
+  return match ? match.name : slug.replace(/-/g, ' ')
 }
+
+const getCategoryUrl = (slug) => `/${slug}`
 
 const MENU_DATA = [
   {
@@ -29,7 +31,7 @@ const MENU_DATA = [
           {
             title: 'Indian & Fusion Wear',
             links: [
-              { name: getCategoryName('Kurtas & Suits'), url: '/products' },
+              { slug: 'kurtas-suits', url: getCategoryUrl('kurtas-suits') },
             ],
           },
         ],
@@ -46,11 +48,11 @@ const MENU_DATA = [
           {
             title: 'Indian & Fusion Wear',
             links: [
-              { name: getCategoryName('Kurtas & Suits'), url: '/women/kurta-suits' },
-              { name: 'Kurtis & Tops', url: '/women/kurta-and-short-tops' },
-              { name: getCategoryName('Sarees'), url: '/women/sarees' },
-              { name: getCategoryName('Dress Materials'), url: '/women/materials   ' },
-              { name: getCategoryName('Dupattas & Shawls'), url: '/women/dupattas' },
+              { slug: 'kurtas-suits', url: getCategoryUrl('kurtas-suits') },
+              { slug: 'kurtis-tops', url: getCategoryUrl('kurtis-tops') },
+              { slug: 'sarees', url: getCategoryUrl('sarees') },
+              { slug: 'dress-materials', url: getCategoryUrl('dress-materials') },
+              { slug: 'dupattas-shawls', url: getCategoryUrl('dupattas-shawls') },
             ],
           },
         ],
@@ -67,8 +69,8 @@ const MENU_DATA = [
           {
             title: "Western Wear",
             links: [
-              { name: getCategoryName('Dresses'), url: '/kids/tshirts' },
-              { name: 'Tunics', url: '/kids/jeans-trousers' }
+              { slug: 'dresses', url: getCategoryUrl('dresses') },
+              { slug: 'tunics', url: getCategoryUrl('tunics') }
             ],
           },
         ],
@@ -85,8 +87,8 @@ const MENU_DATA = [
           {
             title: 'Bottom Wear',
             links: [
-              { name: 'Leggings', url: '/home/bedsheets' },
-              { name: 'Straight Pants', url: '/home/towels' },
+              { slug: 'leggings', url: getCategoryUrl('leggings') },
+              { slug: 'straight-pants', url: getCategoryUrl('straight-pants') },
             ],
           },
         ],
@@ -167,8 +169,8 @@ const MegaMenu = ({ columns }) => {
               <div key={si} style={{ marginBottom: '16px' }}>
                 <div className='mm-section-title'>{section.title}</div>
                 {section.links.map((link) => (
-                  <a key={link.name} href={link.url} className='mm-link'>
-                    {link.name}
+                  <a key={link.slug} href={link.url} className='mm-link'>
+                    {getCategoryNameBySlug(link.slug)}
                   </a>
                 ))}
                 {si < col.sections.length - 1 && <hr className='mm-divider' />}
@@ -667,7 +669,7 @@ const isLoggedIn = !!token
                         </div>
                         {section.links.map((link) => (
                           <a
-                            key={link.name}
+                            key={link.slug}
                             href={link.url}
                             style={{
                               display: 'block',
@@ -677,7 +679,7 @@ const isLoggedIn = !!token
                               textDecoration: 'none',
                             }}
                           >
-                            {link.name}
+                            {getCategoryNameBySlug(link.slug)}
                           </a>
                         ))}
                       </div>
