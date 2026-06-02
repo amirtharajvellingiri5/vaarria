@@ -1,7 +1,7 @@
 import { useState, useMemo, useRef, useEffect } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import { useCartStore } from './store/cartStore'
 import {
   ShoppingBag,
@@ -22,7 +22,7 @@ import Footer from './Footer'
 import logo from './assets/logo.png'
 
 import { COLOR_MAP, formatColorLabel } from './constants/colors'
-import { PRODUCT_CATEGORY_NAMES } from './utils/categories'
+import { PRODUCT_CATEGORY_NAMES, ADMIN_CATEGORIES } from './utils/categories'
 
 // ── Swatch helper ─────────────────────────────────────────────────────────────
 const ColorSwatch = ({ name, size = 14 }) => {
@@ -105,6 +105,39 @@ const fetchProducts = async () => {
     occasion: 'Casual',
     bgColor: 'bg-gradient-to-br from-pink-200 to-red-300',
     description: item.title,
+  }))
+}
+
+const fetchProductsByCategory = async (categoryId) => {
+  if (!categoryId) return fetchProducts()
+
+  const res = await fetch(
+    `https://api.aarria.com/listings?category_id=${categoryId}`,
+  )
+
+  if (!res.ok) {
+    // fallback to empty list on error
+    return []
+  }
+
+  const json = await res.json()
+
+  // assume API returns { data: [...] } or an array
+  const items = Array.isArray(json) ? json : json.data || []
+
+  return items.map((item) => ({
+    id: item.id,
+    name: item.title || item.name,
+    price: item.price || item.sale_price || 0,
+    image: item.image || (item.images?.length ? BASE_URL + item.images[0] : ''),
+    stock: item.stock ?? 0,
+    category: item.category || 'Ethnic',
+    rating: item.rating ?? 4.0,
+    fabric: item.fabric || 'Cotton',
+    color: item.color || 'Red',
+    occasion: item.occasion || 'Casual',
+    bgColor: item.bgColor || 'bg-gradient-to-br from-pink-200 to-red-300',
+    description: item.description || item.title || item.name || '',
   }))
 }
 
@@ -445,9 +478,15 @@ const ListingPage = () => {
   const navigate = useNavigate()
   const [sortOpen, setSortOpen] = useState(false)
 
+  const { slug } = useParams()
+
+  // resolve slug to category_id
+  const category = ADMIN_CATEGORIES.find((c) => c.slug === slug)
+  const categoryId = category ? category.category_id : null
+
   const { data: products, isLoading: productsLoading } = useQuery({
-    queryKey: ['products'],
-    queryFn: fetchProducts,
+    queryKey: ['products', categoryId],
+    queryFn: () => fetchProductsByCategory(categoryId),
   })
 
   const { data: filters, isLoading: filtersLoading } = useQuery({
