@@ -23,21 +23,59 @@ const getCategoryUrl = (slug) => `/${slug}`
 
 const MENU_DATA = [
   {
-    name: 'ALL',
-    url: '/men',
-    columns: [
-      {
-        sections: [
-          {
-            title: 'Indian & Fusion Wear',
-            links: [
-              { slug: 'kurtas-suits', url: getCategoryUrl('kurtas-suits') },
-            ],
-          },
-        ],
-      },
-    ],
-  },
+  name: 'ALL',
+  url: '/',
+  columns: [
+    {
+      sections: [
+        {
+          title: 'Indian & Fusion Wear',
+          links: [
+            { slug: 'kurtas-suits', url: getCategoryUrl('kurtas-suits') },
+            { slug: 'kurtis-tops', url: getCategoryUrl('kurtis-tops') },
+            { slug: 'sarees', url: getCategoryUrl('sarees') },
+            { slug: 'dress-materials', url: getCategoryUrl('dress-materials') },
+            { slug: 'dupattas-shawls', url: getCategoryUrl('dupattas-shawls') },
+          ],
+        },
+      ],
+    },
+    {
+      sections: [
+        {
+          title: 'Western Wear',
+          links: [
+            { slug: 'dresses', url: getCategoryUrl('dresses') },
+            { slug: 'tunics', url: getCategoryUrl('tunics') },
+          ],
+        },
+      ],
+    },
+    {
+      sections: [
+        {
+          title: 'Bottom Wear',
+          links: [
+            { slug: 'leggings', url: getCategoryUrl('leggings') },
+            { slug: 'straight-pants', url: getCategoryUrl('straight-pants') },
+          ],
+        },
+      ],
+    },
+    ,
+    {
+      sections: [
+        {
+          title: 'Nightwear',
+          links: [
+            { slug: 'leggings', url: getCategoryUrl('leggings') },
+            { slug: 'straight-pants', url: getCategoryUrl('straight-pants') },
+          ],
+        },
+      ],
+    },
+  ],
+},
 
   {
     name: 'ETHNIC WEAR',

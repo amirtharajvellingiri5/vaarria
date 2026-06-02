@@ -76,6 +76,19 @@ const ColorSwatch = ({ name, size = 14 }) => {
 
 const BASE_URL = 'https://cdn.aarria.com/app/images/'
 
+const fetchSiblingCategories = async (categoryId) => {
+  if (!categoryId) return []
+
+  const res = await fetch(
+    `https://8184radc92.execute-api.ap-south-1.amazonaws.com/prod/categories/${categoryId}/siblings`,
+  )
+
+  if (!res.ok) return []
+
+  return res.json()
+}
+
+
 /** this url is from cdn */
 const fetchProducts = async () => {
   const response = await fetch(
@@ -145,7 +158,7 @@ const fetchProductsByCategory = async (categoryId) => {
 const fetchFilters = async () => {
   await new Promise((resolve) => setTimeout(resolve, 300))
   return {
-    categories: PRODUCT_CATEGORY_NAMES,
+    categories: siblingCategories.map((c) => c.category_name),
     fabrics: [
       'Silk',
       'Cotton',
@@ -480,9 +493,18 @@ const ListingPage = () => {
 
   const { slug } = useParams()
 
+
   // resolve slug to category_id
   const category = ADMIN_CATEGORIES.find((c) => c.slug === slug)
   const categoryId = category ? category.category_id : null
+
+
+const { data: siblingCategories = [] } = useQuery({
+  queryKey: ['siblings', categoryId],
+  queryFn: () => fetchSiblingCategories(categoryId),
+  enabled: !!categoryId,
+})
+
 
   const { data: products, isLoading: productsLoading } = useQuery({
     queryKey: ['products', categoryId],
@@ -490,9 +512,36 @@ const ListingPage = () => {
   })
 
   const { data: filters, isLoading: filtersLoading } = useQuery({
-    queryKey: ['filters'],
-    queryFn: fetchFilters,
-  })
+  queryKey: ['filters', siblingCategories],
+  queryFn: async () => ({
+    categories: siblingCategories.map((c) => c.category_name),
+    fabrics: [
+      'Silk',
+      'Cotton',
+      'Georgette',
+      'Velvet',
+      'Net',
+      'Banarasi Silk',
+      'Chanderi',
+      'Rayon',
+    ],
+    colors: ['Red', 'Blue', 'Green', 'Yellow', 'Pink', 'Purple', 'Gold'],
+    occasions: ['Wedding', 'Party', 'Casual', 'Festive'],
+    priceRanges: [
+      { label: 'Under ₹2000', min: 0, max: 2000 },
+      { label: '₹2000 - ₹5000', min: 2000, max: 5000 },
+      { label: '₹5000 - ₹10000', min: 5000, max: 10000 },
+      { label: 'Above ₹10000', min: 10000, max: Infinity },
+    ],
+  }),
+})
+  const formatTitleFromSlug = (s) =>
+    s
+      ? s
+          .split('-')
+          .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+          .join(' ')
+      : 'Products'
 
 useEffect(() => {
   const handleClickOutside = (event) => {
@@ -512,15 +561,24 @@ useEffect(() => {
 }, [])
 
   const handleFilterChange = (filterKey, value, checked) => {
-    setSelectedFilters((prev) => ({
-      ...prev,
-      [filterKey]: checked
-        ? [...(prev[filterKey] || []), value]
-        : (prev[filterKey] || []).filter((v) => v !== value),
-    }))
-    setCurrentPage(1)
+  if (filterKey === 'category' && checked) {
+    const category = siblingCategories.find(
+      (c) => c.category_name === value,
+    )
+
+    if (category) {
+      navigate(`/${category.slug}`)
+      return
+    }
   }
 
+  setSelectedFilters((prev) => ({
+    ...prev,
+    [filterKey]: checked
+      ? [...(prev[filterKey] || []), value]
+      : (prev[filterKey] || []).filter((v) => v !== value),
+  }))
+}
   const handleRemoveFilter = (filterKey, value) => {
     setSelectedFilters((prev) => ({
       ...prev,
@@ -628,12 +686,10 @@ useEffect(() => {
 
       <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8'>
         <div className='mb-6'>
-          <h1 className='text-3xl font-bold text-gray-800 mb-2'>
-            Women's Ethnic Wear
+          <h1 className='font-bold text-gray-800 mb-2' style={{ fontSize: '1.2375rem' }}>
+            {category ? category.name : slug ? formatTitleFromSlug(slug) : 'Products'}
           </h1>
-          <p className='text-gray-600'>
-            {filteredProducts.length} products found
-          </p>
+          
         </div>
 
         <div className='flex gap-6'>
