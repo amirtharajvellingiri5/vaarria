@@ -61,10 +61,10 @@ const MENU_DATA = [
       {
         sections: [
           {
-            title: "Boys' Clothing",
+            title: "Western Wear",
             links: [
-              { name: 'Tshirts', url: '/kids/tshirts' },
-              { name: 'Jeans & Trousers', url: '/kids/jeans-trousers' },
+              { name: 'Dresses', url: '/kids/tshirts' },
+              { name: 'Tunics', url: '/kids/jeans-trousers' }
             ],
           },
         ],
@@ -79,10 +79,10 @@ const MENU_DATA = [
       {
         sections: [
           {
-            title: 'Bed & Bath',
+            title: 'Bottom Wear',
             links: [
-              { name: 'Bedsheets', url: '/home/bedsheets' },
-              { name: 'Towels', url: '/home/towels' },
+              { name: 'Leggings', url: '/home/bedsheets' },
+              { name: 'Straight Pants', url: '/home/towels' },
             ],
           },
         ],
@@ -91,7 +91,7 @@ const MENU_DATA = [
   },
 
   {
-    name: 'SHAWLS',
+    name: 'NIGHTWEAR',
     url: '/genz',
     columns: [],
   },
