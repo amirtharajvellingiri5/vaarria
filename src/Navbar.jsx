@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { ShoppingBag, Search, Heart, User, Menu, X } from 'lucide-react'
 import { useCartStore } from './store/cartStore'
+import { ADMIN_CATEGORIES as CATEGORIES } from './utils/categories'
 
 import logo from './assets/logo.png'
 
@@ -9,6 +10,13 @@ const PAGE_CONTAINER = {
   margin: '0 auto',
   padding: '0 24px',
   width: '100%',
+}
+
+const getCategoryName = (name) => {
+  const match = CATEGORIES.find(
+    (cat) => cat.name.toLowerCase() === name.toLowerCase(),
+  )
+  return match ? match.name : name
 }
 
 const MENU_DATA = [
@@ -21,7 +29,7 @@ const MENU_DATA = [
           {
             title: 'Indian & Fusion Wear',
             links: [
-              { name: 'Kurtas & Suits', url: '/products' },
+              { name: getCategoryName('Kurtas & Suits'), url: '/products' },
               { name: 'Sherwanis', url: '/men/sherwanis' },
               { name: 'Men Mojaris', url: '/men/mojaris' },
               { name: 'Nehru Jackets', url: '/men/nehru-jackets' },
@@ -42,11 +50,11 @@ const MENU_DATA = [
           {
             title: 'Indian & Fusion Wear',
             links: [
-              { name: 'Kurtas & Suits', url: '/women/kurta-suits' },
+              { name: getCategoryName('Kurtas & Suits'), url: '/women/kurta-suits' },
               { name: 'Kurtis & Tops', url: '/women/kurta-and-short-tops' },
-              { name: 'Sarees', url: '/women/sarees' },
-              { name: 'Dress Materials', url: '/women/materials   ' },
-              { name: 'Dupattas & Shawls', url: '/women/dupattas' },
+              { name: getCategoryName('Sarees'), url: '/women/sarees' },
+              { name: getCategoryName('Dress Materials'), url: '/women/materials   ' },
+              { name: getCategoryName('Dupattas & Shawls'), url: '/women/dupattas' },
             ],
           },
         ],
@@ -63,7 +71,7 @@ const MENU_DATA = [
           {
             title: "Western Wear",
             links: [
-              { name: 'Dresses', url: '/kids/tshirts' },
+              { name: getCategoryName('Dresses'), url: '/kids/tshirts' },
               { name: 'Tunics', url: '/kids/jeans-trousers' }
             ],
           },

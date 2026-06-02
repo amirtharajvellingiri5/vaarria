@@ -22,6 +22,7 @@ import Footer from './Footer'
 import logo from './assets/logo.png'
 
 import { COLOR_MAP, formatColorLabel } from './constants/colors'
+import { PRODUCT_CATEGORY_NAMES } from './utils/categories'
 
 // ── Swatch helper ─────────────────────────────────────────────────────────────
 const ColorSwatch = ({ name, size = 14 }) => {
@@ -111,7 +112,7 @@ const fetchProducts = async () => {
 const fetchFilters = async () => {
   await new Promise((resolve) => setTimeout(resolve, 300))
   return {
-    categories: ['Sarees', 'Lehengas', 'Suits', 'Kurtis'],
+    categories: PRODUCT_CATEGORY_NAMES,
     fabrics: [
       'Silk',
       'Cotton',
