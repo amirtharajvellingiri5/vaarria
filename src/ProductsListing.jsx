@@ -326,7 +326,10 @@ const ProductCard = ({ product, onViewDetails }) => {
           }}
           className='absolute top-3 right-3 bg-white p-2 rounded-full shadow-md hover:bg-pink-50 transition'
         >
-          <Heart size={16} className='text-pink-500' />
+          <Heart
+  size={18}
+  className='text-pink-500 transition-all duration-200 group-hover:fill-pink-500'
+/>
         </button>
       </div>
       <div className='p-3'>
