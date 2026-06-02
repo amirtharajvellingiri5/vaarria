@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { useNavigate } from "react-router-dom"
+import { useNavigate } from 'react-router-dom'
 import { useCartStore } from './store/cartStore'
 import {
   ShoppingBag,
@@ -23,7 +23,6 @@ import logo from './assets/logo.png'
 
 import { COLOR_MAP, formatColorLabel } from './constants/colors'
 
-
 // ── Swatch helper ─────────────────────────────────────────────────────────────
 const ColorSwatch = ({ name, size = 14 }) => {
   const hex = COLOR_MAP[name?.trim().toLowerCase()]
@@ -36,7 +35,8 @@ const ColorSwatch = ({ name, size = 14 }) => {
           width: size,
           height: size,
           borderRadius: '50%',
-          background: 'conic-gradient(red, yellow, lime, cyan, blue, magenta, red)',
+          background:
+            'conic-gradient(red, yellow, lime, cyan, blue, magenta, red)',
           border: '1px solid rgba(255,255,255,0.2)',
           flexShrink: 0,
         }}
@@ -45,8 +45,15 @@ const ColorSwatch = ({ name, size = 14 }) => {
   }
 
   const isLight = [
-    '#ffffff', '#f5f0e8', '#f8bbd0', '#bbdefb',
-    '#ffcba4', '#fdd835', '#a5d6a7', '#81d4fa', '#ce93d8'
+    '#ffffff',
+    '#f5f0e8',
+    '#f8bbd0',
+    '#bbdefb',
+    '#ffcba4',
+    '#fdd835',
+    '#a5d6a7',
+    '#81d4fa',
+    '#ce93d8',
   ].includes(hex)
 
   return (
@@ -66,15 +73,15 @@ const ColorSwatch = ({ name, size = 14 }) => {
   )
 }
 
-const BASE_URL = "https://cdn.aarria.com/app/images/";
+const BASE_URL = 'https://cdn.aarria.com/app/images/'
 
 /** this url is from cdn */
 const fetchProducts = async () => {
   const response = await fetch(
-    'https://products-api.chatoyantvortex.workers.dev/products?page=1'
-  );
+    'https://products-api.chatoyantvortex.workers.dev/products?page=1',
+  )
 
-  const data = await response.json();
+  const data = await response.json()
 
   return data.data.map((item) => ({
     id: item.id,
@@ -84,21 +91,21 @@ const fetchProducts = async () => {
     image: item.main_image
       ? BASE_URL + item.main_image
       : item.images?.length
-      ? BASE_URL + item.images[0]
-      : "",
+        ? BASE_URL + item.images[0]
+        : '',
 
     stock: item.stock,
 
     // optional defaults (since KV doesn't have these)
-    category: "Ethnic",
+    category: 'Ethnic',
     rating: 4.2,
-    fabric: "Cotton",
-    color: "Red",
-    occasion: "Casual",
-    bgColor: "bg-gradient-to-br from-pink-200 to-red-300",
+    fabric: 'Cotton',
+    color: 'Red',
+    occasion: 'Casual',
+    bgColor: 'bg-gradient-to-br from-pink-200 to-red-300',
     description: item.title,
-  }));
-};
+  }))
+}
 
 // Mock API for Filters
 const fetchFilters = async () => {
@@ -173,9 +180,7 @@ const FilterSidebar = ({
                 }
                 className='w-4 h-4 text-pink-600 rounded focus:ring-pink-500'
               />
-              {filterKey === 'color' && (
-              <ColorSwatch name={item} />
-            )}
+              {filterKey === 'color' && <ColorSwatch name={item} />}
 
               <span className='text-sm text-gray-700'>{item}</span>
             </label>
@@ -193,7 +198,7 @@ const FilterSidebar = ({
           Filters
         </h3>
         {Object.keys(selectedFilters).some(
-          (key) => selectedFilters[key]?.length > 0
+          (key) => selectedFilters[key]?.length > 0,
         ) && (
           <button
             onClick={onClearFilters}
@@ -263,7 +268,7 @@ const FilterSidebar = ({
 // Selected Filters Bar
 const SelectedFiltersBar = ({ selectedFilters, onRemoveFilter }) => {
   const allFilters = Object.entries(selectedFilters).flatMap(([key, values]) =>
-    values.map((value) => ({ key, value }))
+    values.map((value) => ({ key, value })),
   )
 
   if (allFilters.length === 0) return null
@@ -307,17 +312,14 @@ const ProductCard = ({ product, onViewDetails }) => {
       onClick={() => onViewDetails(product)}
       className='bg-white rounded-2xl shadow-md overflow-hidden hover:shadow-2xl transition cursor-pointer group'
     >
-      <div
-        className={`${product.bgColor} h-56 flex items-center justify-center text-6xl relative overflow-hidden`}
-      >
+      <div className='relative aspect-[3/4] overflow-hidden bg-gray-100'>
         <div className='h-full w-full overflow-hidden'>
-  <img
-    src={product.image}
-    alt={product.name}
-    className='h-full w-full object-cover object-top transition group-hover:scale-110'
-  />
-
-</div>
+          <img
+            src={product.image}
+            alt={product.name}
+            className='h-full w-full object-cover'
+          />
+        </div>
         <button
           onClick={(e) => {
             e.stopPropagation()
@@ -327,38 +329,17 @@ const ProductCard = ({ product, onViewDetails }) => {
           <Heart size={16} className='text-pink-500' />
         </button>
       </div>
-      <div className='p-4'>
-        <div className='flex items-center justify-between mb-2'>
-          <span className='text-xs text-pink-600 uppercase font-semibold'>
-            {product.category}
+      <div className='p-3'>
+        <p className='text-sm text-gray-600 line-clamp-2'>{product.name}</p>
+
+        <div className='mt-1 flex items-center gap-2'>
+          <span className='font-bold text-gray-900'>₹{product.price}</span>
+
+          <span className='text-xs text-gray-400 line-through'>
+            ₹{Math.round(product.price * 1.4)}
           </span>
-          <div className='flex items-center bg-green-50 px-2 py-1 rounded'>
-            <Star size={12} className='text-green-600 fill-current' />
-            <span className='text-xs ml-1 font-semibold text-green-600'>
-              {product.rating}
-            </span>
-          </div>
-        </div>
-        <h4 className='font-semibold text-base mb-2 text-gray-800 line-clamp-2'>
-          {product.name}
-        </h4>
-        <p className='text-xs text-gray-500 mb-3'>
-          {product.fabric} • {product.color}
-        </p>
-        <div className='flex items-center justify-between'>
-          <span className='text-xl font-bold text-pink-600'>
-            ₹{product.price.toLocaleString()}
-          </span>
-          <button
-            onClick={handleAddToCart}
-            className={`px-3 py-2 rounded-lg text-sm font-semibold transition transform hover:scale-105 ${
-              added
-                ? 'bg-green-500 text-white'
-                : 'bg-gradient-to-r from-pink-500 to-rose-500 text-white'
-            }`}
-          >
-            {added ? '✓ Added' : 'Add to Bag'}
-          </button>
+
+          <span className='text-xs text-orange-500 font-medium'>(30% OFF)</span>
         </div>
       </div>
     </div>
@@ -408,17 +389,17 @@ const Skeleton = ({ className }) => (
 // Product Card Skeleton
 const ProductCardSkeleton = () => {
   return (
-    <div className="bg-white rounded-2xl shadow-md overflow-hidden">
-      <Skeleton className="h-56 w-full" />
+    <div className='bg-white rounded-2xl shadow-md overflow-hidden'>
+      <Skeleton className='h-56 w-full' />
 
-      <div className="p-4 space-y-3">
-        <Skeleton className="h-3 w-20" />
-        <Skeleton className="h-4 w-full" />
-        <Skeleton className="h-3 w-24" />
+      <div className='p-4 space-y-3'>
+        <Skeleton className='h-3 w-20' />
+        <Skeleton className='h-4 w-full' />
+        <Skeleton className='h-3 w-24' />
 
-        <div className="flex justify-between items-center pt-2">
-          <Skeleton className="h-5 w-20" />
-          <Skeleton className="h-8 w-24 rounded-lg" />
+        <div className='flex justify-between items-center pt-2'>
+          <Skeleton className='h-5 w-20' />
+          <Skeleton className='h-8 w-24 rounded-lg' />
         </div>
       </div>
     </div>
@@ -428,14 +409,14 @@ const ProductCardSkeleton = () => {
 // Filters Skeleton
 const FilterSkeleton = () => {
   return (
-    <div className="bg-white rounded-lg shadow-md p-4 space-y-4">
-      <Skeleton className="h-6 w-24" />
+    <div className='bg-white rounded-lg shadow-md p-4 space-y-4'>
+      <Skeleton className='h-6 w-24' />
 
       {[1, 2, 3, 4, 5].map((i) => (
-        <div key={i} className="space-y-2">
-          <Skeleton className="h-4 w-32" />
+        <div key={i} className='space-y-2'>
+          <Skeleton className='h-4 w-32' />
           {[1, 2, 3].map((j) => (
-            <Skeleton key={j} className="h-3 w-24" />
+            <Skeleton key={j} className='h-3 w-24' />
           ))}
         </div>
       ))}
@@ -445,7 +426,6 @@ const FilterSkeleton = () => {
 
 // Main Listing Page Component
 const ListingPage = () => {
-
   const [selectedFilters, setSelectedFilters] = useState({
     category: [],
     fabric: [],
@@ -457,7 +437,7 @@ const ListingPage = () => {
   const [currentPage, setCurrentPage] = useState(1)
   const [selectedProduct, setSelectedProduct] = useState(null)
   const itemsPerPage = 9
-  const navigate = useNavigate();
+  const navigate = useNavigate()
 
   const { data: products, isLoading: productsLoading } = useQuery({
     queryKey: ['products'],
@@ -505,12 +485,12 @@ const ListingPage = () => {
 
     if (selectedFilters.category.length > 0) {
       filtered = filtered.filter((p) =>
-        selectedFilters.category.includes(p.category)
+        selectedFilters.category.includes(p.category),
       )
     }
     if (selectedFilters.fabric.length > 0) {
       filtered = filtered.filter((p) =>
-        selectedFilters.fabric.includes(p.fabric)
+        selectedFilters.fabric.includes(p.fabric),
       )
     }
     if (selectedFilters.color.length > 0) {
@@ -518,7 +498,7 @@ const ListingPage = () => {
     }
     if (selectedFilters.occasion.length > 0) {
       filtered = filtered.filter((p) =>
-        selectedFilters.occasion.includes(p.occasion)
+        selectedFilters.occasion.includes(p.occasion),
       )
     }
     if (selectedFilters.priceRange.length > 0 && filters) {
@@ -545,40 +525,40 @@ const ListingPage = () => {
   const totalPages = Math.ceil(filteredProducts.length / itemsPerPage)
   const paginatedProducts = filteredProducts.slice(
     (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
+    currentPage * itemsPerPage,
   )
 
-if (productsLoading || filtersLoading) {
-  return (
-    <div className="min-h-screen bg-gradient-to-b from-white to-pink-50">
-      <Navbar />
+  if (productsLoading || filtersLoading) {
+    return (
+      <div className='min-h-screen bg-gradient-to-b from-white to-pink-50'>
+        <Navbar />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Title Skeleton */}
-        <div className="mb-6 space-y-2">
-          <Skeleton className="h-8 w-64" />
-          <Skeleton className="h-4 w-40" />
-        </div>
-
-        <div className="flex gap-6">
-          {/* Left Filters Skeleton */}
-          <div className="hidden lg:block w-64 flex-shrink-0">
-            <FilterSkeleton />
+        <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8'>
+          {/* Title Skeleton */}
+          <div className='mb-6 space-y-2'>
+            <Skeleton className='h-8 w-64' />
+            <Skeleton className='h-4 w-40' />
           </div>
 
-          {/* Products Skeleton */}
-          <div className="flex-1">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {Array.from({ length: 15 }).map((_, i) => (
-                <ProductCardSkeleton key={i} />
-              ))}
+          <div className='flex gap-6'>
+            {/* Left Filters Skeleton */}
+            <div className='hidden lg:block w-64 flex-shrink-0'>
+              <FilterSkeleton />
+            </div>
+
+            {/* Products Skeleton */}
+            <div className='flex-1'>
+              <div className='grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6'>
+                {Array.from({ length: 15 }).map((_, i) => (
+                  <ProductCardSkeleton key={i} />
+                ))}
+              </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
-  )
-}
+    )
+  }
 
   return (
     <div className='min-h-screen bg-gradient-to-b from-white to-pink-50'>
@@ -646,7 +626,7 @@ if (productsLoading || filtersLoading) {
                       product={product}
                       onViewDetails={(product) => {
                         setSelectedProduct(product)
-                          window.open(`/product/${product.id}`, "_blank")
+                        window.open(`/product/${product.id}`, '_blank')
                       }}
                     />
                   ))}
