@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react'
+import { useState, useMemo, useRef, useEffect } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
@@ -437,11 +437,13 @@ const ListingPage = () => {
     occasion: [],
     priceRange: [],
   })
-  const [sortBy, setSortBy] = useState('featured')
+  const dropdownRef = useRef(null)
+  const [sortBy, setSortBy] = useState('price-low')
   const [currentPage, setCurrentPage] = useState(1)
   const [selectedProduct, setSelectedProduct] = useState(null)
   const itemsPerPage = 9
   const navigate = useNavigate()
+  const [sortOpen, setSortOpen] = useState(false)
 
   const { data: products, isLoading: productsLoading } = useQuery({
     queryKey: ['products'],
@@ -452,6 +454,23 @@ const ListingPage = () => {
     queryKey: ['filters'],
     queryFn: fetchFilters,
   })
+
+useEffect(() => {
+  const handleClickOutside = (event) => {
+    if (
+      dropdownRef.current &&
+      !dropdownRef.current.contains(event.target)
+    ) {
+      setSortOpen(false)
+    }
+  }
+
+  document.addEventListener('mousedown', handleClickOutside)
+
+  return () => {
+    document.removeEventListener('mousedown', handleClickOutside)
+  }
+}, [])
 
   const handleFilterChange = (filterKey, value, checked) => {
     setSelectedFilters((prev) => ({
@@ -598,27 +617,61 @@ const ListingPage = () => {
               selectedFilters={selectedFilters}
               onRemoveFilter={handleRemoveFilter}
             />
+<div className='flex justify-end mb-6'>
+  <div
+  ref={dropdownRef}
+  className='relative w-[210px]'
+>
+    <button
+  onClick={() => setSortOpen(!sortOpen)}
+  className='w-full bg-white border border-gray-300 rounded px-4 h-11 flex items-center justify-between hover:border-pink-400 transition'
+>
+  <div className='flex items-center gap-1 text-sm'>
+    <span className='text-gray-500'>Sort by:</span>
 
-            {/* Sorting and View Options */}
-            <div className='flex items-center justify-between mb-6 bg-white rounded-lg p-4 shadow-sm'>
-              <div className='flex items-center gap-2'>
-                <span className='text-sm text-gray-600'>Sort by:</span>
-                <select
-                  value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value)}
-                  className='border border-pink-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-pink-400'
-                >
-                  <option value='featured'>Featured</option>
-                  <option value='price-low'>Price: Low to High</option>
-                  <option value='price-high'>Price: High to Low</option>
-                  <option value='rating'>Highest Rated</option>
-                </select>
-              </div>
+    <span className='font-semibold text-gray-900'>
+      {sortBy === 'featured' && 'Recommended'}
+      {sortBy === 'price-low' && 'Low to High'}
+      {sortBy === 'price-high' && 'High to Low'}
+      {sortBy === 'rating' && 'Rating'}
+    </span>
+  </div>
 
-              <div className='text-sm text-gray-600'>
-                Page {currentPage} of {totalPages}
-              </div>
-            </div>
+  <ChevronDown
+    size={16}
+    className={`flex-shrink-0 transition-transform ${
+      sortOpen ? 'rotate-180' : ''
+    }`}
+  />
+</button>
+
+    {sortOpen && (
+      <div className='absolute right-0 mt-1 w-full bg-white border border-gray-200 rounded shadow-lg z-50 overflow-hidden'>
+        {[
+          { value: 'featured', label: 'Recommended' },
+          { value: 'price-low', label: 'Price: Low to High' },
+          { value: 'price-high', label: 'Price: High to Low' },
+          { value: 'rating', label: 'Customer Rating' },
+        ].map((option) => (
+          <button
+            key={option.value}
+            onClick={() => {
+              setSortBy(option.value)
+              setSortOpen(false)
+            }}
+            className={`w-full text-left px-3 py-2 text-sm transition ${
+              sortBy === option.value
+                ? 'bg-pink-50 text-pink-600 font-medium'
+                : 'text-gray-700 hover:bg-gray-50'
+            }`}
+          >
+            {option.label}
+          </button>
+        ))}
+      </div>
+    )}
+  </div>
+</div>
 
             {/* Products Grid */}
             {paginatedProducts.length > 0 ? (
