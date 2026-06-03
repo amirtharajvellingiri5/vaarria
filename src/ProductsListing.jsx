@@ -1,7 +1,7 @@
 import { useState, useMemo, useRef, useEffect } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams, Link } from 'react-router-dom'
 import { useCartStore } from './store/cartStore'
 import {
   ShoppingBag,
@@ -214,24 +214,36 @@ const FilterSidebar = ({
       </button>
       {expandedSections[filterKey] && (
         <div className='space-y-2'>
-          {items.map((item) => (
-            <label
-              key={item}
-              className='flex items-center space-x-2 cursor-pointer hover:text-pink-600 transition'
-            >
-              <input
-                type='checkbox'
-                checked={selectedFilters[filterKey]?.includes(item) || false}
-                onChange={(e) =>
-                  onFilterChange(filterKey, item, e.target.checked)
-                }
-                className='w-4 h-4 text-pink-600 rounded focus:ring-pink-500'
-              />
-              {filterKey === 'color' && <ColorSwatch name={item} />}
+          {filterKey === 'category' ? (
+            items.map((cat) => (
+              <Link
+                key={cat.slug}
+                to={`/${cat.slug}`}
+                className='block text-sm text-gray-700 hover:text-pink-600 transition py-1'
+              >
+                {cat.name}
+              </Link>
+            ))
+          ) : (
+            items.map((item) => (
+              <label
+                key={item}
+                className='flex items-center space-x-2 cursor-pointer hover:text-pink-600 transition'
+              >
+                <input
+                  type='checkbox'
+                  checked={selectedFilters[filterKey]?.includes(item) || false}
+                  onChange={(e) =>
+                    onFilterChange(filterKey, item, e.target.checked)
+                  }
+                  className='w-4 h-4 text-pink-600 rounded focus:ring-pink-500'
+                />
+                {filterKey === 'color' && <ColorSwatch name={item} />}
 
-              <span className='text-sm text-gray-700'>{item}</span>
-            </label>
-          ))}
+                <span className='text-sm text-gray-700'>{item}</span>
+              </label>
+            ))
+          )}
         </div>
       )}
     </div>
@@ -514,7 +526,7 @@ const { data: siblingCategories = [] } = useQuery({
   const { data: filters, isLoading: filtersLoading } = useQuery({
   queryKey: ['filters', siblingCategories],
   queryFn: async () => ({
-    categories: siblingCategories.map((c) => c.category_name),
+    categories: siblingCategories.map((c) => ({ name: c.category_name, slug: c.slug })),
     fabrics: [
       'Silk',
       'Cotton',
