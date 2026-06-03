@@ -677,7 +677,8 @@ const ListingPage = () => {
                 </div>
 
                 {/* Pagination — min-height matches filter sidebar */}
-                <div style={{ minHeight: '80px' }}>
+                <div className='mt-6 border-t border-pink-100 bg-white px-4 py-4'>
+
                   <Pagination
                     currentPage={currentPage}
                     totalPages={totalPages}
