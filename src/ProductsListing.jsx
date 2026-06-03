@@ -116,14 +116,33 @@ const fetchProductsByCategory = async (categoryId, activeFilters = {}, sortBy = 
   const params = new URLSearchParams({ category_id: categoryId })
 
   if (activeFilters.fabric?.length)
-    params.set('fabric', activeFilters.fabric.join(','))
-  if (activeFilters.color?.length)
-    params.set('color', activeFilters.color.join(','))
-  if (activeFilters.occasion?.length)
-    params.set('occasion', activeFilters.occasion.join(','))
-  if (activeFilters.priceRange?.length)
-    params.set('price_range', activeFilters.priceRange.join(','))
+  params.set('fabric', activeFilters.fabric[0])
 
+if (activeFilters.color?.length)
+  params.set('color', activeFilters.color[0])
+
+if (activeFilters.size?.length)
+  params.set('size', activeFilters.size[0])
+
+if (activeFilters.neckType?.length)
+  params.set('neck_type', activeFilters.neckType[0])
+
+if (activeFilters.sleeveLength?.length)
+  params.set('sleeve_length', activeFilters.sleeveLength[0])
+
+if (activeFilters.priceRange?.length) {
+  const range = filters?.priceRanges?.find(
+    (r) => r.label === activeFilters.priceRange[0],
+  )
+
+  if (range) {
+    params.set('min_price', range.min)
+
+    if (Number.isFinite(range.max)) {
+      params.set('max_price', range.max)
+    }
+  }
+}
   // Map sort option to API param
   const sortMap = {
     'price-low': 'price_asc',
@@ -149,7 +168,9 @@ const fetchProductsByCategory = async (categoryId, activeFilters = {}, sortBy = 
     rating: item.rating ?? 4.0,
     fabric: item.fabric || 'Cotton',
     color: item.color || 'Red',
-    occasion: item.occasion || 'Casual',
+    size: item.size,
+neckType: item.neckType,
+sleeveLength: item.sleeveLength,
     bgColor: item.bgColor || 'bg-gradient-to-br from-pink-200 to-red-300',
     description: item.description || item.title || item.name || '',
   }))
@@ -164,12 +185,14 @@ const FilterSidebar = ({
   siblingCategories,
 }) => {
   const [expandedSections, setExpandedSections] = useState({
-    category: true,
-    fabric: true,
-    color: true,
-    occasion: true,
-    price: true,
-  })
+  category: true,
+  fabric: true,
+  color: true,
+  size: true,
+  neckType: true,
+  sleeveLength: true,
+  price: true,
+})
 
   const toggleSection = (section) => {
     setExpandedSections((prev) => ({ ...prev, [section]: !prev[section] }))
@@ -249,10 +272,22 @@ const FilterSidebar = ({
       <FilterSection title='Fabric' items={filters.fabrics} filterKey='fabric' />
       <FilterSection title='Color' items={filters.colors} filterKey='color' />
       <FilterSection
-        title='Occasion'
-        items={filters.occasions}
-        filterKey='occasion'
-      />
+  title='Size'
+  items={filters.sizes}
+  filterKey='size'
+/>
+
+<FilterSection
+  title='Neck Type'
+  items={filters.neckTypes}
+  filterKey='neckType'
+/>
+
+<FilterSection
+  title='Sleeve Length'
+  items={filters.sleeveLengths}
+  filterKey='sleeveLength'
+/>
 
       {/* Price Range */}
       <div className='border-b border-pink-100 py-4'>
@@ -505,12 +540,14 @@ const SortDropdown = ({ sortBy, setSortBy }) => {
 // ── Main Listing Page ──────────────────────────────────────────────────────────
 const ListingPage = () => {
   const [selectedFilters, setSelectedFilters] = useState({
-    category: [],
-    fabric: [],
-    color: [],
-    occasion: [],
-    priceRange: [],
-  })
+  category: [],
+  fabric: [],
+  color: [],
+  size: [],
+  neckType: [],
+  sleeveLength: [],
+  priceRange: [],
+})
   const [sortBy, setSortBy] = useState('price-low')
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 9
@@ -535,11 +572,48 @@ const ListingPage = () => {
   const { data: filters, isLoading: filtersLoading } = useQuery({
     queryKey: ['filters', siblingCategories],
     queryFn: async () => ({
-      categories: siblingCategories.map((c) => ({ name: c.category_name, slug: c.slug })),
-      fabrics: ['Silk', 'Cotton', 'Georgette', 'Velvet', 'Net', 'Banarasi Silk', 'Chanderi', 'Rayon'],
-      colors: ['Red', 'Blue', 'Green', 'Yellow', 'Pink', 'Purple', 'Gold'],
-      occasions: ['Wedding', 'Party', 'Casual', 'Festive'],
-      priceRanges: [
+  categories: siblingCategories.map((c) => ({
+    name: c.category_name,
+    slug: c.slug,
+  })),
+
+  fabrics: [
+    'Cotton',
+    'Rayon',
+    'Silk',
+    'Georgette',
+    'Chanderi',
+    'Velvet',
+  ],
+
+  colors: [
+    'Red',
+    'Blue',
+    'Green',
+    'Yellow',
+    'Pink',
+    'Purple',
+    'Black',
+    'White',
+  ],
+
+  sizes: ['XS', 'S', 'M', 'L', 'XL', 'XXL'],
+
+  neckTypes: [
+    'Round Neck',
+    'V-Neck',
+    'Boat Neck',
+    'Mandarin Collar',
+  ],
+
+  sleeveLengths: [
+    'Sleeveless',
+    'Short Sleeves',
+    '3/4 Sleeves',
+    'Long Sleeves',
+  ],
+
+  priceRanges: [
         { label: 'Under ₹2000', min: 0, max: 2000 },
         { label: '₹2000 - ₹5000', min: 2000, max: 5000 },
         { label: '₹5000 - ₹10000', min: 5000, max: 10000 },
@@ -576,7 +650,15 @@ const ListingPage = () => {
   }
 
   const handleClearFilters = () => {
-    setSelectedFilters({ category: [], fabric: [], color: [], occasion: [], priceRange: [] })
+    setSelectedFilters({
+  category: [],
+  fabric: [],
+  color: [],
+  size: [],
+  neckType: [],
+  sleeveLength: [],
+  priceRange: [],
+})
     setCurrentPage(1)
   }
 
