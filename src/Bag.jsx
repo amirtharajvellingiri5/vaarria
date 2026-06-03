@@ -227,9 +227,10 @@ function PinBar() {
   }
 
   const handleSelectAddress = (address) => {
-    setDefaultAddress(address)
-    setOpenAddress(false)
-  }
+  localStorage.setItem('selected_address', JSON.stringify(address))
+  setDefaultAddress(address)
+  setOpenAddress(false)
+}
 
   const handleCloseAddress = () => {
     setOpenAddress(false)
@@ -259,6 +260,10 @@ function PinBar() {
 
           const primary = data.items.find((a) => a.is_default)
           setDefaultAddress(primary || data.items[0])
+          localStorage.setItem(
+  'selected_address',
+  JSON.stringify(primary || data.items[0]),
+)
         } else {
           setAddresses([])
           setDefaultAddress(null)
@@ -882,24 +887,31 @@ function CouponPanel() {
     </div>
   )
 }
-
 function PricePanel() {
   const navigate = useNavigate()
   const { items, couponSavings, donationAmount } = useBagStore()
   const [paymentError, setPaymentError] = useState('')
   const [paymentLoading, setPaymentLoading] = useState(false)
 
+  const selectedAddress = JSON.parse(
+  localStorage.getItem('selected_address') || 'null',
+)
+
   const selected = items.filter((i) => i.selected)
+
   const totalMrp = useMemo(
     () => selected.reduce((s, i) => s + i.mrp * i.qty, 0),
     [selected],
   )
+
   const totalPrice = useMemo(
     () => selected.reduce((s, i) => s + i.price * i.qty, 0),
     [selected],
   )
+
   const discountOnMrp = totalMrp - totalPrice
   const total = totalPrice - couponSavings + donationAmount
+
   const API_BASE =
     'https://d8obcfi1ua.execute-api.ap-south-1.amazonaws.com/prod'
 
@@ -920,18 +932,36 @@ function PricePanel() {
     }
 
     try {
+      setPaymentLoading(true)
+
       const totalAmount = Math.max(0, total)
 
       const customerName = customer.full_name || customer.name || 'Customer'
-
       const customerEmail = customer.email || ''
-
       const customerPhone = customer.mobile || customer.phone || ''
 
-      const { data } = await axios.post(`${API_BASE}/payments/create-order`, {
-        amount: totalAmount,
-        receipt: `order_${Date.now()}`,
-      })
+      const selectedAddress =
+  JSON.parse(localStorage.getItem('selected_address') || 'null')
+
+if (!selectedAddress) {
+  setPaymentError('Please select delivery address')
+  return
+}
+
+const { data } = await axios.post(`${API_BASE}/payments/create-order`, {
+  customer_id: String(customer.customer_id),
+  address_id: String(selectedAddress.address_id),
+  amount: totalAmount,
+  receipt: `order_${Date.now()}`,
+  items: selected.map((item) => ({
+    product_id: String(item.productId),
+    product_name: item.name,
+    quantity: item.qty,
+    unit_price: item.price,
+    size: item.size,
+    bag_id: item.id,
+  })),
+})
 
       const options = {
         key: data.key,
@@ -953,55 +983,51 @@ function PricePanel() {
           item_count: selected.length,
         },
 
-       handler: async function (response) {
-  setPaymentLoading(true)
-  try {
-    const verifyResponse = await axios.post(
-      `${API_BASE}/payments/verify`,
-      {
-        razorpay_order_id: response.razorpay_order_id,
-        razorpay_payment_id: response.razorpay_payment_id,
-        razorpay_signature: response.razorpay_signature,
-      }
-    )
+        handler: async function (response) {
+          setPaymentLoading(true)
 
-    setPaymentLoading(false)
+          try {
+            const verifyResponse = await axios.post(
+              `${API_BASE}/payments/verify`,
+              {
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+              },
+            )
 
-    navigate('/order-success', {
-      state: verifyResponse.data.order,
-    })
-  } catch (error) {
-    console.error('Verification failed:', error)
+            setPaymentLoading(false)
 
-    setPaymentLoading(false)
+            navigate('/order-success', {
+              state: verifyResponse.data.order,
+            })
+          } catch (error) {
+            console.error('Verification failed:', error)
+            setPaymentLoading(false)
+            setPaymentError('Payment verification failed')
+          }
+        },
 
-    setPaymentError('Payment verification failed')
-  }
-},
         modal: {
-  ondismiss: () => {
-    setPaymentLoading(false)
-    setPaymentError('Payment cancelled by user')
-  },
-},
+          ondismiss: () => {
+            setPaymentLoading(false)
+            setPaymentError('Payment cancelled by user')
+          },
+        },
       }
-const rzp = new window.Razorpay(options)
 
-rzp.on('payment.failed', function (response) {
-  setPaymentLoading(false)
-  setPaymentError(
-    response.error.description || 'Payment failed'
-  )
-})
+      const rzp = new window.Razorpay(options)
 
-rzp.open()
-
-setTimeout(() => {
-  setPaymentLoading(false)
-}, 800)
-    } catch (error) {
+      rzp.on('payment.failed', function (response) {
         setPaymentLoading(false)
+        setPaymentError(response.error.description || 'Payment failed')
+      })
 
+      rzp.open()
+
+      setPaymentLoading(false)
+    } catch (error) {
+      setPaymentLoading(false)
       console.error(error)
       alert('Unable to start payment')
     }
@@ -1012,14 +1038,18 @@ setTimeout(() => {
       <div style={styles.panelLabel}>
         PRICE DETAILS ({selected.length} Item{selected.length !== 1 ? 's' : ''})
       </div>
+
       <div style={styles.priceRows}>
         <PriceRow label='Total MRP' value={`₹${totalMrp.toLocaleString()}`} />
+
         <PriceRow
           label='Discount on MRP'
           value={`- ₹${discountOnMrp.toLocaleString()}`}
           green
         />
+
         <PriceRow label='Coupon Discount' value={`- ₹${couponSavings}`} green />
+
         {donationAmount > 0 && (
           <PriceRow label='Donation' value={`₹${donationAmount}`} />
         )}
@@ -1046,9 +1076,9 @@ setTimeout(() => {
       <button
         style={styles.placeBtn}
         onClick={handlePlaceOrder}
-        disabled={selected.length === 0}
+        disabled={selected.length === 0 || paymentLoading}
       >
-        PLACE ORDER
+        {paymentLoading ? 'PLEASE WAIT...' : 'PLACE ORDER'}
       </button>
 
       {selected.length === 0 && (
@@ -1063,131 +1093,133 @@ setTimeout(() => {
           Select at least one item to proceed
         </p>
       )}
+
       {paymentLoading && (
-  <div
-    style={{
-      position: 'fixed',
-      inset: 0,
-      background: 'rgba(255,255,255,0.75)',
-      backdropFilter: 'blur(4px)',
-      zIndex: 9998,
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      flexDirection: 'column',
-      gap: 18,
-    }}
-  >
-    <div
-      style={{
-        width: 56,
-        height: 56,
-        border: '4px solid #f3f3f3',
-        borderTop: '4px solid #ff3f6c',
-        borderRadius: '50%',
-        animation: 'spin 0.8s linear infinite',
-      }}
-    />
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(255,255,255,0.75)',
+            backdropFilter: 'blur(4px)',
+            zIndex: 9998,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexDirection: 'column',
+            gap: 18,
+          }}
+        >
+          <div
+            style={{
+              width: 56,
+              height: 56,
+              border: '4px solid #f3f3f3',
+              borderTop: '4px solid #ff3f6c',
+              borderRadius: '50%',
+              animation: 'spin 0.8s linear infinite',
+            }}
+          />
 
-    <div
-      style={{
-        fontSize: 15,
-        fontWeight: 600,
-        color: '#282c3f',
-      }}
-    >
-      Preparing secure payment...
-    </div>
-  </div>
-)}
+          <div
+            style={{
+              fontSize: 15,
+              fontWeight: 600,
+              color: '#282c3f',
+            }}
+          >
+            Preparing secure payment...
+          </div>
+        </div>
+      )}
+
       {paymentError && (
-  <div
-    style={{
-      position: 'fixed',
-      inset: 0,
-      background: 'rgba(0,0,0,0.45)',
-      zIndex: 9999,
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: 16,
-    }}
-  >
-    <div
-      style={{
-        width: '100%',
-        maxWidth: 420,
-        background: '#fff',
-        borderRadius: 20,
-        padding: 28,
-        textAlign: 'center',
-      }}
-    >
-      <XCircle size={70} color='#ef4444' />
-
-      <h2
-        style={{
-          marginTop: 16,
-          marginBottom: 10,
-          fontSize: 24,
-          fontWeight: 700,
-        }}
-      >
-        Payment Failed
-      </h2>
-
-      <p
-        style={{
-          color: '#666',
-          fontSize: 14,
-          marginBottom: 24,
-        }}
-      >
-        {paymentError}
-      </p>
-
-      <div
-        style={{
-          display: 'flex',
-          gap: 12,
-          justifyContent: 'center',
-        }}
-      >
-        <button
-          onClick={() => setPaymentError('')}
+        <div
           style={{
-            background: '#ff3f6c',
-            color: '#fff',
-            border: 'none',
-            padding: '12px 20px',
-            borderRadius: 10,
-            fontWeight: 700,
-            cursor: 'pointer',
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0,0,0,0.45)',
+            zIndex: 9999,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: 16,
           }}
         >
-          TRY AGAIN
-        </button>
+          <div
+            style={{
+              width: '100%',
+              maxWidth: 420,
+              background: '#fff',
+              borderRadius: 20,
+              padding: 28,
+              textAlign: 'center',
+            }}
+          >
+            <XCircle size={70} color='#ef4444' />
 
-        <button
-          onClick={() => {
-            setPaymentError('')
-            navigate('/bag')
-          }}
-          style={{
-            background: '#fff',
-            border: '1px solid #ddd',
-            padding: '12px 20px',
-            borderRadius: 10,
-            fontWeight: 700,
-            cursor: 'pointer',
-          }}
-        >
-          CONTINUE SHOPPING
-        </button>
-      </div>
-    </div>
-  </div>
-)}
+            <h2
+              style={{
+                marginTop: 16,
+                marginBottom: 10,
+                fontSize: 24,
+                fontWeight: 700,
+              }}
+            >
+              Payment Failed
+            </h2>
+
+            <p
+              style={{
+                color: '#666',
+                fontSize: 14,
+                marginBottom: 24,
+              }}
+            >
+              {paymentError}
+            </p>
+
+            <div
+              style={{
+                display: 'flex',
+                gap: 12,
+                justifyContent: 'center',
+              }}
+            >
+              <button
+                onClick={() => setPaymentError('')}
+                style={{
+                  background: '#ff3f6c',
+                  color: '#fff',
+                  border: 'none',
+                  padding: '12px 20px',
+                  borderRadius: 10,
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                }}
+              >
+                TRY AGAIN
+              </button>
+
+              <button
+                onClick={() => {
+                  setPaymentError('')
+                  navigate('/bag')
+                }}
+                style={{
+                  background: '#fff',
+                  border: '1px solid #ddd',
+                  padding: '12px 20px',
+                  borderRadius: 10,
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                }}
+              >
+                CONTINUE SHOPPING
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

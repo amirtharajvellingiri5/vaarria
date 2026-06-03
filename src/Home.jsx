@@ -19,6 +19,7 @@ import Navbar from './Navbar'
 import logo from './assets/logo.png'
 
 import Footer from './Footer'
+import { HOME_CATEGORIES } from './utils/categories'
 
 // Mock API
 const fetchProducts = async () => {
@@ -188,32 +189,7 @@ const HeroSlider = () => {
 
 // Categories
 const Categories = () => {
-  const categories = [
-    {
-      name: 'Sarees',
-      count: '500+',
-      bg: 'bg-gradient-to-br from-pink-100 to-rose-200',
-      icon: '🥻',
-    },
-    {
-      name: 'Lehengas',
-      count: '200+',
-      bg: 'bg-gradient-to-br from-red-100 to-pink-200',
-      icon: '👰',
-    },
-    {
-      name: 'Suits',
-      count: '350+',
-      bg: 'bg-gradient-to-br from-purple-100 to-pink-200',
-      icon: '🎀',
-    },
-    {
-      name: 'Kurtis',
-      count: '600+',
-      bg: 'bg-gradient-to-br from-amber-100 to-orange-200',
-      icon: '👘',
-    },
-  ]
+  const categories = HOME_CATEGORIES
 
   return (
     <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12'>
