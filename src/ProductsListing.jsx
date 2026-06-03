@@ -86,7 +86,11 @@ const fetchSiblingCategories = async (categoryId) => {
 }
 
 /** Fetches listings with optional filter params */
-const fetchProductsByCategory = async (categoryId, activeFilters = {}, sortBy = 'price-low') => {
+const fetchProductsByCategory = async (
+  categoryId,
+  activeFilters = {},
+  sortBy = 'price-low',
+) => {
   if (!categoryId) {
     const response = await fetch(
       'https://products-api.chatoyantvortex.workers.dev/products?page=1',
@@ -114,35 +118,49 @@ const fetchProductsByCategory = async (categoryId, activeFilters = {}, sortBy = 
 
   // Build query string from active filters
   const params = new URLSearchParams({ category_id: categoryId })
+  // Fabric
+  activeFilters.fabric?.forEach((fabric) => {
+    params.append('fabric', fabric)
+  })
 
-  if (activeFilters.fabric?.length)
-  params.set('fabric', activeFilters.fabric[0])
+  // Color
+  activeFilters.color?.forEach((color) => {
+    params.append('color', color)
+  })
 
-if (activeFilters.color?.length)
-  params.set('color', activeFilters.color[0])
+  // Size
+  activeFilters.size?.forEach((size) => {
+    params.append('size', size)
+  })
 
-if (activeFilters.size?.length)
-  params.set('size', activeFilters.size[0])
+  // Neck Type
+  activeFilters.neckType?.forEach((neckType) => {
+    params.append('neck_type', neckType)
+  })
 
-if (activeFilters.neckType?.length)
-  params.set('neck_type', activeFilters.neckType[0])
+  // Sleeve Length
+  activeFilters.sleeveLength?.forEach((sleeveLength) => {
+    params.append('sleeve_length', sleeveLength)
+  })
 
-if (activeFilters.sleeveLength?.length)
-  params.set('sleeve_length', activeFilters.sleeveLength[0])
+  // Price Range
+  if (activeFilters.priceRange?.length) {
+    const ranges = activeFilters.priceRange
+      .map((label) => filters?.priceRanges?.find((r) => r.label === label))
+      .filter(Boolean)
 
-if (activeFilters.priceRange?.length) {
-  const range = filters?.priceRanges?.find(
-    (r) => r.label === activeFilters.priceRange[0],
-  )
+    if (ranges.length) {
+      params.set('min_price', Math.min(...ranges.map((r) => r.min)))
 
-  if (range) {
-    params.set('min_price', range.min)
+      const maxValues = ranges
+        .filter((r) => Number.isFinite(r.max))
+        .map((r) => r.max)
 
-    if (Number.isFinite(range.max)) {
-      params.set('max_price', range.max)
+      if (maxValues.length) {
+        params.set('max_price', Math.max(...maxValues))
+      }
     }
   }
-}
   // Map sort option to API param
   const sortMap = {
     'price-low': 'price_asc',
@@ -152,7 +170,9 @@ if (activeFilters.priceRange?.length) {
   }
   if (sortBy && sortMap[sortBy]) params.set('sort', sortMap[sortBy])
 
-  const res = await fetch(`https://api.aarria.com/listings?${params.toString()}`)
+  const res = await fetch(
+    `https://api.aarria.com/listings?${params.toString()}`,
+  )
   if (!res.ok) return []
 
   const json = await res.json()
@@ -169,8 +189,8 @@ if (activeFilters.priceRange?.length) {
     fabric: item.fabric || 'Cotton',
     color: item.color || 'Red',
     size: item.size,
-neckType: item.neckType,
-sleeveLength: item.sleeveLength,
+    neckType: item.neckType,
+    sleeveLength: item.sleeveLength,
     bgColor: item.bgColor || 'bg-gradient-to-br from-pink-200 to-red-300',
     description: item.description || item.title || item.name || '',
   }))
@@ -185,14 +205,14 @@ const FilterSidebar = ({
   siblingCategories,
 }) => {
   const [expandedSections, setExpandedSections] = useState({
-  category: true,
-  fabric: true,
-  color: true,
-  size: true,
-  neckType: true,
-  sleeveLength: true,
-  price: true,
-})
+    category: true,
+    fabric: true,
+    color: true,
+    size: true,
+    neckType: true,
+    sleeveLength: true,
+    price: true,
+  })
 
   const toggleSection = (section) => {
     setExpandedSections((prev) => ({ ...prev, [section]: !prev[section] }))
@@ -213,35 +233,35 @@ const FilterSidebar = ({
       </button>
       {expandedSections[filterKey] && (
         <div className='space-y-2'>
-          {filterKey === 'category' ? (
-            items.map((cat) => (
-              <Link
-                key={cat.slug}
-                to={`/${cat.slug}`}
-                className='block text-sm text-gray-700 hover:text-pink-600 transition py-1'
-              >
-                {cat.name}
-              </Link>
-            ))
-          ) : (
-            items.map((item) => (
-              <label
-                key={item}
-                className='flex items-center space-x-2 cursor-pointer hover:text-pink-600 transition'
-              >
-                <input
-                  type='checkbox'
-                  checked={selectedFilters[filterKey]?.includes(item) || false}
-                  onChange={(e) =>
-                    onFilterChange(filterKey, item, e.target.checked)
-                  }
-                  className='w-4 h-4 text-pink-600 rounded focus:ring-pink-500'
-                />
-                {filterKey === 'color' && <ColorSwatch name={item} />}
-                <span className='text-sm text-gray-700'>{item}</span>
-              </label>
-            ))
-          )}
+          {filterKey === 'category'
+            ? items.map((cat) => (
+                <Link
+                  key={cat.slug}
+                  to={`/${cat.slug}`}
+                  className='block text-sm text-gray-700 hover:text-pink-600 transition py-1'
+                >
+                  {cat.name}
+                </Link>
+              ))
+            : items.map((item) => (
+                <label
+                  key={item}
+                  className='flex items-center space-x-2 cursor-pointer hover:text-pink-600 transition'
+                >
+                  <input
+                    type='checkbox'
+                    checked={
+                      selectedFilters[filterKey]?.includes(item) || false
+                    }
+                    onChange={(e) =>
+                      onFilterChange(filterKey, item, e.target.checked)
+                    }
+                    className='w-4 h-4 text-pink-600 rounded focus:ring-pink-500'
+                  />
+                  {filterKey === 'color' && <ColorSwatch name={item} />}
+                  <span className='text-sm text-gray-700'>{item}</span>
+                </label>
+              ))}
         </div>
       )}
     </div>
@@ -252,7 +272,10 @@ const FilterSidebar = ({
   )
 
   return (
-    <div className='bg-white rounded-b-lg p-4 overflow-y-auto' style={{ minHeight: '100%' }}>
+    <div
+      className='bg-white rounded-b-lg p-4 overflow-y-auto'
+      style={{ minHeight: '100%' }}
+    >
       {hasFilters && (
         <div className='mb-2 flex justify-end'>
           <button
@@ -269,25 +292,25 @@ const FilterSidebar = ({
         items={filters.categories}
         filterKey='category'
       />
-      <FilterSection title='Fabric' items={filters.fabrics} filterKey='fabric' />
-      <FilterSection title='Color' items={filters.colors} filterKey='color' />
       <FilterSection
-  title='Size'
-  items={filters.sizes}
-  filterKey='size'
-/>
+        title='Fabric'
+        items={filters.fabrics}
+        filterKey='fabric'
+      />
+      <FilterSection title='Color' items={filters.colors} filterKey='color' />
+      <FilterSection title='Size' items={filters.sizes} filterKey='size' />
 
-<FilterSection
-  title='Neck Type'
-  items={filters.neckTypes}
-  filterKey='neckType'
-/>
+      <FilterSection
+        title='Neck Type'
+        items={filters.neckTypes}
+        filterKey='neckType'
+      />
 
-<FilterSection
-  title='Sleeve Length'
-  items={filters.sleeveLengths}
-  filterKey='sleeveLength'
-/>
+      <FilterSection
+        title='Sleeve Length'
+        items={filters.sleeveLengths}
+        filterKey='sleeveLength'
+      />
 
       {/* Price Range */}
       <div className='border-b border-pink-100 py-4'>
@@ -337,8 +360,8 @@ const SelectedFiltersBar = ({ selectedFilters, onRemoveFilter }) => {
   if (allFilters.length === 0) return null
 
   return (
-    <div className='bg-pink-50 rounded-lg p-3 mb-4'>
-      <div className='flex flex-wrap gap-2'>
+    <div className='flex items-center overflow-x-auto'>
+      <div className='flex gap-2'>
         {allFilters.map(({ key, value }) => (
           <span
             key={`${key}-${value}`}
@@ -490,7 +513,8 @@ const SortDropdown = ({ sortBy, setSortBy }) => {
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
-  const currentLabel = SORT_OPTIONS.find((o) => o.value === sortBy)?.label || 'Sort'
+  const currentLabel =
+    SORT_OPTIONS.find((o) => o.value === sortBy)?.label || 'Sort'
 
   return (
     <div ref={dropdownRef} className='relative w-[210px]'>
@@ -540,14 +564,14 @@ const SortDropdown = ({ sortBy, setSortBy }) => {
 // ── Main Listing Page ──────────────────────────────────────────────────────────
 const ListingPage = () => {
   const [selectedFilters, setSelectedFilters] = useState({
-  category: [],
-  fabric: [],
-  color: [],
-  size: [],
-  neckType: [],
-  sleeveLength: [],
-  priceRange: [],
-})
+    category: [],
+    fabric: [],
+    color: [],
+    size: [],
+    neckType: [],
+    sleeveLength: [],
+    priceRange: [],
+  })
   const [sortBy, setSortBy] = useState('price-low')
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 9
@@ -572,48 +596,36 @@ const ListingPage = () => {
   const { data: filters, isLoading: filtersLoading } = useQuery({
     queryKey: ['filters', siblingCategories],
     queryFn: async () => ({
-  categories: siblingCategories.map((c) => ({
-    name: c.category_name,
-    slug: c.slug,
-  })),
+      categories: siblingCategories.map((c) => ({
+        name: c.category_name,
+        slug: c.slug,
+      })),
 
-  fabrics: [
-    'Cotton',
-    'Rayon',
-    'Silk',
-    'Georgette',
-    'Chanderi',
-    'Velvet',
-  ],
+      fabrics: ['Cotton', 'Rayon', 'Silk', 'Georgette', 'Chanderi', 'Velvet'],
 
-  colors: [
-    'Red',
-    'Blue',
-    'Green',
-    'Yellow',
-    'Pink',
-    'Purple',
-    'Black',
-    'White',
-  ],
+      colors: [
+        'Red',
+        'Blue',
+        'Green',
+        'Yellow',
+        'Pink',
+        'Purple',
+        'Black',
+        'White',
+      ],
 
-  sizes: ['XS', 'S', 'M', 'L', 'XL', 'XXL'],
+      sizes: ['XS', 'S', 'M', 'L', 'XL', 'XXL'],
 
-  neckTypes: [
-    'Round Neck',
-    'V-Neck',
-    'Boat Neck',
-    'Mandarin Collar',
-  ],
+      neckTypes: ['Round Neck', 'V-Neck', 'Boat Neck', 'Mandarin Collar'],
 
-  sleeveLengths: [
-    'Sleeveless',
-    'Short Sleeves',
-    '3/4 Sleeves',
-    'Long Sleeves',
-  ],
+      sleeveLengths: [
+        'Sleeveless',
+        'Short Sleeves',
+        '3/4 Sleeves',
+        'Long Sleeves',
+      ],
 
-  priceRanges: [
+      priceRanges: [
         { label: 'Under ₹2000', min: 0, max: 2000 },
         { label: '₹2000 - ₹5000', min: 2000, max: 5000 },
         { label: '₹5000 - ₹10000', min: 5000, max: 10000 },
@@ -624,22 +636,31 @@ const ListingPage = () => {
 
   const formatTitleFromSlug = (s) =>
     s
-      ? s.split('-').map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
+      ? s
+          .split('-')
+          .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+          .join(' ')
       : 'Products'
 
-  const handleFilterChange = useCallback((filterKey, value, checked) => {
-    if (filterKey === 'category' && checked) {
-      const cat = siblingCategories.find((c) => c.category_name === value)
-      if (cat) { navigate(`/${cat.slug}`); return }
-    }
-    setSelectedFilters((prev) => ({
-      ...prev,
-      [filterKey]: checked
-        ? [...(prev[filterKey] || []), value]
-        : (prev[filterKey] || []).filter((v) => v !== value),
-    }))
-    setCurrentPage(1)
-  }, [siblingCategories, navigate])
+  const handleFilterChange = useCallback(
+    (filterKey, value, checked) => {
+      if (filterKey === 'category' && checked) {
+        const cat = siblingCategories.find((c) => c.category_name === value)
+        if (cat) {
+          navigate(`/${cat.slug}`)
+          return
+        }
+      }
+      setSelectedFilters((prev) => ({
+        ...prev,
+        [filterKey]: checked
+          ? [...(prev[filterKey] || []), value]
+          : (prev[filterKey] || []).filter((v) => v !== value),
+      }))
+      setCurrentPage(1)
+    },
+    [siblingCategories, navigate],
+  )
 
   const handleRemoveFilter = (filterKey, value) => {
     setSelectedFilters((prev) => ({
@@ -651,14 +672,14 @@ const ListingPage = () => {
 
   const handleClearFilters = () => {
     setSelectedFilters({
-  category: [],
-  fabric: [],
-  color: [],
-  size: [],
-  neckType: [],
-  sleeveLength: [],
-  priceRange: [],
-})
+      category: [],
+      fabric: [],
+      color: [],
+      size: [],
+      neckType: [],
+      sleeveLength: [],
+      priceRange: [],
+    })
     setCurrentPage(1)
   }
 
@@ -672,7 +693,10 @@ const ListingPage = () => {
     return list
   }, [products, sortBy])
 
-  const totalPages = Math.max(1, Math.ceil(sortedProducts.length / itemsPerPage))
+  const totalPages = Math.max(
+    1,
+    Math.ceil(sortedProducts.length / itemsPerPage),
+  )
   const paginatedProducts = sortedProducts.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage,
@@ -685,39 +709,56 @@ const ListingPage = () => {
       <Navbar />
 
       <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8'>
-
         {/* Page title */}
-        <h1 className='font-bold text-gray-800 mb-4' style={{ fontSize: '1.2375rem' }}>
-          {category ? category.name : slug ? formatTitleFromSlug(slug) : 'Products'}
+        <h1
+          className='font-bold text-gray-800 mb-4'
+          style={{ fontSize: '1.2375rem' }}
+        >
+          {category
+            ? category.name
+            : slug
+              ? formatTitleFromSlug(slug)
+              : 'Products'}
         </h1>
 
         {/* ── Top control bar: "Filters" label + Sort dropdown ── */}
         <div
           className='flex items-center justify-between px-4 py-3 bg-white rounded-t-lg mb-0'
           style={{
-            
             borderBottom: '1px solid #f3e8ee',
           }}
         >
           {/* Left: Filters label (aligns with sidebar width) */}
-          <div className='hidden lg:flex items-center gap-2 w-64 flex-shrink-0'>
-            <SlidersHorizontal size={18} className='text-gray-600' />
-            <span className='font-semibold text-gray-800 text-sm'>Filters</span>
+          <div className='hidden lg:flex items-center gap-4 flex-1 min-w-0'>
+            <div className='flex items-center gap-2 w-64 flex-shrink-0'>
+              <SlidersHorizontal size={18} className='text-gray-600' />
+              <span className='font-semibold text-gray-800 text-sm'>
+                Filters
+              </span>
+            </div>
+
+            <div className='flex-1 min-w-0'>
+              <SelectedFiltersBar
+                selectedFilters={selectedFilters}
+                onRemoveFilter={handleRemoveFilter}
+              />
+            </div>
           </div>
 
           {/* Right: Sort dropdown */}
           <div className='ml-auto'>
             <SortDropdown
               sortBy={sortBy}
-              setSortBy={(val) => { setSortBy(val); setCurrentPage(1) }}
+              setSortBy={(val) => {
+                setSortBy(val)
+                setCurrentPage(1)
+              }}
             />
           </div>
         </div>
 
         {/* ── Main content row (sidebar + products) ── */}
-        <div
-          className='flex gap-0 bg-white rounded-b-lg'        
-        >
+        <div className='flex gap-0 bg-white rounded-b-lg'>
           {/* Left Sidebar */}
           <div className='hidden lg:block w-64 flex-shrink-0 border-r border-pink-100'>
             {isLoading ? (
@@ -735,10 +776,10 @@ const ListingPage = () => {
 
           {/* Products area */}
           <div className='flex-1 p-6'>
-            <SelectedFiltersBar
+            {/* <SelectedFiltersBar
               selectedFilters={selectedFilters}
               onRemoveFilter={handleRemoveFilter}
-            />
+            /> */}
 
             {isLoading ? (
               <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6'>
@@ -753,14 +794,15 @@ const ListingPage = () => {
                     <ProductCard
                       key={product.id}
                       product={product}
-                      onViewDetails={(p) => window.open(`/product/${p.id}`, '_blank')}
+                      onViewDetails={(p) =>
+                        window.open(`/product/${p.id}`, '_blank')
+                      }
                     />
                   ))}
                 </div>
 
                 {/* Pagination — min-height matches filter sidebar */}
                 <div className='mt-6 border-t border-pink-100 bg-white px-4 py-4'>
-
                   <Pagination
                     currentPage={currentPage}
                     totalPages={totalPages}
