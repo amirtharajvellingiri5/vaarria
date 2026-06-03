@@ -440,16 +440,16 @@ const Skeleton = ({ className }) => (
 const ProductCardSkeleton = () => {
   return (
     <div className='bg-white rounded-2xl shadow-md overflow-hidden'>
-      <Skeleton className='h-56 w-full' />
+      <Skeleton className='aspect-[3/4] w-full rounded-none' />
 
-      <div className='p-4 space-y-3'>
-        <Skeleton className='h-3 w-20' />
-        <Skeleton className='h-4 w-full' />
-        <Skeleton className='h-3 w-24' />
+      <div className='p-3'>
+        <Skeleton className='h-4 w-full mb-1' />
+        <Skeleton className='h-4 w-2/3 mb-2' />
 
-        <div className='flex justify-between items-center pt-2'>
-          <Skeleton className='h-5 w-20' />
-          <Skeleton className='h-8 w-24 rounded-lg' />
+        <div className='mt-1 flex items-center gap-2'>
+          <Skeleton className='h-4 w-16' />
+          <Skeleton className='h-3 w-12' />
+          <Skeleton className='h-3 w-16' />
         </div>
       </div>
     </div>
@@ -666,10 +666,10 @@ useEffect(() => {
               <FilterSkeleton />
             </div>
 
-            {/* Products Skeleton */}
+                        {/* Products Skeleton */}
             <div className='flex-1'>
-              <div className='grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6'>
-                {Array.from({ length: 15 }).map((_, i) => (
+              <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6'>
+                {Array.from({ length: 9 }).map((_, i) => (
                   <ProductCardSkeleton key={i} />
                 ))}
               </div>
