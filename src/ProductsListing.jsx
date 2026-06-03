@@ -142,31 +142,31 @@ const fetchProductsByCategory = async (
   activeFilters.sleeveLength?.forEach((sleeveLength) => {
     params.append('sleeve_length', sleeveLength)
   })
-// Price Range
-if (activeFilters.priceRange?.length) {
-  const PRICE_RANGES = [
-    { label: 'Under ₹2000', min: 0, max: 2000 },
-    { label: '₹2000 - ₹5000', min: 2000, max: 5000 },
-    { label: '₹5000 - ₹10000', min: 5000, max: 10000 },
-    { label: 'Above ₹10000', min: 10000, max: Infinity },
-  ]
+  // Price Range
+  if (activeFilters.priceRange?.length) {
+    const PRICE_RANGES = [
+      { label: 'Under ₹2000', min: 0, max: 2000 },
+      { label: '₹2000 - ₹5000', min: 2000, max: 5000 },
+      { label: '₹5000 - ₹10000', min: 5000, max: 10000 },
+      { label: 'Above ₹10000', min: 10000, max: Infinity },
+    ]
 
-  const ranges = activeFilters.priceRange
-    .map((label) => PRICE_RANGES.find((r) => r.label === label))
-    .filter(Boolean)
+    const ranges = activeFilters.priceRange
+      .map((label) => PRICE_RANGES.find((r) => r.label === label))
+      .filter(Boolean)
 
-  if (ranges.length) {
-    params.set('min_price', Math.min(...ranges.map((r) => r.min)))
+    if (ranges.length) {
+      params.set('min_price', Math.min(...ranges.map((r) => r.min)))
 
-    const maxValues = ranges
-      .filter((r) => Number.isFinite(r.max))
-      .map((r) => r.max)
+      const maxValues = ranges
+        .filter((r) => Number.isFinite(r.max))
+        .map((r) => r.max)
 
-    if (maxValues.length) {
-      params.set('max_price', Math.max(...maxValues))
+      if (maxValues.length) {
+        params.set('max_price', Math.max(...maxValues))
+      }
     }
   }
-}
   // Map sort option to API param
   const sortMap = {
     'price-low': 'price_asc',
@@ -282,8 +282,6 @@ const FilterSidebar = ({
       className='bg-white rounded-b-lg p-4 overflow-y-auto'
       style={{ minHeight: '100%' }}
     >
-      
-
       <FilterSection
         title='Category'
         items={filters.categories}
@@ -395,7 +393,10 @@ const ProductCard = ({ product, onViewDetails }) => {
       onClick={() => onViewDetails(product)}
       className='bg-white rounded-2xl shadow-md overflow-hidden hover:shadow-2xl transition cursor-pointer group'
     >
-      <div className='relative aspect-[3/4] overflow-hidden bg-gray-100' style={{ color: '#282c3f' }}>
+      <div
+        className='relative aspect-[3/4] overflow-hidden bg-gray-100'
+        style={{ color: '#282c3f' }}
+      >
         <img
           src={product.image}
           alt={product.name}
@@ -668,19 +669,19 @@ const ListingPage = () => {
   }
 
   const handleClearFilters = () => {
-  setSelectedFilters({
-    category: [],
-    fabric: [],
-    color: [],
-    size: [],
-    neckType: [],
-    sleeveLength: [],
-    priceRange: [],
-  })
+    setSelectedFilters({
+      category: [],
+      fabric: [],
+      color: [],
+      size: [],
+      neckType: [],
+      sleeveLength: [],
+      priceRange: [],
+    })
 
-  setSortBy('price-low')
-  setCurrentPage(1)
-}
+    setSortBy('price-low')
+    setCurrentPage(1)
+  }
 
   // Client-side fallback sort (if API doesn't sort)
   const sortedProducts = useMemo(() => {
@@ -710,12 +711,12 @@ const ListingPage = () => {
       <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8'>
         {/* Page title */}
         <h1
-  className='font-bold text-gray-800 mb-4'
-  style={{
-    fontSize: '1.2375rem',
-    marginLeft: '1.2%',
-  }}
->
+          className='font-bold text-gray-800 mb-4'
+          style={{
+            fontSize: '1.2375rem',
+            marginLeft: '1.2%',
+          }}
+        >
           {category
             ? category.name
             : slug
@@ -732,23 +733,22 @@ const ListingPage = () => {
         >
           {/* Left: Filters label (aligns with sidebar width) */}
           <div className='hidden lg:flex items-center gap-4 flex-1 min-w-0'>
-            <div className='flex items-center gap-2 w-64 flex-shrink-0'>
-  <SlidersHorizontal size={18} className='text-gray-600' />
+            <div className='flex items-center w-64 flex-shrink-0'>
 
-  <span className='font-semibold text-gray-800 text-sm'>
-    Filters
-  </span>
+              <span className='font-semibold text-gray-800 text-sm'>
+                FILTERS
+              </span>
 
-  {Object.values(selectedFilters).some(v => v?.length > 0) && (
-    <button
-  onClick={handleClearFilters}
-  className='text-sm text-pink-600 hover:text-pink-700 font-semibold'
-style={{ marginLeft: '41%' }}
->
-  Clear All
-</button>
-  )}
-</div>
+              {Object.values(selectedFilters).some((v) => v?.length > 0) && (
+                <button
+                  onClick={handleClearFilters}
+                  className='text-sm text-pink-600 hover:text-pink-700 font-semibold'
+                  style={{ marginLeft: '49%' }}
+                >
+                  Clear All
+                </button>
+              )}
+            </div>
 
             <div className='flex-1 min-w-0'>
               <SelectedFiltersBar
