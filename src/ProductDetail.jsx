@@ -297,13 +297,10 @@ async function fetchRatings(productId) {
     breakdown,
     reviews: reviews.map((r, index) => ({
       id: index + 1,
-      user: `Customer ${r.customer_id}`,
+      user: r.name || 'Verified Customer',
       rating: r.rating,
-      title: `${r.rating} Star Review`,
       body: r.review,
-      images: (r.images || []).map(
-    (img) => `https://cdn.aarria.com${img}`
-  ),
+      images: (r.images || []).map((img) => `https://cdn.aarria.com${img}`),
     })),
   }
 }
@@ -350,27 +347,22 @@ function MediaSlider({ mediaItems, initialIndex, onClose }) {
         style={{
           position: 'fixed',
           top: 16,
-          left: '50%',
-          transform: 'translateX(-50%)',
+          right: 16,
           zIndex: 999,
+          width: 44,
+          height: 44,
+          borderRadius: '50%',
+          background: 'rgba(0,0,0,0.6)',
+          border: '1px solid rgba(255,255,255,0.2)',
+          color: '#fff',
           display: 'flex',
           alignItems: 'center',
-          gap: 8,
-          padding: '8px 20px',
-          borderRadius: 999,
-          background: 'rgba(255,255,255,0.15)',
-          border: '1px solid rgba(255,255,255,0.35)',
-          color: '#fff',
-          fontSize: 13,
-          fontWeight: 600,
+          justifyContent: 'center',
           cursor: 'pointer',
           backdropFilter: 'blur(8px)',
-          fontFamily: "'DM Sans', sans-serif",
-          letterSpacing: '0.3px',
         }}
       >
-        <X size={15} />
-        Close Preview
+        <X size={22} />
       </button>
 
       {/* Counter — top left */}
@@ -1222,7 +1214,7 @@ export default function ProductDetail() {
                   display: 'flex',
                   alignItems: 'center',
                   gap: 10,
-                  marginBottom: 6,
+                  marginBottom: 8,
                 }}
               >
                 <span
@@ -1240,10 +1232,15 @@ export default function ProductDetail() {
                 >
                   <Star size={10} fill='#fff' strokeWidth={0} /> {r.rating}
                 </span>
+
                 <span
-                  style={{ fontSize: 14, fontWeight: 600, color: '#1f2937' }}
+                  style={{
+                    fontSize: 14,
+                    fontWeight: 600,
+                    color: '#1f2937',
+                  }}
                 >
-                  {r.title}
+                  {r.user}
                 </span>
               </div>
               <p
@@ -1492,11 +1489,11 @@ export default function ProductDetail() {
             <div className='pdp-size-header'>
               <span className='pdp-section-label'>Select Size</span>
               <span
-  className='pdp-size-guide'
-  onClick={() => setShowSizeChart(true)}
->
-  Size Guide
-</span>
+                className='pdp-size-guide'
+                onClick={() => setShowSizeChart(true)}
+              >
+                Size Guide
+              </span>
             </div>
             <div className='pdp-sizes'>
               {product.sizes.map((s) => {
@@ -1664,171 +1661,171 @@ export default function ProductDetail() {
       {addedToBag && <div className='pdp-toast'>✓ Added to your bag!</div>}
 
       {showSizeChart && (
-  <div
-    onClick={() => setShowSizeChart(false)}
-    style={{
-      position: 'fixed',
-      inset: 0,
-      background: 'rgba(0,0,0,0.6)',
-      zIndex: 1000,
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
-      padding: 20,
-    }}
-  >
-    <div
-      onClick={(e) => e.stopPropagation()}
-      style={{
-        width: '100%',
-        maxWidth: 700,
-        background: '#fff',
-        borderRadius: 12,
-        padding: 24,
-        maxHeight: '90vh',
-        overflowY: 'auto',
-      }}
-    >
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          marginBottom: 20,
-        }}
-      >
-        <h2
-          style={{
-            fontSize: 20,
-            fontWeight: 700,
-            color: '#111827',
-          }}
-        >
-          Size Chart
-        </h2>
-
-        <button
+        <div
           onClick={() => setShowSizeChart(false)}
           style={{
-            border: 'none',
-            background: 'none',
-            cursor: 'pointer',
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0,0,0,0.6)',
+            zIndex: 1000,
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            padding: 20,
           }}
         >
-          <X size={22} />
-        </button>
-      </div>
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              width: '100%',
+              maxWidth: 700,
+              background: '#fff',
+              borderRadius: 12,
+              padding: 24,
+              maxHeight: '90vh',
+              overflowY: 'auto',
+            }}
+          >
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: 20,
+              }}
+            >
+              <h2
+                style={{
+                  fontSize: 20,
+                  fontWeight: 700,
+                  color: '#111827',
+                }}
+              >
+                Size Chart
+              </h2>
 
-      <table
-        style={{
-          width: '100%',
-          borderCollapse: 'collapse',
-        }}
-      >
-        <thead>
-          <tr>
-            <th
-              style={{
-                border: '1px solid #e5e7eb',
-                padding: 12,
-                background: '#f9fafb',
-                textAlign: 'left',
-              }}
-            >
-              Size
-            </th>
-            <th
-              style={{
-                border: '1px solid #e5e7eb',
-                padding: 12,
-                background: '#f9fafb',
-                textAlign: 'left',
-              }}
-            >
-              Bust
-            </th>
-            <th
-              style={{
-                border: '1px solid #e5e7eb',
-                padding: 12,
-                background: '#f9fafb',
-                textAlign: 'left',
-              }}
-            >
-              Waist
-            </th>
-            <th
-              style={{
-                border: '1px solid #e5e7eb',
-                padding: 12,
-                background: '#f9fafb',
-                textAlign: 'left',
-              }}
-            >
-              Hip
-            </th>
-          </tr>
-        </thead>
+              <button
+                onClick={() => setShowSizeChart(false)}
+                style={{
+                  border: 'none',
+                  background: 'none',
+                  cursor: 'pointer',
+                }}
+              >
+                <X size={22} />
+              </button>
+            </div>
 
-        <tbody>
-          {[
-            ['XS', '32"', '26"', '34"'],
-            ['S', '34"', '28"', '36"'],
-            ['M', '36"', '30"', '38"'],
-            ['L', '38"', '32"', '40"'],
-            ['XL', '40"', '34"', '42"'],
-            ['XXL', '42"', '36"', '44"'],
-          ].map(([size, bust, waist, hip]) => (
-            <tr key={size}>
-              <td
-                style={{
-                  border: '1px solid #e5e7eb',
-                  padding: 12,
-                }}
-              >
-                {size}
-              </td>
-              <td
-                style={{
-                  border: '1px solid #e5e7eb',
-                  padding: 12,
-                }}
-              >
-                {bust}
-              </td>
-              <td
-                style={{
-                  border: '1px solid #e5e7eb',
-                  padding: 12,
-                }}
-              >
-                {waist}
-              </td>
-              <td
-                style={{
-                  border: '1px solid #e5e7eb',
-                  padding: 12,
-                }}
-              >
-                {hip}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+            <table
+              style={{
+                width: '100%',
+                borderCollapse: 'collapse',
+              }}
+            >
+              <thead>
+                <tr>
+                  <th
+                    style={{
+                      border: '1px solid #e5e7eb',
+                      padding: 12,
+                      background: '#f9fafb',
+                      textAlign: 'left',
+                    }}
+                  >
+                    Size
+                  </th>
+                  <th
+                    style={{
+                      border: '1px solid #e5e7eb',
+                      padding: 12,
+                      background: '#f9fafb',
+                      textAlign: 'left',
+                    }}
+                  >
+                    Bust
+                  </th>
+                  <th
+                    style={{
+                      border: '1px solid #e5e7eb',
+                      padding: 12,
+                      background: '#f9fafb',
+                      textAlign: 'left',
+                    }}
+                  >
+                    Waist
+                  </th>
+                  <th
+                    style={{
+                      border: '1px solid #e5e7eb',
+                      padding: 12,
+                      background: '#f9fafb',
+                      textAlign: 'left',
+                    }}
+                  >
+                    Hip
+                  </th>
+                </tr>
+              </thead>
 
-      <div
-        style={{
-          marginTop: 16,
-          fontSize: 13,
-          color: '#6b7280',
-        }}
-      >
-        All measurements are in inches and may vary slightly by style.
-      </div>
-    </div>
-  </div>
-)}
+              <tbody>
+                {[
+                  ['XS', '32"', '26"', '34"'],
+                  ['S', '34"', '28"', '36"'],
+                  ['M', '36"', '30"', '38"'],
+                  ['L', '38"', '32"', '40"'],
+                  ['XL', '40"', '34"', '42"'],
+                  ['XXL', '42"', '36"', '44"'],
+                ].map(([size, bust, waist, hip]) => (
+                  <tr key={size}>
+                    <td
+                      style={{
+                        border: '1px solid #e5e7eb',
+                        padding: 12,
+                      }}
+                    >
+                      {size}
+                    </td>
+                    <td
+                      style={{
+                        border: '1px solid #e5e7eb',
+                        padding: 12,
+                      }}
+                    >
+                      {bust}
+                    </td>
+                    <td
+                      style={{
+                        border: '1px solid #e5e7eb',
+                        padding: 12,
+                      }}
+                    >
+                      {waist}
+                    </td>
+                    <td
+                      style={{
+                        border: '1px solid #e5e7eb',
+                        padding: 12,
+                      }}
+                    >
+                      {hip}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+
+            <div
+              style={{
+                marginTop: 16,
+                fontSize: 13,
+                color: '#6b7280',
+              }}
+            >
+              All measurements are in inches and may vary slightly by style.
+            </div>
+          </div>
+        </div>
+      )}
     </>
   )
 }
