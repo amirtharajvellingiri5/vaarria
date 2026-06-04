@@ -974,6 +974,8 @@ export default function ProductDetail() {
   const [reviewSliderOpen, setReviewSliderOpen] = useState(false)
   const [reviewImages, setReviewImages] = useState([])
   const [showSizeChart, setShowSizeChart] = useState(false)
+  const [deliveryMessage, setDeliveryMessage] = useState('')
+const [checkingDelivery, setCheckingDelivery] = useState(false)
   const isOutOfStock =
     !product?.sizes?.length || !product?.availableSizes?.length
 
@@ -987,6 +989,40 @@ export default function ProductDetail() {
       },
     )
   }, [productId])
+
+  const checkPincode = async () => {
+  if (pincode.length !== 6) {
+    setDeliveryMessage('Please enter a valid 6-digit pincode')
+    return
+  }
+
+  try {
+    setCheckingDelivery(true)
+
+    const response = await fetch(
+      `https://api.postalpincode.in/pincode/${pincode}`,
+    )
+
+    const data = await response.json()
+
+    if (
+      data?.[0]?.Status === 'Success' &&
+      data?.[0]?.PostOffice?.length > 0
+    ) {
+      const office = data[0].PostOffice[0]
+
+      setDeliveryMessage(
+        `✓ Delivery available to ${office.District}, ${office.State}`,
+      )
+    } else {
+      setDeliveryMessage('Delivery is not available for this pincode')
+    }
+  } catch {
+    setDeliveryMessage('Unable to verify pincode at the moment')
+  } finally {
+    setCheckingDelivery(false)
+  }
+}
 
   const scrollToRatings = () => {
     setExpandedSection('ratings')
@@ -1599,12 +1635,32 @@ export default function ProductDetail() {
                   placeholder='Enter pincode'
                   maxLength={6}
                 />
-                <button className='pdp-pincode-btn'>Check</button>
+                <button
+  className='pdp-pincode-btn'
+  onClick={checkPincode}
+>
+  {checkingDelivery ? 'Checking...' : 'Check'}
+</button>
               </div>
-              <div className='pdp-delivery-ok'>
-                ✓ Estimated delivery in {product.deliveryInfo.days}
-                {product.deliveryInfo.cod && ' · COD available'}
-              </div>
+              <div
+  style={{
+    marginTop: 10,
+    fontSize: 12,
+    fontWeight: 500,
+    color: deliveryMessage.startsWith('✓')
+      ? '#10b981'
+      : deliveryMessage
+        ? '#ef4444'
+        : '#10b981',
+  }}
+>
+  {deliveryMessage || (
+    <>
+      ✓ Estimated delivery in {product.deliveryInfo.days}
+      {product.deliveryInfo.cod && ' · COD available'}
+    </>
+  )}
+</div>
             </div>
 
             <div className='pdp-accordion'>
