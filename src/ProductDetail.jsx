@@ -906,7 +906,13 @@ function SkeletonLoader() {
         .pdp-breadcrumb { padding: 11px clamp(16px, 6%, 86px); font-size: 12px; color: #9ca3af; display: flex; gap: 6px; align-items: center; border-bottom: 1px solid #fff; background: #fff; max-width: 1440px; margin: 0 auto; box-sizing: border-box; width: 100%; }
         .pdp-outer { display: flex; align-items: flex-start; max-width: 1440px; margin: 0 auto; padding: 0 clamp(16px, 6%, 86px); }
         .pdp-images-col { width: 52%; min-width: 0; }
-        .pdp-info-col { width: 48%; min-width: 0; position: sticky; top: 64px; height: calc(100vh - 64px); overflow-y: auto; padding: 0px 48px 48px 40px; border-left: 1px solid #f3f4f6; background: #fff; }
+        .pdp-info-col {
+  width: 48%;
+  min-width: 0;
+  padding: 0px 48px 48px 40px;
+  border-left: 1px solid #f3f4f6;
+  background: #fff;
+}
         .pdp-hr { height: 1px; background: #f3f4f6; margin: 20px 0; }
       `}</style>
       <div className='pdp-page'>
@@ -966,7 +972,7 @@ export default function ProductDetail() {
   const [sliderIndex, setSliderIndex] = useState(0)
   const [selectedSize, setSelectedSize] = useState(null)
   const [wishlist, setWishlist] = useState(false)
-  const [expandedSection, setExpandedSection] = useState('description')
+  const [expandedSection, setExpandedSection] = useState('ratings')
   const [pincode, setPincode] = useState('560001')
   const [addedToBag, setAddedToBag] = useState(false)
   const [sizeError, setSizeError] = useState(false)
@@ -975,6 +981,7 @@ export default function ProductDetail() {
   const ratingsRef = useRef(null)
   const [reviewSliderOpen, setReviewSliderOpen] = useState(false)
   const [reviewImages, setReviewImages] = useState([])
+  const [showSizeChart, setShowSizeChart] = useState(false)
   const isOutOfStock =
     !product?.sizes?.length || !product?.availableSizes?.length
 
@@ -1311,9 +1318,14 @@ export default function ProductDetail() {
         .pdp-breadcrumb-current { color: #374151; font-weight: 500; }
         .pdp-outer { display: flex; align-items: flex-start; max-width: 1440px; margin: 0 auto; padding: 0 clamp(16px, 6%, 86px); }
         .pdp-images-col { width: 52%; min-width: 0; padding-top: 12px; }
-        .pdp-info-col { width: 48%; min-width: 0; position: sticky; top: 64px; height: calc(100vh - 64px); overflow-y: auto; padding: 0px 48px 48px 40px; border-left: 1px solid #f3f4f6; background: #fff; scrollbar-width: thin; scrollbar-color: #fce7f3 transparent; }
-        .pdp-info-col::-webkit-scrollbar { width: 4px; }
-        .pdp-info-col::-webkit-scrollbar-thumb { background: #fce7f3; border-radius: 4px; }
+        .pdp-info-col {
+  width: 48%;
+  min-width: 0;
+  padding: 0px 48px 48px 40px;
+  border-left: 1px solid #f3f4f6;
+  background: #fff;
+}
+        
         .pdp-brand-name { font-family: 'Playfair Display', serif; font-size: 24px; font-weight: 700; color: #1f2937; line-height: 1.2; }
         .pdp-product-subtitle { font-size: 14px; color: #6b7280; margin-top: 5px; line-height: 1.55; font-weight: 400; }
         .pdp-rating-row { display: flex; align-items: center; gap: 10px; margin-top: 12px; }
@@ -1366,7 +1378,19 @@ export default function ProductDetail() {
         .pdp-accordion-body { padding-bottom: 20px; }
         .pdp-toast { position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%); background: linear-gradient(135deg, #ec4899, #f43f5e); color: #fff; padding: 13px 32px; border-radius: 24px; font-size: 14px; font-weight: 600; z-index: 100; box-shadow: 0 8px 28px rgba(236,72,153,0.4); animation: toastIn 0.3s ease; font-family: 'DM Sans', sans-serif; }
         @keyframes toastIn { from { opacity: 0; transform: translateX(-50%) translateY(16px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
-        @media (max-width: 900px) { .pdp-outer { flex-direction: column; padding: 0; } .pdp-images-col { width: 100%; } .pdp-info-col { width: 100%; position: static; height: auto; padding: 20px 16px 40px; border-left: none; border-top: 1px solid #f3f4f6; } .pdp-breadcrumb { padding: 10px 16px; } }
+        @media (max-width: 900px) { .pdp-outer {
+  display: flex;
+  align-items: flex-start;
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 0 clamp(16px, 6%, 86px);
+} .pdp-images-col { width: 100%; } .pdp-info-col {
+  width: 48%;
+  min-width: 0;
+  padding: 0px 48px 48px 40px;
+  border-left: 1px solid #f3f4f6;
+  background: #fff;
+} .pdp-breadcrumb { padding: 10px 16px; } }
       `}</style>
 
       <div className='pdp-page'>
@@ -1467,7 +1491,12 @@ export default function ProductDetail() {
 
             <div className='pdp-size-header'>
               <span className='pdp-section-label'>Select Size</span>
-              <span className='pdp-size-guide'>Size Guide</span>
+              <span
+  className='pdp-size-guide'
+  onClick={() => setShowSizeChart(true)}
+>
+  Size Guide
+</span>
             </div>
             <div className='pdp-sizes'>
               {product.sizes.map((s) => {
@@ -1633,6 +1662,173 @@ export default function ProductDetail() {
       )}
 
       {addedToBag && <div className='pdp-toast'>✓ Added to your bag!</div>}
+
+      {showSizeChart && (
+  <div
+    onClick={() => setShowSizeChart(false)}
+    style={{
+      position: 'fixed',
+      inset: 0,
+      background: 'rgba(0,0,0,0.6)',
+      zIndex: 1000,
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      padding: 20,
+    }}
+  >
+    <div
+      onClick={(e) => e.stopPropagation()}
+      style={{
+        width: '100%',
+        maxWidth: 700,
+        background: '#fff',
+        borderRadius: 12,
+        padding: 24,
+        maxHeight: '90vh',
+        overflowY: 'auto',
+      }}
+    >
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: 20,
+        }}
+      >
+        <h2
+          style={{
+            fontSize: 20,
+            fontWeight: 700,
+            color: '#111827',
+          }}
+        >
+          Size Chart
+        </h2>
+
+        <button
+          onClick={() => setShowSizeChart(false)}
+          style={{
+            border: 'none',
+            background: 'none',
+            cursor: 'pointer',
+          }}
+        >
+          <X size={22} />
+        </button>
+      </div>
+
+      <table
+        style={{
+          width: '100%',
+          borderCollapse: 'collapse',
+        }}
+      >
+        <thead>
+          <tr>
+            <th
+              style={{
+                border: '1px solid #e5e7eb',
+                padding: 12,
+                background: '#f9fafb',
+                textAlign: 'left',
+              }}
+            >
+              Size
+            </th>
+            <th
+              style={{
+                border: '1px solid #e5e7eb',
+                padding: 12,
+                background: '#f9fafb',
+                textAlign: 'left',
+              }}
+            >
+              Bust
+            </th>
+            <th
+              style={{
+                border: '1px solid #e5e7eb',
+                padding: 12,
+                background: '#f9fafb',
+                textAlign: 'left',
+              }}
+            >
+              Waist
+            </th>
+            <th
+              style={{
+                border: '1px solid #e5e7eb',
+                padding: 12,
+                background: '#f9fafb',
+                textAlign: 'left',
+              }}
+            >
+              Hip
+            </th>
+          </tr>
+        </thead>
+
+        <tbody>
+          {[
+            ['XS', '32"', '26"', '34"'],
+            ['S', '34"', '28"', '36"'],
+            ['M', '36"', '30"', '38"'],
+            ['L', '38"', '32"', '40"'],
+            ['XL', '40"', '34"', '42"'],
+            ['XXL', '42"', '36"', '44"'],
+          ].map(([size, bust, waist, hip]) => (
+            <tr key={size}>
+              <td
+                style={{
+                  border: '1px solid #e5e7eb',
+                  padding: 12,
+                }}
+              >
+                {size}
+              </td>
+              <td
+                style={{
+                  border: '1px solid #e5e7eb',
+                  padding: 12,
+                }}
+              >
+                {bust}
+              </td>
+              <td
+                style={{
+                  border: '1px solid #e5e7eb',
+                  padding: 12,
+                }}
+              >
+                {waist}
+              </td>
+              <td
+                style={{
+                  border: '1px solid #e5e7eb',
+                  padding: 12,
+                }}
+              >
+                {hip}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+
+      <div
+        style={{
+          marginTop: 16,
+          fontSize: 13,
+          color: '#6b7280',
+        }}
+      >
+        All measurements are in inches and may vary slightly by style.
+      </div>
+    </div>
+  </div>
+)}
     </>
   )
 }
