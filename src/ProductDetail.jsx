@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import {
   ChevronLeft,
   ChevronRight,
@@ -259,10 +259,54 @@ async function fetchProduct(productId) {
 }
 
 async function fetchRatings(productId) {
-  await new Promise((r) => setTimeout(r, 400))
-  return MOCK_RATINGS_API_RESPONSE
-}
+  const response = await fetch(
+    `https://d8obcfi1ua.execute-api.ap-south-1.amazonaws.com/prod/products/${productId}/ratings`,
+  )
 
+  if (!response.ok) {
+    throw new Error('Failed to load ratings')
+  }
+
+  const reviews = await response.json()
+
+  const totalRatings = reviews.length
+
+  const averageRating =
+    totalRatings === 0
+      ? 0
+      : Number(
+          (
+            reviews.reduce((sum, r) => sum + r.rating, 0) / totalRatings
+          ).toFixed(1),
+        )
+
+  const breakdown = [5, 4, 3, 2, 1].map((star) => {
+    const count = reviews.filter((r) => r.rating === star).length
+
+    return {
+      label: `${star} ★`,
+      pct: totalRatings === 0 ? 0 : Math.round((count / totalRatings) * 100),
+    }
+  })
+
+  return {
+    product_id: productId,
+    overall: averageRating,
+    rating_count: totalRatings,
+    review_count: totalRatings,
+    breakdown,
+    reviews: reviews.map((r, index) => ({
+      id: index + 1,
+      user: `Customer ${r.customer_id}`,
+      rating: r.rating,
+      title: `${r.rating} Star Review`,
+      body: r.review,
+      images: (r.images || []).map(
+    (img) => `https://cdn.aarria.com${img}`
+  ),
+    })),
+  }
+}
 // ─── Full-screen Media Slider ─────────────────────────────────────────────────
 function MediaSlider({ mediaItems, initialIndex, onClose }) {
   const [current, setCurrent] = useState(initialIndex)
@@ -928,6 +972,9 @@ export default function ProductDetail() {
   const [sizeError, setSizeError] = useState(false)
   const [bagError, setBagError] = useState('')
   const [addingToBag, setAddingToBag] = useState(false)
+  const ratingsRef = useRef(null)
+  const [reviewSliderOpen, setReviewSliderOpen] = useState(false)
+  const [reviewImages, setReviewImages] = useState([])
   const isOutOfStock =
     !product?.sizes?.length || !product?.availableSizes?.length
 
@@ -942,6 +989,17 @@ export default function ProductDetail() {
     )
   }, [productId])
 
+  const scrollToRatings = () => {
+    setExpandedSection('ratings')
+
+    setTimeout(() => {
+      ratingsRef.current?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start',
+      })
+    }, 100)
+  }
+
   const openSlider = (index) => {
     setSliderIndex(index)
     setSliderOpen(true)
@@ -949,13 +1007,13 @@ export default function ProductDetail() {
 
   const handleAddToBag = async () => {
     if (isOutOfStock) {
-  return
-}
+      return
+    }
 
-if (!selectedSize) {
-  setSizeError(true)
-  return
-}
+    if (!selectedSize) {
+      setSizeError(true)
+      return
+    }
 
     setSizeError(false)
     setBagError('')
@@ -1191,10 +1249,46 @@ if (!selectedSize) {
               >
                 {r.body}
               </p>
-              <p style={{ fontSize: 11, color: '#9ca3af', marginTop: 6 }}>
-                {r.user} · {r.date} &nbsp;|&nbsp; {r.helpful} people found this
-                helpful
-              </p>
+
+              {r.images?.length > 0 && (
+                <div
+                  style={{
+                    display: 'flex',
+                    gap: 8,
+                    marginTop: 12,
+                    flexWrap: 'wrap',
+                  }}
+                >
+                  {r.images.map((image, imageIndex) => (
+                    <img
+                      key={imageIndex}
+                      src={image}
+                      alt=''
+                      onClick={() => {
+                        setReviewImages(
+                          r.images.map((img) => ({
+                            type: 'image',
+                            src: img,
+                            thumb: img,
+                            placeholder: img,
+                          })),
+                        )
+
+                        setSliderIndex(imageIndex)
+                        setReviewSliderOpen(true)
+                      }}
+                      style={{
+                        width: 72,
+                        height: 96,
+                        objectFit: 'cover',
+                        borderRadius: 6,
+                        border: '1px solid #e5e7eb',
+                        cursor: 'pointer',
+                      }}
+                    />
+                  ))}
+                </div>
+              )}
             </div>
           ))}
         </>
@@ -1324,18 +1418,26 @@ if (!selectedSize) {
                 <Share2 size={18} color='#9ca3af' />
               </button>
             </div>
-
-            <div className='pdp-rating-row'>
+            <div
+              className='pdp-rating-row'
+              onClick={scrollToRatings}
+              style={{ cursor: 'pointer' }}
+            >
               <span className='pdp-rating-pill'>
-                <Star size={11} fill='#fff' strokeWidth={0} /> {product.rating}
+                <Star size={11} fill='#fff' strokeWidth={0} />{' '}
+                {ratingsData?.overall ?? 0}
               </span>
+
               <span className='pdp-rating-sep'>|</span>
+
               <span className='pdp-rating-meta'>
-                {product.ratingCount.toLocaleString()} Ratings
+                {ratingsData?.rating_count ?? 0} Ratings
               </span>
+
               <span className='pdp-rating-sep'>|</span>
+
               <span className='pdp-rating-meta'>
-                {product.reviewCount} Reviews
+                {ratingsData?.review_count ?? 0} Reviews
               </span>
             </div>
 
@@ -1481,7 +1583,11 @@ if (!selectedSize) {
 
             <div className='pdp-accordion'>
               {accordionSections.map((sec) => (
-                <div key={sec.key} className='pdp-accordion-item'>
+                <div
+                  key={sec.key}
+                  className='pdp-accordion-item'
+                  ref={sec.key === 'ratings' ? ratingsRef : null}
+                >
                   <button
                     className='pdp-accordion-trigger'
                     onClick={() =>
@@ -1507,7 +1613,7 @@ if (!selectedSize) {
         </div>
       </div>
 
-                  <Footer />
+      <Footer />
 
       {/* Full-screen media slider */}
       {sliderOpen && (
@@ -1515,6 +1621,14 @@ if (!selectedSize) {
           mediaItems={product.mediaItems}
           initialIndex={sliderIndex}
           onClose={() => setSliderOpen(false)}
+        />
+      )}
+
+      {reviewSliderOpen && (
+        <MediaSlider
+          mediaItems={reviewImages}
+          initialIndex={sliderIndex}
+          onClose={() => setReviewSliderOpen(false)}
         />
       )}
 

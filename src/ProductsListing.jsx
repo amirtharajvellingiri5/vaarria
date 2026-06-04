@@ -19,7 +19,7 @@ import {
 import Navbar from './Navbar'
 import Footer from './Footer'
 
-import logo from './assets/logo.png'
+import logo from './assets/logo.jpg'
 
 import { COLOR_MAP, formatColorLabel } from './constants/colors'
 import { PRODUCT_CATEGORY_NAMES, ADMIN_CATEGORIES } from './utils/categories'

@@ -16,7 +16,7 @@ import {
   X,
 } from 'lucide-react'
 import Navbar from './Navbar'
-import logo from './assets/logo.png'
+import logo from './assets/logo.jpg'
 
 import Footer from './Footer'
 import { HOME_CATEGORIES } from './utils/categories'

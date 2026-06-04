@@ -3,7 +3,7 @@ import { ShoppingBag, Search, Heart, User, Menu, X } from 'lucide-react'
 import { useCartStore } from './store/cartStore'
 import { ADMIN_CATEGORIES as CATEGORIES } from './utils/categories'
 
-import logo from './assets/logo.png'
+import logo from './assets/logo.jpg'
 
 const PAGE_CONTAINER = {
   maxWidth: '1400px',
@@ -259,10 +259,14 @@ const isLoggedIn = !!token
         {/* Logo */}
         <a href='/' style={{ marginRight: '5%' }}>
           <img
-            src={logo}
-            alt='Logo'
-            className='min-h-[60px] h-16 sm:h-20 md:h-24 w-auto object-contain'
-          />
+  src={logo}
+  alt="Logo"
+  style={{
+    height: '40px',
+    width: 'auto',
+    objectFit: 'contain'
+  }}
+/>
         </a>
 
         {/* Nav Items */}

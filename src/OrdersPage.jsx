@@ -22,7 +22,7 @@ import {
   AlertCircle,
 } from 'lucide-react'
 import axios from 'axios'
-import logo from './assets/logo.png'
+import logo from './assets/logo.jpg'
 import './constants/global.css'
 
 // ─── Constants ────────────────────────────────────────────────────────────────

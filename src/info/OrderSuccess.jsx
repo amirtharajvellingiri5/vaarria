@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Check, Package } from "lucide-react";
-import logo from "../assets/logo.png";
+import logo from "../assets/logo.jpg";
 
 export default function OrderSuccess() {
   const location = useLocation();
