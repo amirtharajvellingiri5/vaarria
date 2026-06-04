@@ -975,7 +975,11 @@ export default function ProductDetail() {
   const [reviewImages, setReviewImages] = useState([])
   const [showSizeChart, setShowSizeChart] = useState(false)
   const [deliveryMessage, setDeliveryMessage] = useState('')
-const [checkingDelivery, setCheckingDelivery] = useState(false)
+  const [checkingDelivery, setCheckingDelivery] = useState(false)
+  const hasRatings =
+    ratingsData &&
+    ratingsData.rating_count > 0 &&
+    ratingsData.reviews?.length > 0
   const isOutOfStock =
     !product?.sizes?.length || !product?.availableSizes?.length
 
@@ -991,38 +995,38 @@ const [checkingDelivery, setCheckingDelivery] = useState(false)
   }, [productId])
 
   const checkPincode = async () => {
-  if (pincode.length !== 6) {
-    setDeliveryMessage('Please enter a valid 6-digit pincode')
-    return
-  }
-
-  try {
-    setCheckingDelivery(true)
-
-    const response = await fetch(
-      `https://api.postalpincode.in/pincode/${pincode}`,
-    )
-
-    const data = await response.json()
-
-    if (
-      data?.[0]?.Status === 'Success' &&
-      data?.[0]?.PostOffice?.length > 0
-    ) {
-      const office = data[0].PostOffice[0]
-
-      setDeliveryMessage(
-        `✓ Delivery available to ${office.District}, ${office.State}`,
-      )
-    } else {
-      setDeliveryMessage('Delivery is not available for this pincode')
+    if (pincode.length !== 6) {
+      setDeliveryMessage('Please enter a valid 6-digit pincode')
+      return
     }
-  } catch {
-    setDeliveryMessage('Unable to verify pincode at the moment')
-  } finally {
-    setCheckingDelivery(false)
+
+    try {
+      setCheckingDelivery(true)
+
+      const response = await fetch(
+        `https://api.postalpincode.in/pincode/${pincode}`,
+      )
+
+      const data = await response.json()
+
+      if (
+        data?.[0]?.Status === 'Success' &&
+        data?.[0]?.PostOffice?.length > 0
+      ) {
+        const office = data[0].PostOffice[0]
+
+        setDeliveryMessage(
+          `✓ Delivery available to ${office.District}, ${office.State}`,
+        )
+      } else {
+        setDeliveryMessage('Delivery is not available for this pincode')
+      }
+    } catch {
+      setDeliveryMessage('Unable to verify pincode at the moment')
+    } finally {
+      setCheckingDelivery(false)
+    }
   }
-}
 
   const scrollToRatings = () => {
     setExpandedSection('ratings')
@@ -1336,7 +1340,9 @@ const [checkingDelivery, setCheckingDelivery] = useState(false)
         <p style={{ fontSize: 13, color: '#9ca3af' }}>Loading ratings…</p>
       ),
     },
-  ]
+  ].filter(
+  (section) => section.key !== 'ratings' || hasRatings,
+)
 
   return (
     <>
@@ -1471,32 +1477,32 @@ const [checkingDelivery, setCheckingDelivery] = useState(false)
                   padding: '4px',
                   flexShrink: 0,
                 }}
-              >
-                <Share2 size={18} color='#9ca3af' />
-              </button>
+              ></button>
             </div>
-            <div
-              className='pdp-rating-row'
-              onClick={scrollToRatings}
-              style={{ cursor: 'pointer' }}
-            >
-              <span className='pdp-rating-pill'>
-                <Star size={11} fill='#fff' strokeWidth={0} />{' '}
-                {ratingsData?.overall ?? 0}
-              </span>
+            {hasRatings && (
+  <div
+    className='pdp-rating-row'
+    onClick={scrollToRatings}
+    style={{ cursor: 'pointer' }}
+  >
+    <span className='pdp-rating-pill'>
+      <Star size={11} fill='#fff' strokeWidth={0} />
+      {ratingsData.overall}
+    </span>
 
-              <span className='pdp-rating-sep'>|</span>
+    <span className='pdp-rating-sep'>|</span>
 
-              <span className='pdp-rating-meta'>
-                {ratingsData?.rating_count ?? 0} Ratings
-              </span>
+    <span className='pdp-rating-meta'>
+      {ratingsData.rating_count} Ratings
+    </span>
 
-              <span className='pdp-rating-sep'>|</span>
+    <span className='pdp-rating-sep'>|</span>
 
-              <span className='pdp-rating-meta'>
-                {ratingsData?.review_count ?? 0} Reviews
-              </span>
-            </div>
+    <span className='pdp-rating-meta'>
+      {ratingsData.review_count} Reviews
+    </span>
+  </div>
+)}
 
             <div className='pdp-price-row'>
               <span className='pdp-price'>
@@ -1635,32 +1641,29 @@ const [checkingDelivery, setCheckingDelivery] = useState(false)
                   placeholder='Enter pincode'
                   maxLength={6}
                 />
-                <button
-  className='pdp-pincode-btn'
-  onClick={checkPincode}
->
-  {checkingDelivery ? 'Checking...' : 'Check'}
-</button>
+                <button className='pdp-pincode-btn' onClick={checkPincode}>
+                  {checkingDelivery ? 'Checking...' : 'Check'}
+                </button>
               </div>
               <div
-  style={{
-    marginTop: 10,
-    fontSize: 12,
-    fontWeight: 500,
-    color: deliveryMessage.startsWith('✓')
-      ? '#10b981'
-      : deliveryMessage
-        ? '#ef4444'
-        : '#10b981',
-  }}
->
-  {deliveryMessage || (
-    <>
-      ✓ Estimated delivery in {product.deliveryInfo.days}
-      {product.deliveryInfo.cod && ' · COD available'}
-    </>
-  )}
-</div>
+                style={{
+                  marginTop: 10,
+                  fontSize: 12,
+                  fontWeight: 500,
+                  color: deliveryMessage.startsWith('✓')
+                    ? '#10b981'
+                    : deliveryMessage
+                      ? '#ef4444'
+                      : '#10b981',
+                }}
+              >
+                {deliveryMessage || (
+                  <>
+                    ✓ Estimated delivery in {product.deliveryInfo.days}
+                    {product.deliveryInfo.cod && ' · COD available'}
+                  </>
+                )}
+              </div>
             </div>
 
             <div className='pdp-accordion'>
