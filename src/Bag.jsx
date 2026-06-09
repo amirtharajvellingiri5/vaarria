@@ -120,19 +120,28 @@ const useBagStore = create((set, get) => ({
   // Call as a selector: useBagStore(s => s.getCouponSavings())
   // Or just read inside components via get().
   getCouponSavings: () => {
-    const { items, appliedCouponIds } = get()
-    return items
-      .filter(
-        (i) => i.selected && appliedCouponIds.has(i.id) && i.couponDiscount > 0,
-      )
-      .reduce((sum, i) => {
-        if (i.discountType === 'PERCENTAGE') {
-          return sum + Math.round((i.price * i.qty * i.couponDiscount) / 100)
-        }
-        // FLAT
-        return sum + i.couponDiscount * i.qty
-      }, 0)
-  },
+  const { items, appliedCouponIds } = get()
+
+  return items
+    .filter(
+      (item) =>
+        item.selected &&
+        appliedCouponIds.has(item.id) &&
+        item.couponDiscount > 0,
+    )
+    .reduce((total, item) => {
+      if (item.discountType === 'PERCENTAGE') {
+        const discount = Math.floor(
+          (item.price * item.qty * item.couponDiscount) / 100,
+        )
+
+        return total + discount
+      }
+
+      // FLAT discount
+      return total + item.couponDiscount * item.qty
+    }, 0)
+},
 
   // ── other existing state ──────────────────────────────────────────────────
   platformFee: 23,
@@ -750,11 +759,14 @@ function ItemCard({ item }) {
           </div>
 
           {item.couponDiscount > 0 && (
-            <div style={styles.couponLine}>
-              <Tag size={11} style={{ marginRight: 4 }} />
-              Coupon Discount: ₹{item.couponDiscount}
-            </div>
-          )}
+  <div style={styles.couponLine}>
+    <Tag size={11} style={{ marginRight: 4 }} />
+    Coupon Discount:{' '}
+    {item.discountType === 'PERCENTAGE'
+      ? `${item.couponDiscount}%`
+      : `₹${item.couponDiscount}`}
+  </div>
+)}
 
           <div style={styles.returnLine}>
             <RotateCcw size={11} style={{ marginRight: 4 }} />
@@ -982,8 +994,7 @@ function PricePanel() {
   const total = totalPrice - couponSavings + donationAmount
   
   const API_BASE =
-    'https://d8obcfi1ua.execute-api.ap-south-1.amazonaws.com/prod'
-
+    'https://zq0dbjycx6.execute-api.ap-south-1.amazonaws.com/prod'
   const handlePlaceOrder = async () => {
     if (selected.length === 0) return
 
@@ -1133,15 +1144,25 @@ function PricePanel() {
       </div>
 
       <p style={styles.terms}>
-        By placing the order, you agree to our{' '}
-        <a href='#' style={styles.termsLink}>
-          Terms of Use
-        </a>{' '}
-        and{' '}
-        <a href='#' style={styles.termsLink}>
-          Privacy Policy
-        </a>
-      </p>
+  By placing the order, you agree to our{' '}
+  <a
+    href='http://localhost:5173/terms'
+    target='_blank'
+    rel='noopener noreferrer'
+    style={styles.termsLink}
+  >
+    Terms of Use
+  </a>{' '}
+  and{' '}
+  <a
+    href='http://localhost:5173/privacy-policy'
+    target='_blank'
+    rel='noopener noreferrer'
+    style={styles.termsLink}
+  >
+    Privacy Policy
+  </a>
+</p>
 
       <button
         style={styles.placeBtn}

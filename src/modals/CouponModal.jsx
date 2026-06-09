@@ -27,12 +27,14 @@ export default function CouponModal({
   const unselectedItems = couponItems.filter((i) => !i.selected)
 
   const calcDiscount = (item) => {
-    if (item.discountType === 'PERCENTAGE') {
-      return Math.round((item.price * item.qty * item.couponDiscount) / 100)
-    }
-    // FLAT
-    return item.couponDiscount * item.qty
+  if (item.discountType === 'PERCENTAGE') {
+    return Math.floor(
+      (item.price * item.qty * item.couponDiscount) / 100,
+    )
   }
+
+  return item.couponDiscount * item.qty
+}
 
   const totalSavings = selectedItems
     .filter((i) => appliedCouponIds.has(i.id))
