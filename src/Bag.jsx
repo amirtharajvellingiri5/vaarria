@@ -104,11 +104,41 @@ function PricePanelSkeleton() {
 // ─── Zustand Store ────────────────────────────────────────────────────────────
 const useBagStore = create((set, get) => ({
   items: [],
-  couponsApplied: 2,
-  couponSavings: 401,
+
+  // ── coupon state ──────────────────────────────────────────────────────────
+  // Set of bag_ids whose coupon is currently toggled ON
+  appliedCouponIds: new Set(),
+
+  toggleCoupon: (bagId) =>
+    set((s) => {
+      const next = new Set(s.appliedCouponIds)
+      next.has(bagId) ? next.delete(bagId) : next.add(bagId)
+      return { appliedCouponIds: next }
+    }),
+
+  // Derived: total coupon savings across SELECTED items with coupon toggled ON.
+  // Call as a selector: useBagStore(s => s.getCouponSavings())
+  // Or just read inside components via get().
+  getCouponSavings: () => {
+    const { items, appliedCouponIds } = get()
+    return items
+      .filter(
+        (i) => i.selected && appliedCouponIds.has(i.id) && i.couponDiscount > 0,
+      )
+      .reduce((sum, i) => {
+        if (i.discountType === 'PERCENTAGE') {
+          return sum + Math.round((i.price * i.qty * i.couponDiscount) / 100)
+        }
+        // FLAT
+        return sum + i.couponDiscount * i.qty
+      }, 0)
+  },
+
+  // ── other existing state ──────────────────────────────────────────────────
   platformFee: 23,
   donationAmount: 0,
   mobileMenuOpen: false,
+
   setItems: (items) => set({ items }),
 
   toggleSelected: (id) =>
@@ -117,8 +147,10 @@ const useBagStore = create((set, get) => ({
         i.id === id ? { ...i, selected: !i.selected } : i,
       ),
     })),
+
   removeItem: (id) =>
     set((s) => ({ items: s.items.filter((i) => i.id !== id) })),
+
   updateQty: (id, delta) =>
     set((s) => ({
       items: s.items.map((i) =>
@@ -128,6 +160,7 @@ const useBagStore = create((set, get) => ({
 
   setDonation: (amt) =>
     set((s) => ({ donationAmount: s.donationAmount === amt ? 0 : amt })),
+
   toggleMobileMenu: () => set((s) => ({ mobileMenuOpen: !s.mobileMenuOpen })),
 }))
 
@@ -227,10 +260,10 @@ function PinBar() {
   }
 
   const handleSelectAddress = (address) => {
-  localStorage.setItem('selected_address', JSON.stringify(address))
-  setDefaultAddress(address)
-  setOpenAddress(false)
-}
+    localStorage.setItem('selected_address', JSON.stringify(address))
+    setDefaultAddress(address)
+    setOpenAddress(false)
+  }
 
   const handleCloseAddress = () => {
     setOpenAddress(false)
@@ -261,9 +294,9 @@ function PinBar() {
           const primary = data.items.find((a) => a.is_default)
           setDefaultAddress(primary || data.items[0])
           localStorage.setItem(
-  'selected_address',
-  JSON.stringify(primary || data.items[0]),
-)
+            'selected_address',
+            JSON.stringify(primary || data.items[0]),
+          )
         } else {
           setAddresses([])
           setDefaultAddress(null)
@@ -855,8 +888,20 @@ function ItemCard({ item }) {
 }
 
 function CouponPanel() {
-  const { couponsApplied, couponSavings } = useBagStore()
+  const { items, appliedCouponIds, toggleCoupon, getCouponSavings } = useBagStore()
   const [showCoupon, setShowCoupon] = useState(false)
+
+  const couponSavings = getCouponSavings()
+
+  // Count how many selected items have coupon toggled on
+  const appliedCount = items.filter(
+    (i) => i.selected && appliedCouponIds.has(i.id) && i.couponDiscount > 0,
+  ).length
+
+  // Count how many selected items have a coupon available (but not yet applied)
+  const availableCount = items.filter(
+    (i) => i.selected && i.couponDiscount > 0,
+  ).length
 
   return (
     <div style={styles.panelCard}>
@@ -865,37 +910,61 @@ function CouponPanel() {
         <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
           <Tag size={18} color='#e91e8c' style={{ marginTop: 2 }} />
           <div>
-            <div style={styles.couponApplied}>
-              {couponsApplied} Coupons applied
-            </div>
-            <div style={styles.couponSaved}>
-              You saved additional ₹{couponSavings}
-            </div>
+            {appliedCount > 0 ? (
+              <>
+                <div style={styles.couponApplied}>
+                  {appliedCount} Coupon{appliedCount !== 1 ? 's' : ''} applied
+                </div>
+                <div style={styles.couponSaved}>
+                  You saved ₹{couponSavings.toLocaleString('en-IN')}
+                </div>
+              </>
+            ) : availableCount > 0 ? (
+              <>
+                <div style={styles.couponApplied}>
+                  {availableCount} coupon{availableCount !== 1 ? 's' : ''} available
+                </div>
+                <div style={{ fontSize: 12, color: '#888', marginTop: 3 }}>
+                  Apply to save on selected items
+                </div>
+              </>
+            ) : (
+              <>
+                <div style={styles.couponApplied}>No coupons available</div>
+                <div style={{ fontSize: 12, color: '#aaa', marginTop: 3 }}>
+                  Select items to see applicable coupons
+                </div>
+              </>
+            )}
           </div>
         </div>
+
         <button style={styles.editBtn} onClick={() => setShowCoupon(true)}>
-          APPLY
+          {appliedCount > 0 ? 'EDIT' : 'APPLY'}
         </button>
-        <CouponModal
-          isOpen={showCoupon}
-          onClose={() => setShowCoupon(false)}
-          onApply={(selectedIds) =>
-            console.log('Applied coupon IDs:', selectedIds)
-          }
-        />
       </div>
+
+      <CouponModal
+        isOpen={showCoupon}
+        onClose={() => setShowCoupon(false)}
+        items={items}
+        appliedCouponIds={appliedCouponIds}
+        onToggleCoupon={toggleCoupon}
+      />
     </div>
   )
 }
 function PricePanel() {
   const navigate = useNavigate()
-  const { items, couponSavings, donationAmount } = useBagStore()
+  const { items, donationAmount, getCouponSavings } = useBagStore()  // ← removed couponSavings
   const [paymentError, setPaymentError] = useState('')
   const [paymentLoading, setPaymentLoading] = useState(false)
 
+  const couponSavings = getCouponSavings()  // ← derived live
+
   const selectedAddress = JSON.parse(
-  localStorage.getItem('selected_address') || 'null',
-)
+    localStorage.getItem('selected_address') || 'null',
+  )
 
   const selected = items.filter((i) => i.selected)
 
@@ -911,7 +980,7 @@ function PricePanel() {
 
   const discountOnMrp = totalMrp - totalPrice
   const total = totalPrice - couponSavings + donationAmount
-
+  
   const API_BASE =
     'https://d8obcfi1ua.execute-api.ap-south-1.amazonaws.com/prod'
 
@@ -940,28 +1009,29 @@ function PricePanel() {
       const customerEmail = customer.email || ''
       const customerPhone = customer.mobile || customer.phone || ''
 
-      const selectedAddress =
-  JSON.parse(localStorage.getItem('selected_address') || 'null')
+      const selectedAddress = JSON.parse(
+        localStorage.getItem('selected_address') || 'null',
+      )
 
-if (!selectedAddress) {
-  setPaymentError('Please select delivery address')
-  return
-}
+      if (!selectedAddress) {
+        setPaymentError('Please select delivery address')
+        return
+      }
 
-const { data } = await axios.post(`${API_BASE}/payments/create-order`, {
-  customer_id: String(customer.customer_id),
-  address_id: String(selectedAddress.address_id),
-  amount: totalAmount,
-  receipt: `order_${Date.now()}`,
-  items: selected.map((item) => ({
-    product_id: String(item.productId),
-    product_name: item.name,
-    quantity: item.qty,
-    unit_price: item.price,
-    size: item.size,
-    bag_id: item.id,
-  })),
-})
+      const { data } = await axios.post(`${API_BASE}/payments/create-order`, {
+        customer_id: String(customer.customer_id),
+        address_id: String(selectedAddress.address_id),
+        amount: totalAmount,
+        receipt: `order_${Date.now()}`,
+        items: selected.map((item) => ({
+          product_id: String(item.productId),
+          product_name: item.name,
+          quantity: item.qty,
+          unit_price: item.price,
+          size: item.size,
+          bag_id: item.id,
+        })),
+      })
 
       const options = {
         key: data.key,
@@ -1264,6 +1334,7 @@ function BagPage() {
           price: item.price,
           mrp: item.mrp,
           couponDiscount: item.coupon_discount,
+          discountType: item.discount_type, // ← NEW
           returnDays: item.return_days,
           colorName: item.color,
           color:
@@ -1280,6 +1351,7 @@ function BagPage() {
                 : '#e91e8c',
           selected: item.selected,
         }))
+
         setItems(mappedItems)
       } catch (error) {
         console.error('Failed to fetch bag items', error)

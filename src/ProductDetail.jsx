@@ -19,7 +19,7 @@ import {
 } from 'lucide-react'
 import Navbar from './Navbar'
 import Footer from './Footer'
-import { useParams } from 'react-router-dom'
+import { useParams, useNavigate } from 'react-router-dom'
 
 // ─── Mock API Response ────────────────────────────────────────────────────────
 const MOCK_PRODUCT_API_RESPONSE = {
@@ -220,8 +220,10 @@ async function fetchProduct(productId) {
   return {
     id: raw.product_id,
     brand: raw.brand.name,
-    name: raw.title,
+    brandId: raw.brand.catalogue_id,
     category: raw.category.category_name,
+    categoryId: raw.category.category_id,
+    name: raw.title,
     mediaItems,
     price: raw.pricing.sale_price,
     mrp: raw.pricing.mrp,
@@ -957,6 +959,7 @@ function SkeletonLoader() {
 // ─── Main Product Detail Page ─────────────────────────────────────────────────
 export default function ProductDetail() {
   const { id: productId } = useParams()
+  const navigate = useNavigate()
   const [product, setProduct] = useState(null)
   const [ratingsData, setRatingsData] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -1340,9 +1343,7 @@ export default function ProductDetail() {
         <p style={{ fontSize: 13, color: '#9ca3af' }}>Loading ratings…</p>
       ),
     },
-  ].filter(
-  (section) => section.key !== 'ratings' || hasRatings,
-)
+  ].filter((section) => section.key !== 'ratings' || hasRatings)
 
   return (
     <>
@@ -1351,8 +1352,23 @@ export default function ProductDetail() {
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         .pdp-page { min-height: 100vh; background: #fff; font-family: 'DM Sans', sans-serif; color: #1f2937; }
         .pdp-breadcrumb { padding: 11px clamp(16px, 6%, 86px); font-size: 12px; color: #9ca3af; display: flex; gap: 6px; align-items: center; border-bottom: 1px solid #fff; background: #fff; max-width: 1440px; margin: 0 auto; box-sizing: border-box; width: 100%; }
-        .pdp-breadcrumb a { color: #9ca3af; text-decoration: none; }
-        .pdp-breadcrumb a:hover { color: #ec4899; }
+        .pdp-breadcrumb a {
+  color: #9ca3af;
+  text-decoration: none;
+}
+
+.pdp-breadcrumb a:hover {
+  color: #ec4899;
+}
+
+.pdp-breadcrumb-clickable {
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.pdp-breadcrumb-clickable:hover {
+  color: #ec4899;
+}
         .pdp-breadcrumb-sep { color: #d1d5db; font-size: 10px; }
         .pdp-breadcrumb-current { color: #374151; font-weight: 500; }
         .pdp-outer { display: flex; align-items: flex-start; max-width: 1440px; margin: 0 auto; padding: 0 clamp(16px, 6%, 86px); }
@@ -1434,17 +1450,32 @@ export default function ProductDetail() {
 
       <div className='pdp-page'>
         <Navbar />
-
         <div className='pdp-breadcrumb'>
-          <a href='#'>Home</a>
+          <span style={{ cursor: 'pointer' }} onClick={() => navigate('/')}>
+            Home
+          </span>
+
           <span className='pdp-breadcrumb-sep'>›</span>
-          <a href='#'>Women</a>
+
+          <span
+            style={{ cursor: 'pointer' }}
+            onClick={() => navigate(`/category/${product.categoryId}`)}
+          >
+            {product.category}
+          </span>
+
           <span className='pdp-breadcrumb-sep'>›</span>
-          <a href='#'>Ethnic Wear</a>
+
+          <span
+            style={{ cursor: 'pointer' }}
+            onClick={() => navigate(`/brand/${product.brandId}`)}
+          >
+            {product.brand}
+          </span>
+
           <span className='pdp-breadcrumb-sep'>›</span>
-          <a href='#'>{product.category}</a>
-          <span className='pdp-breadcrumb-sep'>›</span>
-          <span className='pdp-breadcrumb-current'>{product.brand}</span>
+
+          <span className='pdp-breadcrumb-current'>{product.name}</span>
         </div>
 
         <div className='pdp-outer'>
@@ -1480,29 +1511,29 @@ export default function ProductDetail() {
               ></button>
             </div>
             {hasRatings && (
-  <div
-    className='pdp-rating-row'
-    onClick={scrollToRatings}
-    style={{ cursor: 'pointer' }}
-  >
-    <span className='pdp-rating-pill'>
-      <Star size={11} fill='#fff' strokeWidth={0} />
-      {ratingsData.overall}
-    </span>
+              <div
+                className='pdp-rating-row'
+                onClick={scrollToRatings}
+                style={{ cursor: 'pointer' }}
+              >
+                <span className='pdp-rating-pill'>
+                  <Star size={11} fill='#fff' strokeWidth={0} />
+                  {ratingsData.overall}
+                </span>
 
-    <span className='pdp-rating-sep'>|</span>
+                <span className='pdp-rating-sep'>|</span>
 
-    <span className='pdp-rating-meta'>
-      {ratingsData.rating_count} Ratings
-    </span>
+                <span className='pdp-rating-meta'>
+                  {ratingsData.rating_count} Ratings
+                </span>
 
-    <span className='pdp-rating-sep'>|</span>
+                <span className='pdp-rating-sep'>|</span>
 
-    <span className='pdp-rating-meta'>
-      {ratingsData.review_count} Reviews
-    </span>
-  </div>
-)}
+                <span className='pdp-rating-meta'>
+                  {ratingsData.review_count} Reviews
+                </span>
+              </div>
+            )}
 
             <div className='pdp-price-row'>
               <span className='pdp-price'>

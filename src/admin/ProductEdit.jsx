@@ -418,7 +418,12 @@ const ProductEdit = ({ onBack }) => {
     product_id: productId,
     title,
     brand: { name: brandName, catalogue_id: catalogueId },
-    category_id: categoryId,
+    category: {
+  category_name: categories.find(
+    (c) => c.category_id === categoryId
+  )?.name,
+  category_id: categoryId,
+},
     description: {
       Material: material,
       'Sleeve Length': sleeveLength,
