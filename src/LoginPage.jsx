@@ -328,15 +328,31 @@ const [redirectSeconds, setRedirectSeconds] = useState(null)
   const pad = (n) => String(n).padStart(2, '0')
 
   // ── MSG91 verify ──
-  // MSG91's initSendOTP also handles verification when `otp` is passed in config
+  // MSG91 widget verifies the OTP and returns an access token; the backend
+  // validates that token with MSG91 and issues our JWT
   const verifyOtp = useCallback(
     async (otpValue) => {
       setVerifying(true)
       setError('')
 
       try {
+        const widgetData = await new Promise((resolve, reject) => {
+          window.verifyOtp(
+            otpValue,
+            (data) => resolve(data),
+            (err) =>
+              reject(
+                new Error(
+                  typeof err === 'string'
+                    ? err
+                    : err?.message || 'Invalid OTP',
+                ),
+              ),
+          )
+        })
+
         const response = await fetch(
-          'https://api.aarria.com/api/auth/verify-otp',
+          'https://api.aarria.com/api/auth/msg91-login',
           {
             method: 'POST',
             headers: {
@@ -344,7 +360,7 @@ const [redirectSeconds, setRedirectSeconds] = useState(null)
             },
             body: JSON.stringify({
               mobile_no: phone,
-              otp: otpValue,
+              access_token: widgetData?.message,
             }),
           },
         )
@@ -409,35 +425,27 @@ setRedirectSeconds(3)
     setDigits(['', '', '', ''])
     setDigitState('idle')
 
-    try {
-      const response = await fetch(
-        'https://api.aarria.com/api/auth/generate-otp',
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            mobile_no: phone,
-          }),
-        },
-      )
-
-      const data = await response.json()
-
-      if (!response.ok) {
-        throw new Error(data.detail || 'Could not resend OTP')
-      }
-
-      setCanResend(false)
-      setSeconds(30)
-      refs[0].current?.focus()
-    } catch (err) {
-      setError(err.message)
-    } finally {
-      setResending(false)
-    }
-  }, [resending, phone])
+    // '11' = SMS channel
+    window.retryOtp(
+      '11',
+      (data) => {
+        console.log('[MSG91] OTP resent', data)
+        setCanResend(false)
+        setSeconds(30)
+        setResending(false)
+        refs[0].current?.focus()
+      },
+      (err) => {
+        console.log('[MSG91] resend failed', err)
+        setError(
+          typeof err === 'string'
+            ? err
+            : err?.message || 'Could not resend OTP',
+        )
+        setResending(false)
+      },
+    )
+  }, [resending])
 
   const allFilled = digits.every((d) => d !== '')
 
@@ -540,12 +548,11 @@ setRedirectSeconds(3)
 }
 
 // ─── Login Screen ─────────────────────────────────────────────────────────────
-function LoginScreen({ onContinue }) {
+function LoginScreen({ onContinue, msg91Ready }) {
   const [phone, setPhone] = useState('9876543210')
   const [agreed, setAgreed] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-  const msg91Ready = true
 
   const isReady = phone.length === 10 && agreed && msg91Ready
 
@@ -555,38 +562,29 @@ function LoginScreen({ onContinue }) {
   }
 
   // ── Send OTP via MSG91 ──
-  const handleContinue = async () => {
+  const handleContinue = () => {
     if (!isReady) return
 
     setLoading(true)
     setError('')
 
-    try {
-      const response = await fetch(
-        'https://api.aarria.com/api/auth/generate-otp',
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            mobile_no: phone,
-          }),
-        },
-      )
-
-      const data = await response.json()
-
-      if (!response.ok) {
-        throw new Error(data.detail || 'Failed to send OTP')
-      }
-
-      onContinue(phone)
-    } catch (err) {
-      setError(err.message)
-    } finally {
-      setLoading(false)
-    }
+    window.sendOtp(
+      `91${phone}`,
+      (data) => {
+        console.log('[MSG91] OTP sent', data)
+        setLoading(false)
+        onContinue(phone)
+      },
+      (err) => {
+        console.log('[MSG91] send failed', err)
+        setError(
+          typeof err === 'string'
+            ? err
+            : err?.message || 'Failed to send OTP',
+        )
+        setLoading(false)
+      },
+    )
   }
   return (
     <>
@@ -667,6 +665,9 @@ export default function LoginPage() {
   const [phone, setPhone] = useState('')
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
+  // Load the MSG91 widget here (not in a child screen) so the script
+  // survives the login → otp screen switch
+  const msg91Ready = useMSG91Script()
 
   const handleVerified = (data) => {
     const redirectTo = searchParams.get('redirect') || '/'
@@ -683,6 +684,7 @@ export default function LoginPage() {
         <div className='lp-card'>
           {screen === 'login' ? (
             <LoginScreen
+              msg91Ready={msg91Ready}
               onContinue={(p) => {
                 setPhone(p)
                 setScreen('otp')
