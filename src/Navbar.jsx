@@ -5,10 +5,12 @@ import { ADMIN_CATEGORIES as CATEGORIES } from './utils/categories'
 
 import logo from './assets/logo.jpg'
 
+// Keep in sync with the page content rail (max-w-screen-2xl + lg:px-8)
+// so the logo and content left edges align
 const PAGE_CONTAINER = {
-  maxWidth: '1400px',
+  maxWidth: '1536px',
   margin: '0 auto',
-  padding: '0 24px',
+  padding: '0 32px',
   width: '100%',
 }
 
