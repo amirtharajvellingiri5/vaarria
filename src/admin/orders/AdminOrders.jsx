@@ -76,12 +76,16 @@ const addressLines = (a) =>
     a?.pin ? `PIN: ${a.pin}` : '',
   ].filter(Boolean)
 
+const shippableItems = (order) =>
+  (order.items || []).filter((i) => i.item_status !== 'QC_FAILED')
+
 // ─── Courier invoice / shipping slip ──────────────────────────────────────────
 const printInvoice = (order) => {
   const win = window.open('', '_blank')
   if (!win) return
 
-  const rows = (order.items || [])
+  // QC-failed items are not shipped, so they're excluded from the slip
+  const rows = shippableItems(order)
     .map(
       (item) => `
         <tr>
@@ -147,7 +151,7 @@ const printInvoice = (order) => {
       <p style="margin:0;line-height:1.9">
         Courier: <b>${order.tracking?.provider || '—'}</b><br/>
         AWB / Tracking ID: <b>${order.tracking?.id || '—'}</b><br/>
-        Items: <b>${(order.items || []).reduce((s, i) => s + (i.quantity || 1), 0)}</b><br/>
+        Items: <b>${shippableItems(order).reduce((s, i) => s + (i.quantity || 1), 0)}</b><br/>
         Payment ID: ${order.payment_id || '—'}
       </p>
     </div>
@@ -209,6 +213,126 @@ const Field = ({ label, children }) => (
 
 const inputCls =
   'w-full px-3 py-2 bg-stone-900 border border-stone-700 rounded-lg text-sm text-stone-100 placeholder-stone-600 focus:outline-none focus:border-rose-500 transition-colors'
+
+// ─── QC Fail modal ────────────────────────────────────────────────────────────
+
+const QC_REASONS = [
+  'Damaged in QC check',
+  'Print / colour defect',
+  'Stitching issue',
+  'Wrong size received from vendor',
+  'Out of stock',
+]
+
+function QCFailModal({ order, item, onClose, onDone, setToast }) {
+  const [reason, setReason] = useState('')
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
+
+  const submit = async () => {
+    if (!reason.trim()) return
+    setSaving(true)
+    setError('')
+    try {
+      const res = await fetch(
+        `${ORDERS_API_BASE}/admin/orders/${order.id}/items/${item.id}/qc-fail`,
+        {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ reason: reason.trim() }),
+        },
+      )
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) throw new Error(data.detail || 'Update failed')
+      setToast('Item marked as QC Failed')
+      onDone()
+    } catch (e) {
+      setError(e.message || 'Update failed')
+      setSaving(false)
+    }
+  }
+
+  return (
+    <div
+      onClick={(e) => e.target === e.currentTarget && !saving && onClose()}
+      className='fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4'
+    >
+      <div className='w-full max-w-md bg-stone-950 border border-stone-800 rounded-2xl overflow-hidden shadow-2xl'>
+        <div className='flex items-center gap-3 px-6 py-4 border-b border-stone-800 bg-stone-900/50'>
+          <div className='w-8 h-8 rounded-lg bg-rose-500/10 flex items-center justify-center'>
+            <AlertTriangle size={14} className='text-rose-400' />
+          </div>
+          <div>
+            <h3 className='text-sm font-bold text-stone-100'>Mark Item as QC Failed</h3>
+            <p className='text-xs text-stone-500'>
+              {item.name}{item.size ? ` · Size ${item.size}` : ''} · Order #{order.id}
+            </p>
+          </div>
+        </div>
+
+        <div className='p-6 space-y-3'>
+          <p className='text-xs text-stone-400'>
+            The customer will see this item as <b className='text-rose-400'>QC Failed</b> along
+            with the reason you enter. It will be excluded from the shipping slip.
+          </p>
+
+          <div className='flex flex-wrap gap-1.5'>
+            {QC_REASONS.map((r) => (
+              <button
+                key={r}
+                onClick={() => setReason(r)}
+                className={`px-2.5 py-1 rounded-full text-[11px] font-semibold border transition-colors ${
+                  reason === r
+                    ? 'border-rose-500 text-rose-400 bg-rose-500/10'
+                    : 'border-stone-700 text-stone-400 hover:border-stone-500'
+                }`}
+              >
+                {r}
+              </button>
+            ))}
+          </div>
+
+          <textarea
+            value={reason}
+            onChange={(e) => setReason(e.target.value)}
+            rows={3}
+            placeholder='Reason shown to the customer…'
+            className='w-full px-3 py-2 bg-stone-900 border border-stone-700 rounded-lg text-sm text-stone-100 placeholder-stone-600 focus:outline-none focus:border-rose-500 transition-colors resize-none'
+          />
+
+          {error && (
+            <p className='text-xs text-rose-400 flex items-center gap-1.5'>
+              <AlertTriangle size={12} /> {error}
+            </p>
+          )}
+        </div>
+
+        <div className='flex items-center justify-end gap-3 px-6 py-4 border-t border-stone-800 bg-stone-900/30'>
+          <button
+            onClick={onClose}
+            disabled={saving}
+            className='px-4 py-2 rounded-xl text-sm font-semibold border border-stone-700 text-stone-300 hover:border-stone-500 transition-colors disabled:opacity-40'
+          >
+            Cancel
+          </button>
+          <button
+            onClick={submit}
+            disabled={saving || !reason.trim()}
+            className='flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold bg-rose-600 hover:bg-rose-700 text-white transition-colors disabled:opacity-50'
+          >
+            {saving ? (
+              <>
+                <Loader2 size={13} className='animate-spin' /> Saving…
+              </>
+            ) : (
+              'Mark QC Failed'
+            )}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
 
 // ─── Expanded order panel ─────────────────────────────────────────────────────
 
@@ -379,7 +503,11 @@ function OrderActions({ order, onUpdated, setToast }) {
 
 function OrderRow({ order, onUpdated, setToast }) {
   const [expanded, setExpanded] = useState(false)
+  const [qcItem, setQcItem] = useState(null)
   const a = order.address || {}
+  const qcFailedCount = (order.items || []).filter(
+    (i) => i.item_status === 'QC_FAILED',
+  ).length
 
   return (
     <div className='border-t border-stone-800/60'>
@@ -403,6 +531,11 @@ function OrderRow({ order, onUpdated, setToast }) {
                 {order.tracking.provider} · {order.tracking.id}
               </span>
             )}
+            {qcFailedCount > 0 && (
+              <span className='text-[10px] font-bold text-rose-400 border border-rose-500/30 bg-rose-500/10 rounded-full px-2 py-0.5'>
+                QC FAILED × {qcFailedCount}
+              </span>
+            )}
           </div>
           <p className='text-xs text-stone-500 mt-1 truncate'>
             {order.date} · {a.name || `Customer ${order.customer_id}`} · {(order.items || []).length} item{(order.items || []).length !== 1 ? 's' : ''}
@@ -424,30 +557,52 @@ function OrderRow({ order, onUpdated, setToast }) {
               <Package size={12} /> Items
             </p>
             <div className='space-y-2'>
-              {(order.items || []).map((item) => (
-                <div
-                  key={item.id}
-                  onClick={() => item.product_id && window.open(`/product/${item.product_id}`, '_blank')}
-                  className={`flex items-center gap-3 p-2 rounded-lg border border-stone-800 bg-stone-950 ${item.product_id ? 'cursor-pointer hover:border-rose-500/40' : ''}`}
-                >
-                  {item.image ? (
-                    <img
-                      src={`${CDN}${item.image}`}
-                      alt=''
-                      className='w-10 h-12 rounded object-cover border border-stone-800 flex-shrink-0'
-                      onError={(e) => (e.target.style.visibility = 'hidden')}
-                    />
-                  ) : (
-                    <div className='w-10 h-12 rounded bg-stone-800 flex-shrink-0' />
-                  )}
-                  <div className='min-w-0'>
-                    <p className='text-xs font-semibold text-stone-200 truncate'>{item.name}</p>
-                    <p className='text-[11px] text-stone-500'>
-                      {item.size ? `Size ${item.size} · ` : ''}Qty {item.quantity} · {formatINR(item.price)}
-                    </p>
+              {(order.items || []).map((item) => {
+                const failed = item.item_status === 'QC_FAILED'
+                return (
+                  <div
+                    key={item.id}
+                    onClick={() => item.product_id && window.open(`/product/${item.product_id}`, '_blank')}
+                    className={`flex items-center gap-3 p-2 rounded-lg border bg-stone-950 ${
+                      failed ? 'border-rose-500/40 opacity-80' : 'border-stone-800'
+                    } ${item.product_id ? 'cursor-pointer hover:border-rose-500/40' : ''}`}
+                  >
+                    {item.image ? (
+                      <img
+                        src={`${CDN}${item.image}`}
+                        alt=''
+                        className='w-10 h-12 rounded object-cover border border-stone-800 flex-shrink-0'
+                        onError={(e) => (e.target.style.visibility = 'hidden')}
+                      />
+                    ) : (
+                      <div className='w-10 h-12 rounded bg-stone-800 flex-shrink-0' />
+                    )}
+                    <div className='min-w-0 flex-1'>
+                      <p className='text-xs font-semibold text-stone-200 truncate'>{item.name}</p>
+                      <p className='text-[11px] text-stone-500'>
+                        {item.size ? `Size ${item.size} · ` : ''}Qty {item.quantity} · {formatINR(item.price)}
+                      </p>
+                      {failed && (
+                        <p className='text-[10px] text-rose-400 mt-0.5'>
+                          <b>QC Failed</b>{item.qc_reason ? ` — ${item.qc_reason}` : ''}
+                        </p>
+                      )}
+                    </div>
+                    {!failed && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setQcItem(item)
+                        }}
+                        className='flex-shrink-0 px-2 py-1 rounded-md text-[10px] font-bold border border-stone-700 text-stone-400 hover:border-rose-500/60 hover:text-rose-400 transition-colors'
+                        title='Cancel this item with a reason (QC Failed)'
+                      >
+                        QC FAIL
+                      </button>
+                    )}
                   </div>
-                </div>
-              ))}
+                )
+              })}
             </div>
           </div>
 
@@ -506,6 +661,19 @@ function OrderRow({ order, onUpdated, setToast }) {
           </div>
         </div>
       )}
+
+      {qcItem && (
+        <QCFailModal
+          order={order}
+          item={qcItem}
+          onClose={() => setQcItem(null)}
+          onDone={() => {
+            setQcItem(null)
+            onUpdated()
+          }}
+          setToast={setToast}
+        />
+      )}
     </div>
   )
 }
@@ -552,7 +720,11 @@ export default function AdminOrders() {
   const filtered = useMemo(() => {
     let list = [...allOrders]
 
-    if (statusFilter !== 'ALL') {
+    if (statusFilter === 'QC_FAILED') {
+      list = list.filter((o) =>
+        (o.items || []).some((i) => i.item_status === 'QC_FAILED'),
+      )
+    } else if (statusFilter !== 'ALL') {
       list = list.filter((o) => o.status === statusFilter)
     }
     if (paymentFilter !== 'ALL') {
@@ -686,6 +858,7 @@ export default function AdminOrders() {
               {STATUSES.map((st) => (
                 <option key={st} value={st}>{st}</option>
               ))}
+              <option value='QC_FAILED'>QC FAILED (items)</option>
             </select>
             <select
               value={paymentFilter}

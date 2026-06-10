@@ -390,6 +390,22 @@ function OrderCard({ order }) {
               <p style={{ fontSize: 11, color: '#282c3f', margin: 0 }}>
                 Size: <b>{item.size}</b> · ₹{item.price.toLocaleString('en-IN')}
               </p>
+              {item.item_status === 'QC_FAILED' && (
+                <div style={{ marginTop: 4 }}>
+                  <span style={{
+                    display: 'inline-block', fontSize: 10, fontWeight: 700,
+                    color: '#dc2626', background: '#fee2e2', border: '1px solid #fecaca',
+                    borderRadius: 10, padding: '1px 8px',
+                  }}>
+                    QC Failed
+                  </span>
+                  {item.qc_reason && (
+                    <p style={{ fontSize: 10, color: '#dc2626', margin: '3px 0 0', maxWidth: 150 }}>
+                      {item.qc_reason}
+                    </p>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         ))}
