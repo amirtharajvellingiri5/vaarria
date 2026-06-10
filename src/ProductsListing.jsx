@@ -572,7 +572,7 @@ const ListingPage = () => {
   })
   const [sortBy, setSortBy] = useState('price-low')
   const [currentPage, setCurrentPage] = useState(1)
-  const itemsPerPage = 9
+  const itemsPerPage = 12
   const navigate = useNavigate()
 
   const { slug } = useParams()
@@ -708,7 +708,7 @@ const ListingPage = () => {
     <div className='min-h-screen bg-gradient-to-b from-white to-pink-50'>
       <Navbar />
 
-      <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8'>
+      <div className='max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8'>
         {/* Page title */}
         <h1
           className='font-bold text-gray-800 mb-4'
@@ -795,14 +795,14 @@ const ListingPage = () => {
             /> */}
 
             {isLoading ? (
-              <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6'>
-                {Array.from({ length: 9 }).map((_, i) => (
+              <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6'>
+                {Array.from({ length: 12 }).map((_, i) => (
                   <ProductCardSkeleton key={i} />
                 ))}
               </div>
             ) : paginatedProducts.length > 0 ? (
               <>
-                <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6'>
+                <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6'>
                   {paginatedProducts.map((product) => (
                     <ProductCard
                       key={product.id}
