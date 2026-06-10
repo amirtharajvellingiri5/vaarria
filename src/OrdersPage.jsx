@@ -367,7 +367,7 @@ function OrderCard({ order }) {
         {order.items.map(item => (
           <div
             key={item.id}
-            onClick={() => item.product_id && navigate(`/product/${item.product_id}`)}
+            onClick={() => item.product_id && window.open(`/product/${item.product_id}`, '_blank')}
             style={{
               display: 'flex', alignItems: 'center', gap: 10,
               background: '#fafafa', borderRadius: 8, padding: '8px 10px',
@@ -469,7 +469,16 @@ function OrderCard({ order }) {
               />
             )}
             {(order.status === 'SHIPPED' || order.status === 'OUT') && (
-              <ActionBtn icon={<Truck size={13} />} label="Track Order" primary />
+              <ActionBtn
+                icon={<Truck size={13} />}
+                label="Track Order"
+                primary
+                onClick={() =>
+                  order.tracking?.url
+                    ? window.open(order.tracking.url, '_blank')
+                    : alert('Tracking details will be available soon')
+                }
+              />
             )}
             <ActionBtn
               icon={<MessageCircle size={13} />}
