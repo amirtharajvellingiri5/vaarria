@@ -1064,21 +1064,24 @@ export default function ProductDetail() {
     try {
       const activeColor = product.colors?.find((c) => c.active)?.name || ''
 
-      const response = await fetch('https://api.aarria.com/api/bags', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
+      const response = await fetch(
+        'https://zq0dbjycx6.execute-api.ap-south-1.amazonaws.com/prod/bags/add-bag-item',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            customer_id: 1,
+            product_id: product.id || '',
+            address_id: null,
+            size: selectedSize || '',
+            color: activeColor || '',
+            quantity: 1,
+            selected: true,
+          }),
         },
-        body: JSON.stringify({
-          customer_id: 1,
-          product_id: product.id || '',
-          address_id: null,
-          size: selectedSize || '',
-          color: activeColor || '',
-          quantity: 1,
-          selected: true,
-        }),
-      })
+      )
 
       if (!response.ok) {
         let errorMessage = 'Unable to add item to bag'

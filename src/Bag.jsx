@@ -32,6 +32,10 @@ import './constants/global.css'
 import CouponModal from './modals/CouponModal'
 import AddressModal from './modals/AddressModal'
 
+// Orders handler (DynamoDB-backed) — all bag APIs go here
+const ORDERS_API_BASE =
+  'https://zq0dbjycx6.execute-api.ap-south-1.amazonaws.com/prod'
+
 function SkeletonPulse({ style = {} }) {
   return (
     <div
@@ -288,7 +292,7 @@ function PinBar() {
         }
 
         const response = await fetch(
-          `https://api.aarria.com/api/addresses?customer_id=${customerId}`,
+          `${ORDERS_API_BASE}/addresses?customer_id=${customerId}`,
         )
 
         if (!response.ok) {
@@ -596,13 +600,14 @@ function ItemCard({ item }) {
 
     try {
       const response = await fetch(
-        `https://api.aarria.com/api/bags/${item.id}`,
+        `${ORDERS_API_BASE}/bags/update-bag-item/${item.id}`,
         {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
+            customer_id: 1,
             address_id: item.address_id ?? null,
             size: item.size,
             color: item.colorName,
@@ -638,7 +643,7 @@ function ItemCard({ item }) {
       setDeleting(true)
 
       const response = await fetch(
-        `https://api.aarria.com/api/bags/${item.id}?customer_id=1`,
+        `${ORDERS_API_BASE}/bags/delete-bag-item/${item.id}?customer_id=1`,
         {
           method: 'DELETE',
         },
@@ -993,8 +998,7 @@ function PricePanel() {
   const discountOnMrp = totalMrp - totalPrice
   const total = totalPrice - couponSavings + donationAmount
   
-  const API_BASE =
-    'https://zq0dbjycx6.execute-api.ap-south-1.amazonaws.com/prod'
+  const API_BASE = ORDERS_API_BASE
   const handlePlaceOrder = async () => {
     if (selected.length === 0) return
 
@@ -1339,7 +1343,9 @@ function BagPage() {
     const fetchBagItems = async () => {
       try {
         setLoading(true)
-        const response = await fetch('https://api.aarria.com/customers/1/bag')
+        const response = await fetch(
+          `${ORDERS_API_BASE}/bags/customers/1/bag`,
+        )
 
         const data = await response.json()
 
