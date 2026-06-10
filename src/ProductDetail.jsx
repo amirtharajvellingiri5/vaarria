@@ -897,8 +897,8 @@ function SkeletonLoader() {
         @keyframes skeletonShimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
         .skeleton { background: linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 50%, #f3f4f6 75%); background-size: 200% 100%; animation: skeletonShimmer 1.2s infinite; border-radius: 4px; }
         .pdp-page { min-height: 100vh; background: #fff; font-family: 'DM Sans', sans-serif; color: #1f2937; }
-        .pdp-breadcrumb { padding: 11px clamp(16px, 6%, 86px); font-size: 12px; color: #9ca3af; display: flex; gap: 6px; align-items: center; border-bottom: 1px solid #fff; background: #fff; max-width: 1440px; margin: 0 auto; box-sizing: border-box; width: 100%; }
-        .pdp-outer { display: flex; align-items: flex-start; max-width: 1440px; margin: 0 auto; padding: 0 clamp(16px, 6%, 86px); }
+        .pdp-breadcrumb { padding: 11px clamp(16px, 3%, 32px); font-size: 12px; color: #9ca3af; display: flex; gap: 6px; align-items: center; border-bottom: 1px solid #fff; background: #fff; max-width: 1536px; margin: 0 auto; box-sizing: border-box; width: 100%; }
+        .pdp-outer { display: flex; align-items: flex-start; max-width: 1536px; margin: 0 auto; padding: 0 clamp(16px, 3%, 32px); }
         .pdp-images-col { width: 52%; min-width: 0; }
         .pdp-info-col {
   width: 48%;
@@ -1354,7 +1354,7 @@ export default function ProductDetail() {
         @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Playfair+Display:wght@600;700&display=swap');
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         .pdp-page { min-height: 100vh; background: #fff; font-family: 'DM Sans', sans-serif; color: #1f2937; }
-        .pdp-breadcrumb { padding: 11px clamp(16px, 6%, 86px); font-size: 12px; color: #9ca3af; display: flex; gap: 6px; align-items: center; border-bottom: 1px solid #fff; background: #fff; max-width: 1440px; margin: 0 auto; box-sizing: border-box; width: 100%; }
+        .pdp-breadcrumb { padding: 11px clamp(16px, 3%, 32px); font-size: 12px; color: #9ca3af; display: flex; gap: 6px; align-items: center; border-bottom: 1px solid #fff; background: #fff; max-width: 1536px; margin: 0 auto; box-sizing: border-box; width: 100%; }
         .pdp-breadcrumb a {
   color: #9ca3af;
   text-decoration: none;
@@ -1374,7 +1374,7 @@ export default function ProductDetail() {
 }
         .pdp-breadcrumb-sep { color: #d1d5db; font-size: 10px; }
         .pdp-breadcrumb-current { color: #374151; font-weight: 500; }
-        .pdp-outer { display: flex; align-items: flex-start; max-width: 1440px; margin: 0 auto; padding: 0 clamp(16px, 6%, 86px); }
+        .pdp-outer { display: flex; align-items: flex-start; max-width: 1536px; margin: 0 auto; padding: 0 clamp(16px, 3%, 32px); }
         .pdp-images-col { width: 52%; min-width: 0; padding-top: 12px; }
         .pdp-info-col {
   width: 48%;

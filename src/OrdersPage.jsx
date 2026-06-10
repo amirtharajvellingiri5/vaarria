@@ -616,7 +616,7 @@ export default function OrdersPage() {
         padding: '0 24px', position: 'sticky', top: 0, zIndex: 50,
         boxShadow: '0 1px 6px rgba(0,0,0,0.06)',
       }}>
-        <div style={{ maxWidth: 900, margin: '0 auto', display: 'flex', alignItems: 'center', gap: 16, height: 64 }}>
+        <div style={{ maxWidth: 1200, margin: '0 auto', display: 'flex', alignItems: 'center', gap: 16, height: 64 }}>
           <button
             onClick={() => navigate(-1)}
             style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, color: '#555', padding: 4 }}
@@ -635,7 +635,7 @@ export default function OrdersPage() {
         </div>
       </div>
 
-      <div style={{ maxWidth: 900, margin: '0 auto', padding: '24px 16px' }}>
+      <div style={{ maxWidth: 1200, margin: '0 auto', padding: '24px 32px' }}>
 
         {/* Page Title */}
         <div style={{ marginBottom: 20 }}>
