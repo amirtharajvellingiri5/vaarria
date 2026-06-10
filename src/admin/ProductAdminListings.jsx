@@ -3,6 +3,7 @@ import {
   Search,
   Plus,
   Edit2,
+  Copy,
   Trash2,
   ChevronUp,
   ChevronDown,
@@ -305,6 +306,7 @@ const ProductListings = () => {
   const [deleteProduct, setDeleteProduct] = useState(null)
   const [toast, setToast] = useState('')
   const [syncing, setSyncing] = useState(false)
+  const [cloningId, setCloningId] = useState(null)
 
   useEffect(() => {
     fetchListings()
@@ -321,6 +323,66 @@ const ProductListings = () => {
       setError('Failed to load products. Please try again.')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleClone = async (p) => {
+    setCloningId(p.id)
+    try {
+      // fetch the full product — listing rows only carry summary fields
+      const res = await fetch(`https://api.aarria.com/product/${p.id}`)
+      if (!res.ok) throw new Error(`Error ${res.status}`)
+      const full = await res.json()
+
+      const payload = {
+        title: `${full.title} (Copy)`,
+        brand: {
+          name: full.brand?.name || '',
+          catalogue_id: full.brand?.catalogue_id || '',
+        },
+        category: {
+          category_name: full.category?.category_name || '',
+          category_id: full.category?.category_id,
+        },
+        description: full.description?.description || full.description || {},
+        pricing: {
+          mrp: full.pricing?.mrp || 0,
+          sale_price: full.pricing?.sale_price || 0,
+          buy_price: full.pricing?.buy_price || 0,
+          gst: full.pricing?.gst || 0,
+          discounts: {
+            discount_type: full.pricing?.discounts?.discount_type || 'FLAT',
+            value: full.pricing?.discounts?.value || 0,
+          },
+        },
+        inventory: {
+          variants: (full.inventory?.variants || []).map((v) => ({
+            color: v.color,
+            sizes: (v.sizes || []).map((s) => ({
+              size: s.size,
+              quantity: s.quantity,
+            })),
+            main_image: v.main_image || '',
+            other_images: v.other_images || [],
+          })),
+        },
+        // a clone is a new product — start with no ratings
+        ratings: { average_rating: 0, review_count: 0 },
+      }
+
+      const createRes = await fetch(PRODUCTS_API, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      })
+      if (!createRes.ok) throw new Error(await createRes.text())
+
+      setToast('Product cloned')
+      await fetchListings()
+    } catch {
+      setToast('Clone failed. Please try again.')
+    } finally {
+      setCloningId(null)
     }
   }
 
@@ -680,6 +742,18 @@ const openEditProduct = (id) => {
                             className='flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border border-stone-700 text-stone-300 hover:border-rose-500/50 hover:text-rose-400 hover:bg-rose-500/5 transition-all'
                           >
                             <Edit2 size={12} /> Edit
+                          </button>
+                          <button
+                            onClick={() => handleClone(p)}
+                            disabled={cloningId !== null}
+                            className='flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border border-stone-700 text-stone-300 hover:border-rose-500/50 hover:text-rose-400 hover:bg-rose-500/5 transition-all disabled:opacity-50 disabled:cursor-not-allowed'
+                          >
+                            {cloningId === p.id ? (
+                              <Loader2 size={12} className='animate-spin' />
+                            ) : (
+                              <Copy size={12} />
+                            )}{' '}
+                            Clone
                           </button>
                           <button
                             onClick={() => setDeleteProduct(p)}

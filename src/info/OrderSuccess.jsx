@@ -133,15 +133,17 @@ const s = {
     textAlign: "center",
   },
 
-  logoArea: { marginBottom: 2 },
+  // tick halo (10px box-shadow ring) extends beyond the circle,
+  // so margins here include that overflow
+  logoArea: { marginBottom: 28 },
 
   logo: {
-    height: 120,
+    height: 56,
     width: "auto",
     objectFit: "contain",
   },
 
-  tickWrap: { marginBottom: 0 },
+  tickWrap: { marginBottom: 26 },
 
   tickCircle: {
     width: 72,

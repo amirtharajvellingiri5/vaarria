@@ -1044,6 +1044,7 @@ function PricePanel() {
           quantity: item.qty,
           unit_price: item.price,
           size: item.size,
+          image: item.image || null,
           bag_id: item.id,
         })),
       })

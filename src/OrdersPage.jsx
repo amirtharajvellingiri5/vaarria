@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import {
   ShoppingBag,
@@ -27,7 +27,15 @@ import './constants/global.css'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL || 'https://api.aarria.com'
+// Orders handler (DynamoDB-backed)
+const ORDERS_API_BASE =
+  'https://zq0dbjycx6.execute-api.ap-south-1.amazonaws.com/prod'
+const CDN = 'https://cdn.aarria.com/app/images/'
+
+const getCustomerId = () => {
+  const customer = JSON.parse(localStorage.getItem('customer') || 'null')
+  return customer?.customer_id ?? 1
+}
 
 const ORDER_STATUSES = {
   PLACED:    { label: 'Order Placed',  color: '#7c5cbf', bg: '#f3eeff', icon: Package },
@@ -47,11 +55,22 @@ const FILTER_OPTIONS = [
   { label: 'Returned',   value: 'RETURNED' },
 ]
 
-// ─── Mock Fetcher (swap for real API) ─────────────────────────────────────────
+// ─── Fetcher ──────────────────────────────────────────────────────────────────
 
 const fetchOrders = async () => {
-  // Replace with: const res = await axios.get(`${API_BASE}/orders`); return res.data
-  return MOCK_ORDERS
+  const { data } = await axios.get(
+    `${ORDERS_API_BASE}/customers/${getCustomerId()}/orders/full`,
+  )
+
+  return (data.orders || []).map((order) => ({
+    ...order,
+    items: (order.items || []).map((item) => ({
+      ...item,
+      brand: item.brand || 'Aarria',
+      name: item.name || '',
+      image: item.image ? `${CDN}${item.image}` : '',
+    })),
+  }))
 }
 
 // ─── Timeline Component ────────────────────────────────────────────────────────
@@ -118,9 +137,28 @@ function OrderTimeline({ status }) {
 
 function OrderCard({ order }) {
   const [expanded, setExpanded] = useState(false)
+  const [cancelling, setCancelling] = useState(false)
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
   const meta = ORDER_STATUSES[order.status] || ORDER_STATUSES.PLACED
   const StatusIcon = meta.icon
+
+  const handleCancelOrder = async () => {
+    if (cancelling) return
+    if (!window.confirm('Cancel this order?')) return
+
+    try {
+      setCancelling(true)
+      await axios.put(
+        `${ORDERS_API_BASE}/orders/${order.id}/cancel?customer_id=${getCustomerId()}`,
+      )
+      queryClient.invalidateQueries({ queryKey: ['orders'] })
+    } catch (error) {
+      alert(error.response?.data?.detail || 'Unable to cancel order')
+    } finally {
+      setCancelling(false)
+    }
+  }
 
   return (
     <div style={{
@@ -258,7 +296,12 @@ function OrderCard({ order }) {
               </>
             )}
             {(order.status === 'PLACED' || order.status === 'CONFIRMED') && (
-              <ActionBtn icon={<XCircle size={13} />} label="Cancel Order" danger />
+              <ActionBtn
+                icon={<XCircle size={13} />}
+                label={cancelling ? 'Cancelling…' : 'Cancel Order'}
+                danger
+                onClick={handleCancelOrder}
+              />
             )}
             {(order.status === 'SHIPPED' || order.status === 'OUT') && (
               <ActionBtn icon={<Truck size={13} />} label="Track Order" primary />
@@ -272,10 +315,11 @@ function OrderCard({ order }) {
   )
 }
 
-function ActionBtn({ icon, label, primary, danger }) {
+function ActionBtn({ icon, label, primary, danger, onClick }) {
   const [hover, setHover] = useState(false)
   return (
     <button
+      onClick={onClick}
       onMouseEnter={() => setHover(true)}
       onMouseLeave={() => setHover(false)}
       style={{
@@ -489,66 +533,3 @@ export default function OrdersPage() {
     </div>
   )
 }
-
-// ─── Mock Data ────────────────────────────────────────────────────────────────
-
-const MOCK_ORDERS = [
-  {
-    id: 'ARR-20240521-001',
-    date: '21 May 2024',
-    status: 'DELIVERED',
-    expectedBy: '23 May 2024',
-    total: 2498,
-    mrp: 3499,
-    discount: 1051,
-    delivery: 0,
-    address: { name: 'Priya S.', line1: '12, Rose Nagar, Koramangala', city: 'Bengaluru', pin: '560034' },
-    items: [
-      { id: 1, brand: 'Aarria', name: 'Floral Wrap Midi Dress', size: 'S', price: 1299, image: 'https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=200&q=80' },
-      { id: 2, brand: 'Aarria', name: 'Cotton Striped Kurti', size: 'M', price: 1199, image: 'https://images.unsplash.com/photo-1567401893414-76b7b1e5a7a5?w=200&q=80' },
-    ],
-  },
-  {
-    id: 'ARR-20240528-002',
-    date: '28 May 2024',
-    status: 'SHIPPED',
-    expectedBy: '2 Jun 2024',
-    total: 1799,
-    mrp: 2200,
-    discount: 451,
-    delivery: 50,
-    address: { name: 'Priya S.', line1: '12, Rose Nagar, Koramangala', city: 'Bengaluru', pin: '560034' },
-    items: [
-      { id: 3, brand: 'Aarria', name: 'Pastel Palazzo Set', size: 'M', price: 1799, image: 'https://images.unsplash.com/photo-1594938298603-c8148c4b4357?w=200&q=80' },
-    ],
-  },
-  {
-    id: 'ARR-20240601-003',
-    date: '1 Jun 2024',
-    status: 'PLACED',
-    expectedBy: '6 Jun 2024',
-    total: 3198,
-    mrp: 4000,
-    discount: 852,
-    delivery: 0,
-    address: { name: 'Priya S.', line1: '12, Rose Nagar, Koramangala', city: 'Bengaluru', pin: '560034' },
-    items: [
-      { id: 4, brand: 'Aarria', name: 'Embroidered Anarkali Suit', size: 'L', price: 2199, image: 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=200&q=80' },
-      { id: 5, brand: 'Aarria', name: 'Linen Crop Top', size: 'S', price: 999, image: 'https://images.unsplash.com/photo-1571513722275-4b41940f54b8?w=200&q=80' },
-    ],
-  },
-  {
-    id: 'ARR-20240415-004',
-    date: '15 Apr 2024',
-    status: 'CANCELLED',
-    expectedBy: null,
-    total: 1499,
-    mrp: 1499,
-    discount: 0,
-    delivery: 0,
-    address: { name: 'Priya S.', line1: '12, Rose Nagar, Koramangala', city: 'Bengaluru', pin: '560034' },
-    items: [
-      { id: 6, brand: 'Aarria', name: 'Denim Jacket – Navy', size: 'M', price: 1499, image: 'https://images.unsplash.com/photo-1551537482-f2075a1d41f2?w=200&q=80' },
-    ],
-  },
-]
