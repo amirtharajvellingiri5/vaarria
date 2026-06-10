@@ -262,7 +262,7 @@ async function fetchProduct(productId) {
 
 async function fetchRatings(productId) {
   const response = await fetch(
-    `https://d8obcfi1ua.execute-api.ap-south-1.amazonaws.com/prod/products/${productId}/ratings`,
+    `https://zq0dbjycx6.execute-api.ap-south-1.amazonaws.com/prod/products/${productId}/ratings`,
   )
 
   if (!response.ok) {

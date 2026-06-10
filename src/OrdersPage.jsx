@@ -373,7 +373,7 @@ export default function OrdersPage() {
           >
             <ArrowLeft size={18} />
           </button>
-          <img src={logo} alt="Aarria" style={{ height: 80, objectFit: 'contain' }} />
+          <img src={logo} alt="Aarria" style={{ height: 40, objectFit: 'contain' }} />
           <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 8 }}>
             <span style={{ fontSize: 13, color: '#94969f' }}>My Orders</span>
           </div>
