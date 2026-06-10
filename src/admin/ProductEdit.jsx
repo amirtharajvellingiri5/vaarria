@@ -640,7 +640,7 @@ const ProductEdit = ({ onBack }) => {
         <div className='max-w-7xl mx-auto px-6 h-16 flex items-center justify-between'>
           <div className='flex items-center gap-4'>
             <button
-              onClick={onBack}
+              onClick={() => window.open('/admin', '_blank')}
               className='p-2 rounded-lg hover:bg-stone-800 transition-colors text-stone-400 hover:text-stone-100'
             >
               <ArrowLeft size={18} />
