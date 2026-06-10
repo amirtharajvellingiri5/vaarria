@@ -37,6 +37,89 @@ const getCustomerId = () => {
   return customer?.customer_id ?? 1
 }
 
+const SUPPORT_WHATSAPP = '919731580157'
+
+const openWhatsAppSupport = (orderId) => {
+  const text = encodeURIComponent(`Hi, I need help with my order #${orderId}`)
+  window.open(`https://wa.me/${SUPPORT_WHATSAPP}?text=${text}`, '_blank')
+}
+
+// Opens a printable invoice in a new window — the browser's print dialog
+// lets the user save it as PDF
+const generateInvoice = (order) => {
+  const win = window.open('', '_blank')
+  if (!win) return
+
+  const rows = order.items
+    .map(
+      (item) => `
+        <tr>
+          <td>${item.name || ''}${item.size ? ` (Size: ${item.size})` : ''}</td>
+          <td style="text-align:center">${item.quantity || 1}</td>
+          <td style="text-align:right">₹${Number(item.price).toLocaleString('en-IN')}</td>
+          <td style="text-align:right">₹${Number(item.price * (item.quantity || 1)).toLocaleString('en-IN')}</td>
+        </tr>`,
+    )
+    .join('')
+
+  win.document.write(`<!DOCTYPE html>
+<html>
+<head>
+  <title>Invoice-${order.id}</title>
+  <style>
+    body { font-family: 'Segoe UI', Arial, sans-serif; color: #282c3f; padding: 40px; }
+    .brand { color: #ff3f6c; font-size: 28px; font-weight: 800; margin: 0; }
+    .muted { color: #94969f; font-size: 12px; }
+    h2 { font-size: 16px; margin: 24px 0 4px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 16px; font-size: 13px; }
+    th { text-align: left; border-bottom: 2px solid #282c3f; padding: 8px 6px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; }
+    th:nth-child(2) { text-align: center; }
+    th:nth-child(3), th:nth-child(4) { text-align: right; }
+    td { border-bottom: 1px solid #eee; padding: 8px 6px; }
+    .totals { margin-top: 16px; margin-left: auto; width: 260px; font-size: 13px; }
+    .totals div { display: flex; justify-content: space-between; padding: 4px 0; }
+    .totals .grand { border-top: 1px solid #282c3f; font-weight: 700; margin-top: 4px; padding-top: 8px; }
+    .footer { margin-top: 40px; font-size: 11px; color: #94969f; text-align: center; }
+  </style>
+</head>
+<body>
+  <p class="brand">aarria</p>
+  <p class="muted">www.aarria.com</p>
+
+  <h2>Invoice</h2>
+  <p class="muted">
+    Order #${order.id}<br/>
+    Date: ${order.date} · Status: ${order.status}
+  </p>
+
+  <h2>Deliver To</h2>
+  <p class="muted">
+    ${order.address?.name || ''}<br/>
+    ${order.address?.line1 || ''}${order.address?.city ? `, ${order.address.city}` : ''}${order.address?.pin ? ` – ${order.address.pin}` : ''}
+  </p>
+
+  <table>
+    <thead>
+      <tr><th>Item</th><th>Qty</th><th>Unit Price</th><th>Amount</th></tr>
+    </thead>
+    <tbody>${rows}</tbody>
+  </table>
+
+  <div class="totals">
+    <div><span>MRP Total</span><span>₹${Number(order.mrp).toLocaleString('en-IN')}</span></div>
+    <div><span>Discount</span><span>-₹${Number(order.discount).toLocaleString('en-IN')}</span></div>
+    <div><span>Delivery</span><span>${order.delivery === 0 ? 'FREE' : `₹${order.delivery}`}</span></div>
+    <div class="grand"><span>Total Paid</span><span>₹${Number(order.total).toLocaleString('en-IN')}</span></div>
+  </div>
+
+  <p class="footer">Thank you for shopping with Aarria.</p>
+</body>
+</html>`)
+  win.document.close()
+  win.focus()
+  win.print()
+}
+
 const ORDER_STATUSES = {
   PLACED:    { label: 'Order Placed',  color: '#7c5cbf', bg: '#f3eeff', icon: Package },
   CONFIRMED: { label: 'Confirmed',     color: '#0a7ea4', bg: '#e6f4fb', icon: CheckCircle2 },
@@ -133,31 +216,108 @@ function OrderTimeline({ status }) {
   )
 }
 
+// ─── Cancel Confirmation Modal ────────────────────────────────────────────────
+
+function CancelOrderModal({ order, onClose, onCancelled }) {
+  const [cancelling, setCancelling] = useState(false)
+  const [error, setError] = useState('')
+
+  const handleConfirm = async () => {
+    try {
+      setCancelling(true)
+      setError('')
+      await axios.put(
+        `${ORDERS_API_BASE}/orders/${order.id}/cancel?customer_id=${getCustomerId()}`,
+      )
+      onCancelled()
+    } catch (err) {
+      setError(err.response?.data?.detail || 'Unable to cancel order')
+      setCancelling(false)
+    }
+  }
+
+  return (
+    <div
+      onClick={(e) => e.target === e.currentTarget && !cancelling && onClose()}
+      style={{
+        position: 'fixed', inset: 0, zIndex: 100,
+        background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(2px)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16,
+      }}
+    >
+      <div style={{
+        width: '100%', maxWidth: 380, background: '#fff', borderRadius: 12,
+        padding: '22px 22px 18px', boxShadow: '0 12px 40px rgba(0,0,0,0.18)',
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+          <div style={{
+            width: 36, height: 36, borderRadius: '50%', background: '#fee2e2',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+          }}>
+            <XCircle size={18} color="#dc2626" />
+          </div>
+          <h3 style={{ fontSize: 15, fontWeight: 700, color: '#282c3f', margin: 0 }}>
+            Cancel this order?
+          </h3>
+        </div>
+
+        <p style={{ fontSize: 13, color: '#555', margin: '0 0 6px' }}>
+          Order <b>#{order.id}</b> · {order.items.length} item{order.items.length > 1 ? 's' : ''} · ₹{order.total.toLocaleString('en-IN')}
+        </p>
+        <p style={{ fontSize: 12, color: '#94969f', margin: '0 0 16px' }}>
+          This action cannot be undone. Any payment made will be refunded to the original payment method.
+        </p>
+
+        {error && (
+          <p style={{ fontSize: 12, color: '#dc2626', margin: '0 0 12px', display: 'flex', alignItems: 'center', gap: 6 }}>
+            <AlertCircle size={13} /> {error}
+          </p>
+        )}
+
+        <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+          <button
+            onClick={onClose}
+            disabled={cancelling}
+            style={{
+              padding: '9px 18px', borderRadius: 8, cursor: 'pointer',
+              border: '1.5px solid #d0d0d0', background: '#fff',
+              fontSize: 13, fontWeight: 600, color: '#555',
+              opacity: cancelling ? 0.5 : 1,
+            }}
+          >
+            Keep Order
+          </button>
+          <button
+            onClick={handleConfirm}
+            disabled={cancelling}
+            style={{
+              padding: '9px 18px', borderRadius: 8, cursor: 'pointer',
+              border: 'none', background: '#dc2626', color: '#fff',
+              fontSize: 13, fontWeight: 600,
+              opacity: cancelling ? 0.7 : 1,
+            }}
+          >
+            {cancelling ? 'Cancelling…' : 'Yes, Cancel Order'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ─── Order Card ───────────────────────────────────────────────────────────────
 
 function OrderCard({ order }) {
   const [expanded, setExpanded] = useState(false)
-  const [cancelling, setCancelling] = useState(false)
+  const [showCancelModal, setShowCancelModal] = useState(false)
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const meta = ORDER_STATUSES[order.status] || ORDER_STATUSES.PLACED
   const StatusIcon = meta.icon
 
-  const handleCancelOrder = async () => {
-    if (cancelling) return
-    if (!window.confirm('Cancel this order?')) return
-
-    try {
-      setCancelling(true)
-      await axios.put(
-        `${ORDERS_API_BASE}/orders/${order.id}/cancel?customer_id=${getCustomerId()}`,
-      )
-      queryClient.invalidateQueries({ queryKey: ['orders'] })
-    } catch (error) {
-      alert(error.response?.data?.detail || 'Unable to cancel order')
-    } finally {
-      setCancelling(false)
-    }
+  const handleCancelled = () => {
+    setShowCancelModal(false)
+    queryClient.invalidateQueries({ queryKey: ['orders'] })
   }
 
   return (
@@ -205,11 +365,16 @@ function OrderCard({ order }) {
       {/* Items Preview (always visible) */}
       <div style={{ padding: '0 18px 14px', display: 'flex', gap: 10, overflowX: 'auto' }}>
         {order.items.map(item => (
-          <div key={item.id} style={{
-            display: 'flex', alignItems: 'center', gap: 10,
-            background: '#fafafa', borderRadius: 8, padding: '8px 10px',
-            border: '1px solid #f0f0f0', minWidth: 0, flex: '0 0 auto', maxWidth: 260,
-          }}>
+          <div
+            key={item.id}
+            onClick={() => item.product_id && navigate(`/product/${item.product_id}`)}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 10,
+              background: '#fafafa', borderRadius: 8, padding: '8px 10px',
+              border: '1px solid #f0f0f0', minWidth: 0, flex: '0 0 auto', maxWidth: 260,
+              cursor: item.product_id ? 'pointer' : 'default',
+            }}
+          >
             <img
               src={item.image}
               alt={item.name}
@@ -298,18 +463,34 @@ function OrderCard({ order }) {
             {(order.status === 'PLACED' || order.status === 'CONFIRMED') && (
               <ActionBtn
                 icon={<XCircle size={13} />}
-                label={cancelling ? 'Cancelling…' : 'Cancel Order'}
+                label="Cancel Order"
                 danger
-                onClick={handleCancelOrder}
+                onClick={() => setShowCancelModal(true)}
               />
             )}
             {(order.status === 'SHIPPED' || order.status === 'OUT') && (
               <ActionBtn icon={<Truck size={13} />} label="Track Order" primary />
             )}
-            <ActionBtn icon={<MessageCircle size={13} />} label="Need Help?" />
-            <ActionBtn icon={<Download size={13} />} label="Invoice" />
+            <ActionBtn
+              icon={<MessageCircle size={13} />}
+              label="Need Help?"
+              onClick={() => openWhatsAppSupport(order.id)}
+            />
+            <ActionBtn
+              icon={<Download size={13} />}
+              label="Invoice"
+              onClick={() => generateInvoice(order)}
+            />
           </div>
         </div>
+      )}
+
+      {showCancelModal && (
+        <CancelOrderModal
+          order={order}
+          onClose={() => setShowCancelModal(false)}
+          onCancelled={handleCancelled}
+        />
       )}
     </div>
   )
@@ -417,7 +598,12 @@ export default function OrdersPage() {
           >
             <ArrowLeft size={18} />
           </button>
-          <img src={logo} alt="Aarria" style={{ height: 40, objectFit: 'contain' }} />
+          <img
+            src={logo}
+            alt="Aarria"
+            onClick={() => navigate('/products')}
+            style={{ height: 40, objectFit: 'contain', cursor: 'pointer' }}
+          />
           <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 8 }}>
             <span style={{ fontSize: 13, color: '#94969f' }}>My Orders</span>
           </div>
