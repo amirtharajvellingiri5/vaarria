@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react'
+import AdminNav from './AdminNav'
 import {
   Upload,
   X,
@@ -645,8 +646,10 @@ const ProductUpload = () => {
         rel='stylesheet'
       />
 
-      {/* Top bar */}
-      <div className='sticky top-0 z-50 bg-stone-950/95 backdrop-blur border-b border-stone-800'>
+      <AdminNav />
+
+      {/* Page action bar */}
+      <div className='sticky top-16 z-40 bg-stone-950/95 backdrop-blur border-b border-stone-800'>
         <div className='max-w-7xl mx-auto px-6 h-16 flex items-center justify-between'>
           <div className='flex items-center gap-4'>
             <button className='p-2 rounded-lg hover:bg-stone-800 transition-colors text-stone-400 hover:text-stone-100'>

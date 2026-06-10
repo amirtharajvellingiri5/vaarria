@@ -180,16 +180,18 @@ function OrderTimeline({ status }) {
         const meta = ORDER_STATUSES[step]
         const done = i <= idx
         const active = i === idx
+        // current status in its own colour, completed steps in green
+        const circleBg = active ? meta.color : done ? '#16a34a' : '#f0f0f0'
         return (
           <React.Fragment key={step}>
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: 64 }}>
               <div style={{
                 width: 28, height: 28, borderRadius: '50%',
-                background: done ? '#ff3f6c' : '#f0f0f0',
-                border: active ? '2px solid #ff3f6c' : done ? 'none' : '2px solid #e0e0e0',
+                background: circleBg,
+                border: active ? `2px solid ${meta.color}` : done ? 'none' : '2px solid #e0e0e0',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 transition: 'all 0.2s',
-                boxShadow: active ? '0 0 0 4px rgba(255,63,108,0.12)' : 'none',
+                boxShadow: active ? `0 0 0 4px ${meta.bg}` : 'none',
               }}>
                 {done
                   ? <CheckCircle2 size={14} color="#fff" strokeWidth={2.5} />
@@ -197,15 +199,16 @@ function OrderTimeline({ status }) {
                 }
               </div>
               <span style={{
-                fontSize: 10, marginTop: 5, color: done ? '#ff3f6c' : '#999',
-                fontWeight: active ? 600 : 400, textAlign: 'center', lineHeight: 1.3,
+                fontSize: 10, marginTop: 5,
+                color: active ? meta.color : done ? '#16a34a' : '#999',
+                fontWeight: active ? 700 : done ? 500 : 400, textAlign: 'center', lineHeight: 1.3,
                 whiteSpace: 'nowrap',
               }}>{meta.label}</span>
             </div>
             {i < steps.length - 1 && (
               <div style={{
                 flex: 1, height: 2, minWidth: 16,
-                background: i < idx ? '#ff3f6c' : '#e8e8e8',
+                background: i < idx ? '#16a34a' : '#e8e8e8',
                 marginBottom: 20, transition: 'background 0.3s',
               }} />
             )}
@@ -356,10 +359,32 @@ function OrderCard({ order }) {
             {order.items.length} item{order.items.length > 1 ? 's' : ''} · ₹{order.total.toLocaleString('en-IN')} · {order.date}
           </p>
         </div>
-        <ChevronDown
-          size={18} color="#888"
-          style={{ transform: expanded ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s', marginTop: 2 }}
-        />
+        <button
+          onClick={(e) => {
+            e.stopPropagation()
+            setExpanded(p => !p)
+          }}
+          aria-label={expanded ? 'Collapse order details' : 'Expand order details'}
+          style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            width: 36, height: 36, borderRadius: '50%', flexShrink: 0,
+            border: '1.5px solid #e8e8e8', background: '#fafafa',
+            cursor: 'pointer', transition: 'all 0.2s',
+          }}
+          onMouseEnter={e => {
+            e.currentTarget.style.borderColor = '#ff3f6c'
+            e.currentTarget.style.background = '#fff0f3'
+          }}
+          onMouseLeave={e => {
+            e.currentTarget.style.borderColor = '#e8e8e8'
+            e.currentTarget.style.background = '#fafafa'
+          }}
+        >
+          <ChevronDown
+            size={22} color="#555" strokeWidth={2.5}
+            style={{ transform: expanded ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }}
+          />
+        </button>
       </div>
 
       {/* Items Preview (always visible) */}
@@ -470,11 +495,25 @@ function OrderCard({ order }) {
 
           {/* CTA Buttons */}
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            {order.status !== 'CANCELLED' && order.status !== 'RETURNED' && (
+              <ActionBtn
+                icon={<Star size={13} />}
+                label="Rate & Review"
+                primary={order.status === 'DELIVERED'}
+                disabled={order.status !== 'DELIVERED'}
+                title={order.status !== 'DELIVERED' ? 'Available after delivery' : undefined}
+                onClick={() =>
+                  navigate('/review', {
+                    state: {
+                      orderId: order.id,
+                      items: order.items.filter(i => i.item_status !== 'QC_FAILED'),
+                    },
+                  })
+                }
+              />
+            )}
             {order.status === 'DELIVERED' && (
-              <>
-                <ActionBtn icon={<Star size={13} />} label="Rate & Review" primary />
-                <ActionBtn icon={<RotateCcw size={13} />} label="Return / Exchange" />
-              </>
+              <ActionBtn icon={<RotateCcw size={13} />} label="Return / Exchange" />
             )}
             {(order.status === 'PLACED' || order.status === 'CONFIRMED') && (
               <ActionBtn
@@ -521,11 +560,30 @@ function OrderCard({ order }) {
   )
 }
 
-function ActionBtn({ icon, label, primary, danger, onClick }) {
+function ActionBtn({ icon, label, primary, danger, disabled, title, onClick }) {
   const [hover, setHover] = useState(false)
+
+  if (disabled) {
+    return (
+      <button
+        disabled
+        title={title}
+        style={{
+          display: 'flex', alignItems: 'center', gap: 5,
+          padding: '7px 14px', borderRadius: 20, cursor: 'not-allowed',
+          fontSize: 12, fontWeight: 600,
+          border: '1.5px solid #e8e8e8', background: '#fafafa', color: '#b5b5bd',
+        }}
+      >
+        {icon}{label}
+      </button>
+    )
+  }
+
   return (
     <button
       onClick={onClick}
+      title={title}
       onMouseEnter={() => setHover(true)}
       onMouseLeave={() => setHover(false)}
       style={{
@@ -677,22 +735,28 @@ export default function OrdersPage() {
 
         {/* Filter Pills */}
         <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 4, marginBottom: 20 }}>
-          {FILTER_OPTIONS.map(f => (
-            <button
-              key={f.value}
-              onClick={() => setActiveFilter(f.value)}
-              style={{
-                flexShrink: 0, padding: '7px 16px', borderRadius: 20,
-                border: activeFilter === f.value ? '1.5px solid #ff3f6c' : '1.5px solid #e0e0e0',
-                background: activeFilter === f.value ? '#fff0f3' : '#fff',
-                color: activeFilter === f.value ? '#ff3f6c' : '#666',
-                fontSize: 12, fontWeight: 600, cursor: 'pointer',
-                transition: 'all 0.15s',
-              }}
-            >
-              {f.label}
-            </button>
-          ))}
+          {FILTER_OPTIONS.map(f => {
+            const meta = ORDER_STATUSES[f.value]
+            const accent = meta?.color || '#ff3f6c'
+            const accentBg = meta?.bg || '#fff0f3'
+            const active = activeFilter === f.value
+            return (
+              <button
+                key={f.value}
+                onClick={() => setActiveFilter(f.value)}
+                style={{
+                  flexShrink: 0, padding: '7px 16px', borderRadius: 20,
+                  border: active ? `1.5px solid ${accent}` : '1.5px solid #e0e0e0',
+                  background: active ? accentBg : '#fff',
+                  color: active ? accent : '#666',
+                  fontSize: 12, fontWeight: 600, cursor: 'pointer',
+                  transition: 'all 0.15s',
+                }}
+              >
+                {f.label}
+              </button>
+            )
+          })}
         </div>
 
         {/* States */}

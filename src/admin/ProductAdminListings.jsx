@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import {
   Search,
-  Plus,
   Edit2,
   Copy,
   Trash2,
@@ -17,6 +16,8 @@ import {
   Loader2,
   RefreshCw,
 } from 'lucide-react'
+
+import AdminNav from './AdminNav'
 
 const CDN = 'https://cdn.aarria.com/app/images/'
 const API = 'https://api.aarria.com/listings'
@@ -509,47 +510,20 @@ const openEditProduct = (id) => {
       />
 
       {/* Top bar */}
-      <div className='sticky top-0 z-30 bg-stone-950/95 backdrop-blur border-b border-stone-800'>
-        <div className='max-w-7xl mx-auto px-6 h-16 flex items-center justify-between'>
-          <div>
-            <h1
-              className='font-bold text-stone-100'
-              style={{ fontFamily: "'Playfair Display', serif", fontSize: 18 }}
-            >
-              Product Listings
-            </h1>
-            <p className='text-xs text-stone-500'>Women's Ethnic Wear Store</p>
-          </div>
-          <div>
-            <h1
-              className='font-bold text-stone-100'
-              style={{ fontFamily: "'Playfair Display', serif", fontSize: 18 }}
-            >
-              <a href="/products">Go to Store</a>
-            </h1>
-          </div>
-          <div className='flex items-center gap-3'>
-            <button
-              onClick={handleSync}
-              disabled={syncing}
-              className='flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold border border-stone-700 text-stone-300 hover:border-stone-500 hover:text-stone-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors'
-            >
-              {syncing ? (
-                <Loader2 size={14} className='animate-spin' />
-              ) : (
-                <RefreshCw size={14} />
-              )}
-              {syncing ? 'Syncing…' : 'Sync'}
-            </button>
-            <button
-              onClick={() => window.open('/admin/products/new', '_blank')}
-              className='flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold bg-gradient-to-r from-rose-500 to-pink-600 text-white hover:from-rose-600 hover:to-pink-700 transition-all shadow-lg shadow-rose-500/20'
-            >
-              <Plus size={15} /> Add Product
-            </button>
-          </div>
-        </div>
-      </div>
+      <AdminNav>
+        <button
+          onClick={handleSync}
+          disabled={syncing}
+          className='flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold border border-stone-700 text-stone-300 hover:border-stone-500 hover:text-stone-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors'
+        >
+          {syncing ? (
+            <Loader2 size={14} className='animate-spin' />
+          ) : (
+            <RefreshCw size={14} />
+          )}
+          {syncing ? 'Syncing…' : 'Sync'}
+        </button>
+      </AdminNav>
 
       <div className='max-w-7xl mx-auto px-6 py-8 space-y-6'>
         {/* Stats */}

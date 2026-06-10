@@ -22,6 +22,7 @@ import OrderSuccess from './info/OrderSuccess.jsx'
 import PaymentFailed from './info/PaymentFailed.jsx'
 import AdminOrders from './admin/orders/AdminOrders.jsx'
 import OrdersPage from './OrdersPage.jsx'
+import ReviewPage from './ReviewPage.jsx'
 
 const queryClient = new QueryClient()  // ← add
 
@@ -35,6 +36,7 @@ const router = createBrowserRouter([
   { path: '/contact-us', element: <ContactUsPage /> },
   { path: '/terms', element: <TermsAndConditionsPage/> },
   {path: '/orders', element: <OrdersPage /> },
+  { path: '/review', element: <ReviewPage /> },
   { path: '/refund-policy', element: <RefundPolicyPage/> },
   { path: '/privacy-policy', element: <PrivacyPolicy/> },
   { path: '/admin/products/new', element: <ProductUpload /> },

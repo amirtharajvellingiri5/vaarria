@@ -1,0 +1,124 @@
+/*
+ * Admin theme overrides.
+ *
+ * The admin pages are written against the dark "stone" Tailwind palette.
+ * Non-dark themes re-map those utility classes via CSS variables, scoped
+ * by the data-admin-theme attribute that AdminNav sets on <html>.
+ * Dark is the default — no overrides apply.
+ */
+
+html[data-admin-theme='light'] {
+  --ad-bg: #f4f4f5;
+  --ad-bg-95: rgba(250, 250, 250, 0.95);
+  --ad-surface: #ffffff;
+  --ad-surface-60: rgba(0, 0, 0, 0.05);
+  --ad-surface-50: rgba(0, 0, 0, 0.04);
+  --ad-surface-40: rgba(0, 0, 0, 0.03);
+  --ad-surface-30: rgba(0, 0, 0, 0.02);
+  --ad-surface-10: rgba(0, 0, 0, 0.01);
+  --ad-elev: #e7e5e4;
+  --ad-elev-strong: #d6d3d1;
+  --ad-border: #e4e4e7;
+  --ad-border-soft: rgba(228, 228, 231, 0.6);
+  --ad-border-strong: #d4d4d8;
+  --ad-border-hover: #a1a1aa;
+  --ad-text: #18181b;
+  --ad-text-2: #27272a;
+  --ad-text-3: #3f3f46;
+  --ad-text-4: #52525b;
+  --ad-text-5: #71717a;
+  --ad-text-6: #a1a1aa;
+}
+
+html[data-admin-theme='ocean'] {
+  --ad-bg: #0a1222;
+  --ad-bg-95: rgba(10, 18, 34, 0.95);
+  --ad-surface: #101b30;
+  --ad-surface-60: rgba(22, 36, 63, 0.6);
+  --ad-surface-50: rgba(22, 36, 63, 0.5);
+  --ad-surface-40: rgba(22, 36, 63, 0.4);
+  --ad-surface-30: rgba(22, 36, 63, 0.3);
+  --ad-surface-10: rgba(22, 36, 63, 0.1);
+  --ad-elev: #1b2a47;
+  --ad-elev-strong: #27395c;
+  --ad-border: #1d2d4d;
+  --ad-border-soft: rgba(29, 45, 77, 0.6);
+  --ad-border-strong: #2a3d63;
+  --ad-border-hover: #4a619c;
+  --ad-text: #e8eefc;
+  --ad-text-2: #d4ddf0;
+  --ad-text-3: #b6c2dd;
+  --ad-text-4: #8d9cc0;
+  --ad-text-5: #6b7a9e;
+  --ad-text-6: #4d5b7c;
+}
+
+html[data-admin-theme='sand'] {
+  --ad-bg: #f7f2e9;
+  --ad-bg-95: rgba(251, 247, 240, 0.95);
+  --ad-surface: #fffcf5;
+  --ad-surface-60: rgba(90, 70, 40, 0.07);
+  --ad-surface-50: rgba(90, 70, 40, 0.06);
+  --ad-surface-40: rgba(90, 70, 40, 0.05);
+  --ad-surface-30: rgba(90, 70, 40, 0.035);
+  --ad-surface-10: rgba(90, 70, 40, 0.015);
+  --ad-elev: #ece4d4;
+  --ad-elev-strong: #ddd2bc;
+  --ad-border: #e6dcc8;
+  --ad-border-soft: rgba(230, 220, 200, 0.6);
+  --ad-border-strong: #d8cbb0;
+  --ad-border-hover: #b3a183;
+  --ad-text: #2a2118;
+  --ad-text-2: #3b2f22;
+  --ad-text-3: #4a3f31;
+  --ad-text-4: #6b5d4a;
+  --ad-text-5: #857664;
+  --ad-text-6: #a99a85;
+}
+
+/* ── Background ──────────────────────────────────────────────────────────── */
+html[data-admin-theme]:not([data-admin-theme='dark']) .bg-stone-950 { background-color: var(--ad-bg) !important; }
+html[data-admin-theme]:not([data-admin-theme='dark']) .bg-stone-950\/95 { background-color: var(--ad-bg-95) !important; }
+html[data-admin-theme]:not([data-admin-theme='dark']) .bg-stone-900 { background-color: var(--ad-surface) !important; }
+html[data-admin-theme]:not([data-admin-theme='dark']) .bg-stone-900\/60 { background-color: var(--ad-surface-60) !important; }
+html[data-admin-theme]:not([data-admin-theme='dark']) .bg-stone-900\/50 { background-color: var(--ad-surface-50) !important; }
+html[data-admin-theme]:not([data-admin-theme='dark']) .bg-stone-900\/40 { background-color: var(--ad-surface-40) !important; }
+html[data-admin-theme]:not([data-admin-theme='dark']) .bg-stone-900\/30 { background-color: var(--ad-surface-30) !important; }
+html[data-admin-theme]:not([data-admin-theme='dark']) .bg-stone-900\/10 { background-color: var(--ad-surface-10) !important; }
+html[data-admin-theme]:not([data-admin-theme='dark']) .bg-stone-800 { background-color: var(--ad-elev) !important; }
+html[data-admin-theme]:not([data-admin-theme='dark']) .bg-stone-700 { background-color: var(--ad-elev-strong) !important; }
+html[data-admin-theme]:not([data-admin-theme='dark']) .hover\:bg-stone-800:hover { background-color: var(--ad-elev) !important; }
+html[data-admin-theme]:not([data-admin-theme='dark']) .hover\:bg-stone-900\/40:hover { background-color: var(--ad-surface-40) !important; }
+
+/* ── Borders ─────────────────────────────────────────────────────────────── */
+html[data-admin-theme]:not([data-admin-theme='dark']) .border-stone-800 { border-color: var(--ad-border) !important; }
+html[data-admin-theme]:not([data-admin-theme='dark']) .border-stone-800\/60 { border-color: var(--ad-border-soft) !important; }
+html[data-admin-theme]:not([data-admin-theme='dark']) .border-stone-700 { border-color: var(--ad-border-strong) !important; }
+html[data-admin-theme]:not([data-admin-theme='dark']) .hover\:border-stone-500:hover { border-color: var(--ad-border-hover) !important; }
+
+/* ── Text ────────────────────────────────────────────────────────────────── */
+html[data-admin-theme]:not([data-admin-theme='dark']) .text-stone-100 { color: var(--ad-text) !important; }
+html[data-admin-theme]:not([data-admin-theme='dark']) .text-stone-200 { color: var(--ad-text-2) !important; }
+html[data-admin-theme]:not([data-admin-theme='dark']) .text-stone-300 { color: var(--ad-text-3) !important; }
+html[data-admin-theme]:not([data-admin-theme='dark']) .text-stone-400 { color: var(--ad-text-4) !important; }
+html[data-admin-theme]:not([data-admin-theme='dark']) .text-stone-500 { color: var(--ad-text-5) !important; }
+html[data-admin-theme]:not([data-admin-theme='dark']) .text-stone-600 { color: var(--ad-text-6) !important; }
+html[data-admin-theme]:not([data-admin-theme='dark']) .hover\:text-stone-100:hover { color: var(--ad-text) !important; }
+html[data-admin-theme]:not([data-admin-theme='dark']) .hover\:text-stone-200:hover { color: var(--ad-text-2) !important; }
+html[data-admin-theme]:not([data-admin-theme='dark']) .hover\:text-stone-300:hover { color: var(--ad-text-3) !important; }
+html[data-admin-theme]:not([data-admin-theme='dark']) .placeholder-stone-600::placeholder { color: var(--ad-text-6) !important; }
+html[data-admin-theme]:not([data-admin-theme='dark']) .placeholder-stone-500::placeholder { color: var(--ad-text-5) !important; }
+
+/* ── Accent contrast fixes on light backgrounds ──────────────────────────── */
+html[data-admin-theme='light'] .text-rose-400,
+html[data-admin-theme='sand'] .text-rose-400 { color: #e11d48 !important; }
+html[data-admin-theme='light'] .text-emerald-400,
+html[data-admin-theme='sand'] .text-emerald-400 { color: #059669 !important; }
+html[data-admin-theme='light'] .text-amber-400,
+html[data-admin-theme='sand'] .text-amber-400 { color: #d97706 !important; }
+html[data-admin-theme='light'] .text-violet-400,
+html[data-admin-theme='sand'] .text-violet-400 { color: #7c3aed !important; }
+html[data-admin-theme='light'] .text-sky-400,
+html[data-admin-theme='sand'] .text-sky-400 { color: #0284c7 !important; }
+html[data-admin-theme='light'] .text-cyan-400,
+html[data-admin-theme='sand'] .text-cyan-400 { color: #0891b2 !important; }

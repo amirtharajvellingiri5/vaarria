@@ -20,6 +20,8 @@ import {
   MessageCircle,
 } from 'lucide-react'
 
+import AdminNav from '../AdminNav'
+
 const ORDERS_API_BASE =
   'https://zq0dbjycx6.execute-api.ap-south-1.amazonaws.com/prod'
 const CDN = 'https://cdn.aarria.com/app/images/'
@@ -783,35 +785,16 @@ export default function AdminOrders() {
       />
 
       {/* Top bar */}
-      <div className='sticky top-0 z-30 bg-stone-950/95 backdrop-blur border-b border-stone-800'>
-        <div className='max-w-7xl mx-auto px-6 h-16 flex items-center justify-between'>
-          <div>
-            <h1
-              className='font-bold text-stone-100'
-              style={{ fontFamily: "'Playfair Display', serif", fontSize: 18 }}
-            >
-              Orders
-            </h1>
-            <p className='text-xs text-stone-500'>Process &amp; ship customer orders</p>
-          </div>
-          <div className='flex items-center gap-3'>
-            <a
-              href='/admin'
-              className='text-xs font-semibold text-stone-400 hover:text-stone-100 transition-colors'
-            >
-              Products
-            </a>
-            <button
-              onClick={fetchOrders}
-              disabled={loading}
-              className='flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold border border-stone-700 text-stone-300 hover:border-stone-500 hover:text-stone-100 disabled:opacity-50 transition-colors'
-            >
-              {loading ? <Loader2 size={14} className='animate-spin' /> : <RefreshCw size={14} />}
-              Refresh
-            </button>
-          </div>
-        </div>
-      </div>
+      <AdminNav>
+        <button
+          onClick={fetchOrders}
+          disabled={loading}
+          className='flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold border border-stone-700 text-stone-300 hover:border-stone-500 hover:text-stone-100 disabled:opacity-50 transition-colors'
+        >
+          {loading ? <Loader2 size={14} className='animate-spin' /> : <RefreshCw size={14} />}
+          Refresh
+        </button>
+      </AdminNav>
 
       <div className='max-w-7xl mx-auto px-6 py-8 space-y-6'>
         {/* Stats */}

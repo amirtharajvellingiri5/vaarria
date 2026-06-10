@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react'
+import AdminNav from './AdminNav'
 import {
   Upload,
   X,
@@ -635,8 +636,10 @@ const ProductEdit = ({ onBack }) => {
     <div className='min-h-screen bg-stone-950 text-stone-100' style={{ fontFamily: "'DM Sans', sans-serif" }}>
       <link href='https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Playfair+Display:wght@600;700&display=swap' rel='stylesheet' />
 
-      {/* Top bar */}
-      <div className='sticky top-0 z-50 bg-stone-950/95 backdrop-blur border-b border-stone-800'>
+      <AdminNav />
+
+      {/* Page action bar */}
+      <div className='sticky top-16 z-40 bg-stone-950/95 backdrop-blur border-b border-stone-800'>
         <div className='max-w-7xl mx-auto px-6 h-16 flex items-center justify-between'>
           <div className='flex items-center gap-4'>
             <button
