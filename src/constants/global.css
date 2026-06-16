@@ -10,6 +10,8 @@ body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  background: #F3ECDC;
+  color: #3A332A;
 }
 
 button, input, select, textarea {

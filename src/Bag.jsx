@@ -369,13 +369,13 @@ function PinBar() {
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <Truck size={14} color='#ff3f6c' />
+              <Truck size={14} color='#A65A66' />
               <span
                 style={{
                   fontSize: 11,
                   fontWeight: 700,
                   letterSpacing: 1,
-                  color: '#282c3f',
+                  color: '#3A332A',
                   textTransform: 'uppercase',
                 }}
               >
@@ -387,7 +387,7 @@ function PinBar() {
               style={{
                 fontSize: 12,
                 fontWeight: 700,
-                color: '#ff3f6c',
+                color: '#A65A66',
                 background: 'none',
                 border: 'none',
                 cursor: 'pointer',
@@ -456,7 +456,7 @@ function PinBar() {
               >
                 <MapPin
                   size={16}
-                  color='#ff3f6c'
+                  color='#A65A66'
                   style={{ marginTop: 2, flexShrink: 0 }}
                 />
                 <div>
@@ -472,7 +472,7 @@ function PinBar() {
                       style={{
                         fontSize: 14,
                         fontWeight: 700,
-                        color: '#282c3f',
+                        color: '#3A332A',
                       }}
                     >
                       {defaultAddress.full_name}
@@ -481,8 +481,8 @@ function PinBar() {
                       style={{
                         fontSize: 10,
                         fontWeight: 700,
-                        color: '#ff3f6c',
-                        border: '1px solid #ff3f6c',
+                        color: '#A65A66',
+                        border: '1px solid #A65A66',
                         borderRadius: 2,
                         padding: '1px 6px',
                         letterSpacing: 0.5,
@@ -500,7 +500,7 @@ function PinBar() {
                       : ''}
                     ,&nbsp;
                     {defaultAddress.city}, {defaultAddress.state} —{' '}
-                    <span style={{ fontWeight: 700, color: '#282c3f' }}>
+                    <span style={{ fontWeight: 700, color: '#3A332A' }}>
                       {defaultAddress.pincode}
                     </span>
                   </div>
@@ -543,7 +543,7 @@ function PinBar() {
           gap: 10,
         }}
       >
-        <Truck size={16} style={{ color: '#ff3f6c' }} />
+        <Truck size={16} style={{ color: '#A65A66' }} />
 
         <input
           style={styles.pinInput}
@@ -783,7 +783,7 @@ function ItemCard({ item }) {
         <button
           style={{
             ...styles.removeBtn,
-            color: '#ff3f6c',
+            color: '#A65A66',
           }}
           onClick={() => setShowDeleteConfirm(true)}
           aria-label='remove item'
@@ -884,9 +884,9 @@ function ItemCard({ item }) {
                   flex: 1,
                   height: 44,
                   borderRadius: 12,
-                  border: '1px solid #ff3f6c',
+                  border: '1px solid #A65A66',
                   background: '#fff0f4',
-                  color: '#ff3f6c',
+                  color: '#A65A66',
                   cursor: 'pointer',
                   fontWeight: 700,
                   fontSize: 15,
@@ -1210,7 +1210,7 @@ function PricePanel() {
               width: 56,
               height: 56,
               border: '4px solid #f3f3f3',
-              borderTop: '4px solid #ff3f6c',
+              borderTop: '4px solid #A65A66',
               borderRadius: '50%',
               animation: 'spin 0.8s linear infinite',
             }}
@@ -1220,7 +1220,7 @@ function PricePanel() {
             style={{
               fontSize: 15,
               fontWeight: 600,
-              color: '#282c3f',
+              color: '#3A332A',
             }}
           >
             Preparing secure payment...
@@ -1284,7 +1284,7 @@ function PricePanel() {
               <button
                 onClick={() => setPaymentError('')}
                 style={{
-                  background: '#ff3f6c',
+                  background: '#A65A66',
                   color: '#fff',
                   border: 'none',
                   padding: '12px 20px',
@@ -1892,7 +1892,7 @@ const styles = {
   addressCheckBtn: {
     border: 'none',
     background: 'none',
-    color: '#ff3f6c',
+    color: '#A65A66',
     fontSize: 16,
     fontWeight: 100,
     cursor: 'pointer',

@@ -3,7 +3,7 @@ import { ShoppingBag, Search, Heart, User, Menu, X } from 'lucide-react'
 import { useCartStore } from './store/cartStore'
 import { ADMIN_CATEGORIES as CATEGORIES } from './utils/categories'
 
-import logo from './assets/logo.jpg'
+import logo from './assets/vaarria-logo.svg'
 
 // Keep in sync with the page content rail (max-w-screen-2xl + lg:px-8)
 // so the logo and content left edges align
@@ -154,7 +154,7 @@ const menuItemStyle = {
   display: 'block',
   padding: '10px 0',
   fontSize: '13px',
-  color: '#282c3f',
+  color: '#3A332A',
   textDecoration: 'none',
 }
 
@@ -182,9 +182,9 @@ const MegaMenu = ({ columns }) => {
           from { opacity: 0; transform: translateY(-6px); }
           to   { opacity: 1; transform: translateY(0); }
         }
-        .mm-link { display: block; font-size: 13px; color: #282c3f; padding: 4px 0; cursor: pointer; text-decoration: none; line-height: 1.5; transition: color 0.1s; }
-        .mm-link:hover { color: #ff3f6c; }
-        .mm-section-title { font-size: 13px; font-weight: 700; color: #ff3f6c; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 10px; cursor: pointer; }
+        .mm-link { display: block; font-size: 13px; color: #3A332A; padding: 4px 0; cursor: pointer; text-decoration: none; line-height: 1.5; transition: color 0.1s; }
+        .mm-link:hover { color: #A65A66; }
+        .mm-section-title { font-size: 13px; font-weight: 700; color: #A65A66; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 10px; cursor: pointer; }
         .mm-section-title:hover { text-decoration: underline; }
         .mm-divider { border: none; border-top: 0.5px solid #f0f0f0; margin: 8px 0 12px; }
       `}</style>
@@ -240,8 +240,8 @@ const isLoggedIn = !!token
   return (
     <nav
       style={{
-        background: '#fff',
-        borderBottom: '1px solid #e8e8e8',
+        background: '#F3ECDC',
+        borderBottom: '1px solid #e6ddc7',
         position: 'sticky',
         top: 0,
         zIndex: 100,
@@ -262,9 +262,9 @@ const isLoggedIn = !!token
         <a href='/' style={{ marginRight: '5%' }}>
           <img
   src={logo}
-  alt="Logo"
+  alt="VAARRIA — Adorn Your Aura"
   style={{
-    height: '40px',
+    height: '44px',
     width: 'auto',
     objectFit: 'contain'
   }}
@@ -298,7 +298,7 @@ const isLoggedIn = !!token
                     height: '100%',
                     fontSize: '13px',
                     fontWeight: 700,
-                    color: isActive ? '#ff3f6c' : '#282c3f',
+                    color: isActive ? '#A65A66' : '#3A332A',
                     letterSpacing: '0.04em',
                     textTransform: 'uppercase',
                     fontFamily: 'inherit',
@@ -315,7 +315,7 @@ const isLoggedIn = !!token
                     <span
                       style={{
                         fontSize: '9px',
-                        background: '#ff3f6c',
+                        background: '#A65A66',
                         color: '#fff',
                         borderRadius: '3px',
                         padding: '1px 4px',
@@ -336,7 +336,7 @@ const isLoggedIn = !!token
                         left: '14px',
                         right: '14px',
                         height: '2px',
-                        background: '#ff3f6c',
+                        background: '#A65A66',
                         borderRadius: '1px 1px 0 0',
                       }}
                     />
@@ -389,7 +389,7 @@ const isLoggedIn = !!token
               background: 'transparent',
               outline: 'none',
               fontSize: '13px',
-              color: '#282c3f',
+              color: '#3A332A',
               width: '100%',
               fontFamily: 'inherit',
             }}
@@ -415,7 +415,7 @@ const isLoggedIn = !!token
       background: 'none',
       border: 'none',
       cursor: 'pointer',
-      color: '#282c3f',
+      color: '#3A332A',
       display: 'flex',
       alignItems: 'center',
       flexDirection: 'column',
@@ -512,8 +512,8 @@ const isLoggedIn = !!token
             href="/login"
             style={{
               display: 'inline-block',
-              border: '1px solid #ff3f6c',
-              color: '#ff3f6c',
+              border: '1px solid #A65A66',
+              color: '#A65A66',
               padding: '10px 18px',
               fontSize: '12px',
               fontWeight: 700,
@@ -534,7 +534,7 @@ const isLoggedIn = !!token
               background: 'none',
               border: 'none',
               cursor: 'pointer',
-              color: '#282c3f',
+              color: '#3A332A',
               display: 'flex',
               alignItems: 'center',
               flexDirection: 'column',
@@ -558,7 +558,7 @@ const isLoggedIn = !!token
               background: 'none',
               border: 'none',
               cursor: 'pointer',
-              color: '#282c3f',
+              color: '#3A332A',
               position: 'relative',
               display: 'flex',
               alignItems: 'center',
@@ -585,7 +585,7 @@ const isLoggedIn = !!token
                   position: 'absolute',
                   top: '-4px',
                   right: '-6px',
-                  background: '#ff3f6c',
+                  background: '#A65A66',
                   color: '#fff',
                   fontSize: '10px',
                   borderRadius: '50%',
@@ -609,7 +609,7 @@ const isLoggedIn = !!token
               background: 'none',
               border: 'none',
               cursor: 'pointer',
-              color: '#282c3f',
+              color: '#3A332A',
               display: 'none',
             }}
             className='show-mobile'
@@ -666,7 +666,7 @@ const isLoggedIn = !!token
                   textAlign: 'left',
                   fontSize: '14px',
                   fontWeight: 700,
-                  color: activeMenu === item.name ? '#ff3f6c' : '#282c3f',
+                  color: activeMenu === item.name ? '#A65A66' : '#3A332A',
                   letterSpacing: '0.03em',
                   textTransform: 'uppercase',
                   cursor: 'pointer',
@@ -681,7 +681,7 @@ const isLoggedIn = !!token
                   <span
                     style={{
                       fontSize: '9px',
-                      background: '#ff3f6c',
+                      background: '#A65A66',
                       color: '#fff',
                       borderRadius: '3px',
                       padding: '1px 5px',
@@ -703,7 +703,7 @@ const isLoggedIn = !!token
                           style={{
                             fontSize: '12px',
                             fontWeight: 700,
-                            color: '#ff3f6c',
+                            color: '#A65A66',
                             textTransform: 'uppercase',
                             letterSpacing: '0.04em',
                             marginBottom: '6px',
@@ -718,7 +718,7 @@ const isLoggedIn = !!token
                             style={{
                               display: 'block',
                               fontSize: '13px',
-                              color: '#282c3f',
+                              color: '#3A332A',
                               padding: '3px 0',
                               textDecoration: 'none',
                             }}
@@ -738,8 +738,8 @@ const isLoggedIn = !!token
       <style>{`
         .hidden-mobile { display: flex !important; }
         .show-mobile   { display: none !important; }
-        .icon-btn:hover svg { color: #ff3f6c !important; stroke: #ff3f6c !important; }
-        .icon-btn:hover span { color: #ff3f6c !important; }
+        .icon-btn:hover svg { color: #A65A66 !important; stroke: #A65A66 !important; }
+        .icon-btn:hover span { color: #A65A66 !important; }
         @media (max-width: 768px) {
           .hidden-mobile { display: none !important; }
           .show-mobile   { display: flex !important; }

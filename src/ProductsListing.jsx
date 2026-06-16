@@ -395,7 +395,7 @@ const ProductCard = ({ product, onViewDetails }) => {
     >
       <div
         className='relative aspect-[3/4] overflow-hidden bg-gray-100'
-        style={{ color: '#282c3f' }}
+        style={{ color: '#3A332A' }}
       >
         <img
           src={product.image}

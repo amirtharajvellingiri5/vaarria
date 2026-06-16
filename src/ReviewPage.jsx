@@ -129,9 +129,9 @@ export default function ReviewPage() {
               width: 72, height: 72, borderRadius: '50%', background: '#fff0f3',
               display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px',
             }}>
-              <ShoppingBag size={32} color="#ff3f6c" strokeWidth={1.5} />
+              <ShoppingBag size={32} color="#A65A66" strokeWidth={1.5} />
             </div>
-            <h3 style={{ fontSize: 17, fontWeight: 700, color: '#282c3f', marginBottom: 8 }}>
+            <h3 style={{ fontSize: 17, fontWeight: 700, color: '#3A332A', marginBottom: 8 }}>
               Nothing to review here
             </h3>
             <p style={{ fontSize: 13, color: '#94969f', marginBottom: 20 }}>
@@ -140,7 +140,7 @@ export default function ReviewPage() {
             <button
               onClick={() => navigate('/orders')}
               style={{
-                background: '#ff3f6c', color: '#fff', border: 'none', borderRadius: 6,
+                background: '#A65A66', color: '#fff', border: 'none', borderRadius: 6,
                 padding: '12px 28px', fontSize: 13, fontWeight: 700, cursor: 'pointer',
               }}
             >
@@ -155,7 +155,7 @@ export default function ReviewPage() {
             }}>
               <CheckCircle2 size={36} color="#16a34a" strokeWidth={1.8} />
             </div>
-            <h3 style={{ fontSize: 18, fontWeight: 700, color: '#282c3f', marginBottom: 8 }}>
+            <h3 style={{ fontSize: 18, fontWeight: 700, color: '#3A332A', marginBottom: 8 }}>
               {wasUpdate ? 'Review updated!' : 'Thank you for your review!'}
             </h3>
             <p style={{ fontSize: 13, color: '#94969f', marginBottom: 24 }}>
@@ -165,7 +165,7 @@ export default function ReviewPage() {
               <button
                 onClick={() => navigate('/orders')}
                 style={{
-                  background: '#ff3f6c', color: '#fff', border: 'none', borderRadius: 6,
+                  background: '#A65A66', color: '#fff', border: 'none', borderRadius: 6,
                   padding: '12px 28px', fontSize: 13, fontWeight: 700, cursor: 'pointer',
                 }}
               >
@@ -184,7 +184,7 @@ export default function ReviewPage() {
           </div>
         ) : (
           <div style={{ background: '#fff', borderRadius: 12, border: '1px solid #f0f0f0', padding: 24 }}>
-            <h1 style={{ fontSize: 19, fontWeight: 800, color: '#282c3f', margin: '0 0 4px', letterSpacing: -0.4 }}>
+            <h1 style={{ fontSize: 19, fontWeight: 800, color: '#3A332A', margin: '0 0 4px', letterSpacing: -0.4 }}>
               Rate &amp; Review
             </h1>
             {orderId && (
@@ -202,7 +202,7 @@ export default function ReviewPage() {
                     style={{
                       display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer',
                       background: active ? '#fff0f3' : '#fafafa',
-                      border: active ? '1.5px solid #ff3f6c' : '1.5px solid #f0f0f0',
+                      border: active ? '1.5px solid #A65A66' : '1.5px solid #f0f0f0',
                       borderRadius: 8, padding: '8px 12px', flex: '0 0 auto', maxWidth: 280,
                     }}
                   >
@@ -214,7 +214,7 @@ export default function ReviewPage() {
                       />
                     )}
                     <div style={{ minWidth: 0 }}>
-                      <p style={{ fontSize: 12, fontWeight: 600, color: '#282c3f', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 170 }}>
+                      <p style={{ fontSize: 12, fontWeight: 600, color: '#3A332A', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 170 }}>
                         {item.name}
                       </p>
                       {item.size && (
@@ -271,9 +271,9 @@ export default function ReviewPage() {
               style={{
                 width: '100%', boxSizing: 'border-box', padding: '12px 14px',
                 border: '1.5px solid #e8e8e8', borderRadius: 8, fontSize: 13,
-                color: '#282c3f', fontFamily: 'inherit', resize: 'vertical', outline: 'none',
+                color: '#3A332A', fontFamily: 'inherit', resize: 'vertical', outline: 'none',
               }}
-              onFocus={(e) => (e.target.style.borderColor = '#ff3f6c')}
+              onFocus={(e) => (e.target.style.borderColor = '#A65A66')}
               onBlur={(e) => (e.target.style.borderColor = '#e8e8e8')}
             />
 
@@ -293,7 +293,7 @@ export default function ReviewPage() {
                     onClick={() => removePhoto(p.url)}
                     style={{
                       position: 'absolute', top: -6, right: -6, width: 20, height: 20,
-                      borderRadius: '50%', background: '#282c3f', color: '#fff', border: 'none',
+                      borderRadius: '50%', background: '#3A332A', color: '#fff', border: 'none',
                       display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
                     }}
                   >
@@ -332,7 +332,7 @@ export default function ReviewPage() {
               disabled={submitting || !rating}
               style={{
                 width: '100%', marginTop: 24, padding: '14px 0', borderRadius: 8,
-                background: rating ? '#ff3f6c' : '#f0f0f0',
+                background: rating ? '#A65A66' : '#f0f0f0',
                 color: rating ? '#fff' : '#aaa',
                 border: 'none', fontSize: 14, fontWeight: 700, letterSpacing: 0.5,
                 cursor: rating && !submitting ? 'pointer' : 'not-allowed',

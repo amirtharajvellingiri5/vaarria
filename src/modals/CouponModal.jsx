@@ -93,7 +93,7 @@ export default function CouponModal({
                   marginLeft: 10,
                   fontSize: 11,
                   fontWeight: 700,
-                  color: '#ff3f6c',
+                  color: '#A65A66',
                   background: '#fff0f4',
                   border: '1px solid #ffd0dc',
                   borderRadius: 20,
@@ -203,7 +203,7 @@ export default function CouponModal({
           <button
             onClick={onClose}
             style={{
-              background: '#ff3f6c',
+              background: '#A65A66',
               color: '#fff',
               border: 'none',
               borderRadius: 8,
@@ -254,8 +254,8 @@ function CouponRow({ item, isApplied, discount, isPercentage, onToggle, disabled
           borderRadius: 4,
           flexShrink: 0,
           marginTop: 3,
-          background: isApplied ? '#ff3f6c' : '#fff',
-          border: isApplied ? '2px solid #ff3f6c' : '2px solid #ccc',
+          background: isApplied ? '#A65A66' : '#fff',
+          border: isApplied ? '2px solid #A65A66' : '2px solid #ccc',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -293,16 +293,16 @@ function CouponRow({ item, isApplied, discount, isPercentage, onToggle, disabled
               display: 'inline-flex',
               alignItems: 'center',
               gap: 5,
-              border: `1.5px dashed ${isApplied ? '#ff3f6c' : '#ccc'}`,
+              border: `1.5px dashed ${isApplied ? '#A65A66' : '#ccc'}`,
               borderRadius: 5,
               padding: '3px 10px',
               transition: 'border-color 0.15s',
             }}
           >
-            <Tag size={11} color={isApplied ? '#ff3f6c' : '#999'} />
+            <Tag size={11} color={isApplied ? '#A65A66' : '#999'} />
             <span
               style={{
-                color: isApplied ? '#ff3f6c' : '#999',
+                color: isApplied ? '#A65A66' : '#999',
                 fontWeight: 700,
                 fontSize: 12,
                 letterSpacing: 0.5,

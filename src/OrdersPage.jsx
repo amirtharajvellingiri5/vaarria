@@ -67,18 +67,18 @@ const generateInvoice = (order) => {
 <head>
   <title>Invoice-${order.id}</title>
   <style>
-    body { font-family: 'Segoe UI', Arial, sans-serif; color: #282c3f; padding: 40px; }
-    .brand { color: #ff3f6c; font-size: 28px; font-weight: 800; margin: 0; }
+    body { font-family: 'Segoe UI', Arial, sans-serif; color: #3A332A; padding: 40px; }
+    .brand { color: #A65A66; font-size: 28px; font-weight: 800; margin: 0; }
     .muted { color: #94969f; font-size: 12px; }
     h2 { font-size: 16px; margin: 24px 0 4px; }
     table { width: 100%; border-collapse: collapse; margin-top: 16px; font-size: 13px; }
-    th { text-align: left; border-bottom: 2px solid #282c3f; padding: 8px 6px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; }
+    th { text-align: left; border-bottom: 2px solid #3A332A; padding: 8px 6px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; }
     th:nth-child(2) { text-align: center; }
     th:nth-child(3), th:nth-child(4) { text-align: right; }
     td { border-bottom: 1px solid #eee; padding: 8px 6px; }
     .totals { margin-top: 16px; margin-left: auto; width: 260px; font-size: 13px; }
     .totals div { display: flex; justify-content: space-between; padding: 4px 0; }
-    .totals .grand { border-top: 1px solid #282c3f; font-weight: 700; margin-top: 4px; padding-top: 8px; }
+    .totals .grand { border-top: 1px solid #3A332A; font-weight: 700; margin-top: 4px; padding-top: 8px; }
     .footer { margin-top: 40px; font-size: 11px; color: #94969f; text-align: center; }
   </style>
 </head>
@@ -259,7 +259,7 @@ function CancelOrderModal({ order, onClose, onCancelled }) {
           }}>
             <XCircle size={18} color="#dc2626" />
           </div>
-          <h3 style={{ fontSize: 15, fontWeight: 700, color: '#282c3f', margin: 0 }}>
+          <h3 style={{ fontSize: 15, fontWeight: 700, color: '#3A332A', margin: 0 }}>
             Cancel this order?
           </h3>
         </div>
@@ -343,7 +343,7 @@ function OrderCard({ order }) {
       >
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-            <span style={{ fontSize: 13, fontWeight: 600, color: '#282c3f' }}>
+            <span style={{ fontSize: 13, fontWeight: 600, color: '#3A332A' }}>
               Order #{order.id}
             </span>
             <span style={{
@@ -372,7 +372,7 @@ function OrderCard({ order }) {
             cursor: 'pointer', transition: 'all 0.2s',
           }}
           onMouseEnter={e => {
-            e.currentTarget.style.borderColor = '#ff3f6c'
+            e.currentTarget.style.borderColor = '#A65A66'
             e.currentTarget.style.background = '#fff0f3'
           }}
           onMouseLeave={e => {
@@ -406,13 +406,13 @@ function OrderCard({ order }) {
               style={{ width: 56, height: 68, objectFit: 'cover', borderRadius: 6, flexShrink: 0 }}
             />
             <div style={{ minWidth: 0 }}>
-              <p style={{ fontSize: 12, fontWeight: 600, color: '#282c3f', margin: '0 0 2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 140 }}>
+              <p style={{ fontSize: 12, fontWeight: 600, color: '#3A332A', margin: '0 0 2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 140 }}>
                 {item.brand}
               </p>
               <p style={{ fontSize: 11, color: '#94969f', margin: '0 0 4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 140 }}>
                 {item.name}
               </p>
-              <p style={{ fontSize: 11, color: '#282c3f', margin: 0 }}>
+              <p style={{ fontSize: 11, color: '#3A332A', margin: 0 }}>
                 Size: <b>{item.size}</b> · ₹{item.price.toLocaleString('en-IN')}
               </p>
               {item.item_status === 'QC_FAILED' && (
@@ -449,8 +449,8 @@ function OrderCard({ order }) {
               background: '#fff8f8', border: '1px solid #ffdce5',
               borderRadius: 8, padding: '8px 12px', marginTop: 4, marginBottom: 12,
             }}>
-              <Clock size={13} color="#ff3f6c" />
-              <span style={{ fontSize: 12, color: '#282c3f' }}>
+              <Clock size={13} color="#A65A66" />
+              <span style={{ fontSize: 12, color: '#3A332A' }}>
                 Expected by <b>{order.expectedBy}</b>
               </span>
             </div>
@@ -462,8 +462,8 @@ function OrderCard({ order }) {
               Delivery Address
             </p>
             <div style={{ display: 'flex', alignItems: 'flex-start', gap: 6 }}>
-              <MapPin size={13} color="#ff3f6c" style={{ marginTop: 2, flexShrink: 0 }} />
-              <p style={{ fontSize: 12, color: '#282c3f', margin: 0, lineHeight: 1.6 }}>
+              <MapPin size={13} color="#A65A66" style={{ marginTop: 2, flexShrink: 0 }} />
+              <p style={{ fontSize: 12, color: '#3A332A', margin: 0, lineHeight: 1.6 }}>
                 {order.address.name} · {order.address.line1}, {order.address.city} – {order.address.pin}
               </p>
             </div>
@@ -484,12 +484,12 @@ function OrderCard({ order }) {
             ].map(row => (
               <div key={row.label} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
                 <span style={{ fontSize: 12, color: '#555' }}>{row.label}</span>
-                <span style={{ fontSize: 12, fontWeight: 500, color: row.color || '#282c3f' }}>{row.value}</span>
+                <span style={{ fontSize: 12, fontWeight: 500, color: row.color || '#3A332A' }}>{row.value}</span>
               </div>
             ))}
             <div style={{ borderTop: '1px dashed #e0e0e0', paddingTop: 6, marginTop: 4, display: 'flex', justifyContent: 'space-between' }}>
-              <span style={{ fontSize: 13, fontWeight: 700, color: '#282c3f' }}>Total Paid</span>
-              <span style={{ fontSize: 13, fontWeight: 700, color: '#282c3f' }}>₹{order.total.toLocaleString('en-IN')}</span>
+              <span style={{ fontSize: 13, fontWeight: 700, color: '#3A332A' }}>Total Paid</span>
+              <span style={{ fontSize: 13, fontWeight: 700, color: '#3A332A' }}>₹{order.total.toLocaleString('en-IN')}</span>
             </div>
           </div>
 
@@ -592,13 +592,13 @@ function ActionBtn({ icon, label, primary, danger, disabled, title, onClick }) {
         fontSize: 12, fontWeight: 600, transition: 'all 0.15s',
         border: primary ? 'none' : danger ? '1.5px solid #dc2626' : '1.5px solid #d0d0d0',
         background: primary
-          ? hover ? '#e0315a' : '#ff3f6c'
+          ? hover ? '#e0315a' : '#A65A66'
           : hover
           ? danger ? '#fee2e2' : '#f5f5f5'
           : '#fff',
         color: primary ? '#fff' : danger ? '#dc2626' : '#555',
         transform: hover ? 'translateY(-1px)' : 'none',
-        boxShadow: hover && primary ? '0 4px 12px rgba(255,63,108,0.3)' : 'none',
+        boxShadow: hover && primary ? '0 4px 12px rgba(166,90,102,0.3)' : 'none',
       }}
     >
       {icon}{label}
@@ -617,9 +617,9 @@ function EmptyOrders({ filter }) {
         background: '#fff0f3', display: 'flex', alignItems: 'center',
         justifyContent: 'center', margin: '0 auto 20px',
       }}>
-        <ShoppingBag size={36} color="#ff3f6c" strokeWidth={1.5} />
+        <ShoppingBag size={36} color="#A65A66" strokeWidth={1.5} />
       </div>
-      <h3 style={{ fontSize: 18, fontWeight: 700, color: '#282c3f', marginBottom: 8 }}>
+      <h3 style={{ fontSize: 18, fontWeight: 700, color: '#3A332A', marginBottom: 8 }}>
         No {filter !== 'ALL' ? ORDER_STATUSES[filter]?.label : ''} Orders
       </h3>
       <p style={{ fontSize: 13, color: '#94969f', marginBottom: 24 }}>
@@ -628,7 +628,7 @@ function EmptyOrders({ filter }) {
       <button
         onClick={() => navigate('/')}
         style={{
-          background: '#ff3f6c', color: '#fff', border: 'none',
+          background: '#A65A66', color: '#fff', border: 'none',
           borderRadius: 4, padding: '12px 32px', fontSize: 14, fontWeight: 700,
           cursor: 'pointer', letterSpacing: 0.5,
         }}
@@ -697,7 +697,7 @@ export default function OrdersPage() {
 
         {/* Page Title */}
         <div style={{ marginBottom: 20 }}>
-          <h1 style={{ fontSize: 22, fontWeight: 800, color: '#282c3f', margin: '0 0 4px', letterSpacing: -0.5 }}>
+          <h1 style={{ fontSize: 22, fontWeight: 800, color: '#3A332A', margin: '0 0 4px', letterSpacing: -0.5 }}>
             My Orders
           </h1>
           {!isLoading && (
@@ -710,11 +710,11 @@ export default function OrdersPage() {
         {/* Search Bar */}
         <div style={{
           display: 'flex', alignItems: 'center', gap: 10,
-          background: '#fff', border: `1.5px solid ${searchFocus ? '#ff3f6c' : '#e8e8e8'}`,
+          background: '#fff', border: `1.5px solid ${searchFocus ? '#A65A66' : '#e8e8e8'}`,
           borderRadius: 8, padding: '0 14px', marginBottom: 16,
           transition: 'border-color 0.2s',
         }}>
-          <Search size={16} color={searchFocus ? '#ff3f6c' : '#aaa'} />
+          <Search size={16} color={searchFocus ? '#A65A66' : '#aaa'} />
           <input
             value={search}
             onChange={e => setSearch(e.target.value)}
@@ -723,7 +723,7 @@ export default function OrdersPage() {
             placeholder="Search by order ID or product name…"
             style={{
               flex: 1, border: 'none', outline: 'none', padding: '12px 0',
-              fontSize: 13, color: '#282c3f', background: 'transparent',
+              fontSize: 13, color: '#3A332A', background: 'transparent',
             }}
           />
           {search && (
@@ -737,7 +737,7 @@ export default function OrdersPage() {
         <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 4, marginBottom: 20 }}>
           {FILTER_OPTIONS.map(f => {
             const meta = ORDER_STATUSES[f.value]
-            const accent = meta?.color || '#ff3f6c'
+            const accent = meta?.color || '#A65A66'
             const accentBg = meta?.bg || '#fff0f3'
             const active = activeFilter === f.value
             return (
@@ -778,11 +778,11 @@ export default function OrdersPage() {
             padding: '24px', textAlign: 'center',
           }}>
             <AlertCircle size={32} color="#dc2626" style={{ marginBottom: 12 }} />
-            <p style={{ fontSize: 14, color: '#282c3f', marginBottom: 12 }}>Couldn't load your orders.</p>
+            <p style={{ fontSize: 14, color: '#3A332A', marginBottom: 12 }}>Couldn't load your orders.</p>
             <button
               onClick={refetch}
               style={{
-                background: '#ff3f6c', color: '#fff', border: 'none',
+                background: '#A65A66', color: '#fff', border: 'none',
                 borderRadius: 4, padding: '10px 24px', fontSize: 13,
                 fontWeight: 600, cursor: 'pointer', display: 'inline-flex',
                 alignItems: 'center', gap: 6,

@@ -108,7 +108,7 @@ const printInvoice = (order) => {
   <style>
     body { font-family: 'Segoe UI', Arial, sans-serif; color: #1d2433; padding: 32px; font-size: 13px; }
     .top { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #1d2433; padding-bottom: 12px; }
-    .brand { color: #ff3f6c; font-size: 26px; font-weight: 800; margin: 0; }
+    .brand { color: #A65A66; font-size: 26px; font-weight: 800; margin: 0; }
     .muted { color: #6b7280; font-size: 12px; }
     .grid { display: flex; gap: 24px; margin-top: 18px; }
     .box { flex: 1; border: 1.5px solid #1d2433; border-radius: 8px; padding: 14px; }

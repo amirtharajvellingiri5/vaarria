@@ -104,7 +104,7 @@ function InfoRow({ label, value, highlight, last }) {
 }
 
 /* ─────────────────────────── Styles ─────────────────────────── */
-const PINK  = "#ff3f6c";
+const PINK  = "#A65A66";
 const GREEN = "#16a34a";
 const BORDER = "#ede8e3";
 
