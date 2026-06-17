@@ -227,7 +227,7 @@ const FilterSidebar = ({
   }
 
   const FilterSection = ({ title, items, filterKey }) => (
-    <div className='border-b border-pink-100 py-2'>
+    <div className='border-b border-[#C9A84C]/20 py-2'>
       <button
         onClick={() => toggleSection(filterKey)}
         className='flex items-center justify-between w-full text-left mb-2'
@@ -373,7 +373,7 @@ const FilterSidebar = ({
       <FilterSection title='Size' items={filters.sizes} filterKey='size' />
 
       {/* Price */}
-      <div className='border-b border-pink-100 py-2'>
+      <div className='border-b border-[#C9A84C]/20 py-2'>
         <button
           onClick={() => toggleSection('price')}
           className='flex items-center justify-between w-full text-left mb-2'
@@ -942,7 +942,7 @@ const ListingPage = () => {
                 </div>
 
                 {/* Pagination — min-height matches filter sidebar */}
-                <div className='mt-6 border-t border-pink-100 bg-white px-4 py-4'>
+                <div className='mt-6 border-t border-[#C9A84C]/20 bg-white px-4 py-4'>
                   <Pagination
                     currentPage={currentPage}
                     totalPages={totalPages}

@@ -446,102 +446,92 @@ const isLoggedIn = !!token
         position: 'absolute',
         top: 'calc(100% + 8px)',
         right: 0,
-        width: '220px',
-        background: '#050C1C',
-        border: '1px solid rgba(201,168,76,0.35)',
-        boxShadow: '0 8px 32px rgba(5,12,28,0.45)',
-        borderRadius: '6px',
-        padding: '16px 8px 10px',
+        width: '260px',
+        background: '#0a1628',
+        border: '1px solid #1a2d4a',
+        boxShadow: '0 8px 24px rgba(0,0,0,0.4)',
+        borderRadius: '4px',
+        padding: '16px',
         zIndex: 999,
       }}
     >
       {isLoggedIn ? (
         <>
-          <div style={{ padding: '0 14px 12px' }}>
-            <div style={{ fontSize: '15px', fontWeight: 700, color: '#C9A84C', fontFamily: "'Playfair Display', Georgia, serif" }}>
-              Hello, {customerData?.name?.split(' ')[0] || 'there'}
-            </div>
-            {customerData?.mobile_no && (
-              <div style={{ fontSize: '11px', color: 'rgba(249,246,240,0.45)', marginTop: '3px', letterSpacing: '0.03em' }}>
-                {customerData.mobile_no}
-              </div>
-            )}
+          <div style={{ fontSize: '14px', fontWeight: 700, color: '#E8C060' }}>
+            Hello {customerData?.name}
           </div>
 
-          <div style={{ height: '1px', background: 'rgba(201,168,76,0.2)', margin: '0 14px 8px' }} />
-
-          {[
-            { href: '/orders', label: 'Orders' },
-            { href: '/wishlist', label: 'Wishlist' },
-            { href: '/profile', label: 'Profile' },
-          ].map(({ href, label }) => (
-            <a
-              key={href}
-              href={href}
-              style={menuItemStyle}
-              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(201,168,76,0.1)'; e.currentTarget.style.color = '#C9A84C' }}
-              onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#F9F6F0' }}
-            >
-              {label}
-            </a>
-          ))}
-
-          <div style={{ height: '1px', background: 'rgba(201,168,76,0.2)', margin: '8px 14px 6px' }} />
-
-          <button
-            onClick={() => {
-              localStorage.removeItem('jwt_token')
-              localStorage.removeItem('customer')
-              window.location.href = '/'
-            }}
+          <div
             style={{
-              ...menuItemStyle,
-              background: 'none',
-              border: 'none',
-              width: '100%',
-              textAlign: 'left',
-              cursor: 'pointer',
-              color: 'rgba(249,246,240,0.5)',
               fontSize: '12px',
+              color: '#C9A84C',
+              marginBottom: '14px',
+              opacity: 0.7,
             }}
-            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(239,68,68,0.08)'; e.currentTarget.style.color = '#f87171' }}
-            onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'rgba(249,246,240,0.5)' }}
           >
-            Logout
-          </button>
+            {customerData?.mobile_no}
+          </div>
+
+          <hr style={{ border: 'none', borderTop: '1px solid #1a2d4a' }} />
+
+          <div style={{ paddingTop: '12px' }}>
+            <a href="/orders" style={{ ...menuItemStyle, color: '#C9A84C' }}>Orders</a>
+            <a href="/wishlist" style={{ ...menuItemStyle, color: '#C9A84C' }}>Wishlist</a>
+            <a href="/profile" style={{ ...menuItemStyle, color: '#C9A84C' }}>Profile</a>
+
+            <button
+              onClick={() => {
+                localStorage.removeItem('jwt_token')
+                localStorage.removeItem('customer')
+                window.location.href = '/'
+              }}
+              style={{
+                ...menuItemStyle,
+                color: '#C9A84C',
+                background: 'none',
+                border: 'none',
+                width: '100%',
+                textAlign: 'left',
+                cursor: 'pointer',
+              }}
+            >
+              Logout
+            </button>
+          </div>
         </>
       ) : (
         <>
-          <div style={{ padding: '0 14px 12px' }}>
-            <div style={{ fontSize: '15px', fontWeight: 700, color: '#C9A84C', fontFamily: "'Playfair Display', Georgia, serif" }}>
-              Welcome
-            </div>
-            <div style={{ fontSize: '12px', color: 'rgba(249,246,240,0.5)', margin: '4px 0 0', lineHeight: 1.5 }}>
-              Sign in to access your account
-            </div>
+          <div style={{ fontSize: '14px', fontWeight: 700, color: '#E8C060' }}>
+            Welcome
           </div>
 
-          <div style={{ height: '1px', background: 'rgba(201,168,76,0.2)', margin: '0 14px 12px' }} />
-
-          <div style={{ padding: '0 14px 6px' }}>
-            <a
-              href="/login"
-              style={{
-                display: 'block',
-                background: '#C9A84C',
-                color: '#050C1C',
-                padding: '10px 0',
-                fontSize: '12px',
-                fontWeight: 800,
-                textDecoration: 'none',
-                borderRadius: '4px',
-                textAlign: 'center',
-                letterSpacing: '0.08em',
-              }}
-            >
-              LOGIN / SIGNUP
-            </a>
+          <div
+            style={{
+              fontSize: '12px',
+              color: '#C9A84C',
+              margin: '8px 0 14px',
+              opacity: 0.7,
+            }}
+          >
+            To access account and manage orders
           </div>
+
+          <a
+            href="/login"
+            style={{
+              display: 'inline-block',
+              border: '1px solid #C9A84C',
+              color: '#C9A84C',
+              padding: '10px 18px',
+              fontSize: '12px',
+              fontWeight: 700,
+              textDecoration: 'none',
+              borderRadius: '4px',
+              marginBottom: '14px',
+            }}
+          >
+            LOGIN / SIGNUP
+          </a>
         </>
       )}
     </div>
@@ -552,7 +542,7 @@ const isLoggedIn = !!token
               background: 'none',
               border: 'none',
               cursor: 'pointer',
-              color: '#3A332A',
+              color: '#C9A84C',
               display: 'flex',
               alignItems: 'center',
               flexDirection: 'column',
@@ -576,7 +566,7 @@ const isLoggedIn = !!token
               background: 'none',
               border: 'none',
               cursor: 'pointer',
-              color: '#3A332A',
+              color: '#C9A84C',
               position: 'relative',
               display: 'flex',
               alignItems: 'center',
