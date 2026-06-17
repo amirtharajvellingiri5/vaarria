@@ -210,6 +210,7 @@ const FilterSidebar = ({
   onFilterChange,
   onClearFilters,
   siblingCategories,
+  currentSlug,
 }) => {
   const [expandedSections, setExpandedSections] = useState({
     category: true,
@@ -230,7 +231,7 @@ const FilterSidebar = ({
       <button
         onClick={() => toggleSection(filterKey)}
         className='flex items-center justify-between w-full text-left mb-2'
-        style={{ color: '#C9A84C', fontFamily: "'Playfair Display', Georgia, serif", fontWeight: 400, fontSize: '14px', letterSpacing: '0.04em' }}
+        style={{ color: '#050C1C', fontFamily: "'Playfair Display', Georgia, serif", fontWeight: 600, fontSize: '14px', letterSpacing: '0.04em' }}
       >
         {title}
         {expandedSections[filterKey] ? (
@@ -247,9 +248,34 @@ const FilterSidebar = ({
                   key={cat.slug}
                   to={`/${cat.slug}`}
                   className='block text-sm py-0.5 transition'
-                  style={{ color: '#555', paddingLeft: '10px', borderLeft: '3px solid transparent', textDecoration: 'none', fontFamily: "'Playfair Display', Georgia, serif", fontSize: '14px' }}
-                  onMouseEnter={e => { e.currentTarget.style.color = '#C9A84C'; e.currentTarget.style.borderLeftColor = '#C9A84C'; e.currentTarget.style.paddingLeft = '13px' }}
-                  onMouseLeave={e => { e.currentTarget.style.color = '#555'; e.currentTarget.style.borderLeftColor = 'transparent'; e.currentTarget.style.paddingLeft = '10px' }}
+                  style={{
+                    color: cat.slug === currentSlug ? '#050C1C' : '#555',
+                    paddingLeft: '12px',
+                    borderLeft: `3px solid ${cat.slug === currentSlug ? '#C9A84C' : 'transparent'}`,
+                    textDecoration: 'none',
+                    fontFamily: "'Playfair Display', Georgia, serif",
+                    fontSize: '14px',
+                    fontWeight: cat.slug === currentSlug ? 700 : 400,
+                    background: cat.slug === currentSlug ? '#FDF6E3' : 'transparent',
+                    display: 'block',
+                    padding: '5px 8px 5px 12px',
+                    borderRadius: '0 4px 4px 0',
+                    transition: 'all 0.15s',
+                  }}
+                  onMouseEnter={e => {
+                    if (cat.slug !== currentSlug) {
+                      e.currentTarget.style.color = '#C9A84C'
+                      e.currentTarget.style.borderLeftColor = '#C9A84C'
+                      e.currentTarget.style.background = '#fdf9f0'
+                    }
+                  }}
+                  onMouseLeave={e => {
+                    if (cat.slug !== currentSlug) {
+                      e.currentTarget.style.color = '#555'
+                      e.currentTarget.style.borderLeftColor = 'transparent'
+                      e.currentTarget.style.background = 'transparent'
+                    }
+                  }}
                 >
                   {cat.name}
                 </Link>
@@ -351,7 +377,7 @@ const FilterSidebar = ({
         <button
           onClick={() => toggleSection('price')}
           className='flex items-center justify-between w-full text-left mb-2'
-          style={{ color: '#C9A84C', fontFamily: "'Playfair Display', Georgia, serif", fontWeight: 400, fontSize: '14px', letterSpacing: '0.04em' }}
+          style={{ color: '#050C1C', fontFamily: "'Playfair Display', Georgia, serif", fontWeight: 600, fontSize: '14px', letterSpacing: '0.04em' }}
         >
           Price
           {expandedSections.price ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
@@ -459,7 +485,7 @@ const ProductCard = ({ product, onViewDetails }) => {
       className='cursor-pointer group'
       style={{
         background: '#fff',
-        borderRadius: '0px',
+        borderRadius: '6px',
         overflow: 'hidden',
         boxShadow: '0 2px 12px rgba(58,51,42,0.08)',
         transition: 'transform 0.2s, box-shadow 0.2s, border-color 0.2s',
@@ -485,16 +511,6 @@ const ProductCard = ({ product, onViewDetails }) => {
           onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.04)'}
           onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
         />
-        {/* Discount badge */}
-        <span style={{
-          position: 'absolute', top: '10px', left: '10px',
-          background: '#C9A84C', color: '#050C1C',
-          fontSize: '11px', fontWeight: 700,
-          padding: '3px 8px', borderRadius: '4px',
-          letterSpacing: '0.03em',
-        }}>
-          30% OFF
-        </span>
         {/* Wishlist */}
         <button
           onClick={e => e.stopPropagation()}
@@ -512,16 +528,19 @@ const ProductCard = ({ product, onViewDetails }) => {
           <Heart size={17} style={{ color: '#C9A84C', transition: 'fill 0.2s' }} />
         </button>
       </div>
-      <div style={{ padding: '12px 14px 14px' }}>
-        <p style={{ fontSize: '14px', fontWeight: 500, color: '#333', lineHeight: 1.45, marginBottom: '8px', letterSpacing: '0.02em', fontFamily: "'Playfair Display', Georgia, serif" }} className='line-clamp-2'>
+      <div style={{ padding: '12px 14px 16px' }}>
+        <p style={{ fontSize: '11px', fontWeight: 600, color: '#999', lineHeight: 1.3, marginBottom: '4px', letterSpacing: '0.08em', textTransform: 'uppercase' }} className='line-clamp-1'>
           {product.name}
         </p>
-        <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px' }}>
-          <span style={{ fontWeight: 700, fontSize: '16px', color: '#1a1a1a', fontFamily: "'Playfair Display', Georgia, serif" }}>₹{product.price.toLocaleString('en-IN')}</span>
-          <span style={{ fontSize: '11px', color: '#bbb', textDecoration: 'line-through' }}>
+
+        <div style={{ fontSize: '20px', fontWeight: 700, color: '#0a0a0a', marginBottom: '4px', fontFamily: "'Playfair Display', Georgia, serif" }}>
+          ₹{product.price.toLocaleString('en-IN')}
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <span style={{ fontSize: '12px', color: '#bbb', textDecoration: 'line-through' }}>
             ₹{Math.round(product.price * 1.4).toLocaleString('en-IN')}
           </span>
-          <span style={{ fontSize: '11px', color: '#2e7d32', fontWeight: 600 }}>30% off</span>
+          <span style={{ fontSize: '11px', color: '#C9A84C', fontWeight: 700, letterSpacing: '0.04em' }}>30% OFF</span>
         </div>
       </div>
     </div>
@@ -813,20 +832,20 @@ const ListingPage = () => {
   const isLoading = productsLoading || filtersLoading
 
   return (
-    <div className='min-h-screen' style={{ background: '#f7f5f2' }}>
+    <div className='min-h-screen' style={{ background: '#F9F6F0' }}>
       <Navbar />
 
       <div className='max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8'>
         {/* Breadcrumb + Page title */}
         <div style={{ marginLeft: '1.2%', marginBottom: '16px' }}>
-          <p style={{ fontSize: '12px', color: '#aaa', marginBottom: '6px' }}>
+          <p style={{ fontSize: '12px', color: '#aaa', marginBottom: '6px', fontFamily: "'Playfair Display', Georgia, serif" }}>
             <a href='/' style={{ color: '#C9A84C', textDecoration: 'none' }}>Home</a>
             <span style={{ margin: '0 6px' }}>›</span>
             <span style={{ color: '#666' }}>
               {category ? category.name : slug ? formatTitleFromSlug(slug) : 'Products'}
             </span>
           </p>
-          <h1 style={{ fontSize: '1.35rem', fontWeight: 700, color: '#1a1a1a', display: 'inline-block', paddingBottom: '6px', borderBottom: '2px solid #C9A84C' }}>
+          <h1 style={{ fontSize: '1.35rem', fontWeight: 700, color: '#1a1a1a', display: 'inline-block', paddingBottom: '6px', borderBottom: '2px solid #C9A84C', fontFamily: "'Playfair Display', Georgia, serif" }}>
             {category ? category.name : slug ? formatTitleFromSlug(slug) : 'Products'}
           </h1>
         </div>
@@ -842,7 +861,7 @@ const ListingPage = () => {
           <div className='hidden lg:flex items-center gap-4 flex-1 min-w-0'>
             <div className='flex items-center w-64 flex-shrink-0'>
 
-              <span style={{ color: '#C9A84C', fontFamily: "'Playfair Display', Georgia, serif", fontWeight: 400, fontSize: '14px', letterSpacing: '0.04em' }}>
+              <span style={{ color: '#050C1C', fontFamily: "'Playfair Display', Georgia, serif", fontWeight: 600, fontSize: '14px', letterSpacing: '0.04em' }}>
                 Filters
               </span>
 
@@ -890,6 +909,7 @@ const ListingPage = () => {
                 onFilterChange={handleFilterChange}
                 onClearFilters={handleClearFilters}
                 siblingCategories={siblingCategories}
+                currentSlug={slug}
               />
             ) : null}
           </div>

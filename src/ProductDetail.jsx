@@ -1361,7 +1361,7 @@ export default function ProductDetail() {
 }
 
 .pdp-breadcrumb a:hover {
-  color: #ec4899;
+  color: #C9A84C;
 }
 
 .pdp-breadcrumb-clickable {
@@ -1370,7 +1370,7 @@ export default function ProductDetail() {
 }
 
 .pdp-breadcrumb-clickable:hover {
-  color: #ec4899;
+  color: #C9A84C;
 }
         .pdp-breadcrumb-sep { color: #d1d5db; font-size: 10px; }
         .pdp-breadcrumb-current { color: #374151; font-weight: 500; }
@@ -1393,31 +1393,31 @@ export default function ProductDetail() {
         .pdp-price-row { display: flex; align-items: baseline; gap: 14px; margin-top: 18px; }
         .pdp-price { font-size: 30px; font-weight: 700; color: #1f2937; }
         .pdp-mrp { font-size: 16px; color: #d1d5db; text-decoration: line-through; }
-        .pdp-discount { font-size: 15px; color: #ff6b35; font-weight: 700; }
+        .pdp-discount { font-size: 15px; color: #C9A84C; font-weight: 700; }
         .pdp-tax { font-size: 11px; color: #9ca3af; margin-top: 3px; }
         .pdp-hr { height: 1px; background: #f3f4f6; margin: 20px 0; }
         .pdp-offers-title { font-size: 13px; font-weight: 700; color: #374151; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.5px; }
-        .pdp-offer-row { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 8px; background: #fffbf5; border: 1px solid #fef3c7; margin-bottom: 7px; }
+        .pdp-offer-row { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 8px; background: #F0EBE0; border: 1px solid #D4AF37; margin-bottom: 7px; }
         .pdp-offer-icon { font-size: 15px; margin-top: 1px; flex-shrink: 0; }
         .pdp-offer-title-text { font-size: 13px; font-weight: 600; color: #374151; }
         .pdp-offer-desc { font-size: 12px; color: #6b7280; }
         .pdp-size-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
         .pdp-section-label { font-size: 13px; font-weight: 700; color: #374151; text-transform: uppercase; letter-spacing: 0.5px; }
-        .pdp-size-guide { font-size: 13px; color: #ec4899; font-weight: 600; cursor: pointer; }
+        .pdp-size-guide { font-size: 13px; color: #050C1C; font-weight: 600; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
         .pdp-sizes { display: flex; flex-wrap: wrap; gap: 10px; }
         .pdp-size-btn { width: 56px; height: 56px; border-radius: 50%; border: 1.5px solid #e5e7eb; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 500; color: #374151; cursor: pointer; transition: all 0.15s; background: #fff; font-family: 'DM Sans', sans-serif; }
-        .pdp-size-btn:hover:not([disabled]) { border-color: #ec4899; color: #ec4899; }
-        .pdp-size-btn.selected { border-color: #ec4899; color: #ec4899; background: #fff1f5; font-weight: 700; box-shadow: 0 0 0 3px rgba(236,72,153,0.12); }
+        .pdp-size-btn:hover:not([disabled]) { border-color: #C9A84C; color: #050C1C; }
+        .pdp-size-btn.selected { border-color: #C9A84C; color: #C9A84C; background: #050C1C; font-weight: 700; box-shadow: 0 0 0 3px rgba(201,168,76,0.15); }
         .pdp-size-btn[disabled] { opacity: 0.28; cursor: not-allowed; border-style: dashed; }
         .pdp-size-warn { font-size: 12px; color: #f59e0b; margin-top: 8px; font-weight: 500; }
         .pdp-cta { display: flex; gap: 10px; margin: 22px 0 18px; }
-        .pdp-btn-bag { flex: 1; height: 54px; border: none; border-radius: 4px; font-size: 15px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; letter-spacing: 0.8px; text-transform: uppercase; background: linear-gradient(135deg, #ec4899, #f43f5e); color: #fff; transition: all 0.2s; box-shadow: 0 4px 16px rgba(236,72,153,0.3); font-family: 'DM Sans', sans-serif; }
-        .pdp-btn-bag:hover:not([disabled]) { background: linear-gradient(135deg, #db2777, #e11d48); transform: translateY(-1px); box-shadow: 0 6px 22px rgba(236,72,153,0.42); }
-        .pdp-btn-bag[disabled] { background: #f3f4f6; color: #9ca3af; cursor: not-allowed; box-shadow: none; }
-        .pdp-btn-bag.added { background: linear-gradient(135deg, #10b981, #059669); box-shadow: 0 4px 16px rgba(16,185,129,0.3); }
+        .pdp-btn-bag { flex: 1; height: 54px; border: 1.5px solid #C9A84C; border-radius: 4px; font-size: 15px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; letter-spacing: 0.8px; text-transform: uppercase; background: #050C1C; color: #C9A84C; transition: all 0.2s; box-shadow: none; font-family: 'DM Sans', sans-serif; }
+        .pdp-btn-bag:hover:not([disabled]) { background: #0d1f3c; transform: translateY(-1px); box-shadow: 0 6px 22px rgba(5,12,28,0.25); }
+        .pdp-btn-bag[disabled] { background: #f3f4f6; color: #9ca3af; cursor: not-allowed; box-shadow: none; border-color: #e5e7eb; }
+        .pdp-btn-bag.added { background: #050C1C; color: #C9A84C; box-shadow: none; }
         .pdp-btn-wishlist { width: 54px; height: 54px; border-radius: 4px; border: 1.5px solid #e5e7eb; display: flex; align-items: center; justify-content: center; cursor: pointer; background: #fff; transition: all 0.2s; }
-        .pdp-btn-wishlist:hover { border-color: #ec4899; background: #fff1f5; }
-        .pdp-btn-wishlist.active { border-color: #ec4899; background: #fff1f5; }
+        .pdp-btn-wishlist:hover { border-color: #C9A84C; background: #FDF6E3; }
+        .pdp-btn-wishlist.active { border-color: #C9A84C; background: #FDF6E3; }
         .pdp-trust { display: flex; border: 1px solid #f3f4f6; border-radius: 8px; overflow: hidden; margin-bottom: 20px; }
         .pdp-trust-item { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 5px; padding: 14px 8px; border-right: 1px solid #f3f4f6; text-align: center; background: #fafafa; }
         .pdp-trust-item:last-child { border-right: none; }
@@ -1426,15 +1426,15 @@ export default function ProductDetail() {
         .pdp-delivery-title { font-size: 13px; font-weight: 700; color: #374151; display: flex; align-items: center; gap: 6px; margin-bottom: 10px; }
         .pdp-pincode-row { display: flex; gap: 8px; align-items: center; }
         .pdp-pincode-input { flex: 1; border: 1.5px solid #e5e7eb; border-radius: 6px; padding: 9px 12px; font-size: 13px; outline: none; font-family: 'DM Sans', sans-serif; background: #fff; transition: border-color 0.15s; color: #374151; }
-        .pdp-pincode-input:focus { border-color: #ec4899; }
-        .pdp-pincode-btn { background: none; border: none; color: #ec4899; font-size: 13px; font-weight: 700; cursor: pointer; font-family: 'DM Sans', sans-serif; padding: 0 4px; }
+        .pdp-pincode-input:focus { border-color: #C9A84C; }
+        .pdp-pincode-btn { background: #050C1C; border: 1px solid #C9A84C; color: #C9A84C; font-size: 13px; font-weight: 700; cursor: pointer; font-family: 'DM Sans', sans-serif; padding: 6px 14px; border-radius: 4px; }
         .pdp-delivery-ok { font-size: 12px; color: #10b981; font-weight: 500; margin-top: 9px; }
         .pdp-accordion { margin-top: 8px; }
         .pdp-accordion-item { border-top: 1px solid #f3f4f6; }
         .pdp-accordion-trigger { display: flex; justify-content: space-between; align-items: center; padding: 16px 0; cursor: pointer; user-select: none; background: none; border: none; width: 100%; font-family: 'DM Sans', sans-serif; text-align: left; }
         .pdp-accordion-label { font-size: 14px; font-weight: 600; color: #374151; }
         .pdp-accordion-body { padding-bottom: 20px; }
-        .pdp-toast { position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%); background: linear-gradient(135deg, #ec4899, #f43f5e); color: #fff; padding: 13px 32px; border-radius: 24px; font-size: 14px; font-weight: 600; z-index: 100; box-shadow: 0 8px 28px rgba(236,72,153,0.4); animation: toastIn 0.3s ease; font-family: 'DM Sans', sans-serif; }
+        .pdp-toast { position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%); background: #050C1C; color: #C9A84C; border: 1.5px solid #C9A84C; padding: 13px 32px; border-radius: 24px; font-size: 14px; font-weight: 600; z-index: 100; box-shadow: 0 8px 28px rgba(5,12,28,0.35); animation: toastIn 0.3s ease; font-family: 'DM Sans', sans-serif; }
         @keyframes toastIn { from { opacity: 0; transform: translateX(-50%) translateY(16px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
         @media (max-width: 900px) { .pdp-outer {
   display: flex;
@@ -1465,15 +1465,6 @@ export default function ProductDetail() {
             onClick={() => navigate(`/category/${product.categoryId}`)}
           >
             {product.category}
-          </span>
-
-          <span className='pdp-breadcrumb-sep'>›</span>
-
-          <span
-            style={{ cursor: 'pointer' }}
-            onClick={() => navigate(`/brand/${product.brandId}`)}
-          >
-            {product.brand}
           </span>
 
           <span className='pdp-breadcrumb-sep'>›</span>
@@ -1647,22 +1638,22 @@ export default function ProductDetail() {
 
             <div className='pdp-trust'>
               <div className='pdp-trust-item'>
-                <Truck size={18} color='#10b981' />
+                <Truck size={18} color='#C9A84C' />
                 <span className='pdp-trust-label'>Free Delivery</span>
               </div>
               <div className='pdp-trust-item'>
-                <RefreshCw size={18} color='#f59e0b' />
+                <RefreshCw size={18} color='#C9A84C' />
                 <span className='pdp-trust-label'>7-Day Returns</span>
               </div>
               <div className='pdp-trust-item'>
-                <Shield size={18} color='#8b5cf6' />
+                <Shield size={18} color='#C9A84C' />
                 <span className='pdp-trust-label'>100% Genuine</span>
               </div>
             </div>
 
             <div className='pdp-delivery'>
               <div className='pdp-delivery-title'>
-                <Truck size={14} color='#ec4899' />
+                <Truck size={14} color='#C9A84C' />
                 Delivery Options
               </div>
               <div className='pdp-pincode-row'>
@@ -1772,9 +1763,10 @@ export default function ProductDetail() {
             style={{
               width: '100%',
               maxWidth: 700,
-              background: '#fff',
+              background: '#050C1C',
+              border: '1.5px solid #C9A84C',
               borderRadius: 12,
-              padding: 24,
+              padding: '28px 32px',
               maxHeight: '90vh',
               overflowY: 'auto',
             }}
@@ -1784,14 +1776,18 @@ export default function ProductDetail() {
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
-                marginBottom: 20,
+                marginBottom: 24,
+                borderBottom: '1px solid rgba(201,168,76,0.25)',
+                paddingBottom: 16,
               }}
             >
               <h2
                 style={{
                   fontSize: 20,
                   fontWeight: 700,
-                  color: '#111827',
+                  color: '#C9A84C',
+                  fontFamily: "'Playfair Display', Georgia, serif",
+                  letterSpacing: '0.04em',
                 }}
               >
                 Size Chart
@@ -1800,12 +1796,19 @@ export default function ProductDetail() {
               <button
                 onClick={() => setShowSizeChart(false)}
                 style={{
-                  border: 'none',
+                  border: '1px solid rgba(201,168,76,0.4)',
                   background: 'none',
                   cursor: 'pointer',
+                  color: '#C9A84C',
+                  borderRadius: 4,
+                  width: 32,
+                  height: 32,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
                 }}
               >
-                <X size={22} />
+                <X size={18} />
               </button>
             </div>
 
@@ -1817,46 +1820,24 @@ export default function ProductDetail() {
             >
               <thead>
                 <tr>
-                  <th
-                    style={{
-                      border: '1px solid #e5e7eb',
-                      padding: 12,
-                      background: '#f9fafb',
-                      textAlign: 'left',
-                    }}
-                  >
-                    Size
-                  </th>
-                  <th
-                    style={{
-                      border: '1px solid #e5e7eb',
-                      padding: 12,
-                      background: '#f9fafb',
-                      textAlign: 'left',
-                    }}
-                  >
-                    Bust
-                  </th>
-                  <th
-                    style={{
-                      border: '1px solid #e5e7eb',
-                      padding: 12,
-                      background: '#f9fafb',
-                      textAlign: 'left',
-                    }}
-                  >
-                    Waist
-                  </th>
-                  <th
-                    style={{
-                      border: '1px solid #e5e7eb',
-                      padding: 12,
-                      background: '#f9fafb',
-                      textAlign: 'left',
-                    }}
-                  >
-                    Hip
-                  </th>
+                  {['Size', 'Bust', 'Waist', 'Hip'].map((h) => (
+                    <th
+                      key={h}
+                      style={{
+                        border: '1px solid rgba(201,168,76,0.2)',
+                        padding: '12px 16px',
+                        background: 'rgba(201,168,76,0.08)',
+                        textAlign: 'left',
+                        color: '#C9A84C',
+                        fontSize: 13,
+                        fontWeight: 700,
+                        letterSpacing: '0.07em',
+                        textTransform: 'uppercase',
+                      }}
+                    >
+                      {h}
+                    </th>
+                  ))}
                 </tr>
               </thead>
 
@@ -1868,40 +1849,22 @@ export default function ProductDetail() {
                   ['L', '38"', '32"', '40"'],
                   ['XL', '40"', '34"', '42"'],
                   ['XXL', '42"', '36"', '44"'],
-                ].map(([size, bust, waist, hip]) => (
-                  <tr key={size}>
-                    <td
-                      style={{
-                        border: '1px solid #e5e7eb',
-                        padding: 12,
-                      }}
-                    >
-                      {size}
-                    </td>
-                    <td
-                      style={{
-                        border: '1px solid #e5e7eb',
-                        padding: 12,
-                      }}
-                    >
-                      {bust}
-                    </td>
-                    <td
-                      style={{
-                        border: '1px solid #e5e7eb',
-                        padding: 12,
-                      }}
-                    >
-                      {waist}
-                    </td>
-                    <td
-                      style={{
-                        border: '1px solid #e5e7eb',
-                        padding: 12,
-                      }}
-                    >
-                      {hip}
-                    </td>
+                ].map(([size, bust, waist, hip], i) => (
+                  <tr key={size} style={{ background: i % 2 === 0 ? 'transparent' : 'rgba(201,168,76,0.04)' }}>
+                    {[size, bust, waist, hip].map((val, j) => (
+                      <td
+                        key={j}
+                        style={{
+                          border: '1px solid rgba(201,168,76,0.15)',
+                          padding: '12px 16px',
+                          color: j === 0 ? '#C9A84C' : '#F9F6F0',
+                          fontSize: 14,
+                          fontWeight: j === 0 ? 600 : 400,
+                        }}
+                      >
+                        {val}
+                      </td>
+                    ))}
                   </tr>
                 ))}
               </tbody>
@@ -1910,8 +1873,9 @@ export default function ProductDetail() {
             <div
               style={{
                 marginTop: 16,
-                fontSize: 13,
-                color: '#6b7280',
+                fontSize: 12,
+                color: 'rgba(249,246,240,0.5)',
+                letterSpacing: '0.02em',
               }}
             >
               All measurements are in inches and may vary slightly by style.
