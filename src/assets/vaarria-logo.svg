@@ -1,0 +1,25 @@
+<svg width="320" height="72" viewBox="0 0 320 72" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="VAARRIA — Adorn Your Aura">
+  <defs>
+    <linearGradient id="vaarriaGold" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#E8C76A"/>
+      <stop offset="0.5" stop-color="#BE9A4E"/>
+      <stop offset="1" stop-color="#9C7A2E"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Crescent-moon monogram (Chandra / feminine) in Jupiter gold -->
+  <g transform="translate(6,4)">
+    <circle cx="30" cy="32" r="26" fill="none" stroke="url(#vaarriaGold)" stroke-width="1.2" opacity="0.55"/>
+    <path d="M40 14 A22 22 0 1 0 40 50 A17 17 0 1 1 40 14 Z" fill="url(#vaarriaGold)"/>
+    <!-- Venus sparkle in the crescent's embrace -->
+    <path d="M45 26 L47 31 L52 33 L47 35 L45 40 L43 35 L38 33 L43 31 Z" fill="#A65A66"/>
+  </g>
+
+  <!-- Wordmark -->
+  <text x="74" y="40" font-family="'Playfair Display','Cormorant Garamond',Georgia,serif"
+        font-size="30" font-weight="600" letter-spacing="5" fill="#3A332A">VAARRIA</text>
+
+  <!-- Slogan -->
+  <text x="76" y="58" font-family="'Montserrat','Helvetica Neue',Arial,sans-serif"
+        font-size="9" font-weight="500" letter-spacing="4.5" fill="#A65A66">ADORN YOUR AURA</text>
+</svg>

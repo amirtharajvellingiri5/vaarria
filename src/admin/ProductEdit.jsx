@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react'
+import AdminNav from './AdminNav'
 import {
   Upload,
   X,
@@ -171,11 +172,11 @@ const mapApiToState = (product) => {
     }),
     // Existing server images shown as preview URLs
     main_image_preview: v.main_image
-      ? { id: uid(), src: `https://cdn.aarria.com/app/images/${v.main_image}`, name: v.main_image }
+      ? { id: uid(), src: `https://cdn.vaarria.com/app/images/${v.main_image}`, name: v.main_image }
       : null,
     other_image_previews: (v.other_images || []).map((key) => ({
       id: uid(),
-      src: `https://cdn.aarria.com/app/images/${key}`,
+      src: `https://cdn.vaarria.com/app/images/${key}`,
       name: key,
     })),
     // Keep server filenames so unchanged images don't get re-uploaded
@@ -262,7 +263,7 @@ const ProductEdit = ({ onBack }) => {
     setFetchError('')
     try {
       const res = await fetch(
-        `https://api.aarria.com/product/${productId}`,
+        `https://api.vaarria.com/product/${productId}`,
       )
       if (!res.ok) throw new Error(`Failed to fetch product (${res.status})`)
       const data = await res.json()
@@ -418,7 +419,12 @@ const ProductEdit = ({ onBack }) => {
     product_id: productId,
     title,
     brand: { name: brandName, catalogue_id: catalogueId },
-    category_id: categoryId,
+    category: {
+  category_name: categories.find(
+    (c) => c.category_id === categoryId
+  )?.name,
+  category_id: categoryId,
+},
     description: {
       Material: material,
       'Sleeve Length': sleeveLength,
@@ -630,12 +636,14 @@ const ProductEdit = ({ onBack }) => {
     <div className='min-h-screen bg-stone-950 text-stone-100' style={{ fontFamily: "'DM Sans', sans-serif" }}>
       <link href='https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Playfair+Display:wght@600;700&display=swap' rel='stylesheet' />
 
-      {/* Top bar */}
-      <div className='sticky top-0 z-50 bg-stone-950/95 backdrop-blur border-b border-stone-800'>
+      <AdminNav />
+
+      {/* Page action bar */}
+      <div className='sticky top-16 z-40 bg-stone-950/95 backdrop-blur border-b border-stone-800'>
         <div className='max-w-7xl mx-auto px-6 h-16 flex items-center justify-between'>
           <div className='flex items-center gap-4'>
             <button
-              onClick={onBack}
+              onClick={() => window.open('/admin', '_blank')}
               className='p-2 rounded-lg hover:bg-stone-800 transition-colors text-stone-400 hover:text-stone-100'
             >
               <ArrowLeft size={18} />

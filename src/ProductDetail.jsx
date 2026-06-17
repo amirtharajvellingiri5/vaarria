@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import {
   ChevronLeft,
   ChevronRight,
@@ -19,7 +19,7 @@ import {
 } from 'lucide-react'
 import Navbar from './Navbar'
 import Footer from './Footer'
-import { useParams } from 'react-router-dom'
+import { useParams, useNavigate } from 'react-router-dom'
 
 // ─── Mock API Response ────────────────────────────────────────────────────────
 const MOCK_PRODUCT_API_RESPONSE = {
@@ -147,7 +147,7 @@ async function fetchProduct(productId) {
 
   const allImageFilenames = [variant.main_image, ...variant.other_images]
   const images = allImageFilenames.map(
-    (img) => `https://cdn.aarria.com/app/images/${img}`,
+    (img) => `https://cdn.vaarria.com/app/images/${img}`,
   )
 
   // Build combined media list: images first, then videos
@@ -220,8 +220,10 @@ async function fetchProduct(productId) {
   return {
     id: raw.product_id,
     brand: raw.brand.name,
-    name: raw.title,
+    brandId: raw.brand.catalogue_id,
     category: raw.category.category_name,
+    categoryId: raw.category.category_id,
+    name: raw.title,
     mediaItems,
     price: raw.pricing.sale_price,
     mrp: raw.pricing.mrp,
@@ -259,10 +261,51 @@ async function fetchProduct(productId) {
 }
 
 async function fetchRatings(productId) {
-  await new Promise((r) => setTimeout(r, 400))
-  return MOCK_RATINGS_API_RESPONSE
-}
+  const response = await fetch(
+    `https://zq0dbjycx6.execute-api.ap-south-1.amazonaws.com/prod/products/${productId}/ratings`,
+  )
 
+  if (!response.ok) {
+    throw new Error('Failed to load ratings')
+  }
+
+  const reviews = await response.json()
+
+  const totalRatings = reviews.length
+
+  const averageRating =
+    totalRatings === 0
+      ? 0
+      : Number(
+          (
+            reviews.reduce((sum, r) => sum + r.rating, 0) / totalRatings
+          ).toFixed(1),
+        )
+
+  const breakdown = [5, 4, 3, 2, 1].map((star) => {
+    const count = reviews.filter((r) => r.rating === star).length
+
+    return {
+      label: `${star} ★`,
+      pct: totalRatings === 0 ? 0 : Math.round((count / totalRatings) * 100),
+    }
+  })
+
+  return {
+    product_id: productId,
+    overall: averageRating,
+    rating_count: totalRatings,
+    review_count: totalRatings,
+    breakdown,
+    reviews: reviews.map((r, index) => ({
+      id: index + 1,
+      user: r.name || 'Verified Customer',
+      rating: r.rating,
+      body: r.review,
+      images: (r.images || []).map((img) => `https://cdn.vaarria.com${img}`),
+    })),
+  }
+}
 // ─── Full-screen Media Slider ─────────────────────────────────────────────────
 function MediaSlider({ mediaItems, initialIndex, onClose }) {
   const [current, setCurrent] = useState(initialIndex)
@@ -306,27 +349,22 @@ function MediaSlider({ mediaItems, initialIndex, onClose }) {
         style={{
           position: 'fixed',
           top: 16,
-          left: '50%',
-          transform: 'translateX(-50%)',
+          right: 16,
           zIndex: 999,
+          width: 44,
+          height: 44,
+          borderRadius: '50%',
+          background: 'rgba(0,0,0,0.6)',
+          border: '1px solid rgba(255,255,255,0.2)',
+          color: '#fff',
           display: 'flex',
           alignItems: 'center',
-          gap: 8,
-          padding: '8px 20px',
-          borderRadius: 999,
-          background: 'rgba(255,255,255,0.15)',
-          border: '1px solid rgba(255,255,255,0.35)',
-          color: '#fff',
-          fontSize: 13,
-          fontWeight: 600,
+          justifyContent: 'center',
           cursor: 'pointer',
           backdropFilter: 'blur(8px)',
-          fontFamily: "'DM Sans', sans-serif",
-          letterSpacing: '0.3px',
         }}
       >
-        <X size={15} />
-        Close Preview
+        <X size={22} />
       </button>
 
       {/* Counter — top left */}
@@ -859,10 +897,16 @@ function SkeletonLoader() {
         @keyframes skeletonShimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
         .skeleton { background: linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 50%, #f3f4f6 75%); background-size: 200% 100%; animation: skeletonShimmer 1.2s infinite; border-radius: 4px; }
         .pdp-page { min-height: 100vh; background: #fff; font-family: 'DM Sans', sans-serif; color: #1f2937; }
-        .pdp-breadcrumb { padding: 11px clamp(16px, 6%, 86px); font-size: 12px; color: #9ca3af; display: flex; gap: 6px; align-items: center; border-bottom: 1px solid #fff; background: #fff; max-width: 1440px; margin: 0 auto; box-sizing: border-box; width: 100%; }
-        .pdp-outer { display: flex; align-items: flex-start; max-width: 1440px; margin: 0 auto; padding: 0 clamp(16px, 6%, 86px); }
+        .pdp-breadcrumb { padding: 11px clamp(16px, 3%, 32px); font-size: 12px; color: #9ca3af; display: flex; gap: 6px; align-items: center; border-bottom: 1px solid #fff; background: #fff; max-width: 1536px; margin: 0 auto; box-sizing: border-box; width: 100%; }
+        .pdp-outer { display: flex; align-items: flex-start; max-width: 1536px; margin: 0 auto; padding: 0 clamp(16px, 3%, 32px); }
         .pdp-images-col { width: 52%; min-width: 0; }
-        .pdp-info-col { width: 48%; min-width: 0; position: sticky; top: 64px; height: calc(100vh - 64px); overflow-y: auto; padding: 0px 48px 48px 40px; border-left: 1px solid #f3f4f6; background: #fff; }
+        .pdp-info-col {
+  width: 48%;
+  min-width: 0;
+  padding: 0px 48px 48px 40px;
+  border-left: 1px solid #f3f4f6;
+  background: #fff;
+}
         .pdp-hr { height: 1px; background: #f3f4f6; margin: 20px 0; }
       `}</style>
       <div className='pdp-page'>
@@ -915,6 +959,7 @@ function SkeletonLoader() {
 // ─── Main Product Detail Page ─────────────────────────────────────────────────
 export default function ProductDetail() {
   const { id: productId } = useParams()
+  const navigate = useNavigate()
   const [product, setProduct] = useState(null)
   const [ratingsData, setRatingsData] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -922,12 +967,22 @@ export default function ProductDetail() {
   const [sliderIndex, setSliderIndex] = useState(0)
   const [selectedSize, setSelectedSize] = useState(null)
   const [wishlist, setWishlist] = useState(false)
-  const [expandedSection, setExpandedSection] = useState('description')
+  const [expandedSection, setExpandedSection] = useState('ratings')
   const [pincode, setPincode] = useState('560001')
   const [addedToBag, setAddedToBag] = useState(false)
   const [sizeError, setSizeError] = useState(false)
   const [bagError, setBagError] = useState('')
   const [addingToBag, setAddingToBag] = useState(false)
+  const ratingsRef = useRef(null)
+  const [reviewSliderOpen, setReviewSliderOpen] = useState(false)
+  const [reviewImages, setReviewImages] = useState([])
+  const [showSizeChart, setShowSizeChart] = useState(false)
+  const [deliveryMessage, setDeliveryMessage] = useState('')
+  const [checkingDelivery, setCheckingDelivery] = useState(false)
+  const hasRatings =
+    ratingsData &&
+    ratingsData.rating_count > 0 &&
+    ratingsData.reviews?.length > 0
   const isOutOfStock =
     !product?.sizes?.length || !product?.availableSizes?.length
 
@@ -942,6 +997,51 @@ export default function ProductDetail() {
     )
   }, [productId])
 
+  const checkPincode = async () => {
+    if (pincode.length !== 6) {
+      setDeliveryMessage('Please enter a valid 6-digit pincode')
+      return
+    }
+
+    try {
+      setCheckingDelivery(true)
+
+      const response = await fetch(
+        `https://api.postalpincode.in/pincode/${pincode}`,
+      )
+
+      const data = await response.json()
+
+      if (
+        data?.[0]?.Status === 'Success' &&
+        data?.[0]?.PostOffice?.length > 0
+      ) {
+        const office = data[0].PostOffice[0]
+
+        setDeliveryMessage(
+          `✓ Delivery available to ${office.District}, ${office.State}`,
+        )
+      } else {
+        setDeliveryMessage('Delivery is not available for this pincode')
+      }
+    } catch {
+      setDeliveryMessage('Unable to verify pincode at the moment')
+    } finally {
+      setCheckingDelivery(false)
+    }
+  }
+
+  const scrollToRatings = () => {
+    setExpandedSection('ratings')
+
+    setTimeout(() => {
+      ratingsRef.current?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start',
+      })
+    }, 100)
+  }
+
   const openSlider = (index) => {
     setSliderIndex(index)
     setSliderOpen(true)
@@ -949,13 +1049,13 @@ export default function ProductDetail() {
 
   const handleAddToBag = async () => {
     if (isOutOfStock) {
-  return
-}
+      return
+    }
 
-if (!selectedSize) {
-  setSizeError(true)
-  return
-}
+    if (!selectedSize) {
+      setSizeError(true)
+      return
+    }
 
     setSizeError(false)
     setBagError('')
@@ -964,21 +1064,24 @@ if (!selectedSize) {
     try {
       const activeColor = product.colors?.find((c) => c.active)?.name || ''
 
-      const response = await fetch('https://api.aarria.com/api/bags', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
+      const response = await fetch(
+        'https://zq0dbjycx6.execute-api.ap-south-1.amazonaws.com/prod/bags/add-bag-item',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            customer_id: 1,
+            product_id: product.id || '',
+            address_id: null,
+            size: selectedSize || '',
+            color: activeColor || '',
+            quantity: 1,
+            selected: true,
+          }),
         },
-        body: JSON.stringify({
-          customer_id: 1,
-          product_id: product.id || '',
-          address_id: null,
-          size: selectedSize || '',
-          color: activeColor || '',
-          quantity: 1,
-          selected: true,
-        }),
-      })
+      )
 
       if (!response.ok) {
         let errorMessage = 'Unable to add item to bag'
@@ -1157,7 +1260,7 @@ if (!selectedSize) {
                   display: 'flex',
                   alignItems: 'center',
                   gap: 10,
-                  marginBottom: 6,
+                  marginBottom: 8,
                 }}
               >
                 <span
@@ -1175,10 +1278,15 @@ if (!selectedSize) {
                 >
                   <Star size={10} fill='#fff' strokeWidth={0} /> {r.rating}
                 </span>
+
                 <span
-                  style={{ fontSize: 14, fontWeight: 600, color: '#1f2937' }}
+                  style={{
+                    fontSize: 14,
+                    fontWeight: 600,
+                    color: '#1f2937',
+                  }}
                 >
-                  {r.title}
+                  {r.user}
                 </span>
               </div>
               <p
@@ -1191,10 +1299,46 @@ if (!selectedSize) {
               >
                 {r.body}
               </p>
-              <p style={{ fontSize: 11, color: '#9ca3af', marginTop: 6 }}>
-                {r.user} · {r.date} &nbsp;|&nbsp; {r.helpful} people found this
-                helpful
-              </p>
+
+              {r.images?.length > 0 && (
+                <div
+                  style={{
+                    display: 'flex',
+                    gap: 8,
+                    marginTop: 12,
+                    flexWrap: 'wrap',
+                  }}
+                >
+                  {r.images.map((image, imageIndex) => (
+                    <img
+                      key={imageIndex}
+                      src={image}
+                      alt=''
+                      onClick={() => {
+                        setReviewImages(
+                          r.images.map((img) => ({
+                            type: 'image',
+                            src: img,
+                            thumb: img,
+                            placeholder: img,
+                          })),
+                        )
+
+                        setSliderIndex(imageIndex)
+                        setReviewSliderOpen(true)
+                      }}
+                      style={{
+                        width: 72,
+                        height: 96,
+                        objectFit: 'cover',
+                        borderRadius: 6,
+                        border: '1px solid #e5e7eb',
+                        cursor: 'pointer',
+                      }}
+                    />
+                  ))}
+                </div>
+              )}
             </div>
           ))}
         </>
@@ -1202,7 +1346,7 @@ if (!selectedSize) {
         <p style={{ fontSize: 13, color: '#9ca3af' }}>Loading ratings…</p>
       ),
     },
-  ]
+  ].filter((section) => section.key !== 'ratings' || hasRatings)
 
   return (
     <>
@@ -1210,16 +1354,36 @@ if (!selectedSize) {
         @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Playfair+Display:wght@600;700&display=swap');
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         .pdp-page { min-height: 100vh; background: #fff; font-family: 'DM Sans', sans-serif; color: #1f2937; }
-        .pdp-breadcrumb { padding: 11px clamp(16px, 6%, 86px); font-size: 12px; color: #9ca3af; display: flex; gap: 6px; align-items: center; border-bottom: 1px solid #fff; background: #fff; max-width: 1440px; margin: 0 auto; box-sizing: border-box; width: 100%; }
-        .pdp-breadcrumb a { color: #9ca3af; text-decoration: none; }
-        .pdp-breadcrumb a:hover { color: #ec4899; }
+        .pdp-breadcrumb { padding: 11px clamp(16px, 3%, 32px); font-size: 12px; color: #9ca3af; display: flex; gap: 6px; align-items: center; border-bottom: 1px solid #fff; background: #fff; max-width: 1536px; margin: 0 auto; box-sizing: border-box; width: 100%; }
+        .pdp-breadcrumb a {
+  color: #9ca3af;
+  text-decoration: none;
+}
+
+.pdp-breadcrumb a:hover {
+  color: #C9A84C;
+}
+
+.pdp-breadcrumb-clickable {
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.pdp-breadcrumb-clickable:hover {
+  color: #C9A84C;
+}
         .pdp-breadcrumb-sep { color: #d1d5db; font-size: 10px; }
         .pdp-breadcrumb-current { color: #374151; font-weight: 500; }
-        .pdp-outer { display: flex; align-items: flex-start; max-width: 1440px; margin: 0 auto; padding: 0 clamp(16px, 6%, 86px); }
+        .pdp-outer { display: flex; align-items: flex-start; max-width: 1536px; margin: 0 auto; padding: 0 clamp(16px, 3%, 32px); }
         .pdp-images-col { width: 52%; min-width: 0; padding-top: 12px; }
-        .pdp-info-col { width: 48%; min-width: 0; position: sticky; top: 64px; height: calc(100vh - 64px); overflow-y: auto; padding: 0px 48px 48px 40px; border-left: 1px solid #f3f4f6; background: #fff; scrollbar-width: thin; scrollbar-color: #fce7f3 transparent; }
-        .pdp-info-col::-webkit-scrollbar { width: 4px; }
-        .pdp-info-col::-webkit-scrollbar-thumb { background: #fce7f3; border-radius: 4px; }
+        .pdp-info-col {
+  width: 48%;
+  min-width: 0;
+  padding: 0px 48px 48px 40px;
+  border-left: 1px solid #f3f4f6;
+  background: #fff;
+}
+        
         .pdp-brand-name { font-family: 'Playfair Display', serif; font-size: 24px; font-weight: 700; color: #1f2937; line-height: 1.2; }
         .pdp-product-subtitle { font-size: 14px; color: #6b7280; margin-top: 5px; line-height: 1.55; font-weight: 400; }
         .pdp-rating-row { display: flex; align-items: center; gap: 10px; margin-top: 12px; }
@@ -1229,31 +1393,31 @@ if (!selectedSize) {
         .pdp-price-row { display: flex; align-items: baseline; gap: 14px; margin-top: 18px; }
         .pdp-price { font-size: 30px; font-weight: 700; color: #1f2937; }
         .pdp-mrp { font-size: 16px; color: #d1d5db; text-decoration: line-through; }
-        .pdp-discount { font-size: 15px; color: #ff6b35; font-weight: 700; }
+        .pdp-discount { font-size: 15px; color: #C9A84C; font-weight: 700; }
         .pdp-tax { font-size: 11px; color: #9ca3af; margin-top: 3px; }
         .pdp-hr { height: 1px; background: #f3f4f6; margin: 20px 0; }
         .pdp-offers-title { font-size: 13px; font-weight: 700; color: #374151; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.5px; }
-        .pdp-offer-row { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 8px; background: #fffbf5; border: 1px solid #fef3c7; margin-bottom: 7px; }
+        .pdp-offer-row { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 8px; background: #F0EBE0; border: 1px solid #D4AF37; margin-bottom: 7px; }
         .pdp-offer-icon { font-size: 15px; margin-top: 1px; flex-shrink: 0; }
         .pdp-offer-title-text { font-size: 13px; font-weight: 600; color: #374151; }
         .pdp-offer-desc { font-size: 12px; color: #6b7280; }
         .pdp-size-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
         .pdp-section-label { font-size: 13px; font-weight: 700; color: #374151; text-transform: uppercase; letter-spacing: 0.5px; }
-        .pdp-size-guide { font-size: 13px; color: #ec4899; font-weight: 600; cursor: pointer; }
+        .pdp-size-guide { font-size: 13px; color: #050C1C; font-weight: 600; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
         .pdp-sizes { display: flex; flex-wrap: wrap; gap: 10px; }
         .pdp-size-btn { width: 56px; height: 56px; border-radius: 50%; border: 1.5px solid #e5e7eb; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 500; color: #374151; cursor: pointer; transition: all 0.15s; background: #fff; font-family: 'DM Sans', sans-serif; }
-        .pdp-size-btn:hover:not([disabled]) { border-color: #ec4899; color: #ec4899; }
-        .pdp-size-btn.selected { border-color: #ec4899; color: #ec4899; background: #fff1f5; font-weight: 700; box-shadow: 0 0 0 3px rgba(236,72,153,0.12); }
+        .pdp-size-btn:hover:not([disabled]) { border-color: #C9A84C; color: #050C1C; }
+        .pdp-size-btn.selected { border-color: #C9A84C; color: #C9A84C; background: #050C1C; font-weight: 700; box-shadow: 0 0 0 3px rgba(201,168,76,0.15); }
         .pdp-size-btn[disabled] { opacity: 0.28; cursor: not-allowed; border-style: dashed; }
         .pdp-size-warn { font-size: 12px; color: #f59e0b; margin-top: 8px; font-weight: 500; }
         .pdp-cta { display: flex; gap: 10px; margin: 22px 0 18px; }
-        .pdp-btn-bag { flex: 1; height: 54px; border: none; border-radius: 4px; font-size: 15px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; letter-spacing: 0.8px; text-transform: uppercase; background: linear-gradient(135deg, #ec4899, #f43f5e); color: #fff; transition: all 0.2s; box-shadow: 0 4px 16px rgba(236,72,153,0.3); font-family: 'DM Sans', sans-serif; }
-        .pdp-btn-bag:hover:not([disabled]) { background: linear-gradient(135deg, #db2777, #e11d48); transform: translateY(-1px); box-shadow: 0 6px 22px rgba(236,72,153,0.42); }
-        .pdp-btn-bag[disabled] { background: #f3f4f6; color: #9ca3af; cursor: not-allowed; box-shadow: none; }
-        .pdp-btn-bag.added { background: linear-gradient(135deg, #10b981, #059669); box-shadow: 0 4px 16px rgba(16,185,129,0.3); }
+        .pdp-btn-bag { flex: 1; height: 54px; border: 1.5px solid #C9A84C; border-radius: 4px; font-size: 15px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; letter-spacing: 0.8px; text-transform: uppercase; background: #050C1C; color: #C9A84C; transition: all 0.2s; box-shadow: none; font-family: 'DM Sans', sans-serif; }
+        .pdp-btn-bag:hover:not([disabled]) { background: #0d1f3c; transform: translateY(-1px); box-shadow: 0 6px 22px rgba(5,12,28,0.25); }
+        .pdp-btn-bag[disabled] { background: #f3f4f6; color: #9ca3af; cursor: not-allowed; box-shadow: none; border-color: #e5e7eb; }
+        .pdp-btn-bag.added { background: #050C1C; color: #C9A84C; box-shadow: none; }
         .pdp-btn-wishlist { width: 54px; height: 54px; border-radius: 4px; border: 1.5px solid #e5e7eb; display: flex; align-items: center; justify-content: center; cursor: pointer; background: #fff; transition: all 0.2s; }
-        .pdp-btn-wishlist:hover { border-color: #ec4899; background: #fff1f5; }
-        .pdp-btn-wishlist.active { border-color: #ec4899; background: #fff1f5; }
+        .pdp-btn-wishlist:hover { border-color: #C9A84C; background: #FDF6E3; }
+        .pdp-btn-wishlist.active { border-color: #C9A84C; background: #FDF6E3; }
         .pdp-trust { display: flex; border: 1px solid #f3f4f6; border-radius: 8px; overflow: hidden; margin-bottom: 20px; }
         .pdp-trust-item { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 5px; padding: 14px 8px; border-right: 1px solid #f3f4f6; text-align: center; background: #fafafa; }
         .pdp-trust-item:last-child { border-right: none; }
@@ -1262,32 +1426,50 @@ if (!selectedSize) {
         .pdp-delivery-title { font-size: 13px; font-weight: 700; color: #374151; display: flex; align-items: center; gap: 6px; margin-bottom: 10px; }
         .pdp-pincode-row { display: flex; gap: 8px; align-items: center; }
         .pdp-pincode-input { flex: 1; border: 1.5px solid #e5e7eb; border-radius: 6px; padding: 9px 12px; font-size: 13px; outline: none; font-family: 'DM Sans', sans-serif; background: #fff; transition: border-color 0.15s; color: #374151; }
-        .pdp-pincode-input:focus { border-color: #ec4899; }
-        .pdp-pincode-btn { background: none; border: none; color: #ec4899; font-size: 13px; font-weight: 700; cursor: pointer; font-family: 'DM Sans', sans-serif; padding: 0 4px; }
+        .pdp-pincode-input:focus { border-color: #C9A84C; }
+        .pdp-pincode-btn { background: #050C1C; border: 1px solid #C9A84C; color: #C9A84C; font-size: 13px; font-weight: 700; cursor: pointer; font-family: 'DM Sans', sans-serif; padding: 6px 14px; border-radius: 4px; }
         .pdp-delivery-ok { font-size: 12px; color: #10b981; font-weight: 500; margin-top: 9px; }
         .pdp-accordion { margin-top: 8px; }
         .pdp-accordion-item { border-top: 1px solid #f3f4f6; }
         .pdp-accordion-trigger { display: flex; justify-content: space-between; align-items: center; padding: 16px 0; cursor: pointer; user-select: none; background: none; border: none; width: 100%; font-family: 'DM Sans', sans-serif; text-align: left; }
         .pdp-accordion-label { font-size: 14px; font-weight: 600; color: #374151; }
         .pdp-accordion-body { padding-bottom: 20px; }
-        .pdp-toast { position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%); background: linear-gradient(135deg, #ec4899, #f43f5e); color: #fff; padding: 13px 32px; border-radius: 24px; font-size: 14px; font-weight: 600; z-index: 100; box-shadow: 0 8px 28px rgba(236,72,153,0.4); animation: toastIn 0.3s ease; font-family: 'DM Sans', sans-serif; }
+        .pdp-toast { position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%); background: #050C1C; color: #C9A84C; border: 1.5px solid #C9A84C; padding: 13px 32px; border-radius: 24px; font-size: 14px; font-weight: 600; z-index: 100; box-shadow: 0 8px 28px rgba(5,12,28,0.35); animation: toastIn 0.3s ease; font-family: 'DM Sans', sans-serif; }
         @keyframes toastIn { from { opacity: 0; transform: translateX(-50%) translateY(16px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
-        @media (max-width: 900px) { .pdp-outer { flex-direction: column; padding: 0; } .pdp-images-col { width: 100%; } .pdp-info-col { width: 100%; position: static; height: auto; padding: 20px 16px 40px; border-left: none; border-top: 1px solid #f3f4f6; } .pdp-breadcrumb { padding: 10px 16px; } }
+        @media (max-width: 900px) { .pdp-outer {
+  display: flex;
+  align-items: flex-start;
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 0 clamp(16px, 6%, 86px);
+} .pdp-images-col { width: 100%; } .pdp-info-col {
+  width: 48%;
+  min-width: 0;
+  padding: 0px 48px 48px 40px;
+  border-left: 1px solid #f3f4f6;
+  background: #fff;
+} .pdp-breadcrumb { padding: 10px 16px; } }
       `}</style>
 
       <div className='pdp-page'>
         <Navbar />
-
         <div className='pdp-breadcrumb'>
-          <a href='#'>Home</a>
+          <span style={{ cursor: 'pointer' }} onClick={() => navigate('/')}>
+            Home
+          </span>
+
           <span className='pdp-breadcrumb-sep'>›</span>
-          <a href='#'>Women</a>
+
+          <span
+            style={{ cursor: 'pointer' }}
+            onClick={() => navigate(`/category/${product.categoryId}`)}
+          >
+            {product.category}
+          </span>
+
           <span className='pdp-breadcrumb-sep'>›</span>
-          <a href='#'>Ethnic Wear</a>
-          <span className='pdp-breadcrumb-sep'>›</span>
-          <a href='#'>{product.category}</a>
-          <span className='pdp-breadcrumb-sep'>›</span>
-          <span className='pdp-breadcrumb-current'>{product.brand}</span>
+
+          <span className='pdp-breadcrumb-current'>{product.name}</span>
         </div>
 
         <div className='pdp-outer'>
@@ -1320,24 +1502,32 @@ if (!selectedSize) {
                   padding: '4px',
                   flexShrink: 0,
                 }}
+              ></button>
+            </div>
+            {hasRatings && (
+              <div
+                className='pdp-rating-row'
+                onClick={scrollToRatings}
+                style={{ cursor: 'pointer' }}
               >
-                <Share2 size={18} color='#9ca3af' />
-              </button>
-            </div>
+                <span className='pdp-rating-pill'>
+                  <Star size={11} fill='#fff' strokeWidth={0} />
+                  {ratingsData.overall}
+                </span>
 
-            <div className='pdp-rating-row'>
-              <span className='pdp-rating-pill'>
-                <Star size={11} fill='#fff' strokeWidth={0} /> {product.rating}
-              </span>
-              <span className='pdp-rating-sep'>|</span>
-              <span className='pdp-rating-meta'>
-                {product.ratingCount.toLocaleString()} Ratings
-              </span>
-              <span className='pdp-rating-sep'>|</span>
-              <span className='pdp-rating-meta'>
-                {product.reviewCount} Reviews
-              </span>
-            </div>
+                <span className='pdp-rating-sep'>|</span>
+
+                <span className='pdp-rating-meta'>
+                  {ratingsData.rating_count} Ratings
+                </span>
+
+                <span className='pdp-rating-sep'>|</span>
+
+                <span className='pdp-rating-meta'>
+                  {ratingsData.review_count} Reviews
+                </span>
+              </div>
+            )}
 
             <div className='pdp-price-row'>
               <span className='pdp-price'>
@@ -1365,7 +1555,12 @@ if (!selectedSize) {
 
             <div className='pdp-size-header'>
               <span className='pdp-section-label'>Select Size</span>
-              <span className='pdp-size-guide'>Size Guide</span>
+              <span
+                className='pdp-size-guide'
+                onClick={() => setShowSizeChart(true)}
+              >
+                Size Guide
+              </span>
             </div>
             <div className='pdp-sizes'>
               {product.sizes.map((s) => {
@@ -1443,22 +1638,22 @@ if (!selectedSize) {
 
             <div className='pdp-trust'>
               <div className='pdp-trust-item'>
-                <Truck size={18} color='#10b981' />
+                <Truck size={18} color='#C9A84C' />
                 <span className='pdp-trust-label'>Free Delivery</span>
               </div>
               <div className='pdp-trust-item'>
-                <RefreshCw size={18} color='#f59e0b' />
+                <RefreshCw size={18} color='#C9A84C' />
                 <span className='pdp-trust-label'>7-Day Returns</span>
               </div>
               <div className='pdp-trust-item'>
-                <Shield size={18} color='#8b5cf6' />
+                <Shield size={18} color='#C9A84C' />
                 <span className='pdp-trust-label'>100% Genuine</span>
               </div>
             </div>
 
             <div className='pdp-delivery'>
               <div className='pdp-delivery-title'>
-                <Truck size={14} color='#ec4899' />
+                <Truck size={14} color='#C9A84C' />
                 Delivery Options
               </div>
               <div className='pdp-pincode-row'>
@@ -1471,17 +1666,38 @@ if (!selectedSize) {
                   placeholder='Enter pincode'
                   maxLength={6}
                 />
-                <button className='pdp-pincode-btn'>Check</button>
+                <button className='pdp-pincode-btn' onClick={checkPincode}>
+                  {checkingDelivery ? 'Checking...' : 'Check'}
+                </button>
               </div>
-              <div className='pdp-delivery-ok'>
-                ✓ Estimated delivery in {product.deliveryInfo.days}
-                {product.deliveryInfo.cod && ' · COD available'}
+              <div
+                style={{
+                  marginTop: 10,
+                  fontSize: 12,
+                  fontWeight: 500,
+                  color: deliveryMessage.startsWith('✓')
+                    ? '#10b981'
+                    : deliveryMessage
+                      ? '#ef4444'
+                      : '#10b981',
+                }}
+              >
+                {deliveryMessage || (
+                  <>
+                    ✓ Estimated delivery in {product.deliveryInfo.days}
+                    {product.deliveryInfo.cod && ' · COD available'}
+                  </>
+                )}
               </div>
             </div>
 
             <div className='pdp-accordion'>
               {accordionSections.map((sec) => (
-                <div key={sec.key} className='pdp-accordion-item'>
+                <div
+                  key={sec.key}
+                  className='pdp-accordion-item'
+                  ref={sec.key === 'ratings' ? ratingsRef : null}
+                >
                   <button
                     className='pdp-accordion-trigger'
                     onClick={() =>
@@ -1507,7 +1723,7 @@ if (!selectedSize) {
         </div>
       </div>
 
-                  <Footer />
+      <Footer />
 
       {/* Full-screen media slider */}
       {sliderOpen && (
@@ -1518,7 +1734,155 @@ if (!selectedSize) {
         />
       )}
 
+      {reviewSliderOpen && (
+        <MediaSlider
+          mediaItems={reviewImages}
+          initialIndex={sliderIndex}
+          onClose={() => setReviewSliderOpen(false)}
+        />
+      )}
+
       {addedToBag && <div className='pdp-toast'>✓ Added to your bag!</div>}
+
+      {showSizeChart && (
+        <div
+          onClick={() => setShowSizeChart(false)}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0,0,0,0.6)',
+            zIndex: 1000,
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            padding: 20,
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              width: '100%',
+              maxWidth: 700,
+              background: '#050C1C',
+              border: '1.5px solid #C9A84C',
+              borderRadius: 12,
+              padding: '28px 32px',
+              maxHeight: '90vh',
+              overflowY: 'auto',
+            }}
+          >
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: 24,
+                borderBottom: '1px solid rgba(201,168,76,0.25)',
+                paddingBottom: 16,
+              }}
+            >
+              <h2
+                style={{
+                  fontSize: 20,
+                  fontWeight: 700,
+                  color: '#C9A84C',
+                  fontFamily: "'Playfair Display', Georgia, serif",
+                  letterSpacing: '0.04em',
+                }}
+              >
+                Size Chart
+              </h2>
+
+              <button
+                onClick={() => setShowSizeChart(false)}
+                style={{
+                  border: '1px solid rgba(201,168,76,0.4)',
+                  background: 'none',
+                  cursor: 'pointer',
+                  color: '#C9A84C',
+                  borderRadius: 4,
+                  width: 32,
+                  height: 32,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <table
+              style={{
+                width: '100%',
+                borderCollapse: 'collapse',
+              }}
+            >
+              <thead>
+                <tr>
+                  {['Size', 'Bust', 'Waist', 'Hip'].map((h) => (
+                    <th
+                      key={h}
+                      style={{
+                        border: '1px solid rgba(201,168,76,0.2)',
+                        padding: '12px 16px',
+                        background: 'rgba(201,168,76,0.08)',
+                        textAlign: 'left',
+                        color: '#C9A84C',
+                        fontSize: 13,
+                        fontWeight: 700,
+                        letterSpacing: '0.07em',
+                        textTransform: 'uppercase',
+                      }}
+                    >
+                      {h}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+
+              <tbody>
+                {[
+                  ['XS', '32"', '26"', '34"'],
+                  ['S', '34"', '28"', '36"'],
+                  ['M', '36"', '30"', '38"'],
+                  ['L', '38"', '32"', '40"'],
+                  ['XL', '40"', '34"', '42"'],
+                  ['XXL', '42"', '36"', '44"'],
+                ].map(([size, bust, waist, hip], i) => (
+                  <tr key={size} style={{ background: i % 2 === 0 ? 'transparent' : 'rgba(201,168,76,0.04)' }}>
+                    {[size, bust, waist, hip].map((val, j) => (
+                      <td
+                        key={j}
+                        style={{
+                          border: '1px solid rgba(201,168,76,0.15)',
+                          padding: '12px 16px',
+                          color: j === 0 ? '#C9A84C' : '#F9F6F0',
+                          fontSize: 14,
+                          fontWeight: j === 0 ? 600 : 400,
+                        }}
+                      >
+                        {val}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+
+            <div
+              style={{
+                marginTop: 16,
+                fontSize: 12,
+                color: 'rgba(249,246,240,0.5)',
+                letterSpacing: '0.02em',
+              }}
+            >
+              All measurements are in inches and may vary slightly by style.
+            </div>
+          </div>
+        </div>
+      )}
     </>
   )
 }

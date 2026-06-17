@@ -17,10 +17,12 @@ import ProductEdit from './admin/ProductEdit.jsx'
 import ContactUsPage from './info/ContactUs.jsx'
 import TermsAndConditionsPage from './info/Terms.jsx'
 import RefundPolicyPage from './info/RefundPolicy.jsx'
+import PrivacyPolicy from './info/PrivacyPolicy.jsx'
 import OrderSuccess from './info/OrderSuccess.jsx'
 import PaymentFailed from './info/PaymentFailed.jsx'
 import AdminOrders from './admin/orders/AdminOrders.jsx'
 import OrdersPage from './OrdersPage.jsx'
+import ReviewPage from './ReviewPage.jsx'
 
 const queryClient = new QueryClient()  // ← add
 
@@ -34,7 +36,9 @@ const router = createBrowserRouter([
   { path: '/contact-us', element: <ContactUsPage /> },
   { path: '/terms', element: <TermsAndConditionsPage/> },
   {path: '/orders', element: <OrdersPage /> },
+  { path: '/review', element: <ReviewPage /> },
   { path: '/refund-policy', element: <RefundPolicyPage/> },
+  { path: '/privacy-policy', element: <PrivacyPolicy/> },
   { path: '/admin/products/new', element: <ProductUpload /> },
   { path: '/admin/', element: <ProductListings /> },
   { path: '/admin/products/edit/:id', element: <ProductEdit /> },

@@ -16,7 +16,7 @@ import {
   X,
 } from 'lucide-react'
 import Navbar from './Navbar'
-import logo from './assets/logo.png'
+import logo from './assets/logo.jpg'
 
 import Footer from './Footer'
 import { HOME_CATEGORIES } from './utils/categories'
@@ -145,7 +145,7 @@ const HeroSlider = () => {
             index === current ? 'opacity-100' : 'opacity-0'
           } ${slide.bg}`}
         >
-          <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full flex items-center'>
+          <div className='max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 h-full flex items-center'>
             <div className='text-white'>
               <h2 className='text-4xl md:text-6xl font-bold mb-4 animate-fadeIn'>
                 {slide.title}
@@ -192,7 +192,7 @@ const Categories = () => {
   const categories = HOME_CATEGORIES
 
   return (
-    <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12'>
+    <div className='max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-12'>
       <h3 className='text-3xl font-bold mb-8 text-center text-gray-800'>
         Shop by Category
       </h3>
@@ -279,7 +279,7 @@ const Products = () => {
 
   if (isLoading) {
     return (
-      <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12'>
+      <div className='max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-12'>
         <div className='text-center'>
           <div className='inline-block animate-spin rounded-full h-12 w-12 border-4 border-pink-200 border-t-pink-600'></div>
           <p className='mt-4 text-gray-600'>Loading beautiful collections...</p>
@@ -289,7 +289,7 @@ const Products = () => {
   }
 
   return (
-    <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12'>
+    <div className='max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-12'>
       <div className='text-center mb-8'>
         <h3 className='text-3xl font-bold text-gray-800 mb-2'>Trending Now</h3>
         <p className='text-gray-600'>Handpicked styles for you</p>
@@ -307,7 +307,7 @@ const Products = () => {
 const PromoBanner = () => {
   return (
     <div className='bg-gradient-to-r from-amber-400 via-orange-400 to-pink-400 py-16'>
-      <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-white'>
+      <div className='max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-white'>
         <h3 className='text-3xl md:text-4xl font-bold mb-4'>
           Festive Season Sale
         </h3>

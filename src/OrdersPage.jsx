@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import {
   ShoppingBag,
@@ -22,12 +22,103 @@ import {
   AlertCircle,
 } from 'lucide-react'
 import axios from 'axios'
-import logo from './assets/logo.png'
+import logo from './assets/logo.jpg'
 import './constants/global.css'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL || 'https://api.aarria.com'
+// Orders handler (DynamoDB-backed)
+const ORDERS_API_BASE =
+  'https://zq0dbjycx6.execute-api.ap-south-1.amazonaws.com/prod'
+const CDN = 'https://cdn.vaarria.com/app/images/'
+
+const getCustomerId = () => {
+  const customer = JSON.parse(localStorage.getItem('customer') || 'null')
+  return customer?.customer_id ?? 1
+}
+
+const SUPPORT_WHATSAPP = '919731580157'
+
+const openWhatsAppSupport = (orderId) => {
+  const text = encodeURIComponent(`Hi, I need help with my order #${orderId}`)
+  window.open(`https://wa.me/${SUPPORT_WHATSAPP}?text=${text}`, '_blank')
+}
+
+// Opens a printable invoice in a new window — the browser's print dialog
+// lets the user save it as PDF
+const generateInvoice = (order) => {
+  const win = window.open('', '_blank')
+  if (!win) return
+
+  const rows = order.items
+    .map(
+      (item) => `
+        <tr>
+          <td>${item.name || ''}${item.size ? ` (Size: ${item.size})` : ''}</td>
+          <td style="text-align:center">${item.quantity || 1}</td>
+          <td style="text-align:right">₹${Number(item.price).toLocaleString('en-IN')}</td>
+          <td style="text-align:right">₹${Number(item.price * (item.quantity || 1)).toLocaleString('en-IN')}</td>
+        </tr>`,
+    )
+    .join('')
+
+  win.document.write(`<!DOCTYPE html>
+<html>
+<head>
+  <title>Invoice-${order.id}</title>
+  <style>
+    body { font-family: 'Segoe UI', Arial, sans-serif; color: #3A332A; padding: 40px; }
+    .brand { color: #A65A66; font-size: 28px; font-weight: 800; margin: 0; }
+    .muted { color: #94969f; font-size: 12px; }
+    h2 { font-size: 16px; margin: 24px 0 4px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 16px; font-size: 13px; }
+    th { text-align: left; border-bottom: 2px solid #3A332A; padding: 8px 6px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; }
+    th:nth-child(2) { text-align: center; }
+    th:nth-child(3), th:nth-child(4) { text-align: right; }
+    td { border-bottom: 1px solid #eee; padding: 8px 6px; }
+    .totals { margin-top: 16px; margin-left: auto; width: 260px; font-size: 13px; }
+    .totals div { display: flex; justify-content: space-between; padding: 4px 0; }
+    .totals .grand { border-top: 1px solid #3A332A; font-weight: 700; margin-top: 4px; padding-top: 8px; }
+    .footer { margin-top: 40px; font-size: 11px; color: #94969f; text-align: center; }
+  </style>
+</head>
+<body>
+  <p class="brand">aarria</p>
+  <p class="muted">www.vaarria.com</p>
+
+  <h2>Invoice</h2>
+  <p class="muted">
+    Order #${order.id}<br/>
+    Date: ${order.date} · Status: ${order.status}
+  </p>
+
+  <h2>Deliver To</h2>
+  <p class="muted">
+    ${order.address?.name || ''}<br/>
+    ${order.address?.line1 || ''}${order.address?.city ? `, ${order.address.city}` : ''}${order.address?.pin ? ` – ${order.address.pin}` : ''}
+  </p>
+
+  <table>
+    <thead>
+      <tr><th>Item</th><th>Qty</th><th>Unit Price</th><th>Amount</th></tr>
+    </thead>
+    <tbody>${rows}</tbody>
+  </table>
+
+  <div class="totals">
+    <div><span>MRP Total</span><span>₹${Number(order.mrp).toLocaleString('en-IN')}</span></div>
+    <div><span>Discount</span><span>-₹${Number(order.discount).toLocaleString('en-IN')}</span></div>
+    <div><span>Delivery</span><span>${order.delivery === 0 ? 'FREE' : `₹${order.delivery}`}</span></div>
+    <div class="grand"><span>Total Paid</span><span>₹${Number(order.total).toLocaleString('en-IN')}</span></div>
+  </div>
+
+  <p class="footer">Thank you for shopping with Aarria.</p>
+</body>
+</html>`)
+  win.document.close()
+  win.focus()
+  win.print()
+}
 
 const ORDER_STATUSES = {
   PLACED:    { label: 'Order Placed',  color: '#7c5cbf', bg: '#f3eeff', icon: Package },
@@ -47,11 +138,22 @@ const FILTER_OPTIONS = [
   { label: 'Returned',   value: 'RETURNED' },
 ]
 
-// ─── Mock Fetcher (swap for real API) ─────────────────────────────────────────
+// ─── Fetcher ──────────────────────────────────────────────────────────────────
 
 const fetchOrders = async () => {
-  // Replace with: const res = await axios.get(`${API_BASE}/orders`); return res.data
-  return MOCK_ORDERS
+  const { data } = await axios.get(
+    `${ORDERS_API_BASE}/customers/${getCustomerId()}/orders/full`,
+  )
+
+  return (data.orders || []).map((order) => ({
+    ...order,
+    items: (order.items || []).map((item) => ({
+      ...item,
+      brand: item.brand || 'Aarria',
+      name: item.name || '',
+      image: item.image ? `${CDN}${item.image}` : '',
+    })),
+  }))
 }
 
 // ─── Timeline Component ────────────────────────────────────────────────────────
@@ -78,16 +180,18 @@ function OrderTimeline({ status }) {
         const meta = ORDER_STATUSES[step]
         const done = i <= idx
         const active = i === idx
+        // current status in its own colour, completed steps in green
+        const circleBg = active ? meta.color : done ? '#16a34a' : '#f0f0f0'
         return (
           <React.Fragment key={step}>
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: 64 }}>
               <div style={{
                 width: 28, height: 28, borderRadius: '50%',
-                background: done ? '#ff3f6c' : '#f0f0f0',
-                border: active ? '2px solid #ff3f6c' : done ? 'none' : '2px solid #e0e0e0',
+                background: circleBg,
+                border: active ? `2px solid ${meta.color}` : done ? 'none' : '2px solid #e0e0e0',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 transition: 'all 0.2s',
-                boxShadow: active ? '0 0 0 4px rgba(255,63,108,0.12)' : 'none',
+                boxShadow: active ? `0 0 0 4px ${meta.bg}` : 'none',
               }}>
                 {done
                   ? <CheckCircle2 size={14} color="#fff" strokeWidth={2.5} />
@@ -95,15 +199,16 @@ function OrderTimeline({ status }) {
                 }
               </div>
               <span style={{
-                fontSize: 10, marginTop: 5, color: done ? '#ff3f6c' : '#999',
-                fontWeight: active ? 600 : 400, textAlign: 'center', lineHeight: 1.3,
+                fontSize: 10, marginTop: 5,
+                color: active ? meta.color : done ? '#16a34a' : '#999',
+                fontWeight: active ? 700 : done ? 500 : 400, textAlign: 'center', lineHeight: 1.3,
                 whiteSpace: 'nowrap',
               }}>{meta.label}</span>
             </div>
             {i < steps.length - 1 && (
               <div style={{
                 flex: 1, height: 2, minWidth: 16,
-                background: i < idx ? '#ff3f6c' : '#e8e8e8',
+                background: i < idx ? '#16a34a' : '#e8e8e8',
                 marginBottom: 20, transition: 'background 0.3s',
               }} />
             )}
@@ -114,13 +219,109 @@ function OrderTimeline({ status }) {
   )
 }
 
+// ─── Cancel Confirmation Modal ────────────────────────────────────────────────
+
+function CancelOrderModal({ order, onClose, onCancelled }) {
+  const [cancelling, setCancelling] = useState(false)
+  const [error, setError] = useState('')
+
+  const handleConfirm = async () => {
+    try {
+      setCancelling(true)
+      setError('')
+      await axios.put(
+        `${ORDERS_API_BASE}/orders/${order.id}/cancel?customer_id=${getCustomerId()}`,
+      )
+      onCancelled()
+    } catch (err) {
+      setError(err.response?.data?.detail || 'Unable to cancel order')
+      setCancelling(false)
+    }
+  }
+
+  return (
+    <div
+      onClick={(e) => e.target === e.currentTarget && !cancelling && onClose()}
+      style={{
+        position: 'fixed', inset: 0, zIndex: 100,
+        background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(2px)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16,
+      }}
+    >
+      <div style={{
+        width: '100%', maxWidth: 380, background: '#fff', borderRadius: 12,
+        padding: '22px 22px 18px', boxShadow: '0 12px 40px rgba(0,0,0,0.18)',
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+          <div style={{
+            width: 36, height: 36, borderRadius: '50%', background: '#fee2e2',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+          }}>
+            <XCircle size={18} color="#dc2626" />
+          </div>
+          <h3 style={{ fontSize: 15, fontWeight: 700, color: '#3A332A', margin: 0 }}>
+            Cancel this order?
+          </h3>
+        </div>
+
+        <p style={{ fontSize: 13, color: '#555', margin: '0 0 6px' }}>
+          Order <b>#{order.id}</b> · {order.items.length} item{order.items.length > 1 ? 's' : ''} · ₹{order.total.toLocaleString('en-IN')}
+        </p>
+        <p style={{ fontSize: 12, color: '#94969f', margin: '0 0 16px' }}>
+          This action cannot be undone. Any payment made will be refunded to the original payment method.
+        </p>
+
+        {error && (
+          <p style={{ fontSize: 12, color: '#dc2626', margin: '0 0 12px', display: 'flex', alignItems: 'center', gap: 6 }}>
+            <AlertCircle size={13} /> {error}
+          </p>
+        )}
+
+        <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+          <button
+            onClick={onClose}
+            disabled={cancelling}
+            style={{
+              padding: '9px 18px', borderRadius: 8, cursor: 'pointer',
+              border: '1.5px solid #d0d0d0', background: '#fff',
+              fontSize: 13, fontWeight: 600, color: '#555',
+              opacity: cancelling ? 0.5 : 1,
+            }}
+          >
+            Keep Order
+          </button>
+          <button
+            onClick={handleConfirm}
+            disabled={cancelling}
+            style={{
+              padding: '9px 18px', borderRadius: 8, cursor: 'pointer',
+              border: 'none', background: '#dc2626', color: '#fff',
+              fontSize: 13, fontWeight: 600,
+              opacity: cancelling ? 0.7 : 1,
+            }}
+          >
+            {cancelling ? 'Cancelling…' : 'Yes, Cancel Order'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ─── Order Card ───────────────────────────────────────────────────────────────
 
 function OrderCard({ order }) {
   const [expanded, setExpanded] = useState(false)
+  const [showCancelModal, setShowCancelModal] = useState(false)
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
   const meta = ORDER_STATUSES[order.status] || ORDER_STATUSES.PLACED
   const StatusIcon = meta.icon
+
+  const handleCancelled = () => {
+    setShowCancelModal(false)
+    queryClient.invalidateQueries({ queryKey: ['orders'] })
+  }
 
   return (
     <div style={{
@@ -142,7 +343,7 @@ function OrderCard({ order }) {
       >
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-            <span style={{ fontSize: 13, fontWeight: 600, color: '#282c3f' }}>
+            <span style={{ fontSize: 13, fontWeight: 600, color: '#3A332A' }}>
               Order #{order.id}
             </span>
             <span style={{
@@ -158,35 +359,78 @@ function OrderCard({ order }) {
             {order.items.length} item{order.items.length > 1 ? 's' : ''} · ₹{order.total.toLocaleString('en-IN')} · {order.date}
           </p>
         </div>
-        <ChevronDown
-          size={18} color="#888"
-          style={{ transform: expanded ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s', marginTop: 2 }}
-        />
+        <button
+          onClick={(e) => {
+            e.stopPropagation()
+            setExpanded(p => !p)
+          }}
+          aria-label={expanded ? 'Collapse order details' : 'Expand order details'}
+          style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            width: 36, height: 36, borderRadius: '50%', flexShrink: 0,
+            border: '1.5px solid #e8e8e8', background: '#fafafa',
+            cursor: 'pointer', transition: 'all 0.2s',
+          }}
+          onMouseEnter={e => {
+            e.currentTarget.style.borderColor = '#A65A66'
+            e.currentTarget.style.background = '#fff0f3'
+          }}
+          onMouseLeave={e => {
+            e.currentTarget.style.borderColor = '#e8e8e8'
+            e.currentTarget.style.background = '#fafafa'
+          }}
+        >
+          <ChevronDown
+            size={22} color="#555" strokeWidth={2.5}
+            style={{ transform: expanded ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }}
+          />
+        </button>
       </div>
 
       {/* Items Preview (always visible) */}
       <div style={{ padding: '0 18px 14px', display: 'flex', gap: 10, overflowX: 'auto' }}>
         {order.items.map(item => (
-          <div key={item.id} style={{
-            display: 'flex', alignItems: 'center', gap: 10,
-            background: '#fafafa', borderRadius: 8, padding: '8px 10px',
-            border: '1px solid #f0f0f0', minWidth: 0, flex: '0 0 auto', maxWidth: 260,
-          }}>
+          <div
+            key={item.id}
+            onClick={() => item.product_id && window.open(`/product/${item.product_id}`, '_blank')}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 10,
+              background: '#fafafa', borderRadius: 8, padding: '8px 10px',
+              border: '1px solid #f0f0f0', minWidth: 0, flex: '0 0 auto', maxWidth: 260,
+              cursor: item.product_id ? 'pointer' : 'default',
+            }}
+          >
             <img
               src={item.image}
               alt={item.name}
               style={{ width: 56, height: 68, objectFit: 'cover', borderRadius: 6, flexShrink: 0 }}
             />
             <div style={{ minWidth: 0 }}>
-              <p style={{ fontSize: 12, fontWeight: 600, color: '#282c3f', margin: '0 0 2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 140 }}>
+              <p style={{ fontSize: 12, fontWeight: 600, color: '#3A332A', margin: '0 0 2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 140 }}>
                 {item.brand}
               </p>
               <p style={{ fontSize: 11, color: '#94969f', margin: '0 0 4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 140 }}>
                 {item.name}
               </p>
-              <p style={{ fontSize: 11, color: '#282c3f', margin: 0 }}>
+              <p style={{ fontSize: 11, color: '#3A332A', margin: 0 }}>
                 Size: <b>{item.size}</b> · ₹{item.price.toLocaleString('en-IN')}
               </p>
+              {item.item_status === 'QC_FAILED' && (
+                <div style={{ marginTop: 4 }}>
+                  <span style={{
+                    display: 'inline-block', fontSize: 10, fontWeight: 700,
+                    color: '#dc2626', background: '#fee2e2', border: '1px solid #fecaca',
+                    borderRadius: 10, padding: '1px 8px',
+                  }}>
+                    QC Failed
+                  </span>
+                  {item.qc_reason && (
+                    <p style={{ fontSize: 10, color: '#dc2626', margin: '3px 0 0', maxWidth: 150 }}>
+                      {item.qc_reason}
+                    </p>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         ))}
@@ -205,8 +449,8 @@ function OrderCard({ order }) {
               background: '#fff8f8', border: '1px solid #ffdce5',
               borderRadius: 8, padding: '8px 12px', marginTop: 4, marginBottom: 12,
             }}>
-              <Clock size={13} color="#ff3f6c" />
-              <span style={{ fontSize: 12, color: '#282c3f' }}>
+              <Clock size={13} color="#A65A66" />
+              <span style={{ fontSize: 12, color: '#3A332A' }}>
                 Expected by <b>{order.expectedBy}</b>
               </span>
             </div>
@@ -218,8 +462,8 @@ function OrderCard({ order }) {
               Delivery Address
             </p>
             <div style={{ display: 'flex', alignItems: 'flex-start', gap: 6 }}>
-              <MapPin size={13} color="#ff3f6c" style={{ marginTop: 2, flexShrink: 0 }} />
-              <p style={{ fontSize: 12, color: '#282c3f', margin: 0, lineHeight: 1.6 }}>
+              <MapPin size={13} color="#A65A66" style={{ marginTop: 2, flexShrink: 0 }} />
+              <p style={{ fontSize: 12, color: '#3A332A', margin: 0, lineHeight: 1.6 }}>
                 {order.address.name} · {order.address.line1}, {order.address.city} – {order.address.pin}
               </p>
             </div>
@@ -240,42 +484,106 @@ function OrderCard({ order }) {
             ].map(row => (
               <div key={row.label} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
                 <span style={{ fontSize: 12, color: '#555' }}>{row.label}</span>
-                <span style={{ fontSize: 12, fontWeight: 500, color: row.color || '#282c3f' }}>{row.value}</span>
+                <span style={{ fontSize: 12, fontWeight: 500, color: row.color || '#3A332A' }}>{row.value}</span>
               </div>
             ))}
             <div style={{ borderTop: '1px dashed #e0e0e0', paddingTop: 6, marginTop: 4, display: 'flex', justifyContent: 'space-between' }}>
-              <span style={{ fontSize: 13, fontWeight: 700, color: '#282c3f' }}>Total Paid</span>
-              <span style={{ fontSize: 13, fontWeight: 700, color: '#282c3f' }}>₹{order.total.toLocaleString('en-IN')}</span>
+              <span style={{ fontSize: 13, fontWeight: 700, color: '#3A332A' }}>Total Paid</span>
+              <span style={{ fontSize: 13, fontWeight: 700, color: '#3A332A' }}>₹{order.total.toLocaleString('en-IN')}</span>
             </div>
           </div>
 
           {/* CTA Buttons */}
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            {order.status !== 'CANCELLED' && order.status !== 'RETURNED' && (
+              <ActionBtn
+                icon={<Star size={13} />}
+                label="Rate & Review"
+                primary={order.status === 'DELIVERED'}
+                disabled={order.status !== 'DELIVERED'}
+                title={order.status !== 'DELIVERED' ? 'Available after delivery' : undefined}
+                onClick={() =>
+                  navigate('/review', {
+                    state: {
+                      orderId: order.id,
+                      items: order.items.filter(i => i.item_status !== 'QC_FAILED'),
+                    },
+                  })
+                }
+              />
+            )}
             {order.status === 'DELIVERED' && (
-              <>
-                <ActionBtn icon={<Star size={13} />} label="Rate & Review" primary />
-                <ActionBtn icon={<RotateCcw size={13} />} label="Return / Exchange" />
-              </>
+              <ActionBtn icon={<RotateCcw size={13} />} label="Return / Exchange" />
             )}
             {(order.status === 'PLACED' || order.status === 'CONFIRMED') && (
-              <ActionBtn icon={<XCircle size={13} />} label="Cancel Order" danger />
+              <ActionBtn
+                icon={<XCircle size={13} />}
+                label="Cancel Order"
+                danger
+                onClick={() => setShowCancelModal(true)}
+              />
             )}
             {(order.status === 'SHIPPED' || order.status === 'OUT') && (
-              <ActionBtn icon={<Truck size={13} />} label="Track Order" primary />
+              <ActionBtn
+                icon={<Truck size={13} />}
+                label="Track Order"
+                primary
+                onClick={() =>
+                  order.tracking?.url
+                    ? window.open(order.tracking.url, '_blank')
+                    : alert('Tracking details will be available soon')
+                }
+              />
             )}
-            <ActionBtn icon={<MessageCircle size={13} />} label="Need Help?" />
-            <ActionBtn icon={<Download size={13} />} label="Invoice" />
+            <ActionBtn
+              icon={<MessageCircle size={13} />}
+              label="Need Help?"
+              onClick={() => openWhatsAppSupport(order.id)}
+            />
+            <ActionBtn
+              icon={<Download size={13} />}
+              label="Invoice"
+              onClick={() => generateInvoice(order)}
+            />
           </div>
         </div>
+      )}
+
+      {showCancelModal && (
+        <CancelOrderModal
+          order={order}
+          onClose={() => setShowCancelModal(false)}
+          onCancelled={handleCancelled}
+        />
       )}
     </div>
   )
 }
 
-function ActionBtn({ icon, label, primary, danger }) {
+function ActionBtn({ icon, label, primary, danger, disabled, title, onClick }) {
   const [hover, setHover] = useState(false)
+
+  if (disabled) {
+    return (
+      <button
+        disabled
+        title={title}
+        style={{
+          display: 'flex', alignItems: 'center', gap: 5,
+          padding: '7px 14px', borderRadius: 20, cursor: 'not-allowed',
+          fontSize: 12, fontWeight: 600,
+          border: '1.5px solid #e8e8e8', background: '#fafafa', color: '#b5b5bd',
+        }}
+      >
+        {icon}{label}
+      </button>
+    )
+  }
+
   return (
     <button
+      onClick={onClick}
+      title={title}
       onMouseEnter={() => setHover(true)}
       onMouseLeave={() => setHover(false)}
       style={{
@@ -284,13 +592,13 @@ function ActionBtn({ icon, label, primary, danger }) {
         fontSize: 12, fontWeight: 600, transition: 'all 0.15s',
         border: primary ? 'none' : danger ? '1.5px solid #dc2626' : '1.5px solid #d0d0d0',
         background: primary
-          ? hover ? '#e0315a' : '#ff3f6c'
+          ? hover ? '#e0315a' : '#A65A66'
           : hover
           ? danger ? '#fee2e2' : '#f5f5f5'
           : '#fff',
         color: primary ? '#fff' : danger ? '#dc2626' : '#555',
         transform: hover ? 'translateY(-1px)' : 'none',
-        boxShadow: hover && primary ? '0 4px 12px rgba(255,63,108,0.3)' : 'none',
+        boxShadow: hover && primary ? '0 4px 12px rgba(166,90,102,0.3)' : 'none',
       }}
     >
       {icon}{label}
@@ -309,9 +617,9 @@ function EmptyOrders({ filter }) {
         background: '#fff0f3', display: 'flex', alignItems: 'center',
         justifyContent: 'center', margin: '0 auto 20px',
       }}>
-        <ShoppingBag size={36} color="#ff3f6c" strokeWidth={1.5} />
+        <ShoppingBag size={36} color="#A65A66" strokeWidth={1.5} />
       </div>
-      <h3 style={{ fontSize: 18, fontWeight: 700, color: '#282c3f', marginBottom: 8 }}>
+      <h3 style={{ fontSize: 18, fontWeight: 700, color: '#3A332A', marginBottom: 8 }}>
         No {filter !== 'ALL' ? ORDER_STATUSES[filter]?.label : ''} Orders
       </h3>
       <p style={{ fontSize: 13, color: '#94969f', marginBottom: 24 }}>
@@ -320,7 +628,7 @@ function EmptyOrders({ filter }) {
       <button
         onClick={() => navigate('/')}
         style={{
-          background: '#ff3f6c', color: '#fff', border: 'none',
+          background: '#A65A66', color: '#fff', border: 'none',
           borderRadius: 4, padding: '12px 32px', fontSize: 14, fontWeight: 700,
           cursor: 'pointer', letterSpacing: 0.5,
         }}
@@ -366,25 +674,30 @@ export default function OrdersPage() {
         padding: '0 24px', position: 'sticky', top: 0, zIndex: 50,
         boxShadow: '0 1px 6px rgba(0,0,0,0.06)',
       }}>
-        <div style={{ maxWidth: 900, margin: '0 auto', display: 'flex', alignItems: 'center', gap: 16, height: 64 }}>
+        <div style={{ maxWidth: 1200, margin: '0 auto', display: 'flex', alignItems: 'center', gap: 16, height: 64 }}>
           <button
             onClick={() => navigate(-1)}
             style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, color: '#555', padding: 4 }}
           >
             <ArrowLeft size={18} />
           </button>
-          <img src={logo} alt="Aarria" style={{ height: 80, objectFit: 'contain' }} />
+          <img
+            src={logo}
+            alt="Aarria"
+            onClick={() => navigate('/products')}
+            style={{ height: 40, objectFit: 'contain', cursor: 'pointer' }}
+          />
           <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 8 }}>
             <span style={{ fontSize: 13, color: '#94969f' }}>My Orders</span>
           </div>
         </div>
       </div>
 
-      <div style={{ maxWidth: 900, margin: '0 auto', padding: '24px 16px' }}>
+      <div style={{ maxWidth: 1200, margin: '0 auto', padding: '24px 32px' }}>
 
         {/* Page Title */}
         <div style={{ marginBottom: 20 }}>
-          <h1 style={{ fontSize: 22, fontWeight: 800, color: '#282c3f', margin: '0 0 4px', letterSpacing: -0.5 }}>
+          <h1 style={{ fontSize: 22, fontWeight: 800, color: '#3A332A', margin: '0 0 4px', letterSpacing: -0.5 }}>
             My Orders
           </h1>
           {!isLoading && (
@@ -397,11 +710,11 @@ export default function OrdersPage() {
         {/* Search Bar */}
         <div style={{
           display: 'flex', alignItems: 'center', gap: 10,
-          background: '#fff', border: `1.5px solid ${searchFocus ? '#ff3f6c' : '#e8e8e8'}`,
+          background: '#fff', border: `1.5px solid ${searchFocus ? '#A65A66' : '#e8e8e8'}`,
           borderRadius: 8, padding: '0 14px', marginBottom: 16,
           transition: 'border-color 0.2s',
         }}>
-          <Search size={16} color={searchFocus ? '#ff3f6c' : '#aaa'} />
+          <Search size={16} color={searchFocus ? '#A65A66' : '#aaa'} />
           <input
             value={search}
             onChange={e => setSearch(e.target.value)}
@@ -410,7 +723,7 @@ export default function OrdersPage() {
             placeholder="Search by order ID or product name…"
             style={{
               flex: 1, border: 'none', outline: 'none', padding: '12px 0',
-              fontSize: 13, color: '#282c3f', background: 'transparent',
+              fontSize: 13, color: '#3A332A', background: 'transparent',
             }}
           />
           {search && (
@@ -422,22 +735,28 @@ export default function OrdersPage() {
 
         {/* Filter Pills */}
         <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 4, marginBottom: 20 }}>
-          {FILTER_OPTIONS.map(f => (
-            <button
-              key={f.value}
-              onClick={() => setActiveFilter(f.value)}
-              style={{
-                flexShrink: 0, padding: '7px 16px', borderRadius: 20,
-                border: activeFilter === f.value ? '1.5px solid #ff3f6c' : '1.5px solid #e0e0e0',
-                background: activeFilter === f.value ? '#fff0f3' : '#fff',
-                color: activeFilter === f.value ? '#ff3f6c' : '#666',
-                fontSize: 12, fontWeight: 600, cursor: 'pointer',
-                transition: 'all 0.15s',
-              }}
-            >
-              {f.label}
-            </button>
-          ))}
+          {FILTER_OPTIONS.map(f => {
+            const meta = ORDER_STATUSES[f.value]
+            const accent = meta?.color || '#A65A66'
+            const accentBg = meta?.bg || '#fff0f3'
+            const active = activeFilter === f.value
+            return (
+              <button
+                key={f.value}
+                onClick={() => setActiveFilter(f.value)}
+                style={{
+                  flexShrink: 0, padding: '7px 16px', borderRadius: 20,
+                  border: active ? `1.5px solid ${accent}` : '1.5px solid #e0e0e0',
+                  background: active ? accentBg : '#fff',
+                  color: active ? accent : '#666',
+                  fontSize: 12, fontWeight: 600, cursor: 'pointer',
+                  transition: 'all 0.15s',
+                }}
+              >
+                {f.label}
+              </button>
+            )
+          })}
         </div>
 
         {/* States */}
@@ -459,11 +778,11 @@ export default function OrdersPage() {
             padding: '24px', textAlign: 'center',
           }}>
             <AlertCircle size={32} color="#dc2626" style={{ marginBottom: 12 }} />
-            <p style={{ fontSize: 14, color: '#282c3f', marginBottom: 12 }}>Couldn't load your orders.</p>
+            <p style={{ fontSize: 14, color: '#3A332A', marginBottom: 12 }}>Couldn't load your orders.</p>
             <button
               onClick={refetch}
               style={{
-                background: '#ff3f6c', color: '#fff', border: 'none',
+                background: '#A65A66', color: '#fff', border: 'none',
                 borderRadius: 4, padding: '10px 24px', fontSize: 13,
                 fontWeight: 600, cursor: 'pointer', display: 'inline-flex',
                 alignItems: 'center', gap: 6,
@@ -489,66 +808,3 @@ export default function OrdersPage() {
     </div>
   )
 }
-
-// ─── Mock Data ────────────────────────────────────────────────────────────────
-
-const MOCK_ORDERS = [
-  {
-    id: 'ARR-20240521-001',
-    date: '21 May 2024',
-    status: 'DELIVERED',
-    expectedBy: '23 May 2024',
-    total: 2498,
-    mrp: 3499,
-    discount: 1051,
-    delivery: 0,
-    address: { name: 'Priya S.', line1: '12, Rose Nagar, Koramangala', city: 'Bengaluru', pin: '560034' },
-    items: [
-      { id: 1, brand: 'Aarria', name: 'Floral Wrap Midi Dress', size: 'S', price: 1299, image: 'https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=200&q=80' },
-      { id: 2, brand: 'Aarria', name: 'Cotton Striped Kurti', size: 'M', price: 1199, image: 'https://images.unsplash.com/photo-1567401893414-76b7b1e5a7a5?w=200&q=80' },
-    ],
-  },
-  {
-    id: 'ARR-20240528-002',
-    date: '28 May 2024',
-    status: 'SHIPPED',
-    expectedBy: '2 Jun 2024',
-    total: 1799,
-    mrp: 2200,
-    discount: 451,
-    delivery: 50,
-    address: { name: 'Priya S.', line1: '12, Rose Nagar, Koramangala', city: 'Bengaluru', pin: '560034' },
-    items: [
-      { id: 3, brand: 'Aarria', name: 'Pastel Palazzo Set', size: 'M', price: 1799, image: 'https://images.unsplash.com/photo-1594938298603-c8148c4b4357?w=200&q=80' },
-    ],
-  },
-  {
-    id: 'ARR-20240601-003',
-    date: '1 Jun 2024',
-    status: 'PLACED',
-    expectedBy: '6 Jun 2024',
-    total: 3198,
-    mrp: 4000,
-    discount: 852,
-    delivery: 0,
-    address: { name: 'Priya S.', line1: '12, Rose Nagar, Koramangala', city: 'Bengaluru', pin: '560034' },
-    items: [
-      { id: 4, brand: 'Aarria', name: 'Embroidered Anarkali Suit', size: 'L', price: 2199, image: 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=200&q=80' },
-      { id: 5, brand: 'Aarria', name: 'Linen Crop Top', size: 'S', price: 999, image: 'https://images.unsplash.com/photo-1571513722275-4b41940f54b8?w=200&q=80' },
-    ],
-  },
-  {
-    id: 'ARR-20240415-004',
-    date: '15 Apr 2024',
-    status: 'CANCELLED',
-    expectedBy: null,
-    total: 1499,
-    mrp: 1499,
-    discount: 0,
-    delivery: 0,
-    address: { name: 'Priya S.', line1: '12, Rose Nagar, Koramangala', city: 'Bengaluru', pin: '560034' },
-    items: [
-      { id: 6, brand: 'Aarria', name: 'Denim Jacket – Navy', size: 'M', price: 1499, image: 'https://images.unsplash.com/photo-1551537482-f2075a1d41f2?w=200&q=80' },
-    ],
-  },
-]

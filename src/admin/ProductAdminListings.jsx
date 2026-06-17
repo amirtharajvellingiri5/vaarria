@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import {
   Search,
-  Plus,
   Edit2,
+  Copy,
   Trash2,
   ChevronUp,
   ChevronDown,
@@ -17,8 +17,10 @@ import {
   RefreshCw,
 } from 'lucide-react'
 
-const CDN = 'https://cdn.aarria.com/app/images/'
-const API = 'https://api.aarria.com/listings'
+import AdminNav from './AdminNav'
+
+const CDN = 'https://cdn.vaarria.com/app/images/'
+const API = 'https://api.vaarria.com/listings'
 const PRODUCTS_API =
   'https://8184radc92.execute-api.ap-south-1.amazonaws.com/prod/products'
 const PAGE_SIZE = 10
@@ -305,6 +307,7 @@ const ProductListings = () => {
   const [deleteProduct, setDeleteProduct] = useState(null)
   const [toast, setToast] = useState('')
   const [syncing, setSyncing] = useState(false)
+  const [cloningId, setCloningId] = useState(null)
 
   useEffect(() => {
     fetchListings()
@@ -321,6 +324,66 @@ const ProductListings = () => {
       setError('Failed to load products. Please try again.')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleClone = async (p) => {
+    setCloningId(p.id)
+    try {
+      // fetch the full product — listing rows only carry summary fields
+      const res = await fetch(`https://api.vaarria.com/product/${p.id}`)
+      if (!res.ok) throw new Error(`Error ${res.status}`)
+      const full = await res.json()
+
+      const payload = {
+        title: `${full.title} (Copy)`,
+        brand: {
+          name: full.brand?.name || '',
+          catalogue_id: full.brand?.catalogue_id || '',
+        },
+        category: {
+          category_name: full.category?.category_name || '',
+          category_id: full.category?.category_id,
+        },
+        description: full.description?.description || full.description || {},
+        pricing: {
+          mrp: full.pricing?.mrp || 0,
+          sale_price: full.pricing?.sale_price || 0,
+          buy_price: full.pricing?.buy_price || 0,
+          gst: full.pricing?.gst || 0,
+          discounts: {
+            discount_type: full.pricing?.discounts?.discount_type || 'FLAT',
+            value: full.pricing?.discounts?.value || 0,
+          },
+        },
+        inventory: {
+          variants: (full.inventory?.variants || []).map((v) => ({
+            color: v.color,
+            sizes: (v.sizes || []).map((s) => ({
+              size: s.size,
+              quantity: s.quantity,
+            })),
+            main_image: v.main_image || '',
+            other_images: v.other_images || [],
+          })),
+        },
+        // a clone is a new product — start with no ratings
+        ratings: { average_rating: 0, review_count: 0 },
+      }
+
+      const createRes = await fetch(PRODUCTS_API, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      })
+      if (!createRes.ok) throw new Error(await createRes.text())
+
+      setToast('Product cloned')
+      await fetchListings()
+    } catch {
+      setToast('Clone failed. Please try again.')
+    } finally {
+      setCloningId(null)
     }
   }
 
@@ -447,47 +510,20 @@ const openEditProduct = (id) => {
       />
 
       {/* Top bar */}
-      <div className='sticky top-0 z-30 bg-stone-950/95 backdrop-blur border-b border-stone-800'>
-        <div className='max-w-7xl mx-auto px-6 h-16 flex items-center justify-between'>
-          <div>
-            <h1
-              className='font-bold text-stone-100'
-              style={{ fontFamily: "'Playfair Display', serif", fontSize: 18 }}
-            >
-              Product Listings
-            </h1>
-            <p className='text-xs text-stone-500'>Women's Ethnic Wear Store</p>
-          </div>
-          <div>
-            <h1
-              className='font-bold text-stone-100'
-              style={{ fontFamily: "'Playfair Display', serif", fontSize: 18 }}
-            >
-              <a href="/products">Go to Store</a>
-            </h1>
-          </div>
-          <div className='flex items-center gap-3'>
-            <button
-              onClick={handleSync}
-              disabled={syncing}
-              className='flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold border border-stone-700 text-stone-300 hover:border-stone-500 hover:text-stone-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors'
-            >
-              {syncing ? (
-                <Loader2 size={14} className='animate-spin' />
-              ) : (
-                <RefreshCw size={14} />
-              )}
-              {syncing ? 'Syncing…' : 'Sync'}
-            </button>
-            <button
-              onClick={() => window.open('/admin/products/new', '_blank')}
-              className='flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold bg-gradient-to-r from-rose-500 to-pink-600 text-white hover:from-rose-600 hover:to-pink-700 transition-all shadow-lg shadow-rose-500/20'
-            >
-              <Plus size={15} /> Add Product
-            </button>
-          </div>
-        </div>
-      </div>
+      <AdminNav>
+        <button
+          onClick={handleSync}
+          disabled={syncing}
+          className='flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold border border-stone-700 text-stone-300 hover:border-stone-500 hover:text-stone-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors'
+        >
+          {syncing ? (
+            <Loader2 size={14} className='animate-spin' />
+          ) : (
+            <RefreshCw size={14} />
+          )}
+          {syncing ? 'Syncing…' : 'Sync'}
+        </button>
+      </AdminNav>
 
       <div className='max-w-7xl mx-auto px-6 py-8 space-y-6'>
         {/* Stats */}
@@ -680,6 +716,18 @@ const openEditProduct = (id) => {
                             className='flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border border-stone-700 text-stone-300 hover:border-rose-500/50 hover:text-rose-400 hover:bg-rose-500/5 transition-all'
                           >
                             <Edit2 size={12} /> Edit
+                          </button>
+                          <button
+                            onClick={() => handleClone(p)}
+                            disabled={cloningId !== null}
+                            className='flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border border-stone-700 text-stone-300 hover:border-rose-500/50 hover:text-rose-400 hover:bg-rose-500/5 transition-all disabled:opacity-50 disabled:cursor-not-allowed'
+                          >
+                            {cloningId === p.id ? (
+                              <Loader2 size={12} className='animate-spin' />
+                            ) : (
+                              <Copy size={12} />
+                            )}{' '}
+                            Clone
                           </button>
                           <button
                             onClick={() => setDeleteProduct(p)}

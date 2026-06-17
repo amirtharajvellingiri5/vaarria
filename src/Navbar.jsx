@@ -3,12 +3,14 @@ import { ShoppingBag, Search, Heart, User, Menu, X } from 'lucide-react'
 import { useCartStore } from './store/cartStore'
 import { ADMIN_CATEGORIES as CATEGORIES } from './utils/categories'
 
-import logo from './assets/logo.png'
+const logo = '/vlogo.png'
 
+// Keep in sync with the page content rail (max-w-screen-2xl + lg:px-8)
+// so the logo and content left edges align
 const PAGE_CONTAINER = {
-  maxWidth: '1400px',
+  maxWidth: '1536px',
   margin: '0 auto',
-  padding: '0 24px',
+  padding: '0 32px',
   width: '100%',
 }
 
@@ -152,7 +154,7 @@ const menuItemStyle = {
   display: 'block',
   padding: '10px 0',
   fontSize: '13px',
-  color: '#282c3f',
+  color: '#3A332A',
   textDecoration: 'none',
 }
 
@@ -168,9 +170,9 @@ const MegaMenu = ({ columns }) => {
     left: '50%',
     transform: 'translateX(-50%)',
     width: 'min(90vw, 1200px)',
-    backgroundColor: '#fff',
-    borderTop: '1px solid #f0f0f0',
-    boxShadow: '0 8px 24px rgba(0,0,0,0.1)',
+    backgroundColor: '#0a1628',
+    borderTop: '1px solid #1a2d4a',
+    boxShadow: '0 8px 24px rgba(0,0,0,0.4)',
     padding: '24px 32px',
     zIndex: 200,
   }}
@@ -180,11 +182,11 @@ const MegaMenu = ({ columns }) => {
           from { opacity: 0; transform: translateY(-6px); }
           to   { opacity: 1; transform: translateY(0); }
         }
-        .mm-link { display: block; font-size: 13px; color: #282c3f; padding: 4px 0; cursor: pointer; text-decoration: none; line-height: 1.5; transition: color 0.1s; }
-        .mm-link:hover { color: #ff3f6c; }
-        .mm-section-title { font-size: 13px; font-weight: 700; color: #ff3f6c; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 10px; cursor: pointer; }
+        .mm-link { display: block; font-size: 13px; color: #C9A84C; padding: 4px 0; cursor: pointer; text-decoration: none; line-height: 1.5; transition: color 0.1s; }
+        .mm-link:hover { color: #E8C060; }
+        .mm-section-title { font-size: 13px; font-weight: 800; color: #E8C060; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 10px; cursor: pointer; }
         .mm-section-title:hover { text-decoration: underline; }
-        .mm-divider { border: none; border-top: 0.5px solid #f0f0f0; margin: 8px 0 12px; }
+        .mm-divider { border: none; border-top: 0.5px solid #1a2d4a; margin: 8px 0 12px; }
       `}</style>
 
       <div
@@ -199,7 +201,7 @@ const MegaMenu = ({ columns }) => {
             key={ci}
             style={{
               borderRight:
-                ci < columns.length - 1 ? '0.5px solid #f0f0f0' : 'none',
+                ci < columns.length - 1 ? '0.5px solid #1a2d4a' : 'none',
               paddingRight: ci < columns.length - 1 ? '32px' : 0,
             }}
           >
@@ -230,7 +232,7 @@ const Navbar = () => {
 
 const token = localStorage.getItem('jwt_token')
 const customer = localStorage.getItem('customer')
-const customerData = customer ? JSON.parse(customer) : null
+const customerData = customer && customer !== 'undefined' ? JSON.parse(customer) : null
 const isLoggedIn = !!token
   const cart = useCartStore((state) => state.cart)
   const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0)
@@ -238,8 +240,8 @@ const isLoggedIn = !!token
   return (
     <nav
       style={{
-        background: '#fff',
-        borderBottom: '1px solid #e8e8e8',
+        background: '#050C1C',
+        borderBottom: '1px solid #0d1e3a',
         position: 'sticky',
         top: 0,
         zIndex: 100,
@@ -259,10 +261,14 @@ const isLoggedIn = !!token
         {/* Logo */}
         <a href='/' style={{ marginRight: '5%' }}>
           <img
-            src={logo}
-            alt='Logo'
-            className='min-h-[60px] h-16 sm:h-20 md:h-24 w-auto object-contain'
-          />
+  src={logo}
+  alt="VAARRIA — Adorn Your Aura"
+  style={{
+    height: '48px',
+    width: 'auto',
+    objectFit: 'contain',
+  }}
+/>
         </a>
 
         {/* Nav Items */}
@@ -292,7 +298,7 @@ const isLoggedIn = !!token
                     height: '100%',
                     fontSize: '13px',
                     fontWeight: 700,
-                    color: isActive ? '#ff3f6c' : '#282c3f',
+                    color: isActive ? '#E8C060' : '#C9A84C',
                     letterSpacing: '0.04em',
                     textTransform: 'uppercase',
                     fontFamily: 'inherit',
@@ -309,8 +315,8 @@ const isLoggedIn = !!token
                     <span
                       style={{
                         fontSize: '9px',
-                        background: '#ff3f6c',
-                        color: '#fff',
+                        background: '#C9A84C',
+                        color: '#050C1C',
                         borderRadius: '3px',
                         padding: '1px 4px',
                         fontWeight: 700,
@@ -330,7 +336,7 @@ const isLoggedIn = !!token
                         left: '14px',
                         right: '14px',
                         height: '2px',
-                        background: '#ff3f6c',
+                        background: '#A65A66',
                         borderRadius: '1px 1px 0 0',
                       }}
                     />
@@ -361,7 +367,8 @@ const isLoggedIn = !!token
             marginLeft: 'auto',
             display: 'flex',
             alignItems: 'center',
-            background: '#f5f5f6',
+            background: 'rgba(255,255,255,0.07)',
+            border: '1px solid rgba(201,168,76,0.4)',
             borderRadius: '4px',
             padding: '0 14px',
             gap: '8px',
@@ -372,7 +379,7 @@ const isLoggedIn = !!token
           }}
           className='hidden-mobile'
         >
-          <Search size={16} color='#94969f' />
+          <Search size={16} color='#C9A84C' />
           <input
             type='text'
             placeholder='Search for products'
@@ -383,7 +390,7 @@ const isLoggedIn = !!token
               background: 'transparent',
               outline: 'none',
               fontSize: '13px',
-              color: '#282c3f',
+              color: '#F0E6D3',
               width: '100%',
               fontFamily: 'inherit',
             }}
@@ -409,7 +416,7 @@ const isLoggedIn = !!token
       background: 'none',
       border: 'none',
       cursor: 'pointer',
-      color: '#282c3f',
+      color: '#C9A84C',
       display: 'flex',
       alignItems: 'center',
       flexDirection: 'column',
@@ -420,7 +427,7 @@ const isLoggedIn = !!token
     <User size={20} />
     <span
       style={{
-        fontSize: '10px',
+        fontSize: '11px',
         fontWeight: 600,
         letterSpacing: '0.03em',
       }}
@@ -506,8 +513,8 @@ const isLoggedIn = !!token
             href="/login"
             style={{
               display: 'inline-block',
-              border: '1px solid #ff3f6c',
-              color: '#ff3f6c',
+              border: '1px solid #A65A66',
+              color: '#A65A66',
               padding: '10px 18px',
               fontSize: '12px',
               fontWeight: 700,
@@ -528,7 +535,7 @@ const isLoggedIn = !!token
               background: 'none',
               border: 'none',
               cursor: 'pointer',
-              color: '#282c3f',
+              color: '#3A332A',
               display: 'flex',
               alignItems: 'center',
               flexDirection: 'column',
@@ -539,7 +546,7 @@ const isLoggedIn = !!token
             <Heart size={20} />
             <span
               style={{
-                fontSize: '10px',
+                fontSize: '11px',
                 fontWeight: 600,
                 letterSpacing: '0.03em',
               }}
@@ -552,7 +559,7 @@ const isLoggedIn = !!token
               background: 'none',
               border: 'none',
               cursor: 'pointer',
-              color: '#282c3f',
+              color: '#3A332A',
               position: 'relative',
               display: 'flex',
               alignItems: 'center',
@@ -565,7 +572,7 @@ const isLoggedIn = !!token
               <ShoppingBag size={20} />
               <span
                 style={{
-                  fontSize: '10px',
+                  fontSize: '11px',
                   fontWeight: 600,
                   letterSpacing: '0.03em',
                 }}
@@ -579,7 +586,7 @@ const isLoggedIn = !!token
                   position: 'absolute',
                   top: '-4px',
                   right: '-6px',
-                  background: '#ff3f6c',
+                  background: '#A65A66',
                   color: '#fff',
                   fontSize: '10px',
                   borderRadius: '50%',
@@ -603,7 +610,7 @@ const isLoggedIn = !!token
               background: 'none',
               border: 'none',
               cursor: 'pointer',
-              color: '#282c3f',
+              color: '#C9A84C',
               display: 'none',
             }}
             className='show-mobile'
@@ -615,7 +622,7 @@ const isLoggedIn = !!token
 
       {/* ── Mobile Nav ── */}
       {mobileOpen && (
-        <div style={{ borderTop: '1px solid #f0f0f0', background: '#fff' }}>
+        <div style={{ borderTop: '1px solid #1a2d4a', background: '#050C1C' }}>
           {/* Mobile search */}
           <div style={{ padding: '12px 16px' }}>
             <div
@@ -646,7 +653,7 @@ const isLoggedIn = !!token
           {MENU_DATA.map((item) => (
             <div
               key={item.name}
-              style={{ borderBottom: '0.5px solid #f0f0f0' }}
+              style={{ borderBottom: '0.5px solid #1a2d4a' }}
             >
               <button
                 onClick={() =>
@@ -660,7 +667,7 @@ const isLoggedIn = !!token
                   textAlign: 'left',
                   fontSize: '14px',
                   fontWeight: 700,
-                  color: activeMenu === item.name ? '#ff3f6c' : '#282c3f',
+                  color: activeMenu === item.name ? '#E8C060' : '#C9A84C',
                   letterSpacing: '0.03em',
                   textTransform: 'uppercase',
                   cursor: 'pointer',
@@ -675,7 +682,7 @@ const isLoggedIn = !!token
                   <span
                     style={{
                       fontSize: '9px',
-                      background: '#ff3f6c',
+                      background: '#A65A66',
                       color: '#fff',
                       borderRadius: '3px',
                       padding: '1px 5px',
@@ -688,7 +695,7 @@ const isLoggedIn = !!token
               </button>
 
               {activeMenu === item.name && item.columns.length > 0 && (
-                <div style={{ padding: '0 16px 16px', background: '#fafafa' }}>
+                <div style={{ padding: '0 16px 16px', background: '#0a1628' }}>
                   {item.columns
                     .flatMap((col) => col.sections)
                     .map((section, si) => (
@@ -697,7 +704,8 @@ const isLoggedIn = !!token
                           style={{
                             fontSize: '12px',
                             fontWeight: 700,
-                            color: '#ff3f6c',
+                            color: '#E8C060',
+                            fontWeight: 800,
                             textTransform: 'uppercase',
                             letterSpacing: '0.04em',
                             marginBottom: '6px',
@@ -712,7 +720,7 @@ const isLoggedIn = !!token
                             style={{
                               display: 'block',
                               fontSize: '13px',
-                              color: '#282c3f',
+                              color: '#C9A84C',
                               padding: '3px 0',
                               textDecoration: 'none',
                             }}
@@ -732,8 +740,9 @@ const isLoggedIn = !!token
       <style>{`
         .hidden-mobile { display: flex !important; }
         .show-mobile   { display: none !important; }
-        .icon-btn:hover svg { color: #ff3f6c !important; stroke: #ff3f6c !important; }
-        .icon-btn:hover span { color: #ff3f6c !important; }
+        .icon-btn:hover svg { color: #E8C060 !important; stroke: #E8C060 !important; }
+        .icon-btn:hover span { color: #E8C060 !important; }
+        input::placeholder { color: rgba(240,230,211,0.45) !important; }
         @media (max-width: 768px) {
           .hidden-mobile { display: none !important; }
           .show-mobile   { display: flex !important; }

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Check, Package } from "lucide-react";
-import logo from "../assets/logo.png";
+import logo from "../assets/logo.jpg";
 
 export default function OrderSuccess() {
   const location = useLocation();
@@ -104,7 +104,7 @@ function InfoRow({ label, value, highlight, last }) {
 }
 
 /* ─────────────────────────── Styles ─────────────────────────── */
-const PINK  = "#ff3f6c";
+const PINK  = "#A65A66";
 const GREEN = "#16a34a";
 const BORDER = "#ede8e3";
 
@@ -133,15 +133,17 @@ const s = {
     textAlign: "center",
   },
 
-  logoArea: { marginBottom: 2 },
+  // tick halo (10px box-shadow ring) extends beyond the circle,
+  // so margins here include that overflow
+  logoArea: { marginBottom: 28 },
 
   logo: {
-    height: 120,
+    height: 56,
     width: "auto",
     objectFit: "contain",
   },
 
-  tickWrap: { marginBottom: 0 },
+  tickWrap: { marginBottom: 26 },
 
   tickCircle: {
     width: 72,

@@ -26,11 +26,15 @@ import {
 } from 'lucide-react'
 
 import axios from 'axios'
-import logo from './assets/logo.png'
+import logo from './assets/logo.jpg'
 import './constants/global.css'
 
 import CouponModal from './modals/CouponModal'
 import AddressModal from './modals/AddressModal'
+
+// Orders handler (DynamoDB-backed) — all bag APIs go here
+const ORDERS_API_BASE =
+  'https://zq0dbjycx6.execute-api.ap-south-1.amazonaws.com/prod'
 
 function SkeletonPulse({ style = {} }) {
   return (
@@ -104,11 +108,50 @@ function PricePanelSkeleton() {
 // ─── Zustand Store ────────────────────────────────────────────────────────────
 const useBagStore = create((set, get) => ({
   items: [],
-  couponsApplied: 2,
-  couponSavings: 401,
+
+  // ── coupon state ──────────────────────────────────────────────────────────
+  // Set of bag_ids whose coupon is currently toggled ON
+  appliedCouponIds: new Set(),
+
+  toggleCoupon: (bagId) =>
+    set((s) => {
+      const next = new Set(s.appliedCouponIds)
+      next.has(bagId) ? next.delete(bagId) : next.add(bagId)
+      return { appliedCouponIds: next }
+    }),
+
+  // Derived: total coupon savings across SELECTED items with coupon toggled ON.
+  // Call as a selector: useBagStore(s => s.getCouponSavings())
+  // Or just read inside components via get().
+  getCouponSavings: () => {
+  const { items, appliedCouponIds } = get()
+
+  return items
+    .filter(
+      (item) =>
+        item.selected &&
+        appliedCouponIds.has(item.id) &&
+        item.couponDiscount > 0,
+    )
+    .reduce((total, item) => {
+      if (item.discountType === 'PERCENTAGE') {
+        const discount = Math.floor(
+          (item.price * item.qty * item.couponDiscount) / 100,
+        )
+
+        return total + discount
+      }
+
+      // FLAT discount
+      return total + item.couponDiscount * item.qty
+    }, 0)
+},
+
+  // ── other existing state ──────────────────────────────────────────────────
   platformFee: 23,
   donationAmount: 0,
   mobileMenuOpen: false,
+
   setItems: (items) => set({ items }),
 
   toggleSelected: (id) =>
@@ -117,8 +160,10 @@ const useBagStore = create((set, get) => ({
         i.id === id ? { ...i, selected: !i.selected } : i,
       ),
     })),
+
   removeItem: (id) =>
     set((s) => ({ items: s.items.filter((i) => i.id !== id) })),
+
   updateQty: (id, delta) =>
     set((s) => ({
       items: s.items.map((i) =>
@@ -128,6 +173,7 @@ const useBagStore = create((set, get) => ({
 
   setDonation: (amt) =>
     set((s) => ({ donationAmount: s.donationAmount === amt ? 0 : amt })),
+
   toggleMobileMenu: () => set((s) => ({ mobileMenuOpen: !s.mobileMenuOpen })),
 }))
 
@@ -227,10 +273,10 @@ function PinBar() {
   }
 
   const handleSelectAddress = (address) => {
-  localStorage.setItem('selected_address', JSON.stringify(address))
-  setDefaultAddress(address)
-  setOpenAddress(false)
-}
+    localStorage.setItem('selected_address', JSON.stringify(address))
+    setDefaultAddress(address)
+    setOpenAddress(false)
+  }
 
   const handleCloseAddress = () => {
     setOpenAddress(false)
@@ -246,7 +292,7 @@ function PinBar() {
         }
 
         const response = await fetch(
-          `https://api.aarria.com/api/addresses?customer_id=${customerId}`,
+          `${ORDERS_API_BASE}/addresses?customer_id=${customerId}`,
         )
 
         if (!response.ok) {
@@ -261,9 +307,9 @@ function PinBar() {
           const primary = data.items.find((a) => a.is_default)
           setDefaultAddress(primary || data.items[0])
           localStorage.setItem(
-  'selected_address',
-  JSON.stringify(primary || data.items[0]),
-)
+            'selected_address',
+            JSON.stringify(primary || data.items[0]),
+          )
         } else {
           setAddresses([])
           setDefaultAddress(null)
@@ -323,13 +369,13 @@ function PinBar() {
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <Truck size={14} color='#ff3f6c' />
+              <Truck size={14} color='#A65A66' />
               <span
                 style={{
                   fontSize: 11,
                   fontWeight: 700,
                   letterSpacing: 1,
-                  color: '#282c3f',
+                  color: '#3A332A',
                   textTransform: 'uppercase',
                 }}
               >
@@ -341,7 +387,7 @@ function PinBar() {
               style={{
                 fontSize: 12,
                 fontWeight: 700,
-                color: '#ff3f6c',
+                color: '#A65A66',
                 background: 'none',
                 border: 'none',
                 cursor: 'pointer',
@@ -410,7 +456,7 @@ function PinBar() {
               >
                 <MapPin
                   size={16}
-                  color='#ff3f6c'
+                  color='#A65A66'
                   style={{ marginTop: 2, flexShrink: 0 }}
                 />
                 <div>
@@ -426,7 +472,7 @@ function PinBar() {
                       style={{
                         fontSize: 14,
                         fontWeight: 700,
-                        color: '#282c3f',
+                        color: '#3A332A',
                       }}
                     >
                       {defaultAddress.full_name}
@@ -435,8 +481,8 @@ function PinBar() {
                       style={{
                         fontSize: 10,
                         fontWeight: 700,
-                        color: '#ff3f6c',
-                        border: '1px solid #ff3f6c',
+                        color: '#A65A66',
+                        border: '1px solid #A65A66',
                         borderRadius: 2,
                         padding: '1px 6px',
                         letterSpacing: 0.5,
@@ -454,7 +500,7 @@ function PinBar() {
                       : ''}
                     ,&nbsp;
                     {defaultAddress.city}, {defaultAddress.state} —{' '}
-                    <span style={{ fontWeight: 700, color: '#282c3f' }}>
+                    <span style={{ fontWeight: 700, color: '#3A332A' }}>
                       {defaultAddress.pincode}
                     </span>
                   </div>
@@ -497,7 +543,7 @@ function PinBar() {
           gap: 10,
         }}
       >
-        <Truck size={16} style={{ color: '#ff3f6c' }} />
+        <Truck size={16} style={{ color: '#A65A66' }} />
 
         <input
           style={styles.pinInput}
@@ -554,13 +600,14 @@ function ItemCard({ item }) {
 
     try {
       const response = await fetch(
-        `https://api.aarria.com/api/bags/${item.id}`,
+        `${ORDERS_API_BASE}/bags/update-bag-item/${item.id}`,
         {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
+            customer_id: 1,
             address_id: item.address_id ?? null,
             size: item.size,
             color: item.colorName,
@@ -596,7 +643,7 @@ function ItemCard({ item }) {
       setDeleting(true)
 
       const response = await fetch(
-        `https://api.aarria.com/api/bags/${item.id}?customer_id=1`,
+        `${ORDERS_API_BASE}/bags/delete-bag-item/${item.id}?customer_id=1`,
         {
           method: 'DELETE',
         },
@@ -659,7 +706,7 @@ function ItemCard({ item }) {
         >
           <div style={{ ...styles.itemThumb, background: item.color }}>
             <img
-              src={`https://cdn.aarria.com/app/images/${item.image}`}
+              src={`https://cdn.vaarria.com/app/images/${item.image}`}
               alt={item.name}
               style={{
                 width: '100%',
@@ -673,7 +720,7 @@ function ItemCard({ item }) {
         {/* Details */}
         <div style={styles.itemBody}>
           <a
-            href={`https://aarria.com/product/${item.productId}`}
+            href={`https://vaarria.com/product/${item.productId}`}
             target='_blank'
             rel='noopener noreferrer'
             style={{
@@ -717,11 +764,14 @@ function ItemCard({ item }) {
           </div>
 
           {item.couponDiscount > 0 && (
-            <div style={styles.couponLine}>
-              <Tag size={11} style={{ marginRight: 4 }} />
-              Coupon Discount: ₹{item.couponDiscount}
-            </div>
-          )}
+  <div style={styles.couponLine}>
+    <Tag size={11} style={{ marginRight: 4 }} />
+    Coupon Discount:{' '}
+    {item.discountType === 'PERCENTAGE'
+      ? `${item.couponDiscount}%`
+      : `₹${item.couponDiscount}`}
+  </div>
+)}
 
           <div style={styles.returnLine}>
             <RotateCcw size={11} style={{ marginRight: 4 }} />
@@ -733,7 +783,7 @@ function ItemCard({ item }) {
         <button
           style={{
             ...styles.removeBtn,
-            color: '#ff3f6c',
+            color: '#A65A66',
           }}
           onClick={() => setShowDeleteConfirm(true)}
           aria-label='remove item'
@@ -834,9 +884,9 @@ function ItemCard({ item }) {
                   flex: 1,
                   height: 44,
                   borderRadius: 12,
-                  border: '1px solid #ff3f6c',
+                  border: '1px solid #A65A66',
                   background: '#fff0f4',
-                  color: '#ff3f6c',
+                  color: '#A65A66',
                   cursor: 'pointer',
                   fontWeight: 700,
                   fontSize: 15,
@@ -855,8 +905,20 @@ function ItemCard({ item }) {
 }
 
 function CouponPanel() {
-  const { couponsApplied, couponSavings } = useBagStore()
+  const { items, appliedCouponIds, toggleCoupon, getCouponSavings } = useBagStore()
   const [showCoupon, setShowCoupon] = useState(false)
+
+  const couponSavings = getCouponSavings()
+
+  // Count how many selected items have coupon toggled on
+  const appliedCount = items.filter(
+    (i) => i.selected && appliedCouponIds.has(i.id) && i.couponDiscount > 0,
+  ).length
+
+  // Count how many selected items have a coupon available (but not yet applied)
+  const availableCount = items.filter(
+    (i) => i.selected && i.couponDiscount > 0,
+  ).length
 
   return (
     <div style={styles.panelCard}>
@@ -865,37 +927,61 @@ function CouponPanel() {
         <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
           <Tag size={18} color='#e91e8c' style={{ marginTop: 2 }} />
           <div>
-            <div style={styles.couponApplied}>
-              {couponsApplied} Coupons applied
-            </div>
-            <div style={styles.couponSaved}>
-              You saved additional ₹{couponSavings}
-            </div>
+            {appliedCount > 0 ? (
+              <>
+                <div style={styles.couponApplied}>
+                  {appliedCount} Coupon{appliedCount !== 1 ? 's' : ''} applied
+                </div>
+                <div style={styles.couponSaved}>
+                  You saved ₹{couponSavings.toLocaleString('en-IN')}
+                </div>
+              </>
+            ) : availableCount > 0 ? (
+              <>
+                <div style={styles.couponApplied}>
+                  {availableCount} coupon{availableCount !== 1 ? 's' : ''} available
+                </div>
+                <div style={{ fontSize: 12, color: '#888', marginTop: 3 }}>
+                  Apply to save on selected items
+                </div>
+              </>
+            ) : (
+              <>
+                <div style={styles.couponApplied}>No coupons available</div>
+                <div style={{ fontSize: 12, color: '#aaa', marginTop: 3 }}>
+                  Select items to see applicable coupons
+                </div>
+              </>
+            )}
           </div>
         </div>
+
         <button style={styles.editBtn} onClick={() => setShowCoupon(true)}>
-          APPLY
+          {appliedCount > 0 ? 'EDIT' : 'APPLY'}
         </button>
-        <CouponModal
-          isOpen={showCoupon}
-          onClose={() => setShowCoupon(false)}
-          onApply={(selectedIds) =>
-            console.log('Applied coupon IDs:', selectedIds)
-          }
-        />
       </div>
+
+      <CouponModal
+        isOpen={showCoupon}
+        onClose={() => setShowCoupon(false)}
+        items={items}
+        appliedCouponIds={appliedCouponIds}
+        onToggleCoupon={toggleCoupon}
+      />
     </div>
   )
 }
 function PricePanel() {
   const navigate = useNavigate()
-  const { items, couponSavings, donationAmount } = useBagStore()
+  const { items, donationAmount, getCouponSavings } = useBagStore()  // ← removed couponSavings
   const [paymentError, setPaymentError] = useState('')
   const [paymentLoading, setPaymentLoading] = useState(false)
 
+  const couponSavings = getCouponSavings()  // ← derived live
+
   const selectedAddress = JSON.parse(
-  localStorage.getItem('selected_address') || 'null',
-)
+    localStorage.getItem('selected_address') || 'null',
+  )
 
   const selected = items.filter((i) => i.selected)
 
@@ -911,10 +997,8 @@ function PricePanel() {
 
   const discountOnMrp = totalMrp - totalPrice
   const total = totalPrice - couponSavings + donationAmount
-
-  const API_BASE =
-    'https://d8obcfi1ua.execute-api.ap-south-1.amazonaws.com/prod'
-
+  
+  const API_BASE = ORDERS_API_BASE
   const handlePlaceOrder = async () => {
     if (selected.length === 0) return
 
@@ -940,28 +1024,30 @@ function PricePanel() {
       const customerEmail = customer.email || ''
       const customerPhone = customer.mobile || customer.phone || ''
 
-      const selectedAddress =
-  JSON.parse(localStorage.getItem('selected_address') || 'null')
+      const selectedAddress = JSON.parse(
+        localStorage.getItem('selected_address') || 'null',
+      )
 
-if (!selectedAddress) {
-  setPaymentError('Please select delivery address')
-  return
-}
+      if (!selectedAddress) {
+        setPaymentError('Please select delivery address')
+        return
+      }
 
-const { data } = await axios.post(`${API_BASE}/payments/create-order`, {
-  customer_id: String(customer.customer_id),
-  address_id: String(selectedAddress.address_id),
-  amount: totalAmount,
-  receipt: `order_${Date.now()}`,
-  items: selected.map((item) => ({
-    product_id: String(item.productId),
-    product_name: item.name,
-    quantity: item.qty,
-    unit_price: item.price,
-    size: item.size,
-    bag_id: item.id,
-  })),
-})
+      const { data } = await axios.post(`${API_BASE}/payments/create-order`, {
+        customer_id: String(customer.customer_id),
+        address_id: String(selectedAddress.address_id),
+        amount: totalAmount,
+        receipt: `order_${Date.now()}`,
+        items: selected.map((item) => ({
+          product_id: String(item.productId),
+          product_name: item.name,
+          quantity: item.qty,
+          unit_price: item.price,
+          size: item.size,
+          image: item.image || null,
+          bag_id: item.id,
+        })),
+      })
 
       const options = {
         key: data.key,
@@ -1063,15 +1149,25 @@ const { data } = await axios.post(`${API_BASE}/payments/create-order`, {
       </div>
 
       <p style={styles.terms}>
-        By placing the order, you agree to our{' '}
-        <a href='#' style={styles.termsLink}>
-          Terms of Use
-        </a>{' '}
-        and{' '}
-        <a href='#' style={styles.termsLink}>
-          Privacy Policy
-        </a>
-      </p>
+  By placing the order, you agree to our{' '}
+  <a
+    href='http://localhost:5173/terms'
+    target='_blank'
+    rel='noopener noreferrer'
+    style={styles.termsLink}
+  >
+    Terms of Use
+  </a>{' '}
+  and{' '}
+  <a
+    href='http://localhost:5173/privacy-policy'
+    target='_blank'
+    rel='noopener noreferrer'
+    style={styles.termsLink}
+  >
+    Privacy Policy
+  </a>
+</p>
 
       <button
         style={styles.placeBtn}
@@ -1114,7 +1210,7 @@ const { data } = await axios.post(`${API_BASE}/payments/create-order`, {
               width: 56,
               height: 56,
               border: '4px solid #f3f3f3',
-              borderTop: '4px solid #ff3f6c',
+              borderTop: '4px solid #A65A66',
               borderRadius: '50%',
               animation: 'spin 0.8s linear infinite',
             }}
@@ -1124,7 +1220,7 @@ const { data } = await axios.post(`${API_BASE}/payments/create-order`, {
             style={{
               fontSize: 15,
               fontWeight: 600,
-              color: '#282c3f',
+              color: '#3A332A',
             }}
           >
             Preparing secure payment...
@@ -1188,7 +1284,7 @@ const { data } = await axios.post(`${API_BASE}/payments/create-order`, {
               <button
                 onClick={() => setPaymentError('')}
                 style={{
-                  background: '#ff3f6c',
+                  background: '#A65A66',
                   color: '#fff',
                   border: 'none',
                   padding: '12px 20px',
@@ -1248,7 +1344,9 @@ function BagPage() {
     const fetchBagItems = async () => {
       try {
         setLoading(true)
-        const response = await fetch('https://api.aarria.com/customers/1/bag')
+        const response = await fetch(
+          `${ORDERS_API_BASE}/bags/customers/1/bag`,
+        )
 
         const data = await response.json()
 
@@ -1264,6 +1362,7 @@ function BagPage() {
           price: item.price,
           mrp: item.mrp,
           couponDiscount: item.coupon_discount,
+          discountType: item.discount_type, // ← NEW
           returnDays: item.return_days,
           colorName: item.color,
           color:
@@ -1280,6 +1379,7 @@ function BagPage() {
                 : '#e91e8c',
           selected: item.selected,
         }))
+
         setItems(mappedItems)
       } catch (error) {
         console.error('Failed to fetch bag items', error)
@@ -1473,12 +1573,12 @@ const styles = {
     padding: 4,
   },
   container: {
-    maxWidth: 1080,
+    maxWidth: 1536,
     margin: '0 auto',
-    padding: '20px 16px',
+    padding: '20px 32px',
     display: 'grid',
-    gridTemplateColumns: '1fr 340px',
-    gap: 20,
+    gridTemplateColumns: '1fr 380px',
+    gap: 24,
     alignItems: 'start',
   },
   leftCol: {},
@@ -1792,7 +1892,7 @@ const styles = {
   addressCheckBtn: {
     border: 'none',
     background: 'none',
-    color: '#ff3f6c',
+    color: '#A65A66',
     fontSize: 16,
     fontWeight: 100,
     cursor: 'pointer',

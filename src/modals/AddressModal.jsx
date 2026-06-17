@@ -1,6 +1,10 @@
 import { useState } from 'react'
 import { X, Trash2 } from 'lucide-react'
 
+// Orders handler (DynamoDB-backed) — all address APIs go here
+const ORDERS_API_BASE =
+  'https://zq0dbjycx6.execute-api.ap-south-1.amazonaws.com/prod'
+
 export default function AddressModal({
   open,
   onClose,
@@ -20,7 +24,7 @@ onDeleteSuccess,
     setDeletingId(addressId)
 
     const response = await fetch(
-      `https://api.aarria.com/api/addresses/${addressId}`,
+      `${ORDERS_API_BASE}/addresses/${addressId}?customer_id=1`,
       {
         method: 'DELETE',
       },
@@ -71,7 +75,7 @@ onDeleteSuccess,
     try {
       setLoading(true)
 
-      const response = await fetch('https://api.aarria.com/api/addresses', {
+      const response = await fetch(`${ORDERS_API_BASE}/addresses`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -229,7 +233,7 @@ onDeleteSuccess,
       )
 
       const response = await fetch(
-        `https://api.aarria.com/api/addresses/${address.address_id}/select?customer_id=${customer.customer_id}`,
+        `${ORDERS_API_BASE}/addresses/${address.address_id}/select?customer_id=${customer.customer_id}`,
         {
           method: 'PUT',
         },

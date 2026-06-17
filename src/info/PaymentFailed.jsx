@@ -1,7 +1,7 @@
 import React from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { XCircle } from 'lucide-react'
-import logo from '../assets/logo.png'
+import logo from '../assets/logo.jpg'
 
 function PaymentFailed() {
   const location = useLocation()
