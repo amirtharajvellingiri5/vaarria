@@ -151,11 +151,15 @@ const MENU_DATA = [
 ]
 
 const menuItemStyle = {
-  display: 'block',
-  padding: '10px 0',
+  display: 'flex',
+  alignItems: 'center',
+  padding: '10px 14px',
   fontSize: '13px',
-  color: '#3A332A',
+  color: '#F9F6F0',
   textDecoration: 'none',
+  borderRadius: '4px',
+  transition: 'background 0.15s, color 0.15s',
+  letterSpacing: '0.02em',
 }
 
 // ── MegaMenu Component ────────────────────────────────────────────────────────
@@ -440,91 +444,104 @@ const isLoggedIn = !!token
     <div
       style={{
         position: 'absolute',
-        top: '100%',
+        top: 'calc(100% + 8px)',
         right: 0,
-        width: '260px',
-        background: '#fff',
-        border: '1px solid #eaeaec',
-        boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
-        borderRadius: '4px',
-        padding: '16px',
+        width: '220px',
+        background: '#050C1C',
+        border: '1px solid rgba(201,168,76,0.35)',
+        boxShadow: '0 8px 32px rgba(5,12,28,0.45)',
+        borderRadius: '6px',
+        padding: '16px 8px 10px',
         zIndex: 999,
       }}
     >
       {isLoggedIn ? (
         <>
-          <div style={{ fontSize: '14px', fontWeight: 700 }}>
-            Hello {customerData?.name}
+          <div style={{ padding: '0 14px 12px' }}>
+            <div style={{ fontSize: '15px', fontWeight: 700, color: '#C9A84C', fontFamily: "'Playfair Display', Georgia, serif" }}>
+              Hello, {customerData?.name?.split(' ')[0] || 'there'}
+            </div>
+            {customerData?.mobile_no && (
+              <div style={{ fontSize: '11px', color: 'rgba(249,246,240,0.45)', marginTop: '3px', letterSpacing: '0.03em' }}>
+                {customerData.mobile_no}
+              </div>
+            )}
           </div>
 
-          <div
-            style={{
-              fontSize: '12px',
-              color: '#696b79',
-              marginBottom: '14px',
-            }}
-          >
-            {customerData?.mobile_no}
-          </div>
+          <div style={{ height: '1px', background: 'rgba(201,168,76,0.2)', margin: '0 14px 8px' }} />
 
-          <hr style={{ border: 'none', borderTop: '1px solid #f0f0f0' }} />
-
-          <div style={{ paddingTop: '12px' }}>
-            <a href="/orders" style={menuItemStyle}>Orders</a>
-            <a href="/wishlist" style={menuItemStyle}>Wishlist</a>
-            <a href="/profile" style={menuItemStyle}>Profile</a>
-
-            <button
-              onClick={() => {
-                localStorage.removeItem('jwt_token')
-                localStorage.removeItem('customer')
-                window.location.href = '/'
-              }}
-              style={{
-                ...menuItemStyle,
-                background: 'none',
-                border: 'none',
-                width: '100%',
-                textAlign: 'left',
-                cursor: 'pointer',
-              }}
+          {[
+            { href: '/orders', label: 'Orders' },
+            { href: '/wishlist', label: 'Wishlist' },
+            { href: '/profile', label: 'Profile' },
+          ].map(({ href, label }) => (
+            <a
+              key={href}
+              href={href}
+              style={menuItemStyle}
+              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(201,168,76,0.1)'; e.currentTarget.style.color = '#C9A84C' }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#F9F6F0' }}
             >
-              Logout
-            </button>
-          </div>
+              {label}
+            </a>
+          ))}
+
+          <div style={{ height: '1px', background: 'rgba(201,168,76,0.2)', margin: '8px 14px 6px' }} />
+
+          <button
+            onClick={() => {
+              localStorage.removeItem('jwt_token')
+              localStorage.removeItem('customer')
+              window.location.href = '/'
+            }}
+            style={{
+              ...menuItemStyle,
+              background: 'none',
+              border: 'none',
+              width: '100%',
+              textAlign: 'left',
+              cursor: 'pointer',
+              color: 'rgba(249,246,240,0.5)',
+              fontSize: '12px',
+            }}
+            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(239,68,68,0.08)'; e.currentTarget.style.color = '#f87171' }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'rgba(249,246,240,0.5)' }}
+          >
+            Logout
+          </button>
         </>
       ) : (
         <>
-          <div style={{ fontSize: '14px', fontWeight: 700 }}>
-            Welcome
+          <div style={{ padding: '0 14px 12px' }}>
+            <div style={{ fontSize: '15px', fontWeight: 700, color: '#C9A84C', fontFamily: "'Playfair Display', Georgia, serif" }}>
+              Welcome
+            </div>
+            <div style={{ fontSize: '12px', color: 'rgba(249,246,240,0.5)', margin: '4px 0 0', lineHeight: 1.5 }}>
+              Sign in to access your account
+            </div>
           </div>
 
-          <div
-            style={{
-              fontSize: '12px',
-              color: '#696b79',
-              margin: '8px 0 14px',
-            }}
-          >
-            To access account and manage orders
-          </div>
+          <div style={{ height: '1px', background: 'rgba(201,168,76,0.2)', margin: '0 14px 12px' }} />
 
-          <a
-            href="/login"
-            style={{
-              display: 'inline-block',
-              border: '1px solid #A65A66',
-              color: '#A65A66',
-              padding: '10px 18px',
-              fontSize: '12px',
-              fontWeight: 700,
-              textDecoration: 'none',
-              borderRadius: '4px',
-              marginBottom: '14px',
-            }}
-          >
-            LOGIN / SIGNUP
-          </a>
+          <div style={{ padding: '0 14px 6px' }}>
+            <a
+              href="/login"
+              style={{
+                display: 'block',
+                background: '#C9A84C',
+                color: '#050C1C',
+                padding: '10px 0',
+                fontSize: '12px',
+                fontWeight: 800,
+                textDecoration: 'none',
+                borderRadius: '4px',
+                textAlign: 'center',
+                letterSpacing: '0.08em',
+              }}
+            >
+              LOGIN / SIGNUP
+            </a>
+          </div>
         </>
       )}
     </div>

@@ -435,6 +435,7 @@ function MediaSlider({ mediaItems, initialIndex, onClose }) {
                   width: '100%',
                   height: '100%',
                   objectFit: 'cover',
+                  objectPosition: 'top',
                   display: 'block',
                 }}
               />
@@ -591,7 +592,7 @@ function ProductGallery({ mediaItems, onOpenSlider }) {
       {/* Left thumbnail strip */}
       <div
         style={{
-          width: 76,
+          width: 92,
           flexShrink: 0,
           display: 'flex',
           flexDirection: 'column',
@@ -608,11 +609,11 @@ function ProductGallery({ mediaItems, onOpenSlider }) {
             onMouseEnter={() => setActiveIndex(i)}
             onClick={() => onOpenSlider(i)}
             style={{
-              width: 64,
-              height: 84,
+              width: 78,
+              height: 102,
               flexShrink: 0,
               border:
-                i === activeIndex ? '2px solid #ec4899' : '2px solid #e5e7eb',
+                i === activeIndex ? '2px solid #C9A84C' : '2px solid #e5e7eb',
               borderRadius: 4,
               overflow: 'hidden',
               cursor: 'pointer',
@@ -633,6 +634,7 @@ function ProductGallery({ mediaItems, onOpenSlider }) {
                 width: '100%',
                 height: '100%',
                 objectFit: 'cover',
+                objectPosition: 'top',
                 display: 'block',
               }}
             />
@@ -707,6 +709,7 @@ function ProductGallery({ mediaItems, onOpenSlider }) {
                 width: '100%',
                 height: '100%',
                 objectFit: 'cover',
+                objectPosition: 'top',
                 display: 'block',
                 transition: 'opacity 0.2s ease',
                 animation: 'galleryFadeIn 0.18s ease',
@@ -1375,11 +1378,11 @@ export default function ProductDetail() {
         .pdp-breadcrumb-sep { color: #d1d5db; font-size: 10px; }
         .pdp-breadcrumb-current { color: #374151; font-weight: 500; }
         .pdp-outer { display: flex; align-items: flex-start; max-width: 1536px; margin: 0 auto; padding: 0 clamp(16px, 3%, 32px); }
-        .pdp-images-col { width: 52%; min-width: 0; padding-top: 12px; }
+        .pdp-images-col { width: 55%; min-width: 0; padding-top: 12px; }
         .pdp-info-col {
-  width: 48%;
+  width: 45%;
   min-width: 0;
-  padding: 0px 48px 48px 40px;
+  padding: 0px 32px 32px 32px;
   border-left: 1px solid #f3f4f6;
   background: #fff;
 }
@@ -1395,7 +1398,7 @@ export default function ProductDetail() {
         .pdp-mrp { font-size: 16px; color: #d1d5db; text-decoration: line-through; }
         .pdp-discount { font-size: 15px; color: #C9A84C; font-weight: 700; }
         .pdp-tax { font-size: 11px; color: #9ca3af; margin-top: 3px; }
-        .pdp-hr { height: 1px; background: #f3f4f6; margin: 20px 0; }
+        .pdp-hr { height: 1px; background: #f3f4f6; margin: 14px 0; }
         .pdp-offers-title { font-size: 13px; font-weight: 700; color: #374151; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.5px; }
         .pdp-offer-row { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 8px; background: #F0EBE0; border: 1px solid #D4AF37; margin-bottom: 7px; }
         .pdp-offer-icon { font-size: 15px; margin-top: 1px; flex-shrink: 0; }
@@ -1630,8 +1633,8 @@ export default function ProductDetail() {
               >
                 <Heart
                   size={20}
-                  color={wishlist ? '#ec4899' : '#6b7280'}
-                  fill={wishlist ? '#ec4899' : 'none'}
+                  color={wishlist ? '#C9A84C' : '#6b7280'}
+                  fill={wishlist ? '#C9A84C' : 'none'}
                 />
               </button>
             </div>
@@ -1656,6 +1659,7 @@ export default function ProductDetail() {
                 <Truck size={14} color='#C9A84C' />
                 Delivery Options
               </div>
+              <div style={{ fontSize: 11, color: '#9ca3af', marginBottom: 8, letterSpacing: '0.03em' }}>Enter your pincode to check delivery</div>
               <div className='pdp-pincode-row'>
                 <input
                   className='pdp-pincode-input'
@@ -1663,33 +1667,49 @@ export default function ProductDetail() {
                   onChange={(e) =>
                     setPincode(e.target.value.replace(/\D/g, '').slice(0, 6))
                   }
-                  placeholder='Enter pincode'
+                  placeholder='Enter Pincode'
                   maxLength={6}
                 />
                 <button className='pdp-pincode-btn' onClick={checkPincode}>
                   {checkingDelivery ? 'Checking...' : 'Check'}
                 </button>
               </div>
-              <div
-                style={{
-                  marginTop: 10,
-                  fontSize: 12,
-                  fontWeight: 500,
-                  color: deliveryMessage.startsWith('✓')
-                    ? '#10b981'
-                    : deliveryMessage
-                      ? '#ef4444'
-                      : '#10b981',
-                }}
-              >
-                {deliveryMessage || (
-                  <>
-                    ✓ Estimated delivery in {product.deliveryInfo.days}
-                    {product.deliveryInfo.cod && ' · COD available'}
-                  </>
-                )}
-              </div>
+              {deliveryMessage ? (
+                <div style={{ marginTop: 10, fontSize: 12, fontWeight: 500, color: deliveryMessage.startsWith('✓') ? '#059669' : '#ef4444' }}>
+                  {deliveryMessage}
+                </div>
+              ) : (
+                <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 5 }}>
+                  <div style={{ fontSize: 12, color: '#059669', fontWeight: 500, display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <span style={{ fontWeight: 700 }}>✓</span> Estimated delivery in {product.deliveryInfo.days}
+                  </div>
+                  {product.deliveryInfo.cod && (
+                    <div style={{ fontSize: 12, color: '#059669', fontWeight: 500, display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <span style={{ fontWeight: 700 }}>✓</span> Cash on Delivery Available
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
+
+            {product.highlights?.length > 0 && (
+              <div style={{ margin: '4px 0 12px', padding: '12px 14px', background: '#F9F6F0', borderRadius: 6, border: '1px solid #efe8d8' }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: '#050C1C', letterSpacing: '0.07em', textTransform: 'uppercase', marginBottom: 8 }}>Product Highlights</div>
+                {product.highlights.slice(0, 4).map((h, i) => (
+                  <div key={i} style={{ fontSize: 13, color: '#374151', lineHeight: 1.6, display: 'flex', alignItems: 'flex-start', gap: 6 }}>
+                    <span style={{ color: '#C9A84C', fontWeight: 700, flexShrink: 0 }}>·</span>
+                    <span>{h}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {!isOutOfStock && product.availableSizes?.length < product.sizes?.length && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10, padding: '7px 10px', background: '#FFF8EC', border: '1px solid #F0D080', borderRadius: 5 }}>
+                <span style={{ fontSize: 15 }}>🔥</span>
+                <span style={{ fontSize: 12, color: '#92400e', fontWeight: 600 }}>Only a few sizes left — selling fast!</span>
+              </div>
+            )}
 
             <div className='pdp-accordion'>
               {accordionSections.map((sec) => (
@@ -1708,7 +1728,7 @@ export default function ProductDetail() {
                   >
                     <span className='pdp-accordion-label'>{sec.label}</span>
                     {expandedSection === sec.key ? (
-                      <ChevronUp size={16} color='#ec4899' />
+                      <ChevronUp size={16} color='#C9A84C' />
                     ) : (
                       <ChevronDown size={16} color='#9ca3af' />
                     )}

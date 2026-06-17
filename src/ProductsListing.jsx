@@ -502,11 +502,11 @@ const ProductCard = ({ product, onViewDetails }) => {
         e.currentTarget.style.borderColor = 'transparent'
       }}
     >
-      <div className='relative aspect-[3/4] overflow-hidden' style={{ background: '#f9f7f4' }}>
+      <div className='relative aspect-[3/4] overflow-hidden' style={{ background: '#F1E0C8' }}>
         <img
           src={product.image}
           alt={product.name}
-          className='h-full w-full object-cover'
+          className='h-full w-full object-cover object-top'
           style={{ transition: 'transform 0.3s' }}
           onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.04)'}
           onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
@@ -529,19 +529,19 @@ const ProductCard = ({ product, onViewDetails }) => {
         </button>
       </div>
       <div style={{ padding: '12px 14px 16px' }}>
-        <p style={{ fontSize: '11px', fontWeight: 600, color: '#999', lineHeight: 1.3, marginBottom: '4px', letterSpacing: '0.08em', textTransform: 'uppercase' }} className='line-clamp-1'>
+        <p style={{ fontSize: '14px', fontWeight: 600, color: '#1a1a1a', lineHeight: 1.35, marginBottom: '5px', letterSpacing: '0.01em', fontFamily: "'Playfair Display', Georgia, serif" }} className='line-clamp-2'>
           {product.name}
         </p>
 
-        <div style={{ fontSize: '20px', fontWeight: 700, color: '#0a0a0a', marginBottom: '4px', fontFamily: "'Playfair Display', Georgia, serif" }}>
-          ₹{product.price.toLocaleString('en-IN')}
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span style={{ fontSize: '12px', color: '#bbb', textDecoration: 'line-through' }}>
-            ₹{Math.round(product.price * 1.4).toLocaleString('en-IN')}
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px', flexWrap: 'wrap', marginBottom: '2px' }}>
+          <span style={{ fontSize: '18px', fontWeight: 800, color: '#0a0a0a', fontFamily: "'Playfair Display', Georgia, serif", letterSpacing: '-0.01em' }}>
+            ₹{product.price.toLocaleString('en-IN')}
           </span>
           <span style={{ fontSize: '11px', color: '#C9A84C', fontWeight: 700, letterSpacing: '0.04em' }}>30% OFF</span>
         </div>
+        <span style={{ fontSize: '11px', color: '#c0b8b0', textDecoration: 'line-through' }}>
+          ₹{Math.round(product.price * 1.4).toLocaleString('en-IN')}
+        </span>
       </div>
     </div>
   )
@@ -899,7 +899,7 @@ const ListingPage = () => {
         {/* ── Main content row (sidebar + products) ── */}
         <div className='flex gap-0 bg-white rounded-b-lg'>
           {/* Left Sidebar */}
-          <div className='hidden lg:block w-64 flex-shrink-0' style={{ borderRight: '1px solid #e8e0d0' }}>
+          <div className='hidden lg:block w-64 flex-shrink-0' style={{ borderRight: '1px solid #e8e0d0', position: 'sticky', top: 0, alignSelf: 'flex-start', maxHeight: '100vh', overflowY: 'auto' }}>
             {isLoading ? (
               <FilterSkeleton />
             ) : filters ? (
