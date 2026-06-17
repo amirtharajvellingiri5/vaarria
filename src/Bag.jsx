@@ -263,7 +263,8 @@ function PinBar() {
   const [validationError, setValidationError] = useState('')
 
   const token = localStorage.getItem('jwt_token')
-  const customer = JSON.parse(localStorage.getItem('customer') || 'null')
+  const _rawCustomer = localStorage.getItem('customer')
+  const customer = (_rawCustomer && _rawCustomer !== 'undefined') ? JSON.parse(_rawCustomer) : null
 
   const isLoggedIn = !!token && !!customer
   const customerId = customer?.customer_id
@@ -1003,7 +1004,8 @@ function PricePanel() {
     if (selected.length === 0) return
 
     const token = localStorage.getItem('jwt_token')
-    const customer = JSON.parse(localStorage.getItem('customer') || 'null')
+    const _raw = localStorage.getItem('customer')
+    const customer = (_raw && _raw !== 'undefined') ? JSON.parse(_raw) : null
 
     if (!token || !customer) {
       navigate('/login?redirect=/bag')
