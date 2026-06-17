@@ -324,7 +324,8 @@ const FilterSidebar = ({
                     )
                   })}
                 </div>
-              ))
+              )
+          }
         </div>
       )}
     </div>
@@ -621,14 +622,14 @@ const SortDropdown = ({ sortBy, setSortBy }) => {
     SORT_OPTIONS.find((o) => o.value === sortBy)?.label || 'Sort'
 
   return (
-    <div ref={dropdownRef} className='relative w-[210px]'>
+    <div ref={dropdownRef} className='relative w-[180px]'>
       <button
         onClick={() => setSortOpen(!sortOpen)}
-        className='w-full bg-white rounded px-4 h-11 flex items-center justify-between transition'
+        className='w-full bg-white rounded px-3 h-8 flex items-center justify-between transition'
         style={{ border: '1.5px solid #C9A84C' }}
       >
-        <div className='flex items-center gap-1 text-sm'>
-          <span className='text-gray-500'>Sort by:</span>
+        <div className='flex items-center gap-1 text-xs'>
+          <span className='text-gray-500'>Sort:</span>
           <span className='font-semibold text-gray-900'>
             {sortBy === 'price-low' && 'Low to High'}
             {sortBy === 'price-high' && 'High to Low'}
@@ -637,7 +638,7 @@ const SortDropdown = ({ sortBy, setSortBy }) => {
           </span>
         </div>
         <ChevronDown
-          size={16}
+          size={13}
           className={`flex-shrink-0 transition-transform ${sortOpen ? 'rotate-180' : ''}`}
         />
       </button>
@@ -651,7 +652,7 @@ const SortDropdown = ({ sortBy, setSortBy }) => {
                 setSortBy(option.value)
                 setSortOpen(false)
               }}
-              className={`w-full text-left px-3 py-2 text-sm transition ${
+              className={`w-full text-left px-3 py-1 text-xs transition ${
                 sortBy === option.value
                   ? 'font-medium'
                   : 'text-gray-700 hover:bg-gray-50'
