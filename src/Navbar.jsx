@@ -3,7 +3,7 @@ import { ShoppingBag, Search, Heart, User, Menu, X } from 'lucide-react'
 import { useCartStore } from './store/cartStore'
 import { ADMIN_CATEGORIES as CATEGORIES } from './utils/categories'
 
-import logo from './assets/vaarria-logo.svg'
+const logo = '/vlogo.png'
 
 // Keep in sync with the page content rail (max-w-screen-2xl + lg:px-8)
 // so the logo and content left edges align
@@ -170,9 +170,9 @@ const MegaMenu = ({ columns }) => {
     left: '50%',
     transform: 'translateX(-50%)',
     width: 'min(90vw, 1200px)',
-    backgroundColor: '#fff',
-    borderTop: '1px solid #f0f0f0',
-    boxShadow: '0 8px 24px rgba(0,0,0,0.1)',
+    backgroundColor: '#0a1628',
+    borderTop: '1px solid #1a2d4a',
+    boxShadow: '0 8px 24px rgba(0,0,0,0.4)',
     padding: '24px 32px',
     zIndex: 200,
   }}
@@ -182,11 +182,11 @@ const MegaMenu = ({ columns }) => {
           from { opacity: 0; transform: translateY(-6px); }
           to   { opacity: 1; transform: translateY(0); }
         }
-        .mm-link { display: block; font-size: 13px; color: #3A332A; padding: 4px 0; cursor: pointer; text-decoration: none; line-height: 1.5; transition: color 0.1s; }
-        .mm-link:hover { color: #A65A66; }
-        .mm-section-title { font-size: 13px; font-weight: 700; color: #A65A66; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 10px; cursor: pointer; }
+        .mm-link { display: block; font-size: 13px; color: #C9A84C; padding: 4px 0; cursor: pointer; text-decoration: none; line-height: 1.5; transition: color 0.1s; }
+        .mm-link:hover { color: #E8C060; }
+        .mm-section-title { font-size: 13px; font-weight: 800; color: #E8C060; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 10px; cursor: pointer; }
         .mm-section-title:hover { text-decoration: underline; }
-        .mm-divider { border: none; border-top: 0.5px solid #f0f0f0; margin: 8px 0 12px; }
+        .mm-divider { border: none; border-top: 0.5px solid #1a2d4a; margin: 8px 0 12px; }
       `}</style>
 
       <div
@@ -201,7 +201,7 @@ const MegaMenu = ({ columns }) => {
             key={ci}
             style={{
               borderRight:
-                ci < columns.length - 1 ? '0.5px solid #f0f0f0' : 'none',
+                ci < columns.length - 1 ? '0.5px solid #1a2d4a' : 'none',
               paddingRight: ci < columns.length - 1 ? '32px' : 0,
             }}
           >
@@ -232,7 +232,7 @@ const Navbar = () => {
 
 const token = localStorage.getItem('jwt_token')
 const customer = localStorage.getItem('customer')
-const customerData = customer ? JSON.parse(customer) : null
+const customerData = customer && customer !== 'undefined' ? JSON.parse(customer) : null
 const isLoggedIn = !!token
   const cart = useCartStore((state) => state.cart)
   const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0)
@@ -240,8 +240,8 @@ const isLoggedIn = !!token
   return (
     <nav
       style={{
-        background: '#F3ECDC',
-        borderBottom: '1px solid #e6ddc7',
+        background: '#050C1C',
+        borderBottom: '1px solid #0d1e3a',
         position: 'sticky',
         top: 0,
         zIndex: 100,
@@ -264,9 +264,9 @@ const isLoggedIn = !!token
   src={logo}
   alt="VAARRIA — Adorn Your Aura"
   style={{
-    height: '44px',
+    height: '48px',
     width: 'auto',
-    objectFit: 'contain'
+    objectFit: 'contain',
   }}
 />
         </a>
@@ -298,7 +298,7 @@ const isLoggedIn = !!token
                     height: '100%',
                     fontSize: '13px',
                     fontWeight: 700,
-                    color: isActive ? '#A65A66' : '#3A332A',
+                    color: isActive ? '#E8C060' : '#C9A84C',
                     letterSpacing: '0.04em',
                     textTransform: 'uppercase',
                     fontFamily: 'inherit',
@@ -415,7 +415,7 @@ const isLoggedIn = !!token
       background: 'none',
       border: 'none',
       cursor: 'pointer',
-      color: '#3A332A',
+      color: '#C9A84C',
       display: 'flex',
       alignItems: 'center',
       flexDirection: 'column',
@@ -609,7 +609,7 @@ const isLoggedIn = !!token
               background: 'none',
               border: 'none',
               cursor: 'pointer',
-              color: '#3A332A',
+              color: '#C9A84C',
               display: 'none',
             }}
             className='show-mobile'
@@ -621,7 +621,7 @@ const isLoggedIn = !!token
 
       {/* ── Mobile Nav ── */}
       {mobileOpen && (
-        <div style={{ borderTop: '1px solid #f0f0f0', background: '#fff' }}>
+        <div style={{ borderTop: '1px solid #1a2d4a', background: '#050C1C' }}>
           {/* Mobile search */}
           <div style={{ padding: '12px 16px' }}>
             <div
@@ -652,7 +652,7 @@ const isLoggedIn = !!token
           {MENU_DATA.map((item) => (
             <div
               key={item.name}
-              style={{ borderBottom: '0.5px solid #f0f0f0' }}
+              style={{ borderBottom: '0.5px solid #1a2d4a' }}
             >
               <button
                 onClick={() =>
@@ -666,7 +666,7 @@ const isLoggedIn = !!token
                   textAlign: 'left',
                   fontSize: '14px',
                   fontWeight: 700,
-                  color: activeMenu === item.name ? '#A65A66' : '#3A332A',
+                  color: activeMenu === item.name ? '#E8C060' : '#C9A84C',
                   letterSpacing: '0.03em',
                   textTransform: 'uppercase',
                   cursor: 'pointer',
@@ -694,7 +694,7 @@ const isLoggedIn = !!token
               </button>
 
               {activeMenu === item.name && item.columns.length > 0 && (
-                <div style={{ padding: '0 16px 16px', background: '#fafafa' }}>
+                <div style={{ padding: '0 16px 16px', background: '#0a1628' }}>
                   {item.columns
                     .flatMap((col) => col.sections)
                     .map((section, si) => (
@@ -703,7 +703,8 @@ const isLoggedIn = !!token
                           style={{
                             fontSize: '12px',
                             fontWeight: 700,
-                            color: '#A65A66',
+                            color: '#E8C060',
+                            fontWeight: 800,
                             textTransform: 'uppercase',
                             letterSpacing: '0.04em',
                             marginBottom: '6px',
@@ -718,7 +719,7 @@ const isLoggedIn = !!token
                             style={{
                               display: 'block',
                               fontSize: '13px',
-                              color: '#3A332A',
+                              color: '#C9A84C',
                               padding: '3px 0',
                               textDecoration: 'none',
                             }}
@@ -738,8 +739,8 @@ const isLoggedIn = !!token
       <style>{`
         .hidden-mobile { display: flex !important; }
         .show-mobile   { display: none !important; }
-        .icon-btn:hover svg { color: #A65A66 !important; stroke: #A65A66 !important; }
-        .icon-btn:hover span { color: #A65A66 !important; }
+        .icon-btn:hover svg { color: #E8C060 !important; stroke: #E8C060 !important; }
+        .icon-btn:hover span { color: #E8C060 !important; }
         @media (max-width: 768px) {
           .hidden-mobile { display: none !important; }
           .show-mobile   { display: flex !important; }

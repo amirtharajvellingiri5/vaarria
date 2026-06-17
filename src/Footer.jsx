@@ -3,43 +3,43 @@ import { Link } from 'react-router-dom'
 
 const Footer = () => {
   return (
-    <footer className='bg-gradient-to-b from-pink-50 to-white border-t border-pink-100 mt-16'>
+    <footer className='mt-16' style={{ background: '#050C1C', borderTop: '1px solid #1a2d4a' }}>
       <div className='max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-12'>
         <div className='grid grid-cols-1 md:grid-cols-4 gap-8'>
           <div>
-            <h4 className='text-2xl font-bold bg-gradient-to-r from-pink-500 to-rose-500 bg-clip-text text-transparent mb-4'>
+            <h4 className='text-2xl font-bold mb-4' style={{ color: '#E8C060' }}>
               aarria
             </h4>
 
-            <p className='text-gray-600'>
+            <p style={{ color: '#C9A84C' }}>
               Celebrating Indian heritage through timeless fashion
             </p>
           </div>
 
           <div>
-            <h5 className='font-bold text-gray-800 mb-4'>Shop</h5>
+            <h5 className='font-bold mb-4' style={{ color: '#E8C060' }}>Shop</h5>
 
-            <ul className='space-y-2 text-gray-600'>
+            <ul className='space-y-2' style={{ color: '#C9A84C' }}>
               <li>
-                <Link to='/products' className='hover:text-pink-600 transition'>
+                <Link to='/products' className='transition hover:text-pink-300'>
                   Sarees
                 </Link>
               </li>
 
               <li>
-                <Link to='/products' className='hover:text-pink-600 transition'>
+                <Link to='/products' className='transition hover:text-pink-300'>
                   Lehengas
                 </Link>
               </li>
 
               <li>
-                <Link to='/products' className='hover:text-pink-600 transition'>
+                <Link to='/products' className='transition hover:text-pink-300'>
                   Suits
                 </Link>
               </li>
 
               <li>
-                <Link to='/products' className='hover:text-pink-600 transition'>
+                <Link to='/products' className='transition hover:text-pink-300'>
                   Kurtis
                 </Link>
               </li>
@@ -47,17 +47,17 @@ const Footer = () => {
           </div>
 
           <div>
-            <h5 className='font-bold text-gray-800 mb-4'>Customer Care</h5>
+            <h5 className='font-bold mb-4' style={{ color: '#E8C060' }}>Customer Care</h5>
 
-            <ul className='space-y-2 text-gray-600'>
+            <ul className='space-y-2' style={{ color: '#C9A84C' }}>
               <li>
-                <Link to='/contact-us' className='hover:text-pink-600 transition'>
+                <Link to='/contact-us' className='transition hover:text-pink-300'>
                   Contact Us
                 </Link>
               </li>
 
               <li>
-                <Link to='/bag' className='hover:text-pink-600 transition'>
+                <Link to='/bag' className='transition hover:text-pink-300'>
                   Track Order
                 </Link>
               </li>
@@ -65,14 +65,14 @@ const Footer = () => {
               <li>
                 <Link
                   to='/refund-policy'
-                  className='hover:text-pink-600 transition'
+                  className='transition hover:text-pink-300'
                 >
                   Returns
                 </Link>
               </li>
 
               <li>
-                <Link to='/terms' className='hover:text-pink-600 transition'>
+                <Link to='/terms' className='transition hover:text-pink-300'>
                   Size Guide
                 </Link>
               </li>
@@ -80,11 +80,11 @@ const Footer = () => {
           </div>
 
           <div>
-            <h5 className='font-bold text-gray-800 mb-4'>Legal</h5>
+            <h5 className='font-bold mb-4' style={{ color: '#E8C060' }}>Legal</h5>
 
-            <ul className='space-y-2 text-gray-600 mb-4'>
+            <ul className='space-y-2 mb-4' style={{ color: '#C9A84C' }}>
               <li>
-                <Link to='/terms' className='hover:text-pink-600 transition'>
+                <Link to='/terms' className='transition hover:text-pink-300'>
                   Terms & Conditions
                 </Link>
               </li>
@@ -92,14 +92,14 @@ const Footer = () => {
               <li>
                 <Link
                   to='/refund-policy'
-                  className='hover:text-pink-600 transition'
+                  className='transition hover:text-pink-300'
                 >
                   Refund Policy
                 </Link>
               </li>
 
               <li>
-                <Link to='/login' className='hover:text-pink-600 transition'>
+                <Link to='/login' className='transition hover:text-pink-300'>
                   Login
                 </Link>
               </li>
@@ -116,9 +116,9 @@ const Footer = () => {
             /> */}
           </div>
         </div>
-<div className='border-t border-pink-100 mt-8 pt-8 text-center text-gray-600'>
+<div className='mt-8 pt-8 text-center' style={{ borderTop: '1px solid #1a2d4a', color: '#8A9BB5' }}>
   <p className='text-[0.90rem]'>www.aarria.com &trade; crafted with love for Indian fashion.</p>
-  <p className='mt-2 text-[0.90rem] leading-7 text-white-100'>
+  <p className='mt-2 text-[0.90rem] leading-7'>
     &copy; 2026 CHATOYANTVORTEX PRIME ENTERPRISES PRIVATE LIMITED
   </p>
 </div>
