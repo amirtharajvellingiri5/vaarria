@@ -30,7 +30,7 @@ import './constants/global.css'
 // Orders handler (DynamoDB-backed)
 const ORDERS_API_BASE =
   'https://zq0dbjycx6.execute-api.ap-south-1.amazonaws.com/prod'
-const CDN = 'https://cdn.aarria.com/app/images/'
+const CDN = 'https://cdn.vaarria.com/app/images/'
 
 const getCustomerId = () => {
   const customer = JSON.parse(localStorage.getItem('customer') || 'null')
@@ -84,7 +84,7 @@ const generateInvoice = (order) => {
 </head>
 <body>
   <p class="brand">aarria</p>
-  <p class="muted">www.aarria.com</p>
+  <p class="muted">www.vaarria.com</p>
 
   <h2>Invoice</h2>
   <p class="muted">

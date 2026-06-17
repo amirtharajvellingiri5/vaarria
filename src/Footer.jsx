@@ -117,7 +117,7 @@ const Footer = () => {
           </div>
         </div>
 <div className='mt-8 pt-8 text-center' style={{ borderTop: '1px solid #1a2d4a', color: '#8A9BB5' }}>
-  <p className='text-[0.90rem]'>www.aarria.com &trade; crafted with love for Indian fashion.</p>
+  <p className='text-[0.90rem]'>www.vaarria.com &trade; crafted with love for Indian fashion.</p>
   <p className='mt-2 text-[0.90rem] leading-7'>
     &copy; 2026 CHATOYANTVORTEX PRIME ENTERPRISES PRIVATE LIMITED
   </p>

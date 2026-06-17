@@ -74,7 +74,7 @@ const ColorSwatch = ({ name, size = 14 }) => {
   )
 }
 
-const BASE_URL = 'https://cdn.aarria.com/app/images/'
+const BASE_URL = 'https://cdn.vaarria.com/app/images/'
 
 const fetchSiblingCategories = async (categoryId) => {
   if (!categoryId) return []
@@ -177,7 +177,7 @@ const fetchProductsByCategory = async (
   if (sortBy && sortMap[sortBy]) params.set('sort', sortMap[sortBy])
 
   const res = await fetch(
-    `https://api.aarria.com/listings?${params.toString()}`,
+    `https://api.vaarria.com/listings?${params.toString()}`,
   )
   if (!res.ok) return []
 
@@ -226,27 +226,27 @@ const FilterSidebar = ({
   }
 
   const FilterSection = ({ title, items, filterKey }) => (
-    <div className='border-b border-pink-100 py-4'>
+    <div className='border-b border-pink-100 py-2'>
       <button
         onClick={() => toggleSection(filterKey)}
-        className='flex items-center justify-between w-full text-left font-bold mb-3'
-        style={{ color: '#C9A84C' }}
+        className='flex items-center justify-between w-full text-left mb-2'
+        style={{ color: '#C9A84C', fontFamily: 'Georgia, serif', fontWeight: 400, fontSize: '14px', letterSpacing: '0.04em' }}
       >
         {title}
         {expandedSections[filterKey] ? (
-          <ChevronUp size={18} />
+          <ChevronUp size={15} />
         ) : (
-          <ChevronDown size={18} />
+          <ChevronDown size={15} />
         )}
       </button>
       {expandedSections[filterKey] && (
-        <div className={filterKey === 'color' ? '' : 'space-y-2'}>
+        <div className={filterKey === 'color' ? '' : 'space-y-1'}>
           {filterKey === 'category'
             ? items.map((cat) => (
                 <Link
                   key={cat.slug}
                   to={`/${cat.slug}`}
-                  className='block text-sm py-1.5 transition'
+                  className='block text-sm py-0.5 transition'
                   style={{ color: '#555', paddingLeft: '10px', borderLeft: '3px solid transparent', textDecoration: 'none' }}
                   onMouseEnter={e => { e.currentTarget.style.color = '#C9A84C'; e.currentTarget.style.borderLeftColor = '#C9A84C'; e.currentTarget.style.paddingLeft = '13px' }}
                   onMouseLeave={e => { e.currentTarget.style.color = '#555'; e.currentTarget.style.borderLeftColor = 'transparent'; e.currentTarget.style.paddingLeft = '10px' }}
@@ -349,14 +349,14 @@ const FilterSidebar = ({
       <FilterSection title='Size' items={filters.sizes} filterKey='size' />
 
       {/* Price */}
-      <div className='border-b border-pink-100 py-4'>
+      <div className='border-b border-pink-100 py-2'>
         <button
           onClick={() => toggleSection('price')}
-          className='flex items-center justify-between w-full text-left font-bold mb-3'
-          style={{ color: '#C9A84C' }}
+          className='flex items-center justify-between w-full text-left mb-2'
+          style={{ color: '#C9A84C', fontFamily: 'Georgia, serif', fontWeight: 400, fontSize: '14px', letterSpacing: '0.04em' }}
         >
           Price
-          {expandedSections.price ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+          {expandedSections.price ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
         </button>
         {expandedSections.price && (
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
@@ -465,7 +465,7 @@ const ProductCard = ({ product, onViewDetails }) => {
         overflow: 'hidden',
         boxShadow: '0 2px 12px rgba(58,51,42,0.08)',
         transition: 'transform 0.2s, box-shadow 0.2s, border-color 0.2s',
-        border: '1.5px solid transparent',
+        border: '0.5px solid transparent',
       }}
       onMouseEnter={e => {
         e.currentTarget.style.transform = 'translateY(-4px)'
@@ -626,7 +626,7 @@ const SortDropdown = ({ sortBy, setSortBy }) => {
       <button
         onClick={() => setSortOpen(!sortOpen)}
         className='w-full bg-white rounded px-3 h-8 flex items-center justify-between transition'
-        style={{ border: '1.5px solid #C9A84C' }}
+        style={{ border: '1px solid #e8d9b8' }}
       >
         <div className='flex items-center gap-1 text-xs'>
           <span className='text-gray-500'>Sort:</span>
@@ -843,8 +843,8 @@ const ListingPage = () => {
           <div className='hidden lg:flex items-center gap-4 flex-1 min-w-0'>
             <div className='flex items-center w-64 flex-shrink-0'>
 
-              <span className='font-bold text-sm' style={{ color: '#C9A84C', letterSpacing: '0.06em' }}>
-                FILTERS
+              <span style={{ color: '#C9A84C', fontFamily: 'Georgia, serif', fontWeight: 400, fontSize: '14px', letterSpacing: '0.04em' }}>
+                Filters
               </span>
 
               {Object.values(selectedFilters).some((v) => v?.length > 0) && (

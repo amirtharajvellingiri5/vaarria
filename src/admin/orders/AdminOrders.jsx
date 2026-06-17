@@ -24,7 +24,7 @@ import AdminNav from '../AdminNav'
 
 const ORDERS_API_BASE =
   'https://zq0dbjycx6.execute-api.ap-south-1.amazonaws.com/prod'
-const CDN = 'https://cdn.aarria.com/app/images/'
+const CDN = 'https://cdn.vaarria.com/app/images/'
 const PER_PAGE = 10
 
 const STATUSES = [
@@ -130,7 +130,7 @@ const printInvoice = (order) => {
   <div class="top">
     <div>
       <p class="brand">aarria</p>
-      <p class="muted">www.aarria.com · Women's Ethnic Wear</p>
+      <p class="muted">www.vaarria.com · Women's Ethnic Wear</p>
     </div>
     <div style="text-align:right">
       <p style="margin:0;font-weight:700;font-size:15px">Order #${order.id}</p>

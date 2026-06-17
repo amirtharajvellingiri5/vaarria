@@ -706,7 +706,7 @@ function ItemCard({ item }) {
         >
           <div style={{ ...styles.itemThumb, background: item.color }}>
             <img
-              src={`https://cdn.aarria.com/app/images/${item.image}`}
+              src={`https://cdn.vaarria.com/app/images/${item.image}`}
               alt={item.name}
               style={{
                 width: '100%',
@@ -720,7 +720,7 @@ function ItemCard({ item }) {
         {/* Details */}
         <div style={styles.itemBody}>
           <a
-            href={`https://aarria.com/product/${item.productId}`}
+            href={`https://vaarria.com/product/${item.productId}`}
             target='_blank'
             rel='noopener noreferrer'
             style={{

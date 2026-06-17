@@ -7,7 +7,7 @@ import './constants/global.css'
 
 const ORDERS_API_BASE =
   'https://zq0dbjycx6.execute-api.ap-south-1.amazonaws.com/prod'
-const CDN = 'https://cdn.aarria.com/app/images/'
+const CDN = 'https://cdn.vaarria.com/app/images/'
 const MAX_PHOTOS = 3
 
 const getCustomer = () => JSON.parse(localStorage.getItem('customer') || 'null')

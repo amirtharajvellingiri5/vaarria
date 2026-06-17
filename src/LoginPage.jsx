@@ -352,7 +352,7 @@ const [redirectSeconds, setRedirectSeconds] = useState(null)
         })
 
         const response = await fetch(
-          'https://api.aarria.com/api/auth/msg91-login',
+          'https://api.vaarria.com/api/auth/msg91-login',
           {
             method: 'POST',
             headers: {

@@ -278,7 +278,7 @@ function CouponRow({ item, isApplied, discount, isPercentage, onToggle, disabled
         }}
       >
         <img
-          src={`https://cdn.aarria.com/app/images/${item.image}`}
+          src={`https://cdn.vaarria.com/app/images/${item.image}`}
           alt={item.name}
           style={{ width: '100%', height: '100%', objectFit: 'cover' }}
         />

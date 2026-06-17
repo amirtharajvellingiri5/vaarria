@@ -195,7 +195,7 @@ export default function PrivacyPolicy() {
                     <br />
                     Phone: +91 9731580157
                     <br />
-                    Website: https://aarria.com
+                    Website: https://vaarria.com
                 </p>
             </div>
         </>

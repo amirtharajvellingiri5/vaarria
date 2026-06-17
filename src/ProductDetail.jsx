@@ -147,7 +147,7 @@ async function fetchProduct(productId) {
 
   const allImageFilenames = [variant.main_image, ...variant.other_images]
   const images = allImageFilenames.map(
-    (img) => `https://cdn.aarria.com/app/images/${img}`,
+    (img) => `https://cdn.vaarria.com/app/images/${img}`,
   )
 
   // Build combined media list: images first, then videos
@@ -302,7 +302,7 @@ async function fetchRatings(productId) {
       user: r.name || 'Verified Customer',
       rating: r.rating,
       body: r.review,
-      images: (r.images || []).map((img) => `https://cdn.aarria.com${img}`),
+      images: (r.images || []).map((img) => `https://cdn.vaarria.com${img}`),
     })),
   }
 }

@@ -172,11 +172,11 @@ const mapApiToState = (product) => {
     }),
     // Existing server images shown as preview URLs
     main_image_preview: v.main_image
-      ? { id: uid(), src: `https://cdn.aarria.com/app/images/${v.main_image}`, name: v.main_image }
+      ? { id: uid(), src: `https://cdn.vaarria.com/app/images/${v.main_image}`, name: v.main_image }
       : null,
     other_image_previews: (v.other_images || []).map((key) => ({
       id: uid(),
-      src: `https://cdn.aarria.com/app/images/${key}`,
+      src: `https://cdn.vaarria.com/app/images/${key}`,
       name: key,
     })),
     // Keep server filenames so unchanged images don't get re-uploaded
@@ -263,7 +263,7 @@ const ProductEdit = ({ onBack }) => {
     setFetchError('')
     try {
       const res = await fetch(
-        `https://api.aarria.com/product/${productId}`,
+        `https://api.vaarria.com/product/${productId}`,
       )
       if (!res.ok) throw new Error(`Failed to fetch product (${res.status})`)
       const data = await res.json()

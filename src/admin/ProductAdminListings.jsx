@@ -19,8 +19,8 @@ import {
 
 import AdminNav from './AdminNav'
 
-const CDN = 'https://cdn.aarria.com/app/images/'
-const API = 'https://api.aarria.com/listings'
+const CDN = 'https://cdn.vaarria.com/app/images/'
+const API = 'https://api.vaarria.com/listings'
 const PRODUCTS_API =
   'https://8184radc92.execute-api.ap-south-1.amazonaws.com/prod/products'
 const PAGE_SIZE = 10
@@ -331,7 +331,7 @@ const ProductListings = () => {
     setCloningId(p.id)
     try {
       // fetch the full product — listing rows only carry summary fields
-      const res = await fetch(`https://api.aarria.com/product/${p.id}`)
+      const res = await fetch(`https://api.vaarria.com/product/${p.id}`)
       if (!res.ok) throw new Error(`Error ${res.status}`)
       const full = await res.json()
 
