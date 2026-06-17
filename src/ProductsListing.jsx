@@ -214,12 +214,12 @@ const FilterSidebar = ({
 }) => {
   const [expandedSections, setExpandedSections] = useState({
     category: true,
-    fabric: true,
+    fabric: false,
     color: true,
-    size: true,
-    neckType: true,
-    sleeveLength: true,
-    price: true,
+    size: false,
+    neckType: false,
+    sleeveLength: false,
+    price: false,
   })
 
   const toggleSection = (section) => {
@@ -619,7 +619,6 @@ const SORT_OPTIONS = [
   { value: 'featured', label: 'Recommended' },
   { value: 'price-low', label: 'Price: Low to High' },
   { value: 'price-high', label: 'Price: High to Low' },
-  { value: 'rating', label: 'Customer Rating' },
 ]
 
 const SortDropdown = ({ sortBy, setSortBy }) => {
@@ -639,18 +638,17 @@ const SortDropdown = ({ sortBy, setSortBy }) => {
     SORT_OPTIONS.find((o) => o.value === sortBy)?.label || 'Sort'
 
   return (
-    <div ref={dropdownRef} className='relative w-[180px]'>
+    <div ref={dropdownRef} className='relative w-[155px]'>
       <button
         onClick={() => setSortOpen(!sortOpen)}
         className='w-full bg-white rounded px-3 h-8 flex items-center justify-between transition'
         style={{ border: '1px solid #e8d9b8' }}
       >
-        <div className='flex items-center gap-1 text-xs' style={{ fontFamily: "'Playfair Display', Georgia, serif", fontSize: '13px' }}>
+        <div className='flex items-center gap-1 text-xs whitespace-nowrap' style={{ fontFamily: "'Playfair Display', Georgia, serif", fontSize: '13px' }}>
           <span className='text-gray-500'>Sort:</span>
           <span className='font-semibold text-gray-900'>
             {sortBy === 'price-low' && 'Low to High'}
             {sortBy === 'price-high' && 'High to Low'}
-            {sortBy === 'rating' && 'Rating'}
             {sortBy === 'featured' && 'Recommended'}
           </span>
         </div>
@@ -850,42 +848,28 @@ const ListingPage = () => {
           </h1>
         </div>
 
-        {/* ── Top control bar: "Filters" label + Sort dropdown ── */}
-        <div
-          className='flex items-center justify-between px-4 py-3 bg-white rounded-t-lg mb-0'
-          style={{
-            borderBottom: '1px solid #e8e0d0',
-          }}
-        >
-          {/* Left: Filters label (aligns with sidebar width) */}
-          <div className='hidden lg:flex items-center gap-4 flex-1 min-w-0'>
-            <div className='flex items-center w-64 flex-shrink-0'>
-
-              <span style={{ color: '#050C1C', fontFamily: "'Playfair Display', Georgia, serif", fontWeight: 600, fontSize: '14px', letterSpacing: '0.04em' }}>
-                Filters
-              </span>
-
-              {Object.values(selectedFilters).some((v) => v?.length > 0) && (
-                <button
-                  onClick={handleClearFilters}
-                  style={{ background: 'none', border: '1.5px solid #C9A84C', borderRadius: '20px', padding: '3px 12px', fontSize: '12px', fontWeight: 600, color: '#C9A84C', cursor: 'pointer', whiteSpace: 'nowrap' }}
-                  style={{ marginLeft: '49%' }}
-                >
-                  Clear All
-                </button>
-              )}
-            </div>
-
-            <div className='flex-1 min-w-0'>
-              <SelectedFiltersBar
-                selectedFilters={selectedFilters}
-                onRemoveFilter={handleRemoveFilter}
-              />
-            </div>
+        {/* ── Shared top bar: Filters label + Sort dropdown ── */}
+        <div className='flex items-center bg-white h-12' style={{ borderBottom: '1px solid #e8e0d0' }}>
+          {/* Filters label — matches sidebar width */}
+          <div className='hidden lg:flex items-center gap-3 w-64 flex-shrink-0 px-4'>
+            <span style={{ color: '#050C1C', fontFamily: "'Playfair Display', Georgia, serif", fontWeight: 600, fontSize: '14px', letterSpacing: '0.04em' }}>
+              Filters
+            </span>
+            {Object.values(selectedFilters).some((v) => v?.length > 0) && (
+              <button
+                onClick={handleClearFilters}
+                style={{ background: 'none', border: '1.5px solid #C9A84C', borderRadius: '20px', padding: '3px 12px', fontSize: '12px', fontWeight: 600, color: '#C9A84C', cursor: 'pointer', whiteSpace: 'nowrap' }}
+              >
+                Clear All
+              </button>
+            )}
           </div>
 
-          {/* Right: Sort dropdown */}
-          <div className='ml-auto'>
+          {/* Floating vertical divider — doesn't touch top or bottom */}
+          <div className='hidden lg:block flex-shrink-0' style={{ width: '1px', height: '20px', background: '#e8e0d0', alignSelf: 'center' }} />
+
+          {/* Sort dropdown — right-aligned in products zone */}
+          <div className='flex-1 flex items-center justify-end px-6'>
             <SortDropdown
               sortBy={sortBy}
               setSortBy={(val) => {
@@ -899,7 +883,7 @@ const ListingPage = () => {
         {/* ── Main content row (sidebar + products) ── */}
         <div className='flex gap-0 bg-white rounded-b-lg'>
           {/* Left Sidebar */}
-          <div className='hidden lg:block w-64 flex-shrink-0' style={{ borderRight: '1px solid #e8e0d0', position: 'sticky', top: 0, alignSelf: 'flex-start', maxHeight: '100vh', overflowY: 'auto' }}>
+          <div className='hidden lg:block w-64 flex-shrink-0' style={{ position: 'sticky', top: 0, alignSelf: 'flex-start', maxHeight: '100vh', overflowY: 'auto' }}>
             {isLoading ? (
               <FilterSkeleton />
             ) : filters ? (
@@ -915,7 +899,8 @@ const ListingPage = () => {
           </div>
 
           {/* Products area */}
-          <div className='flex-1 p-6'>
+          <div className='flex-1'>
+            <div className='px-6 pt-4 pb-6'>
             {/* <SelectedFiltersBar
               selectedFilters={selectedFilters}
               onRemoveFilter={handleRemoveFilter}
@@ -942,7 +927,7 @@ const ListingPage = () => {
                 </div>
 
                 {/* Pagination — min-height matches filter sidebar */}
-                <div className='mt-6 border-t border-[#C9A84C]/20 bg-white px-4 py-4'>
+                <div className='mt-6 border-t border-transparent bg-white px-4 py-4'>
                   <Pagination
                     currentPage={currentPage}
                     totalPages={totalPages}
@@ -970,6 +955,7 @@ const ListingPage = () => {
                 </button>
               </div>
             )}
+            </div>
           </div>
         </div>
       </div>
