@@ -254,7 +254,7 @@ async function fetchProduct(productId) {
       {
         icon: <RefreshCw size={16} />,
         title: 'Easy Returns',
-        desc: '7-day return policy. No questions asked.',
+        desc: '7-day return policy. No questions asked. Your money is safe.',
       },
     ],
   }
