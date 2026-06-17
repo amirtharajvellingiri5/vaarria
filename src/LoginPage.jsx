@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import Navbar from './Navbar'
+import { useAuthStore } from './store/authStore'
 
 // ─── MSG91 Config — replace with your real values ─────────────────────────────
 const MSG91_WIDGET_ID = '366568623534393236303030' // widgetId from MSG91 dashboard
@@ -285,10 +286,9 @@ function useMSG91Script() {
 }
 
 // ─── OTP Screen ───────────────────────────────────────────────────────────────
-function OtpScreen({ phone, onBack, onVerified }) {
+function OtpScreen({ phone, onBack, onVerified, onLogin }) {
   const [digits, setDigits] = useState(['', '', '', ''])
   const [seconds, setSeconds] = useState(30)
-const [redirectSeconds, setRedirectSeconds] = useState(null)
   const [canResend, setCanResend] = useState(false)
   const [verifying, setVerifying] = useState(false)
   const [resending, setResending] = useState(false)
@@ -310,20 +310,6 @@ const [redirectSeconds, setRedirectSeconds] = useState(null)
     const t = setTimeout(() => setSeconds((s) => s - 1), 1000)
     return () => clearTimeout(t)
   }, [seconds])
-
-  useEffect(() => {
-  if (redirectSeconds === null) return
-  if (redirectSeconds <= 0) {
-    onVerified?.()
-    return
-  }
-
-  const timer = setTimeout(() => {
-    setRedirectSeconds((s) => s - 1)
-  }, 1000)
-
-  return () => clearTimeout(timer)
-}, [redirectSeconds, onVerified])
 
   const pad = (n) => String(n).padStart(2, '0')
 
@@ -371,12 +357,8 @@ const [redirectSeconds, setRedirectSeconds] = useState(null)
         }
 
         setDigitState('success')
-
-        localStorage.setItem('jwt_token', data.token)
-        localStorage.setItem('customer', JSON.stringify(data.customer))
-
-        setVerifying(true)
-setRedirectSeconds(3)
+        onLogin?.(data.token, data.customer)
+        setTimeout(() => onVerified?.(), 1200)
       } catch (err) {
         setDigitState('shake')
 
@@ -487,9 +469,7 @@ setRedirectSeconds(3)
       {error ? (
         <p className='lp-error'>{error}</p>
       ) : digitState === 'success' ? (
-    <p className='lp-success'>
-  ✓ Verified successfully! Redirecting in {redirectSeconds}s...
-</p>
+        <p className='lp-success'>✓ Verified! Redirecting…</p>
       ) : (
         <div style={{ minHeight: 18 }} />
       )}
@@ -500,12 +480,7 @@ setRedirectSeconds(3)
   allFilled && !verifying && digitState !== 'success' ? ' active' : ''
 }${verifying ? ' loading' : ''}`}
         onClick={handleVerifyClick}
-        disabled={
-  !allFilled ||
-  verifying ||
-  digitState === 'success' ||
-  redirectSeconds !== null
-}
+        disabled={!allFilled || verifying || digitState === 'success'}
       >
         {verifying ? (
           <>
@@ -665,15 +640,12 @@ export default function LoginPage() {
   const [phone, setPhone] = useState('')
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
-  // Load the MSG91 widget here (not in a child screen) so the script
-  // survives the login → otp screen switch
   const msg91Ready = useMSG91Script()
+  const storeLogin = useAuthStore((s) => s.login)
 
-  const handleVerified = (data) => {
+  const handleVerified = () => {
     const redirectTo = searchParams.get('redirect') || '/'
-
-    // token already stored in localStorage by OtpScreen
-    navigate(redirectTo, { replace: true })
+    window.location.href = redirectTo
   }
 
   return (
@@ -695,6 +667,7 @@ export default function LoginPage() {
               phone={phone}
               onBack={() => setScreen('login')}
               onVerified={handleVerified}
+              onLogin={storeLogin}
             />
           )}
         </div>

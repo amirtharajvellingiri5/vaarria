@@ -1,6 +1,8 @@
-// CouponModal.jsx
 import React from 'react'
 import { X, Check, Tag } from 'lucide-react'
+
+const GOLD = '#C9A84C'
+const NAVY = '#050C1C'
 
 /**
  * Props:
@@ -93,9 +95,9 @@ export default function CouponModal({
                   marginLeft: 10,
                   fontSize: 11,
                   fontWeight: 700,
-                  color: '#A65A66',
-                  background: '#fff0f4',
-                  border: '1px solid #ffd0dc',
+                  color: GOLD,
+                  background: '#fffbf0',
+                  border: `1px solid ${GOLD}55`,
                   borderRadius: 20,
                   padding: '2px 9px',
                 }}
@@ -203,15 +205,16 @@ export default function CouponModal({
           <button
             onClick={onClose}
             style={{
-              background: '#A65A66',
-              color: '#fff',
-              border: 'none',
+              background: NAVY,
+              color: GOLD,
+              border: `1px solid ${GOLD}`,
               borderRadius: 8,
               padding: '13px 40px',
               fontWeight: 700,
               fontSize: 14,
               letterSpacing: 1,
               cursor: 'pointer',
+              fontFamily: "'Playfair Display', Georgia, serif",
             }}
           >
             {appliedCount > 0 ? 'DONE' : 'CLOSE'}
@@ -243,7 +246,7 @@ function CouponRow({ item, isApplied, discount, isPercentage, onToggle, disabled
         alignItems: 'flex-start',
         opacity: disabled ? 0.42 : 1,
         transition: 'background 0.15s',
-        background: isApplied ? '#fffafc' : '#fff',
+        background: isApplied ? '#fffbf0' : '#fff',
       }}
     >
       {/* Checkbox */}
@@ -254,8 +257,8 @@ function CouponRow({ item, isApplied, discount, isPercentage, onToggle, disabled
           borderRadius: 4,
           flexShrink: 0,
           marginTop: 3,
-          background: isApplied ? '#A65A66' : '#fff',
-          border: isApplied ? '2px solid #A65A66' : '2px solid #ccc',
+          background: isApplied ? NAVY : '#fff',
+          border: isApplied ? `2px solid ${GOLD}` : '2px solid #ccc',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -293,16 +296,16 @@ function CouponRow({ item, isApplied, discount, isPercentage, onToggle, disabled
               display: 'inline-flex',
               alignItems: 'center',
               gap: 5,
-              border: `1.5px dashed ${isApplied ? '#A65A66' : '#ccc'}`,
+              border: `1.5px dashed ${isApplied ? GOLD : '#ccc'}`,
               borderRadius: 5,
               padding: '3px 10px',
               transition: 'border-color 0.15s',
             }}
           >
-            <Tag size={11} color={isApplied ? '#A65A66' : '#999'} />
+            <Tag size={11} color={isApplied ? GOLD : '#999'} />
             <span
               style={{
-                color: isApplied ? '#A65A66' : '#999',
+                color: isApplied ? GOLD : '#999',
                 fontWeight: 700,
                 fontSize: 12,
                 letterSpacing: 0.5,

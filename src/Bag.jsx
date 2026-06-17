@@ -31,6 +31,7 @@ import './constants/global.css'
 
 import CouponModal from './modals/CouponModal'
 import AddressModal from './modals/AddressModal'
+import { useAuthStore } from './store/authStore'
 
 // Orders handler (DynamoDB-backed) — all bag APIs go here
 const ORDERS_API_BASE =
@@ -262,10 +263,7 @@ function PinBar() {
   const [loadingAddress, setLoadingAddress] = useState(false)
   const [validationError, setValidationError] = useState('')
 
-  const token = localStorage.getItem('jwt_token')
-  const _rawCustomer = localStorage.getItem('customer')
-  const customer = (_rawCustomer && _rawCustomer !== 'undefined') ? JSON.parse(_rawCustomer) : null
-
+  const { token, customer } = useAuthStore()
   const isLoggedIn = !!token && !!customer
   const customerId = customer?.customer_id
 
@@ -370,7 +368,7 @@ function PinBar() {
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <Truck size={14} color='#A65A66' />
+              <Truck size={14} color='#C9A84C' />
               <span
                 style={{
                   fontSize: 11,
@@ -388,7 +386,7 @@ function PinBar() {
               style={{
                 fontSize: 12,
                 fontWeight: 700,
-                color: '#A65A66',
+                color: '#C9A84C',
                 background: 'none',
                 border: 'none',
                 cursor: 'pointer',
@@ -457,7 +455,7 @@ function PinBar() {
               >
                 <MapPin
                   size={16}
-                  color='#A65A66'
+                  color='#C9A84C'
                   style={{ marginTop: 2, flexShrink: 0 }}
                 />
                 <div>
@@ -482,7 +480,7 @@ function PinBar() {
                       style={{
                         fontSize: 10,
                         fontWeight: 700,
-                        color: '#A65A66',
+                        color: '#C9A84C',
                         border: '1px solid #A65A66',
                         borderRadius: 2,
                         padding: '1px 6px',
@@ -529,60 +527,102 @@ function PinBar() {
     )
   }
   return (
-    <div
-      style={{
-        ...styles.pinBar,
-        flexDirection: 'column',
-        alignItems: 'stretch',
-        gap: 8,
-      }}
-    >
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+      {/* Login prompt for address */}
       <div
         style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 10,
+          background: '#fff',
+          border: '1px solid #e8e0d0',
+          borderRadius: 4,
+          overflow: 'hidden',
         }}
       >
-        <Truck size={16} style={{ color: '#A65A66' }} />
-
-        <input
-          style={styles.pinInput}
-          placeholder='Enter PIN code'
-          value={pin}
-          maxLength={6}
-          inputMode='numeric'
-          onChange={(e) => {
-            setPin(e.target.value.replace(/\D/g, ''))
-            setSubmitted(false)
-            setValidationError('')
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            padding: '10px 16px',
+            borderBottom: '1px solid #f0f0f0',
           }}
-          onKeyDown={(e) => e.key === 'Enter' && handleCheck()}
-        />
-
-        <button style={styles.addressCheckBtn} onClick={handleCheck}>
-          check
-        </button>
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <Truck size={14} color='#C9A84C' />
+            <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: 1, color: '#3A332A', textTransform: 'uppercase' }}>
+              Delivery Address
+            </span>
+          </div>
+        </div>
+        <div style={{ padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 12 }}>
+          <MapPin size={18} color='#C9A84C' style={{ flexShrink: 0 }} />
+          <div style={{ flex: 1 }}>
+            <p style={{ margin: 0, fontSize: 13, color: '#555', lineHeight: 1.5 }}>
+              Login to add a delivery address
+            </p>
+          </div>
+          <a
+            href='/login?redirect=/bag'
+            style={{
+              fontSize: 12, fontWeight: 700, color: '#050C1C',
+              background: '#C9A84C', border: 'none', borderRadius: 4,
+              padding: '7px 14px', cursor: 'pointer', textDecoration: 'none',
+              letterSpacing: 0.5, whiteSpace: 'nowrap',
+              fontFamily: "'Playfair Display', Georgia, serif",
+            }}
+          >
+            LOGIN
+          </a>
+        </div>
       </div>
 
-      {isLoading && (
-        <div style={{ paddingLeft: 28, fontSize: 12 }}>Checking...</div>
-      )}
-      {data && (
-        <div style={{ paddingLeft: 28, fontSize: 12, color: '#2e7d32' }}>
-          Deliver to {data.city} by {data.deliveryDate}
+      {/* PIN check */}
+      <div
+        style={{
+          ...styles.pinBar,
+          flexDirection: 'column',
+          alignItems: 'stretch',
+          gap: 8,
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <Truck size={16} style={{ color: '#C9A84C' }} />
+          <input
+            style={styles.pinInput}
+            placeholder='Enter PIN code'
+            value={pin}
+            maxLength={6}
+            inputMode='numeric'
+            onChange={(e) => {
+              setPin(e.target.value.replace(/\D/g, ''))
+              setSubmitted(false)
+              setValidationError('')
+            }}
+            onKeyDown={(e) => e.key === 'Enter' && handleCheck()}
+          />
+          <button style={styles.addressCheckBtn} onClick={handleCheck}>
+            check
+          </button>
         </div>
-      )}
-      {validationError && (
-        <div style={{ paddingLeft: 28, fontSize: 12, color: '#d32f2f' }}>
-          {validationError}
-        </div>
-      )}
-      {isError && (
-        <div style={{ paddingLeft: 28, fontSize: 12, color: '#d32f2f' }}>
-          {error.message}
-        </div>
-      )}
+
+        {isLoading && (
+          <div style={{ paddingLeft: 28, fontSize: 12 }}>Checking...</div>
+        )}
+        {data && (
+          <div style={{ paddingLeft: 28, fontSize: 12, color: '#2e7d32' }}>
+            Deliver to {data.city} by {data.deliveryDate}
+          </div>
+        )}
+        {validationError && (
+          <div style={{ paddingLeft: 28, fontSize: 12, color: '#d32f2f' }}>
+            {validationError}
+          </div>
+        )}
+        {isError && (
+          <div style={{ paddingLeft: 28, fontSize: 12, color: '#d32f2f' }}>
+            {error.message}
+          </div>
+        )}
+      </div>
     </div>
   )
 }
@@ -677,8 +717,8 @@ function ItemCard({ item }) {
           onClick={() => toggleSelected(item.id)}
           style={{
             ...styles.checkbox,
-            background: item.selected ? '#e91e8c' : 'transparent',
-            borderColor: item.selected ? '#e91e8c' : '#bbb',
+            background: item.selected ? '#050C1C' : 'transparent',
+            borderColor: item.selected ? '#C9A84C' : '#bbb',
           }}
           aria-label='toggle item'
         >
@@ -784,7 +824,7 @@ function ItemCard({ item }) {
         <button
           style={{
             ...styles.removeBtn,
-            color: '#A65A66',
+            color: '#C9A84C',
           }}
           onClick={() => setShowDeleteConfirm(true)}
           aria-label='remove item'
@@ -885,9 +925,9 @@ function ItemCard({ item }) {
                   flex: 1,
                   height: 44,
                   borderRadius: 12,
-                  border: '1px solid #A65A66',
-                  background: '#fff0f4',
-                  color: '#A65A66',
+                  border: '1px solid #C9A84C',
+                  background: '#fffbf0',
+                  color: '#C9A84C',
                   cursor: 'pointer',
                   fontWeight: 700,
                   fontSize: 15,
@@ -926,7 +966,7 @@ function CouponPanel() {
       <div style={styles.panelLabel}>COUPONS</div>
       <div style={styles.couponRow}>
         <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
-          <Tag size={18} color='#e91e8c' style={{ marginTop: 2 }} />
+          <Tag size={18} color='#C9A84C' style={{ marginTop: 2 }} />
           <div>
             {appliedCount > 0 ? (
               <>
@@ -1000,17 +1040,17 @@ function PricePanel() {
   const total = totalPrice - couponSavings + donationAmount
   
   const API_BASE = ORDERS_API_BASE
+  const { token: authToken, customer: authCustomer } = useAuthStore()
   const handlePlaceOrder = async () => {
     if (selected.length === 0) return
 
-    const token = localStorage.getItem('jwt_token')
-    const _raw = localStorage.getItem('customer')
-    const customer = (_raw && _raw !== 'undefined') ? JSON.parse(_raw) : null
-
-    if (!token || !customer) {
+    if (!authToken || !authCustomer) {
       navigate('/login?redirect=/bag')
       return
     }
+
+    const token = authToken
+    const customer = authCustomer
 
     if (!window.Razorpay) {
       alert('Payment system unavailable')
@@ -1183,7 +1223,7 @@ function PricePanel() {
         <p
           style={{
             fontSize: 11,
-            color: '#e91e8c',
+            color: '#C9A84C',
             textAlign: 'center',
             marginTop: 8,
           }}
@@ -1286,9 +1326,9 @@ function PricePanel() {
               <button
                 onClick={() => setPaymentError('')}
                 style={{
-                  background: '#A65A66',
-                  color: '#fff',
-                  border: 'none',
+                  background: '#050C1C',
+                  color: '#C9A84C',
+                  border: '1px solid #C9A84C',
                   padding: '12px 20px',
                   borderRadius: 10,
                   fontWeight: 700,
@@ -1378,7 +1418,7 @@ function BagPage() {
               ? '#d32f2f'
               : item.color?.toLowerCase() === 'blue'
                 ? '#1976d2'
-                : '#e91e8c',
+                : '#C9A84C',
           selected: item.selected,
         }))
 
@@ -1420,8 +1460,8 @@ function BagPage() {
               }}
               style={{
                 ...styles.checkbox,
-                background: allSelected ? '#e91e8c' : 'transparent',
-                borderColor: allSelected ? '#e91e8c' : '#bbb',
+                background: allSelected ? '#050C1C' : 'transparent',
+                borderColor: allSelected ? '#C9A84C' : '#bbb',
               }}
             >
               {allSelected && (
@@ -1488,7 +1528,8 @@ function BagPage() {
 }
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
-const PINK = '#e91e8c'
+const PINK = '#C9A84C'
+const NAVY = '#050C1C'
 
 const styles = {
   root: {
@@ -1531,7 +1572,7 @@ const styles = {
   logoM: {
     fontSize: 28,
     fontWeight: 700,
-    background: 'linear-gradient(135deg, #ff6b6b, #e91e8c, #f5a623)',
+    background: 'linear-gradient(135deg, #C9A84C, #E8C060, #a07830)',
     WebkitBackgroundClip: 'text',
     WebkitTextFillColor: 'transparent',
     lineHeight: 1,
@@ -1879,9 +1920,9 @@ const styles = {
   termsLink: { color: PINK, textDecoration: 'none' },
   placeBtn: {
     width: '100%',
-    background: PINK,
-    color: '#fff',
-    border: 'none',
+    background: NAVY,
+    color: '#C9A84C',
+    border: '1px solid #C9A84C',
     padding: '14px',
     borderRadius: 8,
     fontSize: 14,
@@ -1890,11 +1931,12 @@ const styles = {
     cursor: 'pointer',
     marginTop: 14,
     transition: 'background 0.15s',
+    fontFamily: "'Playfair Display', Georgia, serif",
   },
   addressCheckBtn: {
     border: 'none',
     background: 'none',
-    color: '#A65A66',
+    color: '#C9A84C',
     fontSize: 16,
     fontWeight: 100,
     cursor: 'pointer',
