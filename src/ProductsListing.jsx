@@ -230,7 +230,7 @@ const FilterSidebar = ({
       <button
         onClick={() => toggleSection(filterKey)}
         className='flex items-center justify-between w-full text-left mb-2'
-        style={{ color: '#C9A84C', fontFamily: 'Georgia, serif', fontWeight: 400, fontSize: '14px', letterSpacing: '0.04em' }}
+        style={{ color: '#C9A84C', fontFamily: "'Playfair Display', Georgia, serif", fontWeight: 400, fontSize: '14px', letterSpacing: '0.04em' }}
       >
         {title}
         {expandedSections[filterKey] ? (
@@ -247,7 +247,7 @@ const FilterSidebar = ({
                   key={cat.slug}
                   to={`/${cat.slug}`}
                   className='block text-sm py-0.5 transition'
-                  style={{ color: '#555', paddingLeft: '10px', borderLeft: '3px solid transparent', textDecoration: 'none' }}
+                  style={{ color: '#555', paddingLeft: '10px', borderLeft: '3px solid transparent', textDecoration: 'none', fontFamily: "'Playfair Display', Georgia, serif", fontSize: '14px' }}
                   onMouseEnter={e => { e.currentTarget.style.color = '#C9A84C'; e.currentTarget.style.borderLeftColor = '#C9A84C'; e.currentTarget.style.paddingLeft = '13px' }}
                   onMouseLeave={e => { e.currentTarget.style.color = '#555'; e.currentTarget.style.borderLeftColor = 'transparent'; e.currentTarget.style.paddingLeft = '10px' }}
                 >
@@ -256,7 +256,7 @@ const FilterSidebar = ({
               ))
             : filterKey === 'color'
             ? (
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0', border: '1px solid #e8e0d0', borderRadius: '6px', overflow: 'hidden', width: 'fit-content' }}>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
                   {items.map((item, idx) => {
                     const hex = COLOR_MAP[item?.trim().toLowerCase()]
                     const isSelected = selectedFilters[filterKey]?.includes(item) || false
@@ -266,19 +266,17 @@ const FilterSidebar = ({
                         title={item}
                         onClick={() => onFilterChange(filterKey, item, !isSelected)}
                         style={{
-                          width: '36px',
-                          height: '32px',
+                          width: '28px',
+                          height: '28px',
                           background: hex || 'conic-gradient(red, yellow, lime, cyan, blue, magenta, red)',
                           border: 'none',
-                          borderRight: '1px solid rgba(255,255,255,0.25)',
-                          borderBottom: '1px solid rgba(255,255,255,0.25)',
                           cursor: 'pointer',
                           position: 'relative',
-                          transition: 'transform 0.15s, z-index 0s',
+                          transition: 'transform 0.15s',
                           transform: isSelected ? 'scale(1.15)' : 'scale(1)',
                           zIndex: isSelected ? 2 : 1,
-                          boxShadow: isSelected ? '0 0 0 2.5px #C9A84C' : 'none',
-                          borderRadius: isSelected ? '3px' : '0',
+                          boxShadow: isSelected ? '0 0 0 2px #fff, 0 0 0 3.5px #C9A84C' : '0 0 0 1px rgba(0,0,0,0.12)',
+                          borderRadius: '50%',
                         }}
                       >
                         {isSelected && (
@@ -353,7 +351,7 @@ const FilterSidebar = ({
         <button
           onClick={() => toggleSection('price')}
           className='flex items-center justify-between w-full text-left mb-2'
-          style={{ color: '#C9A84C', fontFamily: 'Georgia, serif', fontWeight: 400, fontSize: '14px', letterSpacing: '0.04em' }}
+          style={{ color: '#C9A84C', fontFamily: "'Playfair Display', Georgia, serif", fontWeight: 400, fontSize: '14px', letterSpacing: '0.04em' }}
         >
           Price
           {expandedSections.price ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
@@ -461,7 +459,7 @@ const ProductCard = ({ product, onViewDetails }) => {
       className='cursor-pointer group'
       style={{
         background: '#fff',
-        borderRadius: '12px',
+        borderRadius: '0px',
         overflow: 'hidden',
         boxShadow: '0 2px 12px rgba(58,51,42,0.08)',
         transition: 'transform 0.2s, box-shadow 0.2s, border-color 0.2s',
@@ -515,11 +513,11 @@ const ProductCard = ({ product, onViewDetails }) => {
         </button>
       </div>
       <div style={{ padding: '12px 14px 14px' }}>
-        <p style={{ fontSize: '13px', fontWeight: 500, color: '#333', lineHeight: 1.45, marginBottom: '8px', letterSpacing: '0.01em' }} className='line-clamp-2'>
+        <p style={{ fontSize: '14px', fontWeight: 500, color: '#333', lineHeight: 1.45, marginBottom: '8px', letterSpacing: '0.02em', fontFamily: "'Playfair Display', Georgia, serif" }} className='line-clamp-2'>
           {product.name}
         </p>
         <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px' }}>
-          <span style={{ fontWeight: 700, fontSize: '15px', color: '#1a1a1a' }}>₹{product.price.toLocaleString('en-IN')}</span>
+          <span style={{ fontWeight: 700, fontSize: '16px', color: '#1a1a1a', fontFamily: "'Playfair Display', Georgia, serif" }}>₹{product.price.toLocaleString('en-IN')}</span>
           <span style={{ fontSize: '11px', color: '#bbb', textDecoration: 'line-through' }}>
             ₹{Math.round(product.price * 1.4).toLocaleString('en-IN')}
           </span>
@@ -628,7 +626,7 @@ const SortDropdown = ({ sortBy, setSortBy }) => {
         className='w-full bg-white rounded px-3 h-8 flex items-center justify-between transition'
         style={{ border: '1px solid #e8d9b8' }}
       >
-        <div className='flex items-center gap-1 text-xs'>
+        <div className='flex items-center gap-1 text-xs' style={{ fontFamily: "'Playfair Display', Georgia, serif", fontSize: '13px' }}>
           <span className='text-gray-500'>Sort:</span>
           <span className='font-semibold text-gray-900'>
             {sortBy === 'price-low' && 'Low to High'}
@@ -652,6 +650,7 @@ const SortDropdown = ({ sortBy, setSortBy }) => {
                 setSortBy(option.value)
                 setSortOpen(false)
               }}
+              style={{ fontFamily: "'Playfair Display', Georgia, serif", fontSize: '13px' }}
               className={`w-full text-left px-3 py-1 text-xs transition ${
                 sortBy === option.value
                   ? 'font-medium'
@@ -843,7 +842,7 @@ const ListingPage = () => {
           <div className='hidden lg:flex items-center gap-4 flex-1 min-w-0'>
             <div className='flex items-center w-64 flex-shrink-0'>
 
-              <span style={{ color: '#C9A84C', fontFamily: 'Georgia, serif', fontWeight: 400, fontSize: '14px', letterSpacing: '0.04em' }}>
+              <span style={{ color: '#C9A84C', fontFamily: "'Playfair Display', Georgia, serif", fontWeight: 400, fontSize: '14px', letterSpacing: '0.04em' }}>
                 Filters
               </span>
 
@@ -903,14 +902,14 @@ const ListingPage = () => {
             /> */}
 
             {isLoading ? (
-              <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6'>
+              <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3'>
                 {Array.from({ length: 12 }).map((_, i) => (
                   <ProductCardSkeleton key={i} />
                 ))}
               </div>
             ) : paginatedProducts.length > 0 ? (
               <>
-                <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6'>
+                <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3'>
                   {paginatedProducts.map((product) => (
                     <ProductCard
                       key={product.id}

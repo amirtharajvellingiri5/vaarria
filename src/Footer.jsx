@@ -8,7 +8,7 @@ const Footer = () => {
         <div className='grid grid-cols-1 md:grid-cols-4 gap-8'>
           <div>
             <h4 className='text-2xl font-bold mb-4' style={{ color: '#E8C060' }}>
-              aarria
+              vaarria
             </h4>
 
             <p style={{ color: '#C9A84C' }}>
