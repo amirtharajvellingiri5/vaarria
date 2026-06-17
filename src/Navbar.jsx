@@ -315,8 +315,8 @@ const isLoggedIn = !!token
                     <span
                       style={{
                         fontSize: '9px',
-                        background: '#A65A66',
-                        color: '#fff',
+                        background: '#C9A84C',
+                        color: '#050C1C',
                         borderRadius: '3px',
                         padding: '1px 4px',
                         fontWeight: 700,
@@ -367,7 +367,8 @@ const isLoggedIn = !!token
             marginLeft: 'auto',
             display: 'flex',
             alignItems: 'center',
-            background: '#f5f5f6',
+            background: 'rgba(255,255,255,0.07)',
+            border: '1px solid rgba(201,168,76,0.4)',
             borderRadius: '4px',
             padding: '0 14px',
             gap: '8px',
@@ -378,7 +379,7 @@ const isLoggedIn = !!token
           }}
           className='hidden-mobile'
         >
-          <Search size={16} color='#94969f' />
+          <Search size={16} color='#C9A84C' />
           <input
             type='text'
             placeholder='Search for products'
@@ -389,7 +390,7 @@ const isLoggedIn = !!token
               background: 'transparent',
               outline: 'none',
               fontSize: '13px',
-              color: '#3A332A',
+              color: '#F0E6D3',
               width: '100%',
               fontFamily: 'inherit',
             }}
