@@ -26,7 +26,7 @@ import {
 } from 'lucide-react'
 
 import axios from 'axios'
-import logo from './assets/logo.jpg'
+const logo = '/vlogo.png'
 import './constants/global.css'
 
 import CouponModal from './modals/CouponModal'
@@ -1543,21 +1543,19 @@ const styles = {
     position: 'relative',
   },
   logoImg: {
-    height: 'auto',
-    width: 100, // Force a specific width
-    maxWidth: 100,
-    minWidth: 100,
+    height: '48px',
+    width: 'auto',
     objectFit: 'contain',
-    display: 'block', // Ensures proper rendering
+    display: 'block',
   },
   navbar: {
-    background: '#fff',
-    borderBottom: '0.5px solid #eee',
+    background: '#050C1C',
+    borderBottom: '1px solid #0d1e3a',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
     padding: '0 24px',
-    height: 56,
+    height: 60,
     position: 'sticky',
     top: 0,
     zIndex: 100,
@@ -1588,24 +1586,24 @@ const styles = {
     alignItems: 'center',
     gap: 6,
     fontSize: 12,
-    color: '#aaa',
+    color: '#C9A84C',
     letterSpacing: 0.5,
   },
   step: { display: 'flex', alignItems: 'center' },
   stepActive: {
-    color: PINK,
-    fontWeight: 600,
-    borderBottom: `2px solid ${PINK}`,
+    color: '#E8C060',
+    fontWeight: 700,
+    borderBottom: '2px solid #C9A84C',
     paddingBottom: 2,
   },
-  stepDivider: { color: '#ddd', fontSize: 10 },
+  stepDivider: { color: '#1a2d4a', fontSize: 10 },
   navRight: { display: 'flex', alignItems: 'center', gap: 16 },
   navSecure: {
     display: 'flex',
     alignItems: 'center',
     gap: 5,
     fontSize: 12,
-    color: '#555',
+    color: '#C9A84C',
     fontWeight: 500,
   },
   mobileMenuBtn: {

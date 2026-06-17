@@ -238,18 +238,21 @@ const styles = `
 `
 
 // ─── useMSG91Script ───────────────────────────────────────────────────────────
-// Injects the MSG91 OTP provider script once and exposes a `ready` flag
+// Injects the MSG91 OTP provider script once. MSG91 does not support teardown/
+// re-init (re-registering 'h-captcha' throws), so the script is never removed.
+let msg91Loaded = false
+
 function useMSG91Script() {
-  const [ready, setReady] = useState(
-    () => typeof window !== 'undefined' && !!window.initSendOTP,
-  )
+  const [ready, setReady] = useState(() => msg91Loaded)
 
   useEffect(() => {
-    if (window.initSendOTP) {
+    if (msg91Loaded) {
       setReady(true)
       return
     }
+    if (document.querySelector('script[src*="otp-provider.js"]')) return
 
+    msg91Loaded = true
     const script = document.createElement('script')
     script.src = 'https://verify.msg91.com/otp-provider.js'
     script.async = true
@@ -258,28 +261,14 @@ function useMSG91Script() {
         widgetId: MSG91_WIDGET_ID,
         tokenAuth: MSG91_TOKEN_AUTH,
         exposeMethods: true,
-
-        success: (data) => {
-          console.log('[MSG91] success', data)
-        },
-
-        failure: (err) => {
-          console.log('[MSG91] failure', err)
-        },
+        success: (data) => { console.log('[MSG91] success', data) },
+        failure: (err) => { console.log('[MSG91] failure', err) },
       })
-
       setReady(true)
-      console.log('initSendOTP', window.initSendOTP)
-      console.log('sendOtp', window.sendOtp)
-      console.log('verifyOtp', window.verifyOtp)
-      console.log('retryOtp', window.retryOtp)
     }
-    script.onerror = () => console.error('[MSG91] Script load failed')
+    script.onerror = () => { msg91Loaded = false; console.error('[MSG91] Script load failed') }
     document.body.appendChild(script)
-
-    return () => {
-      if (document.body.contains(script)) document.body.removeChild(script)
-    }
+    // intentionally no cleanup — MSG91 widget cannot be re-initialized
   }, [])
 
   return ready
@@ -524,7 +513,7 @@ function OtpScreen({ phone, onBack, onVerified, onLogin }) {
 
 // ─── Login Screen ─────────────────────────────────────────────────────────────
 function LoginScreen({ onContinue, msg91Ready }) {
-  const [phone, setPhone] = useState('9876543210')
+  const [phone, setPhone] = useState('8553797479')
   const [agreed, setAgreed] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -645,7 +634,7 @@ export default function LoginPage() {
 
   const handleVerified = () => {
     const redirectTo = searchParams.get('redirect') || '/'
-    window.location.href = redirectTo
+    navigate(redirectTo)
   }
 
   return (
