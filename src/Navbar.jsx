@@ -427,7 +427,7 @@ const isLoggedIn = !!token
     <User size={20} />
     <span
       style={{
-        fontSize: '10px',
+        fontSize: '11px',
         fontWeight: 600,
         letterSpacing: '0.03em',
       }}
@@ -546,7 +546,7 @@ const isLoggedIn = !!token
             <Heart size={20} />
             <span
               style={{
-                fontSize: '10px',
+                fontSize: '11px',
                 fontWeight: 600,
                 letterSpacing: '0.03em',
               }}
@@ -572,7 +572,7 @@ const isLoggedIn = !!token
               <ShoppingBag size={20} />
               <span
                 style={{
-                  fontSize: '10px',
+                  fontSize: '11px',
                   fontWeight: 600,
                   letterSpacing: '0.03em',
                 }}
@@ -742,6 +742,7 @@ const isLoggedIn = !!token
         .show-mobile   { display: none !important; }
         .icon-btn:hover svg { color: #E8C060 !important; stroke: #E8C060 !important; }
         .icon-btn:hover span { color: #E8C060 !important; }
+        input::placeholder { color: rgba(240,230,211,0.45) !important; }
         @media (max-width: 768px) {
           .hidden-mobile { display: none !important; }
           .show-mobile   { display: flex !important; }

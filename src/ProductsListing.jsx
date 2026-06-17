@@ -246,7 +246,10 @@ const FilterSidebar = ({
                 <Link
                   key={cat.slug}
                   to={`/${cat.slug}`}
-                  className='block text-sm text-gray-700 py-1 transition' style={{ }} onMouseEnter={e=>e.currentTarget.style.color='#C9A84C'} onMouseLeave={e=>e.currentTarget.style.color=''}
+                  className='block text-sm py-1.5 transition'
+                  style={{ color: '#555', paddingLeft: '10px', borderLeft: '3px solid transparent', textDecoration: 'none' }}
+                  onMouseEnter={e => { e.currentTarget.style.color = '#C9A84C'; e.currentTarget.style.borderLeftColor = '#C9A84C'; e.currentTarget.style.paddingLeft = '13px' }}
+                  onMouseLeave={e => { e.currentTarget.style.color = '#555'; e.currentTarget.style.borderLeftColor = 'transparent'; e.currentTarget.style.paddingLeft = '10px' }}
                 >
                   {cat.name}
                 </Link>
@@ -291,8 +294,7 @@ const FilterSidebar = ({
                   })}
                 </div>
               )
-            : filterKey === 'size'
-            ? (
+            : (
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
                   {items.map((item) => {
                     const isSelected = selectedFilters[filterKey]?.includes(item) || false
@@ -302,7 +304,7 @@ const FilterSidebar = ({
                         onClick={() => onFilterChange(filterKey, item, !isSelected)}
                         style={{
                           minWidth: '42px',
-                          height: '36px',
+                          height: '32px',
                           padding: '0 10px',
                           borderRadius: '5px',
                           background: isSelected ? '#050C1C' : '#fff',
@@ -310,11 +312,11 @@ const FilterSidebar = ({
                           color: isSelected ? '#C9A84C' : '#555',
                           fontSize: '12px',
                           fontWeight: isSelected ? 700 : 500,
-                          letterSpacing: '0.04em',
+                          letterSpacing: '0.03em',
                           cursor: 'pointer',
                           transition: 'all 0.15s',
                           boxShadow: isSelected ? '0 0 0 1px #C9A84C' : 'none',
-                          transform: isSelected ? 'scale(1.08)' : 'scale(1)',
+                          whiteSpace: 'nowrap',
                         }}
                       >
                         {item}
@@ -322,25 +324,7 @@ const FilterSidebar = ({
                     )
                   })}
                 </div>
-              )
-            : items.map((item) => (
-                <label
-                  key={item}
-                  className='flex items-center space-x-2 cursor-pointer transition' style={{ color: '#555' }} onMouseEnter={e=>e.currentTarget.style.color='#C9A84C'} onMouseLeave={e=>e.currentTarget.style.color='#555'}
-                >
-                  <input
-                    type='checkbox'
-                    checked={
-                      selectedFilters[filterKey]?.includes(item) || false
-                    }
-                    onChange={(e) =>
-                      onFilterChange(filterKey, item, e.target.checked)
-                    }
-                    className='w-4 h-4 text-pink-600 rounded focus:ring-pink-500'
-                  />
-                  <span className='text-sm text-gray-700'>{item}</span>
-                </label>
-              ))}
+              ))
         </div>
       )}
     </div>
@@ -493,7 +477,7 @@ const ProductCard = ({ product, onViewDetails }) => {
         e.currentTarget.style.borderColor = 'transparent'
       }}
     >
-      <div className='relative aspect-[3/4] overflow-hidden bg-gray-50'>
+      <div className='relative aspect-[3/4] overflow-hidden' style={{ background: '#f9f7f4' }}>
         <img
           src={product.image}
           alt={product.name}
@@ -530,14 +514,15 @@ const ProductCard = ({ product, onViewDetails }) => {
         </button>
       </div>
       <div style={{ padding: '12px 14px 14px' }}>
-        <p style={{ fontSize: '14px', fontWeight: 600, color: '#1a1a1a', lineHeight: 1.4, marginBottom: '6px' }} className='line-clamp-2'>
+        <p style={{ fontSize: '13px', fontWeight: 500, color: '#333', lineHeight: 1.45, marginBottom: '8px', letterSpacing: '0.01em' }} className='line-clamp-2'>
           {product.name}
         </p>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span style={{ fontWeight: 700, fontSize: '15px', color: '#1a1a1a' }}>₹{product.price}</span>
-          <span style={{ fontSize: '12px', color: '#aaa', textDecoration: 'line-through' }}>
-            ₹{Math.round(product.price * 1.4)}
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px' }}>
+          <span style={{ fontWeight: 700, fontSize: '15px', color: '#1a1a1a' }}>₹{product.price.toLocaleString('en-IN')}</span>
+          <span style={{ fontSize: '11px', color: '#bbb', textDecoration: 'line-through' }}>
+            ₹{Math.round(product.price * 1.4).toLocaleString('en-IN')}
           </span>
+          <span style={{ fontSize: '11px', color: '#2e7d32', fontWeight: 600 }}>30% off</span>
         </div>
       </div>
     </div>
@@ -850,7 +835,7 @@ const ListingPage = () => {
         <div
           className='flex items-center justify-between px-4 py-3 bg-white rounded-t-lg mb-0'
           style={{
-            borderBottom: '1px solid #f3e8ee',
+            borderBottom: '1px solid #e8e0d0',
           }}
         >
           {/* Left: Filters label (aligns with sidebar width) */}
@@ -895,7 +880,7 @@ const ListingPage = () => {
         {/* ── Main content row (sidebar + products) ── */}
         <div className='flex gap-0 bg-white rounded-b-lg'>
           {/* Left Sidebar */}
-          <div className='hidden lg:block w-64 flex-shrink-0 border-r border-pink-100'>
+          <div className='hidden lg:block w-64 flex-shrink-0' style={{ borderRight: '1px solid #e8e0d0' }}>
             {isLoading ? (
               <FilterSkeleton />
             ) : filters ? (
@@ -950,12 +935,16 @@ const ListingPage = () => {
                 className='text-center py-16 flex flex-col items-center justify-center'
                 style={{ minHeight: '400px' }}
               >
-                <p className='text-gray-600 text-lg'>
-                  No products found matching your filters.
+                <ShoppingBag size={56} style={{ color: '#e8e0d0', marginBottom: '16px' }} />
+                <p style={{ fontSize: '17px', fontWeight: 600, color: '#555', marginBottom: '6px' }}>
+                  No products found
+                </p>
+                <p style={{ fontSize: '13px', color: '#999', marginBottom: '20px' }}>
+                  Try adjusting or clearing your filters
                 </p>
                 <button
                   onClick={handleClearFilters}
-                  style={{ marginTop: '16px', padding: '10px 28px', background: '#050C1C', border: '1.5px solid #C9A84C', borderRadius: '8px', color: '#C9A84C', fontSize: '13px', fontWeight: 700, cursor: 'pointer', letterSpacing: '0.04em' }}
+                  style={{ padding: '10px 28px', background: '#050C1C', border: '1.5px solid #C9A84C', borderRadius: '8px', color: '#C9A84C', fontSize: '13px', fontWeight: 700, cursor: 'pointer', letterSpacing: '0.04em' }}
                 >
                   Clear Filters
                 </button>
