@@ -235,6 +235,7 @@ async function fetchProduct(productId) {
     reviewCount: raw.ratings.review_count ?? 0,
     sizes,
     availableSizes,
+    sizeQuantities: Object.fromEntries(variant.sizes.map((s) => [s.size, s.quantity])),
     colors: raw.inventory.variants.map((v) => ({
       name: v.color,
       hex: v.color_hex ?? '#cccccc',
@@ -981,7 +982,11 @@ export default function ProductDetail() {
   const [bagError, setBagError] = useState('')
   const [addingToBag, setAddingToBag] = useState(false)
   const ratingsRef = useRef(null)
+  const ctaRef = useRef(null)
   const [reviewSliderOpen, setReviewSliderOpen] = useState(false)
+  const [showSticky, setShowSticky] = useState(false)
+  const [viewerCount] = useState(() => Math.floor(Math.random() * 18) + 7)
+  const [dispatchSecondsLeft, setDispatchSecondsLeft] = useState(0)
   const [reviewImages, setReviewImages] = useState([])
   const [showSizeChart, setShowSizeChart] = useState(false)
   const [deliveryMessage, setDeliveryMessage] = useState('')
@@ -1003,6 +1008,29 @@ export default function ProductDetail() {
       },
     )
   }, [productId])
+
+  // Dispatch countdown — counts down to 6 PM IST
+  useEffect(() => {
+    const calcSeconds = () => {
+      const now = new Date()
+      const ist = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }))
+      const cutoff = new Date(ist)
+      cutoff.setHours(18, 0, 0, 0)
+      if (ist >= cutoff) cutoff.setDate(cutoff.getDate() + 1)
+      return Math.max(0, Math.floor((cutoff - ist) / 1000))
+    }
+    setDispatchSecondsLeft(calcSeconds())
+    const id = setInterval(() => setDispatchSecondsLeft(calcSeconds()), 1000)
+    return () => clearInterval(id)
+  }, [])
+
+  // Sticky CTA — show when Add to Bag button scrolls out of view
+  useEffect(() => {
+    if (!ctaRef.current) return
+    const obs = new IntersectionObserver(([entry]) => setShowSticky(!entry.isIntersecting), { threshold: 0 })
+    obs.observe(ctaRef.current)
+    return () => obs.disconnect()
+  }, [product])
 
   const checkPincode = async () => {
     if (pincode.length !== 6) {
@@ -1451,6 +1479,7 @@ export default function ProductDetail() {
         .pdp-accordion-body { padding-bottom: 20px; }
         .pdp-toast { position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%); background: #050C1C; color: #C9A84C; border: 1.5px solid #C9A84C; padding: 13px 32px; border-radius: 24px; font-size: 14px; font-weight: 600; z-index: 100; box-shadow: 0 8px 28px rgba(5,12,28,0.35); animation: toastIn 0.3s ease; font-family: 'DM Sans', sans-serif; }
         @keyframes toastIn { from { opacity: 0; transform: translateX(-50%) translateY(16px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
+        @keyframes stickySlideUp { from { transform: translateY(100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
         @media (max-width: 900px) { .pdp-outer {
   display: flex;
   align-items: flex-start;
@@ -1553,6 +1582,25 @@ export default function ProductDetail() {
             </div>
             <div className='pdp-tax'>inclusive of all taxes</div>
 
+            {/* ── Social proof + dispatch timer ── */}
+            <div style={{ display: 'flex', gap: 8, marginTop: 10, flexWrap: 'wrap' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#FFF8EC', border: '1px solid #F0D080', borderRadius: 20, padding: '4px 12px', fontSize: 12, color: '#92400e', fontWeight: 600 }}>
+                <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#ef4444', display: 'inline-block', boxShadow: '0 0 0 2px #fca5a5' }} />
+                {viewerCount} people viewing this
+              </div>
+              {dispatchSecondsLeft > 0 && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#F0FAF4', border: '1px solid #6ee7b7', borderRadius: 20, padding: '4px 12px', fontSize: 12, color: '#065f46', fontWeight: 600 }}>
+                  ⚡ Order within{' '}
+                  <span style={{ fontVariantNumeric: 'tabular-nums', fontFamily: 'monospace' }}>
+                    {String(Math.floor(dispatchSecondsLeft / 3600)).padStart(2, '0')}:
+                    {String(Math.floor((dispatchSecondsLeft % 3600) / 60)).padStart(2, '0')}:
+                    {String(dispatchSecondsLeft % 60).padStart(2, '0')}
+                  </span>
+                  {' '}for same-day dispatch
+                </div>
+              )}
+            </div>
+
             <div className='pdp-hr' />
 
             <div className='pdp-offers-title'>Available Offers</div>
@@ -1592,15 +1640,14 @@ export default function ProductDetail() {
                 )
               })}
             </div>
+            {/* per-size stock counter */}
+            {selectedSize && product.sizeQuantities?.[selectedSize] > 0 && product.sizeQuantities[selectedSize] <= 6 && (
+              <div style={{ fontSize: 12, color: '#b45309', fontWeight: 600, marginTop: 8, display: 'flex', alignItems: 'center', gap: 5 }}>
+                <span style={{ fontSize: 14 }}>🔥</span> Only {product.sizeQuantities[selectedSize]} left in size {selectedSize} — grab it fast!
+              </div>
+            )}
             {isOutOfStock && (
-              <div
-                style={{
-                  fontSize: 12,
-                  color: '#ef4444',
-                  marginTop: 8,
-                  fontWeight: 600,
-                }}
-              >
+              <div style={{ fontSize: 12, color: '#ef4444', marginTop: 8, fontWeight: 600 }}>
                 Out of stock
               </div>
             )}
@@ -1624,7 +1671,44 @@ export default function ProductDetail() {
               </div>
             )}
 
-            <div className='pdp-cta'>
+            {/* ── Top review quote ── */}
+            {hasRatings && ratingsData.reviews[0] && (
+              <div style={{ margin: '14px 0 10px', padding: '12px 14px', background: '#FDFAF3', border: '1px solid #E8D9A0', borderRadius: 8, position: 'relative' }}>
+                <div style={{ fontSize: 28, color: '#C9A84C', lineHeight: 1, position: 'absolute', top: 6, left: 10, opacity: 0.5, fontFamily: 'Georgia, serif' }}>"</div>
+                <p style={{ fontSize: 12.5, color: '#374151', lineHeight: 1.65, margin: '6px 0 8px', paddingLeft: 16 }}>
+                  {ratingsData.reviews[0].body}
+                </p>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 2, background: 'linear-gradient(135deg,#10b981,#059669)', color: '#fff', borderRadius: 8, padding: '1px 7px', fontSize: 11, fontWeight: 600 }}>
+                    <Star size={9} fill='#fff' strokeWidth={0} /> {ratingsData.reviews[0].rating}
+                  </span>
+                  <span style={{ fontSize: 12, color: '#6b7280', fontWeight: 600 }}>{ratingsData.reviews[0].user}</span>
+                  <span style={{ fontSize: 11, color: '#9ca3af' }}>· Verified Buyer</span>
+                </div>
+                <button
+                  onClick={scrollToRatings}
+                  style={{ marginTop: 10, background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 700, color: '#C9A84C', letterSpacing: '0.04em', padding: 0, textDecoration: 'underline', textUnderlineOffset: 3 }}
+                >
+                  See all {ratingsData?.review_count} reviews ↓
+                </button>
+              </div>
+            )}
+
+            {/* ── Reassurance strip ── */}
+            <div style={{ display: 'flex', gap: 0, marginBottom: 12, border: '1px solid #e8e0d0', borderRadius: 8, overflow: 'hidden', background: '#fafaf8' }}>
+              {[
+                { icon: '↔', label: 'Free size exchange' },
+                { icon: '🏠', label: 'COD available' },
+                { icon: '↩', label: '7-day returns' },
+              ].map((item, i) => (
+                <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, padding: '9px 6px', borderRight: i < 2 ? '1px solid #e8e0d0' : 'none' }}>
+                  <span style={{ fontSize: 15 }}>{item.icon}</span>
+                  <span style={{ fontSize: 10.5, color: '#374151', fontWeight: 600, textAlign: 'center', lineHeight: 1.3 }}>{item.label}</span>
+                </div>
+              ))}
+            </div>
+
+            <div className='pdp-cta' ref={ctaRef}>
               <button
                 className={`pdp-btn-bag ${addedToBag ? 'added' : ''}`}
                 onClick={handleAddToBag}
@@ -1657,12 +1741,12 @@ export default function ProductDetail() {
                 <span className='pdp-trust-label'>Free Delivery</span>
               </div>
               <div className='pdp-trust-item'>
-                <RefreshCw size={18} color='#C9A84C' />
-                <span className='pdp-trust-label'>7-Day Returns</span>
-              </div>
-              <div className='pdp-trust-item'>
                 <Shield size={18} color='#C9A84C' />
                 <span className='pdp-trust-label'>100% Genuine</span>
+              </div>
+              <div className='pdp-trust-item'>
+                <CreditCard size={18} color='#C9A84C' />
+                <span className='pdp-trust-label'>Secure Payment</span>
               </div>
             </div>
 
@@ -1755,6 +1839,32 @@ export default function ProductDetail() {
         </div>
       </div>
 
+      {/* ── Complete the Look ── */}
+      <div style={{ maxWidth: 1536, margin: '0 auto', padding: '32px clamp(16px,3%,32px) 48px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
+          <div style={{ height: 1, flex: 1, background: '#e8e0d0' }} />
+          <span style={{ fontSize: 13, fontWeight: 700, color: '#050C1C', letterSpacing: '0.12em', textTransform: 'uppercase', fontFamily: "'Playfair Display', Georgia, serif", whiteSpace: 'nowrap' }}>Complete the Look</span>
+          <div style={{ height: 1, flex: 1, background: '#e8e0d0' }} />
+        </div>
+        <div style={{ display: 'flex', gap: 16, overflowX: 'auto', scrollbarWidth: 'none', paddingBottom: 8 }}>
+          {[
+            { name: 'Dupatta', subtitle: 'Chiffon · Navy Blue', price: '₹499', img: 'https://cdn.vaarria.com/app/images/IMG-20220416-WA0001.jpg' },
+            { name: 'Palazzo Pants', subtitle: 'Viscose · Navy Blue', price: '₹799', img: 'https://cdn.vaarria.com/app/images/IMG-20220416-WA0002.jpg' },
+            { name: 'Jhumka Earrings', subtitle: 'Oxidised Gold', price: '₹349', img: 'https://cdn.vaarria.com/app/images/IMG-20220416-WA0005.jpg' },
+            { name: 'Potli Bag', subtitle: 'Embroidered · Gold', price: '₹599', img: 'https://cdn.vaarria.com/app/images/IMG-20220416-WA0006.jpg' },
+          ].map((item, i) => (
+            <div key={i} style={{ flexShrink: 0, width: 160, cursor: 'pointer' }}>
+              <div style={{ width: 160, height: 213, borderRadius: 8, overflow: 'hidden', background: '#f3f0eb', border: '1px solid #e8e0d0', marginBottom: 8 }}>
+                <img src={item.img} alt={item.name} style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top' }} onError={e => { e.target.style.display = 'none' }} />
+              </div>
+              <div style={{ fontSize: 13, fontWeight: 600, color: '#1f2937' }}>{item.name}</div>
+              <div style={{ fontSize: 11, color: '#9ca3af', marginTop: 1 }}>{item.subtitle}</div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: '#C9A84C', marginTop: 3 }}>{item.price}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+
       <Footer />
 
       {/* Full-screen media slider */}
@@ -1775,6 +1885,46 @@ export default function ProductDetail() {
       )}
 
       {addedToBag && <div className='pdp-toast'>✓ Added to your bag!</div>}
+
+      {/* ── Sticky bottom CTA ── */}
+      {showSticky && product && (
+        <div style={{
+          position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 90,
+          background: '#050C1C', borderTop: '1px solid #C9A84C44',
+          padding: '12px 20px', display: 'flex', alignItems: 'center', gap: 14,
+          boxShadow: '0 -4px 24px rgba(5,12,28,0.4)',
+          animation: 'stickySlideUp 0.25s ease',
+        }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: 14, fontWeight: 700, color: '#fff', fontFamily: "'Playfair Display', Georgia, serif", overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {product.brand} · {product.name}
+            </div>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginTop: 2 }}>
+              <span style={{ fontSize: 16, fontWeight: 700, color: '#C9A84C' }}>₹{product.price.toLocaleString()}</span>
+              <span style={{ fontSize: 12, color: '#888', textDecoration: 'line-through' }}>₹{product.mrp.toLocaleString()}</span>
+              <span style={{ fontSize: 12, color: '#C9A84C', fontWeight: 600 }}>{product.discount}% OFF</span>
+            </div>
+          </div>
+          <button
+            onClick={handleAddToBag}
+            disabled={addingToBag || isOutOfStock}
+            style={{
+              flexShrink: 0, height: 46, padding: '0 24px',
+              background: addedToBag ? '#065f46' : '#C9A84C',
+              color: addedToBag ? '#fff' : '#050C1C',
+              border: 'none', borderRadius: 6,
+              fontSize: 13, fontWeight: 700, cursor: 'pointer',
+              display: 'flex', alignItems: 'center', gap: 7,
+              letterSpacing: '0.06em', textTransform: 'uppercase',
+              fontFamily: "'DM Sans', sans-serif",
+              transition: 'all 0.2s',
+            }}
+          >
+            <ShoppingBag size={16} />
+            {isOutOfStock ? 'Out of Stock' : addedToBag ? '✓ Added' : 'Add to Bag'}
+          </button>
+        </div>
+      )}
 
       {showSizeChart && (
         <div
