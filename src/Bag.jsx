@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react'
+import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import { create } from 'zustand'
@@ -36,6 +36,35 @@ import { useAuthStore } from './store/authStore'
 // Orders handler (DynamoDB-backed) — all bag APIs go here
 const ORDERS_API_BASE =
   'https://zq0dbjycx6.execute-api.ap-south-1.amazonaws.com/prod'
+
+const MSG91_WIDGET_ID = '366568623534393236303030'
+const MSG91_TOKEN_AUTH = '147259Txua8xfclqV69fd54e9P1'
+let bagMsg91Loaded = false
+
+function useBagMsg91() {
+  const [ready, setReady] = useState(() => typeof window.sendOtp === 'function')
+  useEffect(() => {
+    if (typeof window.sendOtp === 'function') { setReady(true); return }
+    if (bagMsg91Loaded) return
+    if (document.querySelector('script[src*="otp-provider.js"]')) return
+    bagMsg91Loaded = true
+    const s = document.createElement('script')
+    s.src = 'https://verify.msg91.com/otp-provider.js'
+    s.async = true
+    s.onload = () => {
+      window.initSendOTP({
+        widgetId: MSG91_WIDGET_ID,
+        tokenAuth: MSG91_TOKEN_AUTH,
+        exposeMethods: true,
+        success: () => {},
+        failure: () => {},
+      })
+      setReady(true)
+    }
+    document.body.appendChild(s)
+  }, [])
+  return ready
+}
 
 function SkeletonPulse({ style = {} }) {
   return (
@@ -353,167 +382,49 @@ function PinBar() {
             border: '1px solid #ebecef',
             borderRadius: 4,
             marginBottom: 14,
-            overflow: 'hidden',
-            minHeight: 110,
+            padding: '12px 16px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 10,
           }}
         >
-          {/* Header strip */}
-          <div
+          <Truck size={14} color='#C9A84C' style={{ flexShrink: 0 }} />
+
+          {loadingAddress ? (
+            <SkeletonPulse style={{ flex: 1, height: 16, borderRadius: 4 }} />
+          ) : defaultAddress ? (
+            <span style={{ flex: 1, fontSize: 13, color: '#535766', lineHeight: 1.4 }}>
+              <span style={{ fontWeight: 700, color: '#3A332A' }}>{defaultAddress.full_name}</span>
+              {defaultAddress.address_type && (
+                <span style={{
+                  fontSize: 10, fontWeight: 700, color: '#C9A84C',
+                  border: '1px solid #C9A84C', borderRadius: 2,
+                  padding: '1px 5px', marginLeft: 6, letterSpacing: 0.4,
+                }}>
+                  {defaultAddress.address_type.toUpperCase()}
+                </span>
+              )}
+              <span style={{ marginLeft: 6 }}>
+                {defaultAddress.address_line_1}, {defaultAddress.city}, {defaultAddress.state} —{' '}
+                <span style={{ fontWeight: 700, color: '#3A332A' }}>{defaultAddress.pincode}</span>
+              </span>
+            </span>
+          ) : (
+            <span style={{ flex: 1, fontSize: 13, color: '#94969f' }}>
+              No address saved. Add one to continue.
+            </span>
+          )}
+
+          <button
+            onClick={() => setOpenAddress(true)}
             style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              padding: '10px 16px',
-              borderBottom: '1px solid #f0f0f0',
+              fontSize: 12, fontWeight: 700, color: '#C9A84C',
+              background: 'none', border: 'none', cursor: 'pointer',
+              letterSpacing: 0.5, padding: 0, flexShrink: 0,
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <Truck size={14} color='#C9A84C' />
-              <span
-                style={{
-                  fontSize: 11,
-                  fontWeight: 700,
-                  letterSpacing: 1,
-                  color: '#3A332A',
-                  textTransform: 'uppercase',
-                }}
-              >
-                Delivery Address
-              </span>
-            </div>
-            <button
-              onClick={() => setOpenAddress(true)}
-              style={{
-                fontSize: 12,
-                fontWeight: 700,
-                color: '#C9A84C',
-                background: 'none',
-                border: 'none',
-                cursor: 'pointer',
-                letterSpacing: 0.5,
-                padding: 0,
-              }}
-            >
-              {defaultAddress ? 'CHANGE' : 'ADD ADDRESS'}
-            </button>
-          </div>
-
-          {/* Body */}
-          <div style={{ padding: '12px 16px' }}>
-            {loadingAddress ? (
-              <div
-                style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}
-              >
-                <SkeletonPulse
-                  style={{
-                    width: 16,
-                    height: 16,
-                    borderRadius: '50%',
-                    marginTop: 4,
-                    flexShrink: 0,
-                  }}
-                />
-
-                <div style={{ flex: 1 }}>
-                  <div
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 8,
-                      marginBottom: 8,
-                    }}
-                  >
-                    <SkeletonPulse style={{ width: 140, height: 20 }} />
-                    <SkeletonPulse
-                      style={{
-                        width: 52,
-                        height: 24,
-                        borderRadius: 4,
-                      }}
-                    />
-                  </div>
-
-                  <SkeletonPulse
-                    style={{
-                      width: '95%',
-                      height: 16,
-                      marginBottom: 8,
-                    }}
-                  />
-
-                  <SkeletonPulse
-                    style={{
-                      width: '72%',
-                      height: 16,
-                    }}
-                  />
-                </div>
-              </div>
-            ) : defaultAddress ? (
-              <div
-                style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}
-              >
-                <MapPin
-                  size={16}
-                  color='#C9A84C'
-                  style={{ marginTop: 2, flexShrink: 0 }}
-                />
-                <div>
-                  <div
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 8,
-                      marginBottom: 4,
-                    }}
-                  >
-                    <span
-                      style={{
-                        fontSize: 14,
-                        fontWeight: 700,
-                        color: '#3A332A',
-                      }}
-                    >
-                      {defaultAddress.full_name}
-                    </span>
-                    <span
-                      style={{
-                        fontSize: 10,
-                        fontWeight: 700,
-                        color: '#C9A84C',
-                        border: '1px solid #A65A66',
-                        borderRadius: 2,
-                        padding: '1px 6px',
-                        letterSpacing: 0.5,
-                      }}
-                    >
-                      {defaultAddress.address_type?.toUpperCase() || 'HOME'}
-                    </span>
-                  </div>
-                  <div
-                    style={{ fontSize: 13, color: '#535766', lineHeight: 1.5 }}
-                  >
-                    {defaultAddress.address_line_1}
-                    {defaultAddress.address_line_2
-                      ? `, ${defaultAddress.address_line_2}`
-                      : ''}
-                    ,&nbsp;
-                    {defaultAddress.city}, {defaultAddress.state} —{' '}
-                    <span style={{ fontWeight: 700, color: '#3A332A' }}>
-                      {defaultAddress.pincode}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <MapPin size={15} color='#94969f' />
-                <span style={{ fontSize: 13, color: '#94969f' }}>
-                  No address saved. Add one to continue.
-                </span>
-              </div>
-            )}
-          </div>
+            {defaultAddress ? 'CHANGE' : 'ADD ADDRESS'}
+          </button>
         </div>
         <AddressModal
           open={openAddress}
@@ -522,59 +433,18 @@ function PinBar() {
           selectedAddress={defaultAddress}
           onSelectAddress={handleSelectAddress}
           onDeleteSuccess={handleDeleteSuccess}
+          onAddressAdded={(newAddress) => {
+            setDefaultAddress(newAddress)
+            localStorage.setItem('selected_address', JSON.stringify(newAddress))
+            setShouldRefetch((c) => c + 1)
+          }}
+          customerId={customerId}
         />
       </>
     )
   }
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-      {/* Login prompt for address */}
-      <div
-        style={{
-          background: '#fff',
-          border: '1px solid #e8e0d0',
-          borderRadius: 4,
-          overflow: 'hidden',
-        }}
-      >
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            padding: '10px 16px',
-            borderBottom: '1px solid #f0f0f0',
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <Truck size={14} color='#C9A84C' />
-            <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: 1, color: '#3A332A', textTransform: 'uppercase' }}>
-              Delivery Address
-            </span>
-          </div>
-        </div>
-        <div style={{ padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 12 }}>
-          <MapPin size={18} color='#C9A84C' style={{ flexShrink: 0 }} />
-          <div style={{ flex: 1 }}>
-            <p style={{ margin: 0, fontSize: 13, color: '#555', lineHeight: 1.5 }}>
-              Login to add a delivery address
-            </p>
-          </div>
-          <a
-            href='/login?redirect=/bag'
-            style={{
-              fontSize: 12, fontWeight: 700, color: '#050C1C',
-              background: '#C9A84C', border: 'none', borderRadius: 4,
-              padding: '7px 14px', cursor: 'pointer', textDecoration: 'none',
-              letterSpacing: 0.5, whiteSpace: 'nowrap',
-              fontFamily: "'Playfair Display', Georgia, serif",
-            }}
-          >
-            LOGIN
-          </a>
-        </div>
-      </div>
-
       {/* PIN check */}
       <div
         style={{
@@ -1012,17 +882,14 @@ function CouponPanel() {
     </div>
   )
 }
-function PricePanel() {
+function PricePanel({ onNeedAuth, triggerPay, onTriggerConsumed }) {
   const navigate = useNavigate()
-  const { items, donationAmount, getCouponSavings } = useBagStore()  // ← removed couponSavings
+  const { items, donationAmount, getCouponSavings } = useBagStore()
   const [paymentError, setPaymentError] = useState('')
   const [paymentLoading, setPaymentLoading] = useState(false)
+  const [showEmptyBagPopup, setShowEmptyBagPopup] = useState(false)
 
-  const couponSavings = getCouponSavings()  // ← derived live
-
-  const selectedAddress = JSON.parse(
-    localStorage.getItem('selected_address') || 'null',
-  )
+  const couponSavings = getCouponSavings()
 
   const selected = items.filter((i) => i.selected)
 
@@ -1038,14 +905,16 @@ function PricePanel() {
 
   const discountOnMrp = totalMrp - totalPrice
   const total = totalPrice - couponSavings + donationAmount
-  
+
   const API_BASE = ORDERS_API_BASE
   const { token: authToken, customer: authCustomer } = useAuthStore()
-  const handlePlaceOrder = async () => {
+
+  const handlePlaceOrder = useCallback(async () => {
+    if (items.length === 0) { setShowEmptyBagPopup(true); return }
     if (selected.length === 0) return
 
     if (!authToken || !authCustomer) {
-      navigate('/login?redirect=/bag')
+      onNeedAuth?.('mobile')
       return
     }
 
@@ -1064,14 +933,15 @@ function PricePanel() {
 
       const customerName = customer.full_name || customer.name || 'Customer'
       const customerEmail = customer.email || ''
-      const customerPhone = customer.mobile || customer.phone || ''
+      const customerPhone = customer.mobile || customer.phone || customer.mobile_no || ''
 
       const selectedAddress = JSON.parse(
         localStorage.getItem('selected_address') || 'null',
       )
 
       if (!selectedAddress) {
-        setPaymentError('Please select delivery address')
+        onNeedAuth?.('address')
+        setPaymentLoading(false)
         return
       }
 
@@ -1124,6 +994,15 @@ function PricePanel() {
               },
             )
 
+            // Remove purchased items from bag
+            const { removeItem } = useBagStore.getState()
+            await Promise.allSettled(
+              selected.map((item) =>
+                fetch(`${API_BASE}/bags/delete-bag-item/${item.id}?customer_id=1`, { method: 'DELETE' })
+                  .then(() => removeItem(item.id))
+              )
+            )
+
             setPaymentLoading(false)
 
             navigate('/order-success', {
@@ -1159,7 +1038,17 @@ function PricePanel() {
       console.error(error)
       alert('Unable to start payment')
     }
-  }
+  }, [selected, total, authToken, authCustomer, onNeedAuth, API_BASE, navigate])
+
+  const handlePlaceOrderRef = useRef(handlePlaceOrder)
+  handlePlaceOrderRef.current = handlePlaceOrder
+
+  useEffect(() => {
+    if (triggerPay) {
+      onTriggerConsumed?.()
+      handlePlaceOrderRef.current()
+    }
+  }, [triggerPay])
 
   return (
     <div style={styles.panelCard}>
@@ -1214,10 +1103,50 @@ function PricePanel() {
       <button
         style={styles.placeBtn}
         onClick={handlePlaceOrder}
-        disabled={selected.length === 0 || paymentLoading}
+        disabled={(items.length > 0 && selected.length === 0) || paymentLoading}
       >
         {paymentLoading ? 'PLEASE WAIT...' : 'PLACE ORDER'}
       </button>
+
+      {showEmptyBagPopup && (
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 200,
+          background: 'rgba(0,0,0,0.55)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          padding: 16,
+        }}>
+          <div style={{
+            background: '#fff', borderRadius: 12, maxWidth: 340, width: '100%',
+            padding: '36px 28px', textAlign: 'center',
+            boxShadow: '0 20px 60px rgba(0,0,0,0.25)',
+          }}>
+            <div style={{ fontSize: 44, marginBottom: 12 }}>🛍️</div>
+            <div style={{
+              fontFamily: "'Playfair Display', Georgia, serif",
+              fontSize: 20, fontWeight: 700, color: '#050C1C', marginBottom: 10,
+            }}>
+              Your bag is empty
+            </div>
+            <p style={{ fontSize: 13, color: '#777', lineHeight: 1.7, margin: '0 0 24px' }}>
+              Looks like you haven't added anything yet.<br />
+              Explore our collection and find something you'll love.
+            </p>
+            <button
+              onClick={() => setShowEmptyBagPopup(false)}
+              style={{
+                width: '100%', padding: '11px', borderRadius: 6,
+                background: '#050C1C', color: '#C9A84C',
+                border: '1px solid #C9A84C',
+                fontSize: 13, fontWeight: 700, letterSpacing: 0.5,
+                cursor: 'pointer',
+                fontFamily: "'Playfair Display', Georgia, serif",
+              }}
+            >
+              Continue Shopping
+            </button>
+          </div>
+        </div>
+      )}
 
       {selected.length === 0 && (
         <p
@@ -1375,12 +1304,340 @@ function PriceRow({ label, value, green }) {
   )
 }
 
+// ─── Checkout Drawer ──────────────────────────────────────────────────────────
+
+const drawerInputStyle = {
+  width: '100%', padding: '13px 14px', fontSize: 15,
+  border: '1.5px solid #e0d5c0', borderRadius: 10,
+  outline: 'none', boxSizing: 'border-box', color: '#3A332A',
+  fontFamily: 'inherit',
+}
+
+const drawerBtnStyle = {
+  width: '100%', padding: '14px 0', fontSize: 15, fontWeight: 700,
+  background: '#050C1C', color: '#C9A84C',
+  border: '1px solid #C9A84C', borderRadius: 12,
+  cursor: 'pointer', letterSpacing: 0.5,
+}
+
+function DrawerMobileStep({ msg91Ready, onSent }) {
+  const [phone, setPhone] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+
+  const canSend = phone.length === 10 && msg91Ready
+
+  const handleSend = () => {
+    if (!canSend || loading) return
+    setLoading(true)
+    setError('')
+    window.sendOtp(
+      `91${phone}`,
+      () => { setLoading(false); onSent(phone) },
+      (err) => {
+        setError(typeof err === 'string' ? err : err?.message || 'Failed to send OTP')
+        setLoading(false)
+      }
+    )
+  }
+
+  return (
+    <div>
+      <p style={{ fontSize: 22, fontWeight: 700, margin: '0 0 6px', color: '#3A332A' }}>Enter mobile number</p>
+      <p style={{ fontSize: 13, color: '#888', margin: '0 0 22px' }}>We'll send a 4-digit OTP to verify</p>
+      <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 16 }}>
+        <span style={{
+          padding: '13px 12px', background: '#f7f4ef', border: '1.5px solid #e0d5c0',
+          borderRadius: 10, fontSize: 15, fontWeight: 600, color: '#3A332A', whiteSpace: 'nowrap',
+        }}>+91</span>
+        <input
+          type='tel' inputMode='numeric' maxLength={10} placeholder='10-digit mobile number'
+          value={phone}
+          onChange={e => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
+          onKeyDown={e => e.key === 'Enter' && handleSend()}
+          style={drawerInputStyle}
+          autoFocus
+        />
+      </div>
+      {error && <p style={{ color: '#e53935', fontSize: 12, marginBottom: 10 }}>{error}</p>}
+      <button onClick={handleSend} disabled={!canSend || loading} style={{
+        ...drawerBtnStyle,
+        opacity: !canSend || loading ? 0.5 : 1,
+      }}>
+        {loading ? 'Sending OTP…' : !msg91Ready ? 'Loading…' : 'Send OTP →'}
+      </button>
+    </div>
+  )
+}
+
+function DrawerOtpStep({ phone, onBack, onVerified }) {
+  const [digits, setDigits] = useState(['', '', '', ''])
+  const [seconds, setSeconds] = useState(30)
+  const [canResend, setCanResend] = useState(false)
+  const [verifying, setVerifying] = useState(false)
+  const [resending, setResending] = useState(false)
+  const [error, setError] = useState('')
+  const [success, setSuccess] = useState(false)
+  const refs = [useRef(), useRef(), useRef(), useRef()]
+
+  useEffect(() => { refs[0].current?.focus() }, [])
+  useEffect(() => {
+    if (seconds <= 0) { setCanResend(true); return }
+    const t = setTimeout(() => setSeconds(s => s - 1), 1000)
+    return () => clearTimeout(t)
+  }, [seconds])
+
+  const verifyOtp = useCallback(async (otp) => {
+    setVerifying(true)
+    setError('')
+    try {
+      const widgetData = await new Promise((resolve, reject) => {
+        window.verifyOtp(otp, resolve, (err) => reject(new Error(
+          typeof err === 'string' ? err : err?.message || 'Invalid OTP'
+        )))
+      })
+      const res = await fetch('https://api.vaarria.com/api/auth/msg91-login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mobile_no: phone, access_token: widgetData?.message }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.detail || 'Invalid OTP')
+      setSuccess(true)
+      setTimeout(() => onVerified(data.token, data.customer), 800)
+    } catch (err) {
+      setError(err.message)
+      setDigits(['', '', '', ''])
+      setTimeout(() => refs[0].current?.focus(), 100)
+      setVerifying(false)
+    }
+  }, [phone, onVerified])
+
+  const handleChange = (i, val) => {
+    const v = val.replace(/\D/g, '').slice(-1)
+    const next = [...digits]
+    next[i] = v
+    setDigits(next)
+    if (v && i < 3) refs[i + 1].current?.focus()
+    if (i === 3 && v) verifyOtp(next.join(''))
+  }
+
+  const handleKeyDown = (i, e) => {
+    if (e.key === 'Backspace' && !digits[i] && i > 0) refs[i - 1].current?.focus()
+  }
+
+  const mm = String(Math.floor(seconds / 60)).padStart(2, '0')
+  const ss = String(seconds % 60).padStart(2, '0')
+
+  return (
+    <div style={{ textAlign: 'center' }}>
+      <p style={{ fontSize: 22, fontWeight: 700, margin: '0 0 6px', color: '#3A332A' }}>Verify OTP</p>
+      <p style={{ fontSize: 13, color: '#888', margin: '0 0 24px' }}>Sent to +91 {phone}</p>
+      <div style={{ display: 'flex', gap: 12, justifyContent: 'center', marginBottom: 16 }}>
+        {digits.map((d, i) => (
+          <input
+            key={i} ref={refs[i]} type='tel' inputMode='numeric' maxLength={1} value={d}
+            disabled={verifying || success}
+            onChange={e => handleChange(i, e.target.value)}
+            onKeyDown={e => handleKeyDown(i, e)}
+            style={{
+              width: 52, height: 56, textAlign: 'center', fontSize: 24, fontWeight: 700,
+              border: success ? '2px solid #2e7d32' : error ? '2px solid #e53935' : '1.5px solid #e0d5c0',
+              borderRadius: 10, outline: 'none',
+              background: success ? '#f1f8f1' : error ? '#fff5f5' : '#fff',
+              color: '#3A332A', transition: 'border 0.2s',
+            }}
+          />
+        ))}
+      </div>
+      {error && <p style={{ color: '#e53935', fontSize: 12, marginBottom: 10 }}>{error}</p>}
+      {success && <p style={{ color: '#2e7d32', fontSize: 13, marginBottom: 10, fontWeight: 600 }}>✓ Verified! Setting up your account…</p>}
+      {!success && (
+        <div style={{ fontSize: 13, color: '#888', marginBottom: 16 }}>
+          {canResend ? (
+            <button disabled={resending} onClick={() => {
+              setResending(true)
+              setError('')
+              setDigits(['', '', '', ''])
+              window.retryOtp('11', () => {
+                setCanResend(false); setSeconds(30); setResending(false)
+                refs[0].current?.focus()
+              }, (err) => {
+                setError(typeof err === 'string' ? err : 'Could not resend')
+                setResending(false)
+              })
+            }} style={{ background: 'none', border: 'none', color: '#C9A84C', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
+              {resending ? 'Sending…' : 'Resend OTP'}
+            </button>
+          ) : <>Resend in <strong>{mm}:{ss}</strong></>}
+        </div>
+      )}
+      {!success && (
+        <button onClick={onBack} style={{ background: 'none', border: 'none', color: '#888', fontSize: 12, cursor: 'pointer' }}>
+          ← Change number
+        </button>
+      )}
+    </div>
+  )
+}
+
+function DrawerAddressStep({ onSaved }) {
+  const { customer } = useAuthStore()
+  const [name, setName] = useState(customer?.name || '')
+  const [pincode, setPincode] = useState('')
+  const [city, setCity] = useState('')
+  const [state, setState] = useState('')
+  const [houseNo, setHouseNo] = useState('')
+  const [pinLoading, setPinLoading] = useState(false)
+  const [pinError, setPinError] = useState('')
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
+
+  const handlePincode = async (val) => {
+    const p = val.replace(/\D/g, '').slice(0, 6)
+    setPincode(p)
+    setCity(''); setState(''); setPinError('')
+    if (p.length === 6) {
+      setPinLoading(true)
+      try {
+        const details = await fetchPinDetails(p)
+        setCity(details.city); setState(details.state)
+      } catch (e) {
+        setPinError(e.message)
+      } finally {
+        setPinLoading(false)
+      }
+    }
+  }
+
+  const handleSave = async () => {
+    if (!name.trim()) { setError('Please enter your name'); return }
+    if (!pincode || pincode.length < 6) { setError('Please enter a valid pincode'); return }
+    if (!city) { setError('Pincode not found — please check and retry'); return }
+    if (!houseNo.trim()) { setError('Please enter your house / flat number'); return }
+    if (!customer?.customer_id) { setError('Session error — please refresh'); return }
+    try {
+      setSaving(true)
+      const res = await fetch(`${ORDERS_API_BASE}/addresses`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          customer_id: customer.customer_id,
+          full_name: name,
+          mobile_no: customer.mobile_no,
+          address_line_1: houseNo,
+          address_line_2: '',
+          landmark: '',
+          city,
+          state,
+          country: 'India',
+          pincode,
+          address_type: 'HOME',
+          is_default: true,
+        }),
+      })
+      if (!res.ok) throw new Error('Failed to save address')
+      const data = await res.json()
+      localStorage.setItem('selected_address', JSON.stringify(data))
+      onSaved()
+    } catch (e) {
+      setError(e.message)
+      setSaving(false)
+    }
+  }
+
+  return (
+    <div>
+      <p style={{ fontSize: 22, fontWeight: 700, margin: '0 0 6px', color: '#3A332A' }}>Delivery address</p>
+      <p style={{ fontSize: 13, color: '#888', margin: '0 0 20px' }}>Just 3 quick details</p>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <input placeholder='Your full name' value={name} onChange={e => setName(e.target.value)} style={drawerInputStyle} autoFocus />
+        <div>
+          <input
+            placeholder='PIN code (6 digits)' inputMode='numeric' maxLength={6}
+            value={pincode} onChange={e => handlePincode(e.target.value)}
+            style={drawerInputStyle}
+          />
+          {pinLoading && <p style={{ fontSize: 12, color: '#888', marginTop: 4 }}>Looking up pincode…</p>}
+          {city && !pinLoading && <p style={{ fontSize: 12, color: '#2e7d32', marginTop: 4 }}>✓ {city}, {state}</p>}
+          {pinError && <p style={{ fontSize: 12, color: '#e53935', marginTop: 4 }}>{pinError}</p>}
+        </div>
+        <input placeholder='House / Flat / Street' value={houseNo} onChange={e => setHouseNo(e.target.value)} style={drawerInputStyle} />
+      </div>
+      {error && <p style={{ color: '#e53935', fontSize: 12, marginTop: 10 }}>{error}</p>}
+      <button onClick={handleSave} disabled={saving || !city} style={{ ...drawerBtnStyle, marginTop: 24, opacity: saving || !city ? 0.6 : 1 }}>
+        {saving ? 'Saving…' : 'Confirm & Place Order →'}
+      </button>
+    </div>
+  )
+}
+
+function CheckoutDrawer({ open, initialStep, onClose, onSuccess }) {
+  const [step, setStep] = useState(initialStep || 'mobile')
+  const [phone, setPhone] = useState('')
+  const msg91Ready = useBagMsg91()
+  const { login: storeLogin } = useAuthStore()
+
+  useEffect(() => {
+    if (open) { setStep(initialStep || 'mobile'); setPhone('') }
+  }, [open, initialStep])
+
+  if (!open) return null
+
+  const steps = initialStep === 'address' ? ['address'] : ['mobile', 'otp', 'address']
+  const currentIdx = steps.indexOf(step)
+
+  return (
+    <div style={{ position: 'fixed', inset: 0, zIndex: 9000, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
+      <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.52)' }} onClick={onClose} />
+      <div style={{
+        position: 'relative', zIndex: 1, width: '100%', maxWidth: 480,
+        background: '#fff', borderRadius: '20px 20px 0 0',
+        padding: '28px 24px 44px', animation: 'drawerUp 0.28s ease',
+      }}>
+        <div style={{ display: 'flex', gap: 6, marginBottom: 28 }}>
+          {steps.map((s, i) => (
+            <div key={s} style={{ height: 3, flex: 1, borderRadius: 2, background: i <= currentIdx ? '#C9A84C' : '#eee', transition: 'background 0.3s' }} />
+          ))}
+        </div>
+        <button onClick={onClose} style={{ position: 'absolute', top: 18, right: 18, background: 'none', border: 'none', cursor: 'pointer', padding: 4 }}>
+          <X size={20} color='#aaa' />
+        </button>
+        {step === 'mobile' && (
+          <DrawerMobileStep msg91Ready={msg91Ready} onSent={p => { setPhone(p); setStep('otp') }} />
+        )}
+        {step === 'otp' && (
+          <DrawerOtpStep
+            phone={phone}
+            onBack={() => setStep('mobile')}
+            onVerified={(token, cust) => { storeLogin(token, cust); setStep('address') }}
+          />
+        )}
+        {step === 'address' && (
+          <DrawerAddressStep onSaved={onSuccess} />
+        )}
+      </div>
+      <style>{`@keyframes drawerUp { from { transform: translateY(100%); } to { transform: translateY(0); } }`}</style>
+    </div>
+  )
+}
+
 // ─── Main BagPage ─────────────────────────────────────────────────────────────
 function BagPage() {
   const { items, toggleSelected, setItems } = useBagStore()
+  const { token, customer } = useAuthStore()
+  const isLoggedIn = !!token && !!customer
   const [loading, setLoading] = useState(true)
+  const [drawer, setDrawer] = useState({ open: false, step: 'mobile' })
+  const [triggerPay, setTriggerPay] = useState(false)
   const selectedCount = items.filter((i) => i.selected).length
   const allSelected = selectedCount === items.length
+
+  const handleNeedAuth = (step) => setDrawer({ open: true, step })
+  const handleDrawerSuccess = () => {
+    setDrawer({ open: false, step: 'mobile' })
+    setTriggerPay(true)
+  }
 
   useEffect(() => {
     const fetchBagItems = async () => {
@@ -1507,6 +1764,29 @@ function BagPage() {
           ) : (
             items.map((item) => <ItemCard key={item.id} item={item} />)
           )}
+
+          {!isLoggedIn && (
+            <div
+              onClick={() => handleNeedAuth('mobile')}
+              style={{
+                background: '#fff', border: '1px solid #ebecef',
+                borderRadius: 4, padding: '12px 16px', marginTop: 4,
+                display: 'flex', alignItems: 'center', gap: 10,
+                cursor: 'pointer',
+              }}
+            >
+              <Truck size={14} color='#C9A84C' style={{ flexShrink: 0 }} />
+              <span style={{ flex: 1, fontSize: 13, color: '#94969f' }}>
+                Where should we deliver?
+              </span>
+              <span style={{
+                fontSize: 12, fontWeight: 600, color: '#C9A84C',
+                letterSpacing: 0.3, whiteSpace: 'nowrap',
+              }}>
+                Enter phone →
+              </span>
+            </div>
+          )}
         </div>
 
         <div style={styles.rightCol}>
@@ -1518,11 +1798,21 @@ function BagPage() {
           ) : (
             <>
               <CouponPanel />
-              <PricePanel />
+              <PricePanel
+                onNeedAuth={handleNeedAuth}
+                triggerPay={triggerPay}
+                onTriggerConsumed={() => setTriggerPay(false)}
+              />
             </>
           )}
         </div>
       </div>
+      <CheckoutDrawer
+        open={drawer.open}
+        initialStep={drawer.step}
+        onClose={() => setDrawer({ open: false, step: 'mobile' })}
+        onSuccess={handleDrawerSuccess}
+      />
     </div>
   )
 }

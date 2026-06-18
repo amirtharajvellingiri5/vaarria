@@ -27,6 +27,8 @@ export default function AddressModal({
   selectedAddress = null,
   onSelectAddress,
   onDeleteSuccess,
+  onAddressAdded,
+  customerId,
 }) {
   const [showAddAddressPopup, setShowAddAddressPopup] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -38,7 +40,7 @@ export default function AddressModal({
     try {
       setDeletingId(addressId)
       const response = await fetch(
-        `${ORDERS_API_BASE}/addresses/${addressId}?customer_id=1`,
+        `${ORDERS_API_BASE}/addresses/${addressId}?customer_id=${customerId}`,
         { method: 'DELETE' },
       )
       if (!response.ok) throw new Error('Failed to delete address')
@@ -68,12 +70,15 @@ export default function AddressModal({
       const response = await fetch(`${ORDERS_API_BASE}/addresses`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ customer_id: 1, ...form }),
+        body: JSON.stringify({ customer_id: customerId, ...form }),
       })
       if (!response.ok) throw new Error('Failed to add address')
+      const { address_id } = await response.json()
+      const newAddress = { ...form, address_id, customer_id: customerId }
       setShowSuccess(true)
       setShowAddAddressPopup(false)
-      setTimeout(() => { setShowSuccess(false); onClose() }, 1500)
+      onAddressAdded?.(newAddress)
+      setTimeout(() => setShowSuccess(false), 1500)
       setForm({
         full_name: '', mobile_no: '', address_line_1: '', address_line_2: '',
         landmark: '', city: '', state: '', country: 'India',
