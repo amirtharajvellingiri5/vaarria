@@ -5,7 +5,6 @@ import {
   ShoppingBag,
   Search,
   ChevronDown,
-  ChevronRight,
   Star,
   RotateCcw,
   Truck,
@@ -14,20 +13,24 @@ import {
   CheckCircle2,
   XCircle,
   Clock,
-  Filter,
   ArrowLeft,
   Download,
   MessageCircle,
   RefreshCw,
   AlertCircle,
+  Pencil,
 } from 'lucide-react'
 import axios from 'axios'
-import logo from './assets/logo.jpg'
+const logo = '/vlogo.png'
 import './constants/global.css'
+
+// ─── Brand ────────────────────────────────────────────────────────────────────
+
+const GOLD = '#C9A84C'
+const NAVY = '#050C1C'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-// Orders handler (DynamoDB-backed)
 const ORDERS_API_BASE =
   'https://zq0dbjycx6.execute-api.ap-south-1.amazonaws.com/prod'
 const CDN = 'https://cdn.vaarria.com/app/images/'
@@ -44,8 +47,6 @@ const openWhatsAppSupport = (orderId) => {
   window.open(`https://wa.me/${SUPPORT_WHATSAPP}?text=${text}`, '_blank')
 }
 
-// Opens a printable invoice in a new window — the browser's print dialog
-// lets the user save it as PDF
 const generateInvoice = (order) => {
   const win = window.open('', '_blank')
   if (!win) return
@@ -67,23 +68,27 @@ const generateInvoice = (order) => {
 <head>
   <title>Invoice-${order.id}</title>
   <style>
-    body { font-family: 'Segoe UI', Arial, sans-serif; color: #3A332A; padding: 40px; }
-    .brand { color: #A65A66; font-size: 28px; font-weight: 800; margin: 0; }
+    body { font-family: 'Segoe UI', Arial, sans-serif; color: #050C1C; padding: 40px; }
+    .brand { color: #C9A84C; font-size: 28px; font-weight: 800; margin: 0; font-family: 'Playfair Display', Georgia, serif; }
     .muted { color: #94969f; font-size: 12px; }
     h2 { font-size: 16px; margin: 24px 0 4px; }
     table { width: 100%; border-collapse: collapse; margin-top: 16px; font-size: 13px; }
-    th { text-align: left; border-bottom: 2px solid #3A332A; padding: 8px 6px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; }
+    th { text-align: left; border-bottom: 2px solid #050C1C; padding: 8px 6px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; }
     th:nth-child(2) { text-align: center; }
     th:nth-child(3), th:nth-child(4) { text-align: right; }
     td { border-bottom: 1px solid #eee; padding: 8px 6px; }
     .totals { margin-top: 16px; margin-left: auto; width: 260px; font-size: 13px; }
     .totals div { display: flex; justify-content: space-between; padding: 4px 0; }
-    .totals .grand { border-top: 1px solid #3A332A; font-weight: 700; margin-top: 4px; padding-top: 8px; }
+    .totals .grand { border-top: 1px solid #C9A84C; font-weight: 700; margin-top: 4px; padding-top: 8px; color: #C9A84C; }
     .footer { margin-top: 40px; font-size: 11px; color: #94969f; text-align: center; }
   </style>
 </head>
 <body>
-  <p class="brand">aarria</p>
+  <div style="background:#050C1C;border-radius:10px;padding:20px 24px 16px;margin-bottom:12px;text-align:center;border:1px solid #C9A84C44;">
+    <img src="${window.location.origin}/vlogo__1_-removebg-preview.png" alt="Vaarria" style="height:56px;object-fit:contain;margin-bottom:6px;" onerror="this.style.display='none';this.nextElementSibling.style.display='block'"/>
+    <div style="display:none;font-size:22px;font-weight:800;color:#C9A84C;font-family:'Playfair Display',Georgia,serif;letter-spacing:0.2em;">VAARRIA</div>
+    <div style="font-size:8px;color:#C9A84C88;letter-spacing:0.18em;text-transform:uppercase;">WHERE ELEGANCE FINDS FORM</div>
+  </div>
   <p class="muted">www.vaarria.com</p>
 
   <h2>Invoice</h2>
@@ -107,12 +112,15 @@ const generateInvoice = (order) => {
 
   <div class="totals">
     <div><span>MRP Total</span><span>₹${Number(order.mrp).toLocaleString('en-IN')}</span></div>
-    <div><span>Discount</span><span>-₹${Number(order.discount).toLocaleString('en-IN')}</span></div>
+    <div style="color:#16a34a"><span>Discount</span><span>-₹${Number(order.discount).toLocaleString('en-IN')}</span></div>
     <div><span>Delivery</span><span>${order.delivery === 0 ? 'FREE' : `₹${order.delivery}`}</span></div>
     <div class="grand"><span>Total Paid</span><span>₹${Number(order.total).toLocaleString('en-IN')}</span></div>
   </div>
 
-  <p class="footer">Thank you for shopping with Aarria.</p>
+  <div style="background:#050C1C;border-radius:8px;padding:16px 20px;margin-top:32px;text-align:center;border:1px solid #C9A84C33;">
+    <div style="font-size:13px;color:#C9A84C;font-family:'Playfair Display',Georgia,serif;font-style:italic;margin-bottom:4px;">We truly appreciate your trust in us.</div>
+    <div style="font-size:10px;color:#c8c8d4;">♥ With love, The Vaarria Team</div>
+  </div>
 </body>
 </html>`)
   win.document.close()
@@ -121,13 +129,13 @@ const generateInvoice = (order) => {
 }
 
 const ORDER_STATUSES = {
-  PLACED:    { label: 'Order Placed',  color: '#7c5cbf', bg: '#f3eeff', icon: Package },
-  CONFIRMED: { label: 'Confirmed',     color: '#0a7ea4', bg: '#e6f4fb', icon: CheckCircle2 },
-  SHIPPED:   { label: 'Shipped',       color: '#d97706', bg: '#fef3c7', icon: Truck },
+  PLACED:    { label: 'Order Placed',     color: '#7c5cbf', bg: '#f3eeff', icon: Package },
+  CONFIRMED: { label: 'Confirmed',        color: '#0a7ea4', bg: '#e6f4fb', icon: CheckCircle2 },
+  SHIPPED:   { label: 'Shipped',          color: GOLD,      bg: '#fdf8ec', icon: Truck },
   OUT:       { label: 'Out for Delivery', color: '#0891b2', bg: '#e0f7fa', icon: MapPin },
-  DELIVERED: { label: 'Delivered',     color: '#16a34a', bg: '#dcfce7', icon: CheckCircle2 },
-  CANCELLED: { label: 'Cancelled',     color: '#dc2626', bg: '#fee2e2', icon: XCircle },
-  RETURNED:  { label: 'Returned',      color: '#6b7280', bg: '#f3f4f6', icon: RotateCcw },
+  DELIVERED: { label: 'Delivered',        color: '#16a34a', bg: '#dcfce7', icon: CheckCircle2 },
+  CANCELLED: { label: 'Cancelled',        color: '#dc2626', bg: '#fee2e2', icon: XCircle },
+  RETURNED:  { label: 'Returned',         color: '#6b7280', bg: '#f3f4f6', icon: RotateCcw },
 }
 
 const FILTER_OPTIONS = [
@@ -156,7 +164,7 @@ const fetchOrders = async () => {
   }))
 }
 
-// ─── Timeline Component ────────────────────────────────────────────────────────
+// ─── Timeline ─────────────────────────────────────────────────────────────────
 
 function OrderTimeline({ status }) {
   const steps = ['PLACED', 'CONFIRMED', 'SHIPPED', 'OUT', 'DELIVERED']
@@ -169,7 +177,7 @@ function OrderTimeline({ status }) {
     return (
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '12px 0' }}>
         <Icon size={16} color={meta.color} />
-        <span style={{ fontSize: 13, color: meta.color, fontWeight: 500 }}>{meta.label}</span>
+        <span style={{ fontSize: 13, color: meta.color, fontWeight: 600 }}>{meta.label}</span>
       </div>
     )
   }
@@ -180,27 +188,26 @@ function OrderTimeline({ status }) {
         const meta = ORDER_STATUSES[step]
         const done = i <= idx
         const active = i === idx
-        // current status in its own colour, completed steps in green
-        const circleBg = active ? meta.color : done ? '#16a34a' : '#f0f0f0'
+        const circleBg = active ? NAVY : done ? '#16a34a' : '#f0f0f0'
         return (
           <React.Fragment key={step}>
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: 64 }}>
               <div style={{
                 width: 28, height: 28, borderRadius: '50%',
                 background: circleBg,
-                border: active ? `2px solid ${meta.color}` : done ? 'none' : '2px solid #e0e0e0',
+                border: active ? `2px solid ${GOLD}` : done ? 'none' : '2px solid #e0e0e0',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 transition: 'all 0.2s',
-                boxShadow: active ? `0 0 0 4px ${meta.bg}` : 'none',
+                boxShadow: active ? `0 0 0 4px ${GOLD}22` : 'none',
               }}>
                 {done
-                  ? <CheckCircle2 size={14} color="#fff" strokeWidth={2.5} />
+                  ? <CheckCircle2 size={14} color={active ? GOLD : '#fff'} strokeWidth={2.5} />
                   : <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#ccc' }} />
                 }
               </div>
               <span style={{
                 fontSize: 10, marginTop: 5,
-                color: active ? meta.color : done ? '#16a34a' : '#999',
+                color: active ? NAVY : done ? '#16a34a' : '#999',
                 fontWeight: active ? 700 : done ? 500 : 400, textAlign: 'center', lineHeight: 1.3,
                 whiteSpace: 'nowrap',
               }}>{meta.label}</span>
@@ -219,7 +226,7 @@ function OrderTimeline({ status }) {
   )
 }
 
-// ─── Cancel Confirmation Modal ────────────────────────────────────────────────
+// ─── Cancel Modal ─────────────────────────────────────────────────────────────
 
 function CancelOrderModal({ order, onClose, onCancelled }) {
   const [cancelling, setCancelling] = useState(false)
@@ -244,30 +251,34 @@ function CancelOrderModal({ order, onClose, onCancelled }) {
       onClick={(e) => e.target === e.currentTarget && !cancelling && onClose()}
       style={{
         position: 'fixed', inset: 0, zIndex: 100,
-        background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(2px)',
+        background: 'rgba(5,12,28,0.6)', backdropFilter: 'blur(3px)',
         display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16,
       }}
     >
       <div style={{
-        width: '100%', maxWidth: 380, background: '#fff', borderRadius: 12,
-        padding: '22px 22px 18px', boxShadow: '0 12px 40px rgba(0,0,0,0.18)',
+        width: '100%', maxWidth: 380, background: '#fff', borderRadius: 14,
+        padding: '24px 24px 20px', boxShadow: '0 20px 60px rgba(5,12,28,0.2)',
+        border: '1px solid #e8e0d0',
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
           <div style={{
-            width: 36, height: 36, borderRadius: '50%', background: '#fee2e2',
+            width: 38, height: 38, borderRadius: '50%', background: '#fee2e2',
             display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
           }}>
             <XCircle size={18} color="#dc2626" />
           </div>
-          <h3 style={{ fontSize: 15, fontWeight: 700, color: '#3A332A', margin: 0 }}>
+          <h3 style={{
+            fontSize: 16, fontWeight: 700, color: NAVY, margin: 0,
+            fontFamily: "'Playfair Display', Georgia, serif",
+          }}>
             Cancel this order?
           </h3>
         </div>
 
-        <p style={{ fontSize: 13, color: '#555', margin: '0 0 6px' }}>
+        <p style={{ fontSize: 13, color: '#444', margin: '0 0 6px' }}>
           Order <b>#{order.id}</b> · {order.items.length} item{order.items.length > 1 ? 's' : ''} · ₹{order.total.toLocaleString('en-IN')}
         </p>
-        <p style={{ fontSize: 12, color: '#94969f', margin: '0 0 16px' }}>
+        <p style={{ fontSize: 12, color: '#94969f', margin: '0 0 18px' }}>
           This action cannot be undone. Any payment made will be refunded to the original payment method.
         </p>
 
@@ -282,9 +293,9 @@ function CancelOrderModal({ order, onClose, onCancelled }) {
             onClick={onClose}
             disabled={cancelling}
             style={{
-              padding: '9px 18px', borderRadius: 8, cursor: 'pointer',
-              border: '1.5px solid #d0d0d0', background: '#fff',
-              fontSize: 13, fontWeight: 600, color: '#555',
+              padding: '10px 20px', borderRadius: 8, cursor: 'pointer',
+              border: `1.5px solid ${GOLD}66`, background: '#fff',
+              fontSize: 13, fontWeight: 600, color: NAVY,
               opacity: cancelling ? 0.5 : 1,
             }}
           >
@@ -294,14 +305,229 @@ function CancelOrderModal({ order, onClose, onCancelled }) {
             onClick={handleConfirm}
             disabled={cancelling}
             style={{
-              padding: '9px 18px', borderRadius: 8, cursor: 'pointer',
+              padding: '10px 20px', borderRadius: 8, cursor: 'pointer',
               border: 'none', background: '#dc2626', color: '#fff',
               fontSize: 13, fontWeight: 600,
               opacity: cancelling ? 0.7 : 1,
             }}
           >
-            {cancelling ? 'Cancelling…' : 'Yes, Cancel Order'}
+            {cancelling ? 'Cancelling…' : 'Yes, Cancel'}
           </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ─── Edit Address Modal ───────────────────────────────────────────────────────
+
+const ADDR_FIELDS_META = [
+  { key: 'full_name',      label: 'Full Name',       required: true },
+  { key: 'mobile_no',      label: 'Mobile Number',   required: true },
+  { key: 'address_line_1', label: 'Address Line 1',  required: true },
+  { key: 'address_line_2', label: 'Address Line 2',  required: false },
+  { key: 'landmark',       label: 'Landmark',        required: false },
+  { key: 'city',           label: 'City',            required: true },
+  { key: 'state',          label: 'State',           required: true },
+  { key: 'pincode',        label: 'Pincode',         required: true },
+]
+
+function EditAddressModal({ order, onClose, onSaved }) {
+  const addr = order.address || {}
+  const [form, setForm] = useState({
+    full_name:      addr.name   || '',
+    mobile_no:      addr.phone  || '',
+    address_line_1: addr.line1  || '',
+    address_line_2: addr.line2  || '',
+    landmark:       addr.landmark || '',
+    city:           addr.city   || '',
+    state:          addr.state  || '',
+    pincode:        addr.pin    || '',
+    address_type:   addr.address_type || '',
+    country:        'India',
+    is_default:     false,
+  })
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
+
+  const set = (key) => (e) => setForm(f => ({ ...f, [key]: e.target.value }))
+
+  const handleSave = async () => {
+    const missing = ADDR_FIELDS_META.filter(f => f.required && !form[f.key]?.trim())
+    if (missing.length) {
+      setError(`Please fill: ${missing.map(f => f.label).join(', ')}`)
+      return
+    }
+    if (!order.address_id) {
+      setError('Address ID not available — please redeploy orders_handler and refresh.')
+      return
+    }
+    try {
+      setSaving(true)
+      setError('')
+      const customerId = getCustomerId()
+      await axios.put(
+        `${ORDERS_API_BASE}/addresses/${order.address_id}`,
+        { ...form, customer_id: customerId },
+      )
+      onSaved()
+    } catch (err) {
+      const detail = err.response?.data?.detail
+      const errorMsg = Array.isArray(detail)
+        ? detail.map(e => e.msg || String(e)).join(', ')
+        : typeof detail === 'string' ? detail : 'Failed to update address'
+      setError(errorMsg)
+      setSaving(false)
+    }
+  }
+
+  const inputStyle = {
+    width: '100%', boxSizing: 'border-box',
+    border: `1.5px solid #e8e0d0`, borderRadius: 8,
+    padding: '10px 12px', fontSize: 13, color: NAVY,
+    outline: 'none', background: '#fff', fontFamily: 'inherit',
+  }
+
+  return (
+    <div
+      onClick={(e) => e.target === e.currentTarget && !saving && onClose()}
+      style={{
+        position: 'fixed', inset: 0, zIndex: 200,
+        background: 'rgba(5,12,28,0.55)', backdropFilter: 'blur(3px)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16,
+      }}
+    >
+      <div style={{
+        width: '100%', maxWidth: 480, background: '#fff', borderRadius: 16,
+        boxShadow: '0 24px 64px rgba(5,12,28,0.22)', border: '1px solid #e8e0d0',
+        maxHeight: '90vh', overflowY: 'auto',
+      }}>
+        {/* Header */}
+        <div style={{
+          padding: '18px 22px 14px',
+          borderBottom: `1px solid ${GOLD}22`,
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          position: 'sticky', top: 0, background: '#fff', zIndex: 1,
+        }}>
+          <div>
+            <h3 style={{
+              fontSize: 17, fontWeight: 700, color: NAVY, margin: 0,
+              fontFamily: "'Playfair Display', Georgia, serif",
+            }}>
+              Edit Delivery Address
+            </h3>
+            <p style={{ fontSize: 11, color: '#94969f', margin: '3px 0 0' }}>
+              Order #{order.id}
+            </p>
+          </div>
+          <button
+            onClick={onClose}
+            style={{
+              background: 'none', border: 'none', cursor: 'pointer',
+              color: '#aaa', fontSize: 20, lineHeight: 1, padding: 4,
+            }}
+          >
+            ×
+          </button>
+        </div>
+
+        {/* Form */}
+        <div style={{ padding: '18px 22px 22px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+          {/* 2-col grid for name + mobile */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+            {['full_name', 'mobile_no'].map(key => {
+              const meta = ADDR_FIELDS_META.find(f => f.key === key)
+              return (
+                <div key={key}>
+                  <label style={{ fontSize: 11, fontWeight: 600, color: '#888', textTransform: 'uppercase', letterSpacing: '0.08em', display: 'block', marginBottom: 5 }}>
+                    {meta.label}{meta.required && <span style={{ color: GOLD }}> *</span>}
+                  </label>
+                  <input
+                    value={form[key]}
+                    onChange={set(key)}
+                    style={inputStyle}
+                    onFocus={e => { e.target.style.borderColor = GOLD; e.target.style.boxShadow = `0 0 0 3px ${GOLD}18` }}
+                    onBlur={e => { e.target.style.borderColor = '#e8e0d0'; e.target.style.boxShadow = 'none' }}
+                  />
+                </div>
+              )
+            })}
+          </div>
+
+          {/* Remaining fields */}
+          {['address_line_1', 'address_line_2', 'landmark'].map(key => {
+            const meta = ADDR_FIELDS_META.find(f => f.key === key)
+            return (
+              <div key={key}>
+                <label style={{ fontSize: 11, fontWeight: 600, color: '#888', textTransform: 'uppercase', letterSpacing: '0.08em', display: 'block', marginBottom: 5 }}>
+                  {meta.label}{meta.required && <span style={{ color: GOLD }}> *</span>}
+                </label>
+                <input
+                  value={form[key]}
+                  onChange={set(key)}
+                  style={inputStyle}
+                  onFocus={e => { e.target.style.borderColor = GOLD; e.target.style.boxShadow = `0 0 0 3px ${GOLD}18` }}
+                  onBlur={e => { e.target.style.borderColor = '#e8e0d0'; e.target.style.boxShadow = 'none' }}
+                />
+              </div>
+            )
+          })}
+
+          {/* 3-col grid for city / state / pincode */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
+            {['city', 'state', 'pincode'].map(key => {
+              const meta = ADDR_FIELDS_META.find(f => f.key === key)
+              return (
+                <div key={key}>
+                  <label style={{ fontSize: 11, fontWeight: 600, color: '#888', textTransform: 'uppercase', letterSpacing: '0.08em', display: 'block', marginBottom: 5 }}>
+                    {meta.label}{meta.required && <span style={{ color: GOLD }}> *</span>}
+                  </label>
+                  <input
+                    value={form[key]}
+                    onChange={set(key)}
+                    style={inputStyle}
+                    onFocus={e => { e.target.style.borderColor = GOLD; e.target.style.boxShadow = `0 0 0 3px ${GOLD}18` }}
+                    onBlur={e => { e.target.style.borderColor = '#e8e0d0'; e.target.style.boxShadow = 'none' }}
+                  />
+                </div>
+              )
+            })}
+          </div>
+
+          {error && (
+            <p style={{ fontSize: 12, color: '#dc2626', display: 'flex', alignItems: 'center', gap: 6, margin: 0 }}>
+              <AlertCircle size={13} /> {error}
+            </p>
+          )}
+
+          <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 4 }}>
+            <button
+              onClick={onClose}
+              disabled={saving}
+              style={{
+                padding: '10px 22px', borderRadius: 8, cursor: 'pointer',
+                border: `1.5px solid ${GOLD}66`, background: '#fff',
+                fontSize: 13, fontWeight: 600, color: NAVY,
+                opacity: saving ? 0.5 : 1,
+              }}
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleSave}
+              disabled={saving}
+              style={{
+                padding: '10px 28px', borderRadius: 8, cursor: 'pointer',
+                border: `1px solid ${GOLD}`, background: saving ? '#e8e0d0' : NAVY,
+                fontSize: 13, fontWeight: 700, color: GOLD,
+                fontFamily: "'Playfair Display', Georgia, serif",
+                opacity: saving ? 0.8 : 1,
+                transition: 'all 0.15s',
+              }}
+            >
+              {saving ? 'Saving…' : 'Save Address'}
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -313,6 +539,7 @@ function CancelOrderModal({ order, onClose, onCancelled }) {
 function OrderCard({ order }) {
   const [expanded, setExpanded] = useState(false)
   const [showCancelModal, setShowCancelModal] = useState(false)
+  const [showEditAddress, setShowEditAddress] = useState(false)
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const meta = ORDER_STATUSES[order.status] || ORDER_STATUSES.PLACED
@@ -323,31 +550,49 @@ function OrderCard({ order }) {
     queryClient.invalidateQueries({ queryKey: ['orders'] })
   }
 
+  const handleAddressSaved = () => {
+    setShowEditAddress(false)
+    queryClient.invalidateQueries({ queryKey: ['orders'] })
+  }
+
   return (
-    <div style={{
-      background: '#fff',
-      border: '1px solid #f0f0f0',
-      borderRadius: 12,
-      marginBottom: 12,
-      overflow: 'hidden',
-      boxShadow: '0 1px 4px rgba(0,0,0,0.05)',
-      transition: 'box-shadow 0.2s',
-    }}
-      onMouseEnter={e => e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,0.09)'}
-      onMouseLeave={e => e.currentTarget.style.boxShadow = '0 1px 4px rgba(0,0,0,0.05)'}
+    <div
+      style={{
+        background: '#fff',
+        border: '1px solid #e8e0d0',
+        borderRadius: 14,
+        marginBottom: 14,
+        overflow: 'hidden',
+        boxShadow: '0 2px 8px rgba(5,12,28,0.05)',
+        transition: 'box-shadow 0.2s, transform 0.2s',
+      }}
+      onMouseEnter={e => {
+        e.currentTarget.style.boxShadow = '0 6px 24px rgba(5,12,28,0.1)'
+        e.currentTarget.style.transform = 'translateY(-1px)'
+      }}
+      onMouseLeave={e => {
+        e.currentTarget.style.boxShadow = '0 2px 8px rgba(5,12,28,0.05)'
+        e.currentTarget.style.transform = 'translateY(0)'
+      }}
     >
+      {/* Gold-navy gradient accent strip */}
+      <div style={{ height: 3, background: `linear-gradient(90deg, ${NAVY}, ${GOLD})` }} />
+
       {/* Header */}
       <div
         style={{ padding: '14px 18px', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}
         onClick={() => setExpanded(p => !p)}
       >
         <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-            <span style={{ fontSize: 13, fontWeight: 600, color: '#3A332A' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 5 }}>
+            <span style={{
+              fontSize: 13, fontWeight: 700, color: NAVY,
+              fontFamily: "'Playfair Display', Georgia, serif",
+            }}>
               Order #{order.id}
             </span>
             <span style={{
-              fontSize: 11, fontWeight: 600, padding: '2px 8px', borderRadius: 20,
+              fontSize: 11, fontWeight: 600, padding: '2px 9px', borderRadius: 20,
               background: meta.bg, color: meta.color,
               display: 'flex', alignItems: 'center', gap: 4,
             }}>
@@ -356,38 +601,37 @@ function OrderCard({ order }) {
             </span>
           </div>
           <p style={{ fontSize: 12, color: '#94969f', margin: 0 }}>
-            {order.items.length} item{order.items.length > 1 ? 's' : ''} · ₹{order.total.toLocaleString('en-IN')} · {order.date}
+            {order.items.length} item{order.items.length > 1 ? 's' : ''} ·{' '}
+            <span style={{ color: GOLD, fontWeight: 600 }}>₹{order.total.toLocaleString('en-IN')}</span>
+            {' '}· {order.date}
           </p>
         </div>
         <button
-          onClick={(e) => {
-            e.stopPropagation()
-            setExpanded(p => !p)
-          }}
+          onClick={(e) => { e.stopPropagation(); setExpanded(p => !p) }}
           aria-label={expanded ? 'Collapse order details' : 'Expand order details'}
           style={{
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            width: 36, height: 36, borderRadius: '50%', flexShrink: 0,
-            border: '1.5px solid #e8e8e8', background: '#fafafa',
+            width: 34, height: 34, borderRadius: '50%', flexShrink: 0,
+            border: `1.5px solid ${GOLD}44`, background: '#fdfcf9',
             cursor: 'pointer', transition: 'all 0.2s',
           }}
           onMouseEnter={e => {
-            e.currentTarget.style.borderColor = '#A65A66'
-            e.currentTarget.style.background = '#fff0f3'
+            e.currentTarget.style.borderColor = GOLD
+            e.currentTarget.style.background = '#fdf8ec'
           }}
           onMouseLeave={e => {
-            e.currentTarget.style.borderColor = '#e8e8e8'
-            e.currentTarget.style.background = '#fafafa'
+            e.currentTarget.style.borderColor = `${GOLD}44`
+            e.currentTarget.style.background = '#fdfcf9'
           }}
         >
           <ChevronDown
-            size={22} color="#555" strokeWidth={2.5}
+            size={20} color={NAVY} strokeWidth={2.5}
             style={{ transform: expanded ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }}
           />
         </button>
       </div>
 
-      {/* Items Preview (always visible) */}
+      {/* Items Preview */}
       <div style={{ padding: '0 18px 14px', display: 'flex', gap: 10, overflowX: 'auto' }}>
         {order.items.map(item => (
           <div
@@ -395,25 +639,28 @@ function OrderCard({ order }) {
             onClick={() => item.product_id && window.open(`/product/${item.product_id}`, '_blank')}
             style={{
               display: 'flex', alignItems: 'center', gap: 10,
-              background: '#fafafa', borderRadius: 8, padding: '8px 10px',
-              border: '1px solid #f0f0f0', minWidth: 0, flex: '0 0 auto', maxWidth: 260,
+              background: '#fdfcf9', borderRadius: 10, padding: '8px 12px',
+              border: '1px solid #e8e0d0', minWidth: 0, flex: '0 0 auto', maxWidth: 260,
               cursor: item.product_id ? 'pointer' : 'default',
             }}
           >
             <img
               src={item.image}
               alt={item.name}
-              style={{ width: 56, height: 68, objectFit: 'cover', borderRadius: 6, flexShrink: 0 }}
+              style={{
+                width: 52, height: 64, objectFit: 'cover', borderRadius: 6,
+                flexShrink: 0, border: '1px solid #f0ece4',
+              }}
             />
             <div style={{ minWidth: 0 }}>
-              <p style={{ fontSize: 12, fontWeight: 600, color: '#3A332A', margin: '0 0 2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 140 }}>
+              <p style={{ fontSize: 12, fontWeight: 700, color: NAVY, margin: '0 0 2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 140 }}>
                 {item.brand}
               </p>
               <p style={{ fontSize: 11, color: '#94969f', margin: '0 0 4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 140 }}>
                 {item.name}
               </p>
-              <p style={{ fontSize: 11, color: '#3A332A', margin: 0 }}>
-                Size: <b>{item.size}</b> · ₹{item.price.toLocaleString('en-IN')}
+              <p style={{ fontSize: 11, color: '#444', margin: 0 }}>
+                Size: <b>{item.size}</b> · <span style={{ color: GOLD, fontWeight: 600 }}>₹{item.price.toLocaleString('en-IN')}</span>
               </p>
               {item.item_status === 'QC_FAILED' && (
                 <div style={{ marginTop: 4 }}>
@@ -438,43 +685,84 @@ function OrderCard({ order }) {
 
       {/* Expanded Section */}
       {expanded && (
-        <div style={{ borderTop: '1px solid #f5f5f5', padding: '14px 18px' }}>
-          {/* Timeline */}
+        <div style={{ borderTop: `1px solid ${GOLD}22`, padding: '14px 18px', background: '#fdfcf9' }}>
           <OrderTimeline status={order.status} />
 
-          {/* Estimated delivery */}
           {order.status !== 'DELIVERED' && order.status !== 'CANCELLED' && order.status !== 'RETURNED' && (
             <div style={{
               display: 'flex', alignItems: 'center', gap: 6,
-              background: '#fff8f8', border: '1px solid #ffdce5',
+              background: '#fffdf5', border: `1px solid ${GOLD}44`,
               borderRadius: 8, padding: '8px 12px', marginTop: 4, marginBottom: 12,
             }}>
-              <Clock size={13} color="#A65A66" />
-              <span style={{ fontSize: 12, color: '#3A332A' }}>
+              <Clock size={13} color={GOLD} />
+              <span style={{ fontSize: 12, color: NAVY }}>
                 Expected by <b>{order.expectedBy}</b>
               </span>
             </div>
           )}
 
-          {/* Delivery address */}
           <div style={{ marginBottom: 14 }}>
-            <p style={{ fontSize: 11, color: '#94969f', fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 4 }}>
-              Delivery Address
-            </p>
-            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 6 }}>
-              <MapPin size={13} color="#A65A66" style={{ marginTop: 2, flexShrink: 0 }} />
-              <p style={{ fontSize: 12, color: '#3A332A', margin: 0, lineHeight: 1.6 }}>
-                {order.address.name} · {order.address.line1}, {order.address.city} – {order.address.pin}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+              <p style={{ fontSize: 10, color: '#aaa', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', margin: 0 }}>
+                Delivery Address
               </p>
+              {order.status !== 'DELIVERED' && order.status !== 'CANCELLED' && order.status !== 'RETURNED' && (
+                <button
+                  onClick={() => setShowEditAddress(true)}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 4,
+                    background: 'none', border: `1px solid ${GOLD}66`,
+                    borderRadius: 6, padding: '3px 10px', cursor: 'pointer',
+                    fontSize: 11, fontWeight: 600, color: NAVY,
+                    transition: 'all 0.15s',
+                  }}
+                  onMouseEnter={e => { e.currentTarget.style.background = '#fdf8ec'; e.currentTarget.style.borderColor = GOLD }}
+                  onMouseLeave={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.borderColor = `${GOLD}66` }}
+                >
+                  <Pencil size={11} color={GOLD} /> Edit
+                </button>
+              )}
+            </div>
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 6 }}>
+              <MapPin size={13} color={GOLD} style={{ marginTop: 2, flexShrink: 0 }} />
+              {order.address ? (
+                <div style={{ fontSize: 12, color: '#444', lineHeight: 1.7 }}>
+                  <div style={{ fontWeight: 600, color: NAVY }}>
+                    {order.address.name}
+                    {order.address.address_type && (
+                      <span style={{
+                        marginLeft: 6, fontSize: 10, fontWeight: 700,
+                        background: `${GOLD}22`, color: GOLD,
+                        borderRadius: 4, padding: '1px 6px',
+                        textTransform: 'uppercase', letterSpacing: '0.06em',
+                      }}>
+                        {order.address.address_type}
+                      </span>
+                    )}
+                  </div>
+                  <div>{order.address.line1}</div>
+                  {order.address.line2 && <div>{order.address.line2}</div>}
+                  {order.address.landmark && <div style={{ color: '#888' }}>Near: {order.address.landmark}</div>}
+                  <div>
+                    {order.address.city}{order.address.state ? `, ${order.address.state}` : ''} – {order.address.pin}
+                  </div>
+                  {order.address.phone && (
+                    <div style={{ color: '#888', marginTop: 2 }}>
+                      📞 {order.address.phone}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <p style={{ fontSize: 12, color: '#94969f', margin: 0 }}>Address not available</p>
+              )}
             </div>
           </div>
 
-          {/* Price breakdown */}
           <div style={{
-            background: '#fafafa', borderRadius: 8, padding: '10px 14px',
-            border: '1px solid #f0f0f0', marginBottom: 14,
+            background: '#fff', borderRadius: 10, padding: '12px 16px',
+            border: '1px solid #e8e0d0', marginBottom: 14,
           }}>
-            <p style={{ fontSize: 11, color: '#94969f', fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8 }}>
+            <p style={{ fontSize: 10, color: '#aaa', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 10 }}>
               Price Details
             </p>
             {[
@@ -482,18 +770,50 @@ function OrderCard({ order }) {
               { label: 'Discount', value: `-₹${order.discount.toLocaleString('en-IN')}`, color: '#16a34a' },
               { label: 'Delivery', value: order.delivery === 0 ? 'FREE' : `₹${order.delivery}`, color: order.delivery === 0 ? '#16a34a' : undefined },
             ].map(row => (
-              <div key={row.label} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                <span style={{ fontSize: 12, color: '#555' }}>{row.label}</span>
-                <span style={{ fontSize: 12, fontWeight: 500, color: row.color || '#3A332A' }}>{row.value}</span>
+              <div key={row.label} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 5 }}>
+                <span style={{ fontSize: 12, color: '#666' }}>{row.label}</span>
+                <span style={{ fontSize: 12, fontWeight: 500, color: row.color || '#444' }}>{row.value}</span>
               </div>
             ))}
-            <div style={{ borderTop: '1px dashed #e0e0e0', paddingTop: 6, marginTop: 4, display: 'flex', justifyContent: 'space-between' }}>
-              <span style={{ fontSize: 13, fontWeight: 700, color: '#3A332A' }}>Total Paid</span>
-              <span style={{ fontSize: 13, fontWeight: 700, color: '#3A332A' }}>₹{order.total.toLocaleString('en-IN')}</span>
+            <div style={{ borderTop: `1px solid ${GOLD}44`, paddingTop: 8, marginTop: 6, display: 'flex', justifyContent: 'space-between' }}>
+              <span style={{ fontSize: 13, fontWeight: 700, color: NAVY }}>Total Paid</span>
+              <span style={{ fontSize: 14, fontWeight: 700, color: GOLD }}>₹{order.total.toLocaleString('en-IN')}</span>
             </div>
           </div>
 
-          {/* CTA Buttons */}
+          {/* Thank you card — shown after delivery */}
+          {order.status === 'DELIVERED' && (
+            <div style={{
+              background: NAVY, borderRadius: 10,
+              border: `1px solid ${GOLD}44`,
+              padding: '18px 20px', marginBottom: 14, textAlign: 'center',
+              boxShadow: `inset 0 0 0 1px ${GOLD}18`,
+            }}>
+              <img src="/vlogo__1_-removebg-preview.png" alt="Vaarria" style={{ height: 48, objectFit: 'contain', marginBottom: 8 }} />
+              <div style={{ fontSize: 13, color: GOLD, fontFamily: "'Playfair Display', Georgia, serif", fontStyle: 'italic', marginBottom: 6 }}>
+                We truly appreciate your trust in us.
+              </div>
+              <div style={{ fontSize: 11.5, color: '#c8c8d4', lineHeight: 1.6, marginBottom: 10 }}>
+                If there's anything we can do to make your experience even better, we're always here for you.
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'center', gap: 24, marginBottom: 8 }}>
+                {[
+                  { icon: '✦', label: 'Premium Quality' },
+                  { icon: '✿', label: 'Crafted with Care' },
+                  { icon: '♡', label: 'Made for You' },
+                ].map(({ icon, label }) => (
+                  <div key={label} style={{ textAlign: 'center' }}>
+                    <div style={{ fontSize: 14, color: GOLD, marginBottom: 2 }}>{icon}</div>
+                    <div style={{ fontSize: 9, color: `${GOLD}99`, letterSpacing: '0.08em', textTransform: 'uppercase' }}>{label}</div>
+                  </div>
+                ))}
+              </div>
+              <div style={{ fontSize: 9, color: `${GOLD}77`, letterSpacing: '0.18em', textTransform: 'uppercase' }}>
+                ♥ With love, The Vaarria Team
+              </div>
+            </div>
+          )}
+
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
             {order.status !== 'CANCELLED' && order.status !== 'RETURNED' && (
               <ActionBtn
@@ -556,6 +876,14 @@ function OrderCard({ order }) {
           onCancelled={handleCancelled}
         />
       )}
+
+      {showEditAddress && (
+        <EditAddressModal
+          order={order}
+          onClose={() => setShowEditAddress(false)}
+          onSaved={handleAddressSaved}
+        />
+      )}
     </div>
   )
 }
@@ -590,15 +918,19 @@ function ActionBtn({ icon, label, primary, danger, disabled, title, onClick }) {
         display: 'flex', alignItems: 'center', gap: 5,
         padding: '7px 14px', borderRadius: 20, cursor: 'pointer',
         fontSize: 12, fontWeight: 600, transition: 'all 0.15s',
-        border: primary ? 'none' : danger ? '1.5px solid #dc2626' : '1.5px solid #d0d0d0',
+        border: primary
+          ? `1px solid ${GOLD}`
+          : danger
+          ? '1.5px solid #dc2626'
+          : `1.5px solid ${GOLD}44`,
         background: primary
-          ? hover ? '#e0315a' : '#A65A66'
+          ? hover ? GOLD : NAVY
           : hover
-          ? danger ? '#fee2e2' : '#f5f5f5'
+          ? danger ? '#fee2e2' : '#fdf8ec'
           : '#fff',
-        color: primary ? '#fff' : danger ? '#dc2626' : '#555',
+        color: primary ? (hover ? NAVY : GOLD) : danger ? '#dc2626' : NAVY,
         transform: hover ? 'translateY(-1px)' : 'none',
-        boxShadow: hover && primary ? '0 4px 12px rgba(166,90,102,0.3)' : 'none',
+        boxShadow: hover && primary ? `0 4px 14px ${GOLD}44` : 'none',
       }}
     >
       {icon}{label}
@@ -611,29 +943,35 @@ function ActionBtn({ icon, label, primary, danger, disabled, title, onClick }) {
 function EmptyOrders({ filter }) {
   const navigate = useNavigate()
   return (
-    <div style={{ textAlign: 'center', padding: '60px 20px' }}>
+    <div style={{ textAlign: 'center', padding: '70px 20px' }}>
       <div style={{
         width: 80, height: 80, borderRadius: '50%',
-        background: '#fff0f3', display: 'flex', alignItems: 'center',
-        justifyContent: 'center', margin: '0 auto 20px',
+        background: `${GOLD}18`, border: `2px solid ${GOLD}33`,
+        display: 'flex', alignItems: 'center',
+        justifyContent: 'center', margin: '0 auto 22px',
       }}>
-        <ShoppingBag size={36} color="#A65A66" strokeWidth={1.5} />
+        <ShoppingBag size={34} color={GOLD} strokeWidth={1.5} />
       </div>
-      <h3 style={{ fontSize: 18, fontWeight: 700, color: '#3A332A', marginBottom: 8 }}>
+      <h3 style={{
+        fontSize: 20, fontWeight: 700, color: NAVY, marginBottom: 8,
+        fontFamily: "'Playfair Display', Georgia, serif",
+      }}>
         No {filter !== 'ALL' ? ORDER_STATUSES[filter]?.label : ''} Orders
       </h3>
-      <p style={{ fontSize: 13, color: '#94969f', marginBottom: 24 }}>
+      <p style={{ fontSize: 13, color: '#94969f', marginBottom: 28 }}>
         Looks like you haven't placed any orders yet. Start shopping!
       </p>
       <button
         onClick={() => navigate('/')}
         style={{
-          background: '#A65A66', color: '#fff', border: 'none',
-          borderRadius: 4, padding: '12px 32px', fontSize: 14, fontWeight: 700,
-          cursor: 'pointer', letterSpacing: 0.5,
+          background: NAVY, color: GOLD,
+          border: `1px solid ${GOLD}`, borderRadius: 8,
+          padding: '13px 36px', fontSize: 13, fontWeight: 700,
+          cursor: 'pointer', letterSpacing: '0.06em',
+          fontFamily: "'Playfair Display', Georgia, serif",
         }}
       >
-        EXPLORE PRODUCTS
+        Explore Products
       </button>
     </div>
   )
@@ -666,42 +1004,61 @@ export default function OrdersPage() {
   }, [orders, activeFilter, search])
 
   return (
-    <div style={{ minHeight: '100vh', background: '#f4f4f5', fontFamily: '"Sora", "Segoe UI", sans-serif' }}>
+    <div style={{ minHeight: '100vh', background: '#f5f4f0', fontFamily: '"Sora", "Segoe UI", sans-serif' }}>
 
-      {/* Top Nav */}
+      {/* Top Nav — navy bar with logo */}
       <div style={{
-        background: '#fff', borderBottom: '1px solid #f0f0f0',
+        background: NAVY,
         padding: '0 24px', position: 'sticky', top: 0, zIndex: 50,
-        boxShadow: '0 1px 6px rgba(0,0,0,0.06)',
+        boxShadow: '0 2px 16px rgba(5,12,28,0.3)',
       }}>
         <div style={{ maxWidth: 1200, margin: '0 auto', display: 'flex', alignItems: 'center', gap: 16, height: 64 }}>
           <button
             onClick={() => navigate(-1)}
-            style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, color: '#555', padding: 4 }}
+            style={{
+              background: 'none', border: `1px solid ${GOLD}44`,
+              cursor: 'pointer', display: 'flex', alignItems: 'center',
+              color: GOLD, padding: '6px 10px', borderRadius: 8,
+              fontSize: 12, fontWeight: 600, transition: 'all 0.15s',
+            }}
+            onMouseEnter={e => { e.currentTarget.style.background = `${GOLD}18` }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'none' }}
           >
-            <ArrowLeft size={18} />
+            <ArrowLeft size={16} />
           </button>
+
           <img
             src={logo}
             alt="Aarria"
             onClick={() => navigate('/products')}
-            style={{ height: 40, objectFit: 'contain', cursor: 'pointer' }}
+            style={{
+              height: 38, objectFit: 'contain', cursor: 'pointer',
+            }}
           />
-          <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span style={{ fontSize: 13, color: '#94969f' }}>My Orders</span>
+
+          <div style={{ marginLeft: 'auto' }}>
+            <span style={{
+              fontSize: 11, color: `${GOLD}cc`, fontWeight: 700,
+              letterSpacing: '0.12em', textTransform: 'uppercase',
+            }}>
+              My Orders
+            </span>
           </div>
         </div>
       </div>
 
-      <div style={{ maxWidth: 1200, margin: '0 auto', padding: '24px 32px' }}>
+      <div style={{ maxWidth: 1200, margin: '0 auto', padding: '28px 32px' }}>
 
         {/* Page Title */}
-        <div style={{ marginBottom: 20 }}>
-          <h1 style={{ fontSize: 22, fontWeight: 800, color: '#3A332A', margin: '0 0 4px', letterSpacing: -0.5 }}>
+        <div style={{ marginBottom: 22 }}>
+          <h1 style={{
+            fontSize: 26, fontWeight: 700, color: NAVY, margin: '0 0 4px',
+            fontFamily: "'Playfair Display', Georgia, serif",
+          }}>
             My Orders
           </h1>
           {!isLoading && (
-            <p style={{ fontSize: 13, color: '#94969f', margin: 0 }}>
+            <p style={{ fontSize: 12.5, color: '#94969f', margin: 0 }}>
               {orders.length} order{orders.length !== 1 ? 's' : ''} placed
             </p>
           )}
@@ -710,11 +1067,12 @@ export default function OrdersPage() {
         {/* Search Bar */}
         <div style={{
           display: 'flex', alignItems: 'center', gap: 10,
-          background: '#fff', border: `1.5px solid ${searchFocus ? '#A65A66' : '#e8e8e8'}`,
-          borderRadius: 8, padding: '0 14px', marginBottom: 16,
+          background: '#fff', border: `1.5px solid ${searchFocus ? GOLD : '#e8e0d0'}`,
+          borderRadius: 10, padding: '0 14px', marginBottom: 16,
           transition: 'border-color 0.2s',
+          boxShadow: searchFocus ? `0 0 0 3px ${GOLD}18` : 'none',
         }}>
-          <Search size={16} color={searchFocus ? '#A65A66' : '#aaa'} />
+          <Search size={16} color={searchFocus ? GOLD : '#bbb'} />
           <input
             value={search}
             onChange={e => setSearch(e.target.value)}
@@ -722,35 +1080,33 @@ export default function OrdersPage() {
             onBlur={() => setSearchFocus(false)}
             placeholder="Search by order ID or product name…"
             style={{
-              flex: 1, border: 'none', outline: 'none', padding: '12px 0',
-              fontSize: 13, color: '#3A332A', background: 'transparent',
+              flex: 1, border: 'none', outline: 'none', padding: '13px 0',
+              fontSize: 13, color: NAVY, background: 'transparent',
             }}
           />
           {search && (
-            <button onClick={() => setSearch('')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#aaa', padding: 0 }}>
+            <button onClick={() => setSearch('')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#bbb', padding: 0 }}>
               <XCircle size={16} />
             </button>
           )}
         </div>
 
         {/* Filter Pills */}
-        <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 4, marginBottom: 20 }}>
+        <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 4, marginBottom: 22 }}>
           {FILTER_OPTIONS.map(f => {
-            const meta = ORDER_STATUSES[f.value]
-            const accent = meta?.color || '#A65A66'
-            const accentBg = meta?.bg || '#fff0f3'
             const active = activeFilter === f.value
             return (
               <button
                 key={f.value}
                 onClick={() => setActiveFilter(f.value)}
                 style={{
-                  flexShrink: 0, padding: '7px 16px', borderRadius: 20,
-                  border: active ? `1.5px solid ${accent}` : '1.5px solid #e0e0e0',
-                  background: active ? accentBg : '#fff',
-                  color: active ? accent : '#666',
+                  flexShrink: 0, padding: '7px 18px', borderRadius: 20,
+                  border: active ? `1.5px solid ${GOLD}` : '1.5px solid #e8e0d0',
+                  background: active ? NAVY : '#fff',
+                  color: active ? GOLD : '#666',
                   fontSize: 12, fontWeight: 600, cursor: 'pointer',
                   transition: 'all 0.15s',
+                  boxShadow: active ? `0 2px 10px ${NAVY}22` : 'none',
                 }}
               >
                 {f.label}
@@ -759,31 +1115,31 @@ export default function OrdersPage() {
           })}
         </div>
 
-        {/* States */}
+        {/* Loading skeletons */}
         {isLoading && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
             {[1, 2, 3].map(i => (
               <div key={i} style={{
-                height: 120, background: '#fff', borderRadius: 12,
-                border: '1px solid #f0f0f0', animation: 'pulse 1.5s ease-in-out infinite',
+                height: 130, background: '#fff', borderRadius: 14,
+                border: '1px solid #e8e0d0', animation: 'pulse 1.5s ease-in-out infinite',
               }} />
             ))}
-            <style>{`@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }`}</style>
+            <style>{`@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.45} }`}</style>
           </div>
         )}
 
         {isError && (
           <div style={{
-            background: '#fff', borderRadius: 12, border: '1px solid #fee2e2',
-            padding: '24px', textAlign: 'center',
+            background: '#fff', borderRadius: 14, border: '1px solid #fee2e2',
+            padding: '32px', textAlign: 'center',
           }}>
             <AlertCircle size={32} color="#dc2626" style={{ marginBottom: 12 }} />
-            <p style={{ fontSize: 14, color: '#3A332A', marginBottom: 12 }}>Couldn't load your orders.</p>
+            <p style={{ fontSize: 14, color: NAVY, marginBottom: 16 }}>Couldn't load your orders.</p>
             <button
               onClick={refetch}
               style={{
-                background: '#A65A66', color: '#fff', border: 'none',
-                borderRadius: 4, padding: '10px 24px', fontSize: 13,
+                background: NAVY, color: GOLD, border: `1px solid ${GOLD}`,
+                borderRadius: 8, padding: '10px 28px', fontSize: 13,
                 fontWeight: 600, cursor: 'pointer', display: 'inline-flex',
                 alignItems: 'center', gap: 6,
               }}

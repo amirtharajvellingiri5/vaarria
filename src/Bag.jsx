@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
-import { create } from 'zustand'
+import { useBagStore } from './store/bagStore'
 import {
   ShoppingBag,
   Search,
@@ -135,77 +135,9 @@ function PricePanelSkeleton() {
   )
 }
 
-// ─── Zustand Store ────────────────────────────────────────────────────────────
-const useBagStore = create((set, get) => ({
-  items: [],
-
-  // ── coupon state ──────────────────────────────────────────────────────────
-  // Set of bag_ids whose coupon is currently toggled ON
-  appliedCouponIds: new Set(),
-
-  toggleCoupon: (bagId) =>
-    set((s) => {
-      const next = new Set(s.appliedCouponIds)
-      next.has(bagId) ? next.delete(bagId) : next.add(bagId)
-      return { appliedCouponIds: next }
-    }),
-
-  // Derived: total coupon savings across SELECTED items with coupon toggled ON.
-  // Call as a selector: useBagStore(s => s.getCouponSavings())
-  // Or just read inside components via get().
-  getCouponSavings: () => {
-  const { items, appliedCouponIds } = get()
-
-  return items
-    .filter(
-      (item) =>
-        item.selected &&
-        appliedCouponIds.has(item.id) &&
-        item.couponDiscount > 0,
-    )
-    .reduce((total, item) => {
-      if (item.discountType === 'PERCENTAGE') {
-        const discount = Math.floor(
-          (item.price * item.qty * item.couponDiscount) / 100,
-        )
-
-        return total + discount
-      }
-
-      // FLAT discount
-      return total + item.couponDiscount * item.qty
-    }, 0)
-},
-
-  // ── other existing state ──────────────────────────────────────────────────
-  platformFee: 23,
-  donationAmount: 0,
-  mobileMenuOpen: false,
-
-  setItems: (items) => set({ items }),
-
-  toggleSelected: (id) =>
-    set((s) => ({
-      items: s.items.map((i) =>
-        i.id === id ? { ...i, selected: !i.selected } : i,
-      ),
-    })),
-
-  removeItem: (id) =>
-    set((s) => ({ items: s.items.filter((i) => i.id !== id) })),
-
-  updateQty: (id, delta) =>
-    set((s) => ({
-      items: s.items.map((i) =>
-        i.id === id ? { ...i, qty: Math.max(1, i.qty + delta) } : i,
-      ),
-    })),
-
-  setDonation: (amt) =>
-    set((s) => ({ donationAmount: s.donationAmount === amt ? 0 : amt })),
-
-  toggleMobileMenu: () => set((s) => ({ mobileMenuOpen: !s.mobileMenuOpen })),
-}))
+const getCustomerId = () => {
+  try { return JSON.parse(localStorage.getItem('customer'))?.customer_id || 1 } catch { return 1 }
+}
 
 // ─── Mock fetch (TanStack Query) ──────────────────────────────────────────────
 const fetchPinDetails = async (pin) => {
@@ -518,7 +450,7 @@ function ItemCard({ item }) {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            customer_id: 1,
+            customer_id: getCustomerId(),
             address_id: item.address_id ?? null,
             size: item.size,
             color: item.colorName,
@@ -554,7 +486,7 @@ function ItemCard({ item }) {
       setDeleting(true)
 
       const response = await fetch(
-        `${ORDERS_API_BASE}/bags/delete-bag-item/${item.id}?customer_id=1`,
+        `${ORDERS_API_BASE}/bags/delete-bag-item/${item.id}?customer_id=${getCustomerId()}`,
         {
           method: 'DELETE',
         },
@@ -998,7 +930,7 @@ function PricePanel({ onNeedAuth, triggerPay, onTriggerConsumed }) {
             const { removeItem } = useBagStore.getState()
             await Promise.allSettled(
               selected.map((item) =>
-                fetch(`${API_BASE}/bags/delete-bag-item/${item.id}?customer_id=1`, { method: 'DELETE' })
+                fetch(`${API_BASE}/bags/delete-bag-item/${item.id}?customer_id=${getCustomerId()}`, { method: 'DELETE' })
                   .then(() => removeItem(item.id))
               )
             )
@@ -1644,7 +1576,7 @@ function BagPage() {
       try {
         setLoading(true)
         const response = await fetch(
-          `${ORDERS_API_BASE}/bags/customers/1/bag`,
+          `${ORDERS_API_BASE}/bags/customers/${customer?.customer_id || 1}/bag`,
         )
 
         const data = await response.json()
@@ -1688,7 +1620,7 @@ function BagPage() {
     }
 
     fetchBagItems()
-  }, [setItems])
+  }, [setItems, customer?.customer_id])
 
   return (
     <div style={styles.root}>

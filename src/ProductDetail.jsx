@@ -20,6 +20,8 @@ import {
 import Navbar from './Navbar'
 import Footer from './Footer'
 import { useParams, useNavigate } from 'react-router-dom'
+import { useAuthStore } from './store/authStore'
+import { useBagStore } from './store/bagStore'
 
 // ─── Mock API Response ────────────────────────────────────────────────────────
 const MOCK_PRODUCT_API_RESPONSE = {
@@ -963,6 +965,8 @@ function SkeletonLoader() {
 export default function ProductDetail() {
   const { id: productId } = useParams()
   const navigate = useNavigate()
+  const { customer } = useAuthStore()
+  const setItems = useBagStore((state) => state.setItems)
   const [product, setProduct] = useState(null)
   const [ratingsData, setRatingsData] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -1075,7 +1079,7 @@ export default function ProductDetail() {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            customer_id: 1,
+            customer_id: customer?.customer_id || 1,
             product_id: product.id || '',
             address_id: null,
             size: selectedSize || '',
@@ -1100,10 +1104,18 @@ export default function ProductDetail() {
       }
 
       setAddedToBag(true)
+      setTimeout(() => setAddedToBag(false), 2000)
 
-      setTimeout(() => {
-        setAddedToBag(false)
-      }, 2000)
+      // refresh bag store so Navbar count updates instantly
+      const cid = customer?.customer_id || 1
+      fetch(`https://zq0dbjycx6.execute-api.ap-south-1.amazonaws.com/prod/bags/customers/${cid}/bag`)
+        .then(r => r.json())
+        .then(data => {
+          if (Array.isArray(data?.items)) {
+            setItems(data.items.map(item => ({ id: item.bag_id, qty: item.quantity })))
+          }
+        })
+        .catch(() => {})
     } catch (error) {
       setBagError(error.message || 'Unable to add item to bag')
     } finally {

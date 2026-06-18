@@ -1,6 +1,6 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { ShoppingBag, Search, Heart, User, Menu, X } from 'lucide-react'
-import { useCartStore } from './store/cartStore'
+import { useBagStore } from './store/bagStore'
 import { useAuthStore } from './store/authStore'
 import { ADMIN_CATEGORIES as CATEGORIES } from './utils/categories'
 
@@ -237,8 +237,21 @@ const Navbar = () => {
 
   const { token, customer: customerData, logout } = useAuthStore()
   const isLoggedIn = !!token
-  const cart = useCartStore((state) => state.cart)
-  const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0)
+  const bagItems = useBagStore((state) => state.items)
+  const setItems = useBagStore((state) => state.setItems)
+  const cartCount = bagItems.reduce((sum, item) => sum + (item.qty || 0), 0)
+
+  useEffect(() => {
+    if (!customerData?.customer_id) return
+    fetch(`https://zq0dbjycx6.execute-api.ap-south-1.amazonaws.com/prod/bags/customers/${customerData.customer_id}/bag`)
+      .then(r => r.json())
+      .then(data => {
+        if (Array.isArray(data?.items)) {
+          setItems(data.items.map(item => ({ id: item.bag_id, qty: item.quantity })))
+        }
+      })
+      .catch(() => {})
+  }, [customerData?.customer_id, setItems])
 
   return (
     <nav
@@ -339,7 +352,7 @@ const Navbar = () => {
                         left: '14px',
                         right: '14px',
                         height: '2px',
-                        background: '#A65A66',
+                        background: '#16a34a',
                         borderRadius: '1px 1px 0 0',
                       }}
                     />
@@ -565,7 +578,7 @@ const Navbar = () => {
                   position: 'absolute',
                   top: '-4px',
                   right: '-6px',
-                  background: '#A65A66',
+                  background: '#16a34a',
                   color: '#fff',
                   fontSize: '10px',
                   borderRadius: '50%',
@@ -661,7 +674,7 @@ const Navbar = () => {
                   <span
                     style={{
                       fontSize: '9px',
-                      background: '#A65A66',
+                      background: '#16a34a',
                       color: '#fff',
                       borderRadius: '3px',
                       padding: '1px 5px',

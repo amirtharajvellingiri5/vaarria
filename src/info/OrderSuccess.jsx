@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import logo from "../assets/logo.jpg";
 
 export default function OrderSuccess() {
   const location = useLocation();
@@ -28,33 +27,75 @@ export default function OrderSuccess() {
         transition: "opacity 0.5s ease, transform 0.5s ease",
       }}>
 
-        {/* ── Logo ── */}
-        <img src={logo} alt="Aarria" style={s.logo} />
+        {/* ── Thank You Card ── */}
+        <div style={s.thankCard}>
+          <img src="/vlogo__1_-removebg-preview.png" alt="Vaarria" style={{ height: 64, objectFit: 'contain', marginBottom: 4 }} />
+          <div style={s.thankTitle}>THANK YOU</div>
+          <div style={s.thankSub}>FOR CHOOSING VAARRIA</div>
+          <p style={s.thankBody}>
+            Your support means the world to us. Every piece you choose is crafted with
+            passion, precision and a promise of elegance.
+          </p>
+          <div style={s.thankDivider}>✦</div>
+          <div style={s.thankBrand}>VAARRIA</div>
+          <div style={s.thankTagline}>WHERE ELEGANCE FINDS FORM</div>
+        </div>
 
         {/* ── Animated tick ── */}
         <div style={s.tickOuter}>
-          <svg width="72" height="72" viewBox="0 0 72 72">
-            <circle cx="36" cy="36" r="34" fill="none" stroke="#e8f5e9" strokeWidth="4" />
+          <svg width="90" height="90" viewBox="0 0 90 90" style={{ overflow: 'visible' }}>
+            <defs>
+              {/* bangle metallic gradient — light top-left, dark bottom-right, bright specular */}
+              <linearGradient id="bangleGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%"   stopColor="#fffbe8" />
+                <stop offset="18%"  stopColor="#f5d060" />
+                <stop offset="38%"  stopColor="#C9A84C" />
+                <stop offset="55%"  stopColor="#8a6820" />
+                <stop offset="72%"  stopColor="#C9A84C" />
+                <stop offset="88%"  stopColor="#f0c040" />
+                <stop offset="100%" stopColor="#fffbe8" />
+              </linearGradient>
+              {/* soft drop shadow for depth */}
+              <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+                <feDropShadow dx="0" dy="3" stdDeviation="4" floodColor="#8a6820" floodOpacity="0.45" />
+              </filter>
+            </defs>
+            {/* bangle ring — thick stroke with metallic gradient */}
             <circle
-              cx="36" cy="36" r="34"
+              cx="45" cy="45" r="38"
               fill="none"
-              stroke="#2e7d32"
-              strokeWidth="3"
-              strokeDasharray="213"
-              strokeDashoffset={checked ? 0 : 213}
+              stroke="url(#bangleGrad)"
+              strokeWidth="9"
+              strokeDasharray="239"
+              strokeDashoffset={checked ? 0 : 239}
               strokeLinecap="round"
-              style={{ transition: "stroke-dashoffset 0.6s ease", transformOrigin: "center", transform: "rotate(-90deg)" }}
+              filter="url(#shadow)"
+              style={{ transition: "stroke-dashoffset 0.7s cubic-bezier(.4,0,.2,1)", transformOrigin: "center", transform: "rotate(-90deg)" }}
             />
-            <polyline
-              points="22,37 32,47 50,28"
+            {/* specular highlight arc — thin bright streak at top */}
+            <circle
+              cx="45" cy="45" r="38"
               fill="none"
-              stroke="#2e7d32"
-              strokeWidth="3.5"
+              stroke="#fffde0"
+              strokeWidth="2"
+              strokeDasharray="40 199"
+              strokeDashoffset={checked ? -20 : 239}
+              strokeLinecap="round"
+              opacity="0.7"
+              style={{ transition: "stroke-dashoffset 0.7s cubic-bezier(.4,0,.2,1) 0.1s", transformOrigin: "center", transform: "rotate(-120deg)" }}
+            />
+            {/* tick */}
+            <polyline
+              points="27,46 39,58 63,32"
+              fill="none"
+              stroke="url(#bangleGrad)"
+              strokeWidth="5"
               strokeLinecap="round"
               strokeLinejoin="round"
-              strokeDasharray="40"
-              strokeDashoffset={checked ? 0 : 40}
-              style={{ transition: "stroke-dashoffset 0.4s ease 0.5s" }}
+              strokeDasharray="50"
+              strokeDashoffset={checked ? 0 : 50}
+              filter="url(#shadow)"
+              style={{ transition: "stroke-dashoffset 0.4s ease 0.6s" }}
             />
           </svg>
         </div>
@@ -150,11 +191,67 @@ const s = {
     textAlign: "center",
   },
 
-  logo: {
-    height: 48,
-    width: "auto",
-    objectFit: "contain",
+  thankCard: {
+    width: "100%",
+    background: NAVY,
+    borderRadius: 12,
+    border: `1px solid ${GOLD}44`,
+    padding: "28px 24px 22px",
     marginBottom: 28,
+    textAlign: "center",
+    boxShadow: `0 4px 24px rgba(5,12,28,0.18), inset 0 0 0 1px ${GOLD}22`,
+  },
+  vaMonogram: {
+    fontSize: 36,
+    fontWeight: 800,
+    color: GOLD,
+    fontFamily: "'Playfair Display', Georgia, serif",
+    letterSpacing: "0.08em",
+    marginBottom: 10,
+  },
+  thankTitle: {
+    fontSize: 22,
+    fontWeight: 700,
+    color: GOLD,
+    fontFamily: "'Playfair Display', Georgia, serif",
+    letterSpacing: "0.18em",
+    marginBottom: 4,
+  },
+  thankSub: {
+    fontSize: 10,
+    fontWeight: 600,
+    color: `${GOLD}99`,
+    letterSpacing: "0.18em",
+    textTransform: "uppercase",
+    marginBottom: 14,
+  },
+  thankBody: {
+    fontSize: 12.5,
+    color: "#c8c8d4",
+    lineHeight: 1.75,
+    margin: "0 0 14px",
+    maxWidth: 300,
+    marginLeft: "auto",
+    marginRight: "auto",
+  },
+  thankDivider: {
+    color: GOLD,
+    fontSize: 14,
+    marginBottom: 10,
+  },
+  thankBrand: {
+    fontSize: 15,
+    fontWeight: 700,
+    color: GOLD,
+    fontFamily: "'Playfair Display', Georgia, serif",
+    letterSpacing: "0.22em",
+    marginBottom: 3,
+  },
+  thankTagline: {
+    fontSize: 9,
+    color: `${GOLD}88`,
+    letterSpacing: "0.2em",
+    textTransform: "uppercase",
   },
 
   tickOuter: {
