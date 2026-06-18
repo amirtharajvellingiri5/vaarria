@@ -202,6 +202,128 @@ const fetchProductsByCategory = async (
   }))
 }
 
+// ── Filter Section (standalone — must be outside FilterSidebar to avoid remount) ─
+const FilterSection = ({
+  title, items, filterKey,
+  expanded, onToggle,
+  selectedFilters, onFilterChange,
+  currentSlug,
+}) => (
+  <div className='border-b border-[#C9A84C]/20 py-2'>
+    <button
+      onClick={() => onToggle(filterKey)}
+      className='flex items-center justify-between w-full text-left mb-2'
+      style={{ color: '#050C1C', fontFamily: "'Playfair Display', Georgia, serif", fontWeight: 600, fontSize: '14px', letterSpacing: '0.04em' }}
+    >
+      {title}
+      {expanded ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
+    </button>
+    {expanded && (
+      <div className={filterKey === 'color' ? '' : 'space-y-1'}>
+        {filterKey === 'category'
+          ? items.map((cat) => (
+              <Link
+                key={cat.slug}
+                to={`/${cat.slug}`}
+                style={{
+                  color: cat.slug === currentSlug ? '#050C1C' : '#555',
+                  borderLeft: `3px solid ${cat.slug === currentSlug ? '#C9A84C' : 'transparent'}`,
+                  textDecoration: 'none',
+                  fontFamily: "'Playfair Display', Georgia, serif",
+                  fontSize: '14px',
+                  fontWeight: cat.slug === currentSlug ? 700 : 400,
+                  background: cat.slug === currentSlug ? '#FDF6E3' : 'transparent',
+                  display: 'block',
+                  padding: '5px 8px 5px 12px',
+                  borderRadius: '0 4px 4px 0',
+                  transition: 'all 0.15s',
+                }}
+                onMouseEnter={e => {
+                  if (cat.slug !== currentSlug) {
+                    e.currentTarget.style.color = '#C9A84C'
+                    e.currentTarget.style.borderLeftColor = '#C9A84C'
+                    e.currentTarget.style.background = '#fdf9f0'
+                  }
+                }}
+                onMouseLeave={e => {
+                  if (cat.slug !== currentSlug) {
+                    e.currentTarget.style.color = '#555'
+                    e.currentTarget.style.borderLeftColor = 'transparent'
+                    e.currentTarget.style.background = 'transparent'
+                  }
+                }}
+              >
+                {cat.name}
+              </Link>
+            ))
+          : filterKey === 'color'
+          ? (
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                {items.map((item) => {
+                  const hex = COLOR_MAP[item?.trim().toLowerCase()]
+                  const isSelected = selectedFilters[filterKey]?.includes(item) || false
+                  return (
+                    <button
+                      key={item}
+                      title={item}
+                      onClick={() => onFilterChange(filterKey, item, !isSelected)}
+                      style={{
+                        width: '28px', height: '28px',
+                        background: hex || 'conic-gradient(red, yellow, lime, cyan, blue, magenta, red)',
+                        border: 'none', cursor: 'pointer',
+                        position: 'relative', transition: 'transform 0.15s',
+                        transform: isSelected ? 'scale(1.15)' : 'scale(1)',
+                        zIndex: isSelected ? 2 : 1,
+                        boxShadow: isSelected ? '0 0 0 2px #fff, 0 0 0 3.5px #C9A84C' : '0 0 0 1px rgba(0,0,0,0.12)',
+                        borderRadius: '50%',
+                      }}
+                    >
+                      {isSelected && (
+                        <span style={{
+                          position: 'absolute', inset: 0,
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          color: '#fff', fontSize: '13px', fontWeight: 700,
+                          textShadow: '0 1px 3px rgba(0,0,0,0.6)',
+                        }}>✓</span>
+                      )}
+                    </button>
+                  )
+                })}
+              </div>
+            )
+          : (
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                {items.map((item) => {
+                  const isSelected = selectedFilters[filterKey]?.includes(item) || false
+                  return (
+                    <button
+                      key={item}
+                      onClick={() => onFilterChange(filterKey, item, !isSelected)}
+                      style={{
+                        minWidth: '42px', height: '32px', padding: '0 10px',
+                        borderRadius: '5px',
+                        background: isSelected ? '#050C1C' : '#fff',
+                        border: isSelected ? '2px solid #C9A84C' : '1.5px solid #ddd',
+                        color: isSelected ? '#C9A84C' : '#555',
+                        fontSize: '12px', fontWeight: isSelected ? 700 : 500,
+                        letterSpacing: '0.03em', cursor: 'pointer',
+                        transition: 'all 0.15s',
+                        boxShadow: isSelected ? '0 0 0 1px #C9A84C' : 'none',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      {item}
+                    </button>
+                  )
+                })}
+              </div>
+            )
+        }
+      </div>
+    )}
+  </div>
+)
+
 // ── Filter Sidebar ─────────────────────────────────────────────────────────────
 
 const FilterSidebar = ({
@@ -214,163 +336,38 @@ const FilterSidebar = ({
 }) => {
   const [expandedSections, setExpandedSections] = useState({
     category: true,
-    fabric: false,
+    fabric: true,
     color: true,
-    size: false,
-    neckType: false,
-    sleeveLength: false,
-    price: false,
+    size: true,
+    neckType: true,
+    sleeveLength: true,
+    price: true,
   })
 
   const toggleSection = (section) => {
     setExpandedSections((prev) => ({ ...prev, [section]: !prev[section] }))
   }
 
-  const FilterSection = ({ title, items, filterKey }) => (
-    <div className='border-b border-[#C9A84C]/20 py-2'>
-      <button
-        onClick={() => toggleSection(filterKey)}
-        className='flex items-center justify-between w-full text-left mb-2'
-        style={{ color: '#050C1C', fontFamily: "'Playfair Display', Georgia, serif", fontWeight: 600, fontSize: '14px', letterSpacing: '0.04em' }}
-      >
-        {title}
-        {expandedSections[filterKey] ? (
-          <ChevronUp size={15} />
-        ) : (
-          <ChevronDown size={15} />
-        )}
-      </button>
-      {expandedSections[filterKey] && (
-        <div className={filterKey === 'color' ? '' : 'space-y-1'}>
-          {filterKey === 'category'
-            ? items.map((cat) => (
-                <Link
-                  key={cat.slug}
-                  to={`/${cat.slug}`}
-                  className='block text-sm py-0.5 transition'
-                  style={{
-                    color: cat.slug === currentSlug ? '#050C1C' : '#555',
-                    paddingLeft: '12px',
-                    borderLeft: `3px solid ${cat.slug === currentSlug ? '#C9A84C' : 'transparent'}`,
-                    textDecoration: 'none',
-                    fontFamily: "'Playfair Display', Georgia, serif",
-                    fontSize: '14px',
-                    fontWeight: cat.slug === currentSlug ? 700 : 400,
-                    background: cat.slug === currentSlug ? '#FDF6E3' : 'transparent',
-                    display: 'block',
-                    padding: '5px 8px 5px 12px',
-                    borderRadius: '0 4px 4px 0',
-                    transition: 'all 0.15s',
-                  }}
-                  onMouseEnter={e => {
-                    if (cat.slug !== currentSlug) {
-                      e.currentTarget.style.color = '#C9A84C'
-                      e.currentTarget.style.borderLeftColor = '#C9A84C'
-                      e.currentTarget.style.background = '#fdf9f0'
-                    }
-                  }}
-                  onMouseLeave={e => {
-                    if (cat.slug !== currentSlug) {
-                      e.currentTarget.style.color = '#555'
-                      e.currentTarget.style.borderLeftColor = 'transparent'
-                      e.currentTarget.style.background = 'transparent'
-                    }
-                  }}
-                >
-                  {cat.name}
-                </Link>
-              ))
-            : filterKey === 'color'
-            ? (
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-                  {items.map((item, idx) => {
-                    const hex = COLOR_MAP[item?.trim().toLowerCase()]
-                    const isSelected = selectedFilters[filterKey]?.includes(item) || false
-                    return (
-                      <button
-                        key={item}
-                        title={item}
-                        onClick={() => onFilterChange(filterKey, item, !isSelected)}
-                        style={{
-                          width: '28px',
-                          height: '28px',
-                          background: hex || 'conic-gradient(red, yellow, lime, cyan, blue, magenta, red)',
-                          border: 'none',
-                          cursor: 'pointer',
-                          position: 'relative',
-                          transition: 'transform 0.15s',
-                          transform: isSelected ? 'scale(1.15)' : 'scale(1)',
-                          zIndex: isSelected ? 2 : 1,
-                          boxShadow: isSelected ? '0 0 0 2px #fff, 0 0 0 3.5px #C9A84C' : '0 0 0 1px rgba(0,0,0,0.12)',
-                          borderRadius: '50%',
-                        }}
-                      >
-                        {isSelected && (
-                          <span style={{
-                            position: 'absolute', inset: 0,
-                            display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            color: '#fff', fontSize: '13px', fontWeight: 700,
-                            textShadow: '0 1px 3px rgba(0,0,0,0.6)',
-                          }}>✓</span>
-                        )}
-                      </button>
-                    )
-                  })}
-                </div>
-              )
-            : (
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-                  {items.map((item) => {
-                    const isSelected = selectedFilters[filterKey]?.includes(item) || false
-                    return (
-                      <button
-                        key={item}
-                        onClick={() => onFilterChange(filterKey, item, !isSelected)}
-                        style={{
-                          minWidth: '42px',
-                          height: '32px',
-                          padding: '0 10px',
-                          borderRadius: '5px',
-                          background: isSelected ? '#050C1C' : '#fff',
-                          border: isSelected ? '2px solid #C9A84C' : '1.5px solid #ddd',
-                          color: isSelected ? '#C9A84C' : '#555',
-                          fontSize: '12px',
-                          fontWeight: isSelected ? 700 : 500,
-                          letterSpacing: '0.03em',
-                          cursor: 'pointer',
-                          transition: 'all 0.15s',
-                          boxShadow: isSelected ? '0 0 0 1px #C9A84C' : 'none',
-                          whiteSpace: 'nowrap',
-                        }}
-                      >
-                        {item}
-                      </button>
-                    )
-                  })}
-                </div>
-              )
-          }
-        </div>
-      )}
-    </div>
-  )
-
-  const hasFilters = Object.keys(selectedFilters).some(
-    (key) => selectedFilters[key]?.length > 0,
-  )
-
   return (
-    <div
-      className='bg-white rounded-b-lg p-4 overflow-y-auto'
-      style={{ minHeight: '100%' }}
-    >
+    <div className='bg-white p-4 overflow-y-auto' style={{ minHeight: '100%' }}>
       <FilterSection
-        title='Category'
-        items={filters.categories}
-        filterKey='category'
+        title='Category' items={filters.categories} filterKey='category'
+        expanded={expandedSections.category} onToggle={toggleSection}
+        selectedFilters={selectedFilters} onFilterChange={onFilterChange}
+        currentSlug={currentSlug}
       />
-      <FilterSection title='Color' items={filters.colors} filterKey='color' />
-      <FilterSection title='Size' items={filters.sizes} filterKey='size' />
+      <FilterSection
+        title='Color' items={filters.colors} filterKey='color'
+        expanded={expandedSections.color} onToggle={toggleSection}
+        selectedFilters={selectedFilters} onFilterChange={onFilterChange}
+        currentSlug={currentSlug}
+      />
+      <FilterSection
+        title='Size' items={filters.sizes} filterKey='size'
+        expanded={expandedSections.size} onToggle={toggleSection}
+        selectedFilters={selectedFilters} onFilterChange={onFilterChange}
+        currentSlug={currentSlug}
+      />
 
       {/* Price */}
       <div className='border-b border-[#C9A84C]/20 py-2'>
@@ -414,19 +411,22 @@ const FilterSidebar = ({
       </div>
 
       <FilterSection
-        title='Fabric'
-        items={filters.fabrics}
-        filterKey='fabric'
+        title='Fabric' items={filters.fabrics} filterKey='fabric'
+        expanded={expandedSections.fabric} onToggle={toggleSection}
+        selectedFilters={selectedFilters} onFilterChange={onFilterChange}
+        currentSlug={currentSlug}
       />
       <FilterSection
-        title='Neck Type'
-        items={filters.neckTypes}
-        filterKey='neckType'
+        title='Neck Type' items={filters.neckTypes} filterKey='neckType'
+        expanded={expandedSections.neckType} onToggle={toggleSection}
+        selectedFilters={selectedFilters} onFilterChange={onFilterChange}
+        currentSlug={currentSlug}
       />
       <FilterSection
-        title='Sleeve Length'
-        items={filters.sleeveLengths}
-        filterKey='sleeveLength'
+        title='Sleeve Length' items={filters.sleeveLengths} filterKey='sleeveLength'
+        expanded={expandedSections.sleeveLength} onToggle={toggleSection}
+        selectedFilters={selectedFilters} onFilterChange={onFilterChange}
+        currentSlug={currentSlug}
       />
     </div>
   )
@@ -440,8 +440,8 @@ const SelectedFiltersBar = ({ selectedFilters, onRemoveFilter }) => {
   if (allFilters.length === 0) return null
 
   return (
-    <div className='flex items-center overflow-x-auto'>
-      <div className='flex gap-2'>
+    <div className='flex items-center overflow-x-auto mb-4 pb-3' style={{ borderBottom: '1px solid #e8e0d0' }}>
+      <div className='flex flex-wrap gap-2'>
         {allFilters.map(({ key, value }) => (
           <span
             key={`${key}-${value}`}
@@ -901,10 +901,10 @@ const ListingPage = () => {
           {/* Products area */}
           <div className='flex-1'>
             <div className='px-6 pt-4 pb-6'>
-            {/* <SelectedFiltersBar
+            <SelectedFiltersBar
               selectedFilters={selectedFilters}
               onRemoveFilter={handleRemoveFilter}
-            /> */}
+            />
 
             {isLoading ? (
               <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3'>

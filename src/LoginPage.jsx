@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import Navbar from './Navbar'
+import { useAuthStore } from './store/authStore'
 
 // ─── MSG91 Config — replace with your real values ─────────────────────────────
 const MSG91_WIDGET_ID = '366568623534393236303030' // widgetId from MSG91 dashboard
@@ -237,18 +238,21 @@ const styles = `
 `
 
 // ─── useMSG91Script ───────────────────────────────────────────────────────────
-// Injects the MSG91 OTP provider script once and exposes a `ready` flag
+// Injects the MSG91 OTP provider script once. MSG91 does not support teardown/
+// re-init (re-registering 'h-captcha' throws), so the script is never removed.
+let msg91Loaded = false
+
 function useMSG91Script() {
-  const [ready, setReady] = useState(
-    () => typeof window !== 'undefined' && !!window.initSendOTP,
-  )
+  const [ready, setReady] = useState(() => msg91Loaded)
 
   useEffect(() => {
-    if (window.initSendOTP) {
+    if (msg91Loaded) {
       setReady(true)
       return
     }
+    if (document.querySelector('script[src*="otp-provider.js"]')) return
 
+    msg91Loaded = true
     const script = document.createElement('script')
     script.src = 'https://verify.msg91.com/otp-provider.js'
     script.async = true
@@ -257,38 +261,23 @@ function useMSG91Script() {
         widgetId: MSG91_WIDGET_ID,
         tokenAuth: MSG91_TOKEN_AUTH,
         exposeMethods: true,
-
-        success: (data) => {
-          console.log('[MSG91] success', data)
-        },
-
-        failure: (err) => {
-          console.log('[MSG91] failure', err)
-        },
+        success: (data) => { console.log('[MSG91] success', data) },
+        failure: (err) => { console.log('[MSG91] failure', err) },
       })
-
       setReady(true)
-      console.log('initSendOTP', window.initSendOTP)
-      console.log('sendOtp', window.sendOtp)
-      console.log('verifyOtp', window.verifyOtp)
-      console.log('retryOtp', window.retryOtp)
     }
-    script.onerror = () => console.error('[MSG91] Script load failed')
+    script.onerror = () => { msg91Loaded = false; console.error('[MSG91] Script load failed') }
     document.body.appendChild(script)
-
-    return () => {
-      if (document.body.contains(script)) document.body.removeChild(script)
-    }
+    // intentionally no cleanup — MSG91 widget cannot be re-initialized
   }, [])
 
   return ready
 }
 
 // ─── OTP Screen ───────────────────────────────────────────────────────────────
-function OtpScreen({ phone, onBack, onVerified }) {
+function OtpScreen({ phone, onBack, onVerified, onLogin }) {
   const [digits, setDigits] = useState(['', '', '', ''])
   const [seconds, setSeconds] = useState(30)
-const [redirectSeconds, setRedirectSeconds] = useState(null)
   const [canResend, setCanResend] = useState(false)
   const [verifying, setVerifying] = useState(false)
   const [resending, setResending] = useState(false)
@@ -310,20 +299,6 @@ const [redirectSeconds, setRedirectSeconds] = useState(null)
     const t = setTimeout(() => setSeconds((s) => s - 1), 1000)
     return () => clearTimeout(t)
   }, [seconds])
-
-  useEffect(() => {
-  if (redirectSeconds === null) return
-  if (redirectSeconds <= 0) {
-    onVerified?.()
-    return
-  }
-
-  const timer = setTimeout(() => {
-    setRedirectSeconds((s) => s - 1)
-  }, 1000)
-
-  return () => clearTimeout(timer)
-}, [redirectSeconds, onVerified])
 
   const pad = (n) => String(n).padStart(2, '0')
 
@@ -371,12 +346,8 @@ const [redirectSeconds, setRedirectSeconds] = useState(null)
         }
 
         setDigitState('success')
-
-        localStorage.setItem('jwt_token', data.token)
-        localStorage.setItem('customer', JSON.stringify(data.customer))
-
-        setVerifying(true)
-setRedirectSeconds(3)
+        onLogin?.(data.token, data.customer)
+        setTimeout(() => onVerified?.(), 1200)
       } catch (err) {
         setDigitState('shake')
 
@@ -487,9 +458,7 @@ setRedirectSeconds(3)
       {error ? (
         <p className='lp-error'>{error}</p>
       ) : digitState === 'success' ? (
-    <p className='lp-success'>
-  ✓ Verified successfully! Redirecting in {redirectSeconds}s...
-</p>
+        <p className='lp-success'>✓ Verified! Redirecting…</p>
       ) : (
         <div style={{ minHeight: 18 }} />
       )}
@@ -500,12 +469,7 @@ setRedirectSeconds(3)
   allFilled && !verifying && digitState !== 'success' ? ' active' : ''
 }${verifying ? ' loading' : ''}`}
         onClick={handleVerifyClick}
-        disabled={
-  !allFilled ||
-  verifying ||
-  digitState === 'success' ||
-  redirectSeconds !== null
-}
+        disabled={!allFilled || verifying || digitState === 'success'}
       >
         {verifying ? (
           <>
@@ -549,7 +513,7 @@ setRedirectSeconds(3)
 
 // ─── Login Screen ─────────────────────────────────────────────────────────────
 function LoginScreen({ onContinue, msg91Ready }) {
-  const [phone, setPhone] = useState('9876543210')
+  const [phone, setPhone] = useState('8553797479')
   const [agreed, setAgreed] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -665,15 +629,12 @@ export default function LoginPage() {
   const [phone, setPhone] = useState('')
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
-  // Load the MSG91 widget here (not in a child screen) so the script
-  // survives the login → otp screen switch
   const msg91Ready = useMSG91Script()
+  const storeLogin = useAuthStore((s) => s.login)
 
-  const handleVerified = (data) => {
+  const handleVerified = () => {
     const redirectTo = searchParams.get('redirect') || '/'
-
-    // token already stored in localStorage by OtpScreen
-    navigate(redirectTo, { replace: true })
+    navigate(redirectTo)
   }
 
   return (
@@ -695,6 +656,7 @@ export default function LoginPage() {
               phone={phone}
               onBack={() => setScreen('login')}
               onVerified={handleVerified}
+              onLogin={storeLogin}
             />
           )}
         </div>

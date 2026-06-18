@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { ShoppingBag, Search, Heart, User, Menu, X } from 'lucide-react'
 import { useCartStore } from './store/cartStore'
+import { useAuthStore } from './store/authStore'
 import { ADMIN_CATEGORIES as CATEGORIES } from './utils/categories'
 
 const logo = '/vlogo.png'
@@ -234,10 +235,8 @@ const Navbar = () => {
   const [searchValue, setSearchValue] = useState('')
   const [profileOpen, setProfileOpen] = useState(false)
 
-const token = localStorage.getItem('jwt_token')
-const customer = localStorage.getItem('customer')
-const customerData = customer && customer !== 'undefined' ? JSON.parse(customer) : null
-const isLoggedIn = !!token
+  const { token, customer: customerData, logout } = useAuthStore()
+  const isLoggedIn = !!token
   const cart = useCartStore((state) => state.cart)
   const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0)
 
@@ -436,7 +435,7 @@ const isLoggedIn = !!token
         letterSpacing: '0.03em',
       }}
     >
-      {isLoggedIn ? customerData?.name || 'Profile' : 'Profile'}
+      {isLoggedIn ? customerData?.mobile_no || 'Account' : 'Login'}
     </span>
   </button>
 
@@ -444,95 +443,68 @@ const isLoggedIn = !!token
     <div
       style={{
         position: 'absolute',
-        top: 'calc(100% + 8px)',
-        right: 0,
-        width: '260px',
+        top: '100%',
+        left: '50%',
+        transform: 'translateX(-50%)',
+        width: '180px',
         background: '#0a1628',
         border: '1px solid #1a2d4a',
         boxShadow: '0 8px 24px rgba(0,0,0,0.4)',
         borderRadius: '4px',
-        padding: '16px',
+        paddingTop: '8px',
         zIndex: 999,
       }}
     >
+      {/* invisible bridge so mouse can travel from button to panel */}
+      <div style={{ position: 'absolute', top: '-8px', left: 0, right: 0, height: '8px' }} />
       {isLoggedIn ? (
-        <>
-          <div style={{ fontSize: '14px', fontWeight: 700, color: '#E8C060' }}>
-            Hello {customerData?.name}
+        <div style={{ padding: '10px 14px 6px' }}>
+          <div style={{ fontSize: '13px', fontWeight: 700, color: '#E8C060', marginBottom: '2px' }}>
+            Hello {customerData?.mobile_no || customerData?.name}
           </div>
-
-          <div
-            style={{
-              fontSize: '12px',
-              color: '#C9A84C',
-              marginBottom: '14px',
-              opacity: 0.7,
+          {customerData?.name && (
+            <div style={{ fontSize: '11px', color: '#C9A84C', marginBottom: '4px', opacity: 0.7 }}>
+              {customerData.name}
+            </div>
+          )}
+          <hr style={{ border: 'none', borderTop: '1px solid #1a2d4a', marginBottom: '6px' }} />
+          <a href="/orders" style={{ ...menuItemStyle, color: '#C9A84C', fontSize: '12px' }}>Orders</a>
+          <a href="/wishlist" style={{ ...menuItemStyle, color: '#C9A84C', fontSize: '12px' }}>Wishlist</a>
+          <a href="/profile" style={{ ...menuItemStyle, color: '#C9A84C', fontSize: '12px' }}>Profile</a>
+          <button
+            onClick={() => {
+              logout()
+              window.location.href = '/'
             }}
+            style={{ ...menuItemStyle, color: '#C9A84C', fontSize: '12px', background: 'none', border: 'none', width: '100%', textAlign: 'left', cursor: 'pointer' }}
           >
-            {customerData?.mobile_no}
-          </div>
-
-          <hr style={{ border: 'none', borderTop: '1px solid #1a2d4a' }} />
-
-          <div style={{ paddingTop: '12px' }}>
-            <a href="/orders" style={{ ...menuItemStyle, color: '#C9A84C' }}>Orders</a>
-            <a href="/wishlist" style={{ ...menuItemStyle, color: '#C9A84C' }}>Wishlist</a>
-            <a href="/profile" style={{ ...menuItemStyle, color: '#C9A84C' }}>Profile</a>
-
-            <button
-              onClick={() => {
-                localStorage.removeItem('jwt_token')
-                localStorage.removeItem('customer')
-                window.location.href = '/'
-              }}
-              style={{
-                ...menuItemStyle,
-                color: '#C9A84C',
-                background: 'none',
-                border: 'none',
-                width: '100%',
-                textAlign: 'left',
-                cursor: 'pointer',
-              }}
-            >
-              Logout
-            </button>
-          </div>
-        </>
+            Logout
+          </button>
+        </div>
       ) : (
-        <>
-          <div style={{ fontSize: '14px', fontWeight: 700, color: '#E8C060' }}>
+        <div style={{ padding: '10px 14px 12px', textAlign: 'center' }}>
+          <div style={{ fontSize: '13px', fontWeight: 700, color: '#E8C060', marginBottom: '4px' }}>
             Welcome
           </div>
-
-          <div
-            style={{
-              fontSize: '12px',
-              color: '#C9A84C',
-              margin: '8px 0 14px',
-              opacity: 0.7,
-            }}
-          >
-            To access account and manage orders
+          <div style={{ fontSize: '11px', color: '#C9A84C', marginBottom: '10px', opacity: 0.7, lineHeight: 1.4 }}>
+            Sign in to manage orders
           </div>
-
           <a
             href="/login"
             style={{
-              display: 'inline-block',
+              display: 'block',
               border: '1px solid #C9A84C',
               color: '#C9A84C',
-              padding: '10px 18px',
-              fontSize: '12px',
+              padding: '7px 12px',
+              fontSize: '11px',
               fontWeight: 700,
               textDecoration: 'none',
               borderRadius: '4px',
-              marginBottom: '14px',
             }}
           >
             LOGIN / SIGNUP
           </a>
-        </>
+        </div>
       )}
     </div>
   )}
