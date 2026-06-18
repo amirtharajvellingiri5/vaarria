@@ -1,79 +1,94 @@
 import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { Check, Package } from "lucide-react";
 import logo from "../assets/logo.jpg";
 
 export default function OrderSuccess() {
   const location = useLocation();
   const navigate = useNavigate();
   const [visible, setVisible] = useState(false);
+  const [checked, setChecked] = useState(false);
 
   const order = location.state;
 
   useEffect(() => {
     if (!order) { navigate("/"); return; }
-    const t = setTimeout(() => setVisible(true), 80);
-    return () => clearTimeout(t);
+    const t1 = setTimeout(() => setVisible(true), 80);
+    const t2 = setTimeout(() => setChecked(true), 400);
+    return () => { clearTimeout(t1); clearTimeout(t2); };
   }, [order, navigate]);
 
   if (!order) return null;
 
   return (
     <div style={s.page}>
-      <div
-        style={{
-          ...s.card,
-          opacity: visible ? 1 : 0,
-          transform: visible ? "translateY(0)" : "translateY(20px)",
-          transition: "opacity 0.4s ease, transform 0.4s ease",
-        }}
-      >
-        {/* ── Logo ── */}
-        <div style={s.logoArea}>
-          <img src={logo} alt="Aarria" style={s.logo} />
-        </div>
+      <div style={{
+        ...s.card,
+        opacity: visible ? 1 : 0,
+        transform: visible ? "translateY(0)" : "translateY(24px)",
+        transition: "opacity 0.5s ease, transform 0.5s ease",
+      }}>
 
-        {/* ── Green tick ── */}
-        <div style={s.tickWrap}>
-          <div style={s.tickCircle}>
-            <Check size={36} color="#fff" strokeWidth={2.8} />
-          </div>
+        {/* ── Logo ── */}
+        <img src={logo} alt="Aarria" style={s.logo} />
+
+        {/* ── Animated tick ── */}
+        <div style={s.tickOuter}>
+          <svg width="72" height="72" viewBox="0 0 72 72">
+            <circle cx="36" cy="36" r="34" fill="none" stroke="#e8f5e9" strokeWidth="4" />
+            <circle
+              cx="36" cy="36" r="34"
+              fill="none"
+              stroke="#2e7d32"
+              strokeWidth="3"
+              strokeDasharray="213"
+              strokeDashoffset={checked ? 0 : 213}
+              strokeLinecap="round"
+              style={{ transition: "stroke-dashoffset 0.6s ease", transformOrigin: "center", transform: "rotate(-90deg)" }}
+            />
+            <polyline
+              points="22,37 32,47 50,28"
+              fill="none"
+              stroke="#2e7d32"
+              strokeWidth="3.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeDasharray="40"
+              strokeDashoffset={checked ? 0 : 40}
+              style={{ transition: "stroke-dashoffset 0.4s ease 0.5s" }}
+            />
+          </svg>
         </div>
 
         {/* ── Heading ── */}
-        <h1 style={s.title}>Order Confirmed!</h1>
+        <h1 style={s.title}>Thank you for your order</h1>
         <p style={s.subtitle}>
-          Thank you for shopping with Aarria.{"\n"}
-          A confirmation has been sent to your email.
+          Your order has been confirmed and is being prepared with care.
         </p>
 
-        {/* ── Divider ── */}
-        <div style={s.dividerRow}>
-          <div style={s.dividerLine} />
-          <span style={s.dividerLabel}>Order Summary</span>
-          <div style={s.dividerLine} />
+        {/* ── Order summary card ── */}
+        <div style={s.summaryCard}>
+          <div style={s.summaryHeader}>Order Summary</div>
+          <InfoRow label="Order ID"    value={order.order_id} mono />
+          <InfoRow label="Payment ID"  value={order.payment_id} mono />
+          <InfoRow label="Amount Paid" value={`₹${order.amount}`} gold />
+          <InfoRow label="Estimated Delivery" value={order.estimated_delivery} last />
         </div>
 
-        {/* ── Info rows ── */}
-        <div style={s.infoBox}>
-          <InfoRow label="Order ID"    value={order.order_id} />
-          <InfoRow label="Payment ID"  value={order.payment_id} />
-          <InfoRow label="Amount Paid" value={`₹${order.amount}`} highlight />
-          <InfoRow label="Delivery By" value={order.estimated_delivery} last />
-        </div>
-
-        {/* ── Delivery notice ── */}
-        <div style={s.deliveryBanner}>
-          <Package size={18} color="#16a34a" strokeWidth={1.8} style={{ flexShrink: 0, marginTop: 1 }} />
-          <p style={s.deliveryText}>
-            Your order is being prepared and will be dispatched soon.
-            You'll receive tracking info via email once it ships.
+        {/* ── Dispatch notice ── */}
+        <div style={s.notice}>
+          <span style={s.noticeDot} />
+          <p style={s.noticeText}>
+            You'll receive tracking details at{" "}
+            <a href="mailto:chatoyantvortex@outlook.com" style={s.noticeEmail}>
+              chatoyantvortex@outlook.com
+            </a>{" "}
+            once your order ships.
           </p>
         </div>
 
         {/* ── Actions ── */}
         <div style={s.actions}>
-          <button style={s.btnPrimary}   onClick={() => navigate("/orders")}>
+          <button style={s.btnPrimary} onClick={() => navigate("/orders")}>
             View My Orders
           </button>
           <button style={s.btnSecondary} onClick={() => navigate("/")}>
@@ -81,10 +96,10 @@ export default function OrderSuccess() {
           </button>
         </div>
 
-        <p style={s.supportNote}>
-          Questions?&nbsp;
-          <a href="mailto:support@aarria.in" style={s.supportLink}>
-            support@aarria.in
+        <p style={s.support}>
+          Need help?{" "}
+          <a href="mailto:chatoyantvortex@outlook.com" style={s.supportLink}>
+            chatoyantvortex@outlook.com
           </a>
         </p>
       </div>
@@ -92,26 +107,28 @@ export default function OrderSuccess() {
   );
 }
 
-function InfoRow({ label, value, highlight, last }) {
+function InfoRow({ label, value, gold, mono, last }) {
   return (
-    <div style={{ ...s.infoRow, ...(last ? { borderBottom: "none" } : {}) }}>
-      <span style={s.infoLabel}>{label}</span>
-      <span style={{ ...s.infoValue, ...(highlight ? s.infoHighlight : {}) }}>
+    <div style={{ ...s.row, ...(last ? { borderBottom: "none" } : {}) }}>
+      <span style={s.rowLabel}>{label}</span>
+      <span style={{
+        ...s.rowValue,
+        ...(gold ? { color: "#C9A84C", fontWeight: 700, fontSize: 15 } : {}),
+        ...(mono ? { fontFamily: "monospace", fontSize: 12, color: "#555" } : {}),
+      }}>
         {value}
       </span>
     </div>
   );
 }
 
-/* ─────────────────────────── Styles ─────────────────────────── */
-const PINK  = "#A65A66";
-const GREEN = "#16a34a";
-const BORDER = "#ede8e3";
+const GOLD = "#C9A84C";
+const NAVY = "#050C1C";
 
 const s = {
   page: {
     minHeight: "100vh",
-    background: "#faf8f6",
+    background: "#f5f4f0",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
@@ -121,129 +138,122 @@ const s = {
 
   card: {
     width: "100%",
-    maxWidth: 520,
+    maxWidth: 480,
     background: "#ffffff",
     borderRadius: 16,
-    border: `1px solid ${BORDER}`,
-    boxShadow: "0 4px 32px rgba(0,0,0,0.07)",
-    padding: "36px 36px 28px",
+    border: "1px solid #e8e0d0",
+    boxShadow: "0 8px 40px rgba(0,0,0,0.08)",
+    padding: "36px 32px 28px",
     display: "flex",
     flexDirection: "column",
     alignItems: "center",
     textAlign: "center",
   },
 
-  // tick halo (10px box-shadow ring) extends beyond the circle,
-  // so margins here include that overflow
-  logoArea: { marginBottom: 28 },
-
   logo: {
-    height: 56,
+    height: 48,
     width: "auto",
     objectFit: "contain",
+    marginBottom: 28,
   },
 
-  tickWrap: { marginBottom: 26 },
-
-  tickCircle: {
-    width: 72,
-    height: 72,
-    borderRadius: "50%",
-    background: GREEN,
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    boxShadow: "0 0 0 10px #dcfce7",
+  tickOuter: {
+    marginBottom: 24,
   },
 
   title: {
-    fontSize: 26,
+    fontSize: 22,
     fontWeight: 700,
-    color: "#111827",
-    margin: "0 0 8px",
-    letterSpacing: "-0.3px",
+    color: NAVY,
+    margin: "0 0 10px",
+    fontFamily: "'Playfair Display', Georgia, serif",
+    letterSpacing: 0.2,
   },
 
   subtitle: {
-    fontSize: 14,
+    fontSize: 13.5,
     color: "#6b7280",
-    lineHeight: 1.65,
-    whiteSpace: "pre-line",
+    lineHeight: 1.7,
     margin: "0 0 28px",
+    maxWidth: 340,
   },
 
-  dividerRow: {
-    display: "flex",
-    alignItems: "center",
-    gap: 10,
+  summaryCard: {
     width: "100%",
+    border: "1px solid #e8e0d0",
+    borderRadius: 10,
+    overflow: "hidden",
     marginBottom: 16,
+    background: "#fdfcf9",
   },
-  dividerLine: { flex: 1, height: 1, background: BORDER },
-  dividerLabel: {
-    fontSize: 11,
-    fontWeight: 600,
+
+  summaryHeader: {
+    fontSize: 10,
+    fontWeight: 700,
     letterSpacing: "0.12em",
     textTransform: "uppercase",
-    color: "#9ca3af",
-    whiteSpace: "nowrap",
+    color: "#aaa",
+    padding: "10px 16px",
+    borderBottom: "1px solid #e8e0d0",
+    textAlign: "left",
   },
 
-  infoBox: {
-    width: "100%",
-    border: `1px solid ${BORDER}`,
-    borderRadius: 12,
-    overflow: "hidden",
-    marginBottom: 14,
-    background: "#fdfcfb",
-  },
-
-  infoRow: {
+  row: {
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
-    padding: "13px 18px",
-    borderBottom: `1px solid ${BORDER}`,
+    padding: "12px 16px",
+    borderBottom: "1px solid #f0ece4",
   },
 
-  infoLabel: {
+  rowLabel: {
     fontSize: 13,
-    color: "#6b7280",
+    color: "#888",
     fontWeight: 400,
   },
 
-  infoValue: {
+  rowValue: {
     fontSize: 13.5,
     fontWeight: 600,
-    color: "#111827",
-    maxWidth: "55%",
+    color: NAVY,
+    maxWidth: "58%",
     textAlign: "right",
     wordBreak: "break-all",
   },
 
-  infoHighlight: {
-    color: GREEN,
-    fontSize: 15,
-  },
-
-  deliveryBanner: {
+  notice: {
     display: "flex",
     alignItems: "flex-start",
     gap: 10,
     width: "100%",
-    background: "#f0fdf4",
-    border: "1px solid #bbf7d0",
-    borderRadius: 10,
-    padding: "12px 16px",
+    background: "#fffdf5",
+    border: `1px solid ${GOLD}33`,
+    borderRadius: 8,
+    padding: "12px 14px",
     marginBottom: 24,
     textAlign: "left",
   },
 
-  deliveryText: {
+  noticeDot: {
+    width: 7,
+    height: 7,
+    borderRadius: "50%",
+    background: GOLD,
+    flexShrink: 0,
+    marginTop: 5,
+  },
+
+  noticeText: {
     fontSize: 12.5,
-    color: "#374151",
-    lineHeight: 1.6,
+    color: "#555",
+    lineHeight: 1.65,
     margin: 0,
+  },
+
+  noticeEmail: {
+    color: GOLD,
+    textDecoration: "none",
+    fontWeight: 600,
   },
 
   actions: {
@@ -257,38 +267,38 @@ const s = {
   btnPrimary: {
     width: "100%",
     padding: "13px",
-    background: PINK,
-    color: "#fff",
-    border: "none",
+    background: NAVY,
+    color: GOLD,
+    border: `1px solid ${GOLD}`,
     borderRadius: 8,
-    fontSize: 13.5,
+    fontSize: 13,
     fontWeight: 700,
-    letterSpacing: "0.04em",
+    letterSpacing: "0.06em",
     cursor: "pointer",
-    fontFamily: "inherit",
+    fontFamily: "'Playfair Display', Georgia, serif",
   },
 
   btnSecondary: {
     width: "100%",
     padding: "13px",
     background: "#fff",
-    color: "#374151",
-    border: "1px solid #d1d5db",
+    color: "#555",
+    border: "1px solid #ddd",
     borderRadius: 8,
-    fontSize: 13.5,
+    fontSize: 13,
     fontWeight: 600,
     letterSpacing: "0.04em",
     cursor: "pointer",
     fontFamily: "inherit",
   },
 
-  supportNote: {
+  support: {
     fontSize: 12,
-    color: "#9ca3af",
+    color: "#aaa",
   },
 
   supportLink: {
-    color: PINK,
+    color: GOLD,
     textDecoration: "none",
     fontWeight: 500,
   },
