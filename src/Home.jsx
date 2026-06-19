@@ -39,9 +39,21 @@ function useNewArrivals() {
   return { products, loading }
 }
 
+function usePriceImages() {
+  const [images, setImages] = useState([])
+  useEffect(() => {
+    fetch(`${LISTING}/listings?page_size=4`)
+      .then(r => r.json())
+      .then(d => setImages((d.data ?? []).filter(p => p.main_image).slice(0, 4)))
+      .catch(() => {})
+  }, [])
+  return images
+}
+
 export default function Home() {
   const navigate = useNavigate()
   const { products, loading } = useNewArrivals()
+  const priceImages = usePriceImages()
 
   return (
     <div style={{ minHeight: '100vh', background: '#FAF8F4', fontFamily: "'DM Sans', sans-serif" }}>
@@ -59,7 +71,7 @@ export default function Home() {
               We removed <span style={{ color: GOLD }}>3 steps</span> from your wardrobe's supply chain.
             </h1>
             <p style={{ fontSize: 14, color: 'rgba(255,255,255,.55)', lineHeight: 1.75, marginBottom: 28, maxWidth: 440 }}>
-              Most brands mark up 4× before the fabric reaches you — mill, distributor, brand, retailer. We go direct. Same Egyptian cotton, same Italian weave. Our price is 50% less. Always.
+              Most brands mark up 4× before the fabric reaches you — mill, distributor, brand, retailer. We go direct. Same handpicked fabric, same premium finish. Our price is 50% less. Always.
             </p>
             <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
               <button
@@ -97,7 +109,7 @@ export default function Home() {
                 ))}
               </div>
               <p style={{ fontSize: 10, color: 'rgba(255,255,255,.25)', marginTop: 6, textAlign: 'right' }}>
-                ends at <span style={{ textDecoration: 'line-through', color: 'rgba(255,80,80,.5)' }}>₹4,999</span>
+                ends at <span style={{ textDecoration: 'line-through', color: 'rgba(255,80,80,.5)' }}>up to 4× markup</span>
               </p>
             </div>
 
@@ -117,7 +129,7 @@ export default function Home() {
                 ))}
               </div>
               <p style={{ fontSize: 10, color: GOLD, marginTop: 6, textAlign: 'right', fontWeight: 600 }}>
-                you pay <span style={{ fontSize: 14 }}>₹2,199</span> — same fabric
+                you pay <span style={{ fontSize: 14 }}>~50% less</span> — same fabric
               </p>
             </div>
           </div>
@@ -140,34 +152,65 @@ export default function Home() {
 
       {/* ── Price breakdown ── */}
       <section id='how-we-price' style={{ background: '#fff', padding: 'clamp(32px,5vw,60px) clamp(20px,5vw,80px)', borderBottom: '1px solid #e8e0d0' }}>
-        <div style={{ maxWidth: 1200, margin: '0 auto' }}>
-          <p style={{ fontSize: 10, letterSpacing: '.18em', textTransform: 'uppercase', color: '#9ca3af', marginBottom: 8 }}>The price difference, explained</p>
-          <h2 style={{ fontSize: 'clamp(20px,3vw,30px)', fontWeight: 700, color: NAVY, fontFamily: "'Playfair Display', Georgia, serif", marginBottom: 28 }}>
-            Same fabric. Less than half the price. Here's why.
-          </h2>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(220px,1fr))', gap: 16 }}>
-            <div style={{ border: '1px solid #f3f0eb', borderRadius: 10, padding: 20 }}>
-              <p style={{ fontSize: 11, color: '#9ca3af', marginBottom: 6 }}>What you pay at a typical brand</p>
-              <p style={{ fontSize: 28, fontWeight: 700, color: '#d1d5db', textDecoration: 'line-through', textDecorationColor: '#f87171', fontFamily: "'Playfair Display', Georgia, serif" }}>₹4,999</p>
-              <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 6 }}>
-                {['Mill cost: ₹800', 'Distributor margin: ₹600', 'Brand overhead: ₹1,400', 'Retailer markup: ₹1,200', 'Their profit: ₹999'].map(l => (
-                  <div key={l} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#f3f0eb', flexShrink: 0 }} />
-                    <p style={{ fontSize: 12, color: '#9ca3af' }}>{l}</p>
-                  </div>
-                ))}
-              </div>
+        <div style={{ maxWidth: 1200, margin: '0 auto', display: 'grid', gridTemplateColumns: 'minmax(0,1fr) minmax(0,1.4fr)', gap: 'clamp(24px,4vw,56px)', alignItems: 'center' }}>
+
+          {/* Left — product image collage */}
+          <div style={{ position: 'relative' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gridTemplateRows: '1fr 1fr', gap: 8, aspectRatio: '1/1' }}>
+              {[0,1,2,3].map(i => (
+                <div key={i} style={{
+                  background: ['#EDE8E0','#E0D8CC','#D4CCBE','#C8C0B2'][i],
+                  borderRadius: 10,
+                  overflow: 'hidden',
+                  gridColumn: i === 0 ? 'span 1' : undefined,
+                }}>
+                  {priceImages[i]?.main_image && (
+                    <img
+                      src={`${CDN}${priceImages[i].main_image}`}
+                      alt=''
+                      style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top' }}
+                      onError={e => { e.target.style.display = 'none' }}
+                    />
+                  )}
+                </div>
+              ))}
             </div>
-            <div style={{ border: `1px solid ${GOLD}44`, borderRadius: 10, padding: 20, background: '#fffdf7' }}>
-              <p style={{ fontSize: 11, color: GOLD, marginBottom: 6 }}>What you pay at Vaarria</p>
-              <p style={{ fontSize: 28, fontWeight: 700, color: NAVY, fontFamily: "'Playfair Display', Georgia, serif" }}>₹2,199</p>
-              <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 6 }}>
-                {['Mill cost: ₹800', 'Quality check: ₹200', 'Fulfilment & delivery: ₹400', 'Our margin: ₹799', 'You save: ₹2,800'].map((l, i) => (
-                  <div key={l} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <div style={{ width: 6, height: 6, borderRadius: '50%', background: i === 4 ? GOLD : `${GOLD}44`, flexShrink: 0 }} />
-                    <p style={{ fontSize: 12, color: i === 4 ? NAVY : '#6b7280', fontWeight: i === 4 ? 700 : 400 }}>{l}</p>
+            {/* Floating badge */}
+            <div style={{
+              position: 'absolute', bottom: -14, right: -14,
+              background: NAVY, borderRadius: 10, padding: '12px 16px',
+              border: `1px solid ${GOLD}44`, textAlign: 'center', minWidth: 100,
+            }}>
+              <p style={{ fontSize: 22, fontWeight: 700, color: GOLD, fontFamily: "'Playfair Display', Georgia, serif", lineHeight: 1 }}>50%</p>
+              <p style={{ fontSize: 10, color: 'rgba(255,255,255,.5)', marginTop: 3 }}>less than retail</p>
+            </div>
+          </div>
+
+          {/* Right — price cards */}
+          <div>
+            <p style={{ fontSize: 10, letterSpacing: '.18em', textTransform: 'uppercase', color: '#9ca3af', marginBottom: 8 }}>The price difference, explained</p>
+            <h2 style={{ fontSize: 'clamp(20px,2.5vw,28px)', fontWeight: 700, color: NAVY, fontFamily: "'Playfair Display', Georgia, serif", marginBottom: 24 }}>
+              Same fabric. Less than half the price. Here's why.
+            </h2>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <div style={{ border: '1px solid #f3f0eb', borderRadius: 10, padding: '16px 18px', display: 'flex', gap: 16, alignItems: 'flex-start' }}>
+                <div style={{ flex: 1 }}>
+                  <p style={{ fontSize: 11, color: '#9ca3af', marginBottom: 4 }}>What you pay elsewhere</p>
+                  <p style={{ fontSize: 24, fontWeight: 700, color: '#d1d5db', textDecoration: 'line-through', textDecorationColor: '#f87171', fontFamily: "'Playfair Display', Georgia, serif", marginBottom: 10 }}>Up to 4× markup</p>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                    {['Mill → Distributor → Brand → Retailer → You', '4 hands. 4 margins. You pay for all of them.'].map((l, i) => (
+                      <p key={i} style={{ fontSize: 12, color: '#9ca3af', lineHeight: 1.5 }}>{l}</p>
+                    ))}
                   </div>
-                ))}
+                </div>
+              </div>
+
+              <div style={{ border: `2px solid ${GOLD}66`, borderRadius: 10, padding: '16px 18px', background: '#fffdf7' }}>
+                <p style={{ fontSize: 11, color: GOLD, marginBottom: 4 }}>What you pay at Vaarria</p>
+                <p style={{ fontSize: 28, fontWeight: 700, color: NAVY, fontFamily: "'Playfair Display', Georgia, serif", marginBottom: 10 }}>~50% less</p>
+                <p style={{ fontSize: 12, color: '#6b7280', marginBottom: 10 }}>Mill → Vaarria → You</p>
+                <p style={{ fontSize: 12, color: '#6b7280', lineHeight: 1.5 }}>2 steps. That's it. Every rupee we save goes back to you.</p>
               </div>
             </div>
           </div>
