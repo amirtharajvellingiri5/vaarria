@@ -60,8 +60,9 @@ export default function Home() {
       <Navbar />
 
       {/* ── Hero ── */}
-      <section style={{ background: NAVY, padding: 'clamp(40px,6vw,80px) clamp(20px,5vw,80px)' }}>
-        <div style={{ maxWidth: 1200, margin: '0 auto', display: 'grid', gridTemplateColumns: 'minmax(0,1.2fr) minmax(0,1fr)', gap: 'clamp(24px,4vw,64px)', alignItems: 'center' }}>
+      <section style={{ background: NAVY, backgroundImage: 'url(/hero-banner.png)', backgroundSize: 'cover', backgroundPosition: 'center top', position: 'relative', padding: 'clamp(40px,6vw,80px) clamp(20px,5vw,80px)' }}>
+        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(90deg, rgba(5,12,28,.92) 0%, rgba(5,12,28,.75) 50%, rgba(5,12,28,.2) 100%)', pointerEvents: 'none' }} />
+        <div style={{ position: 'relative', maxWidth: 1200, margin: '0 auto', display: 'grid', gridTemplateColumns: 'minmax(0,1.2fr) minmax(0,1fr)', gap: 'clamp(24px,4vw,64px)', alignItems: 'center' }}>
 
           <div>
             <p style={{ fontSize: 11, letterSpacing: '.2em', textTransform: 'uppercase', color: GOLD, marginBottom: 14 }}>
@@ -136,7 +137,7 @@ export default function Home() {
         </div>
 
         {/* Stats bar */}
-        <div style={{ maxWidth: 1200, margin: '32px auto 0', display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 1, background: 'rgba(255,255,255,.06)', borderRadius: 8, overflow: 'hidden' }}>
+        <div style={{ position: 'relative', maxWidth: 1200, margin: '32px auto 0', display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 1, background: 'rgba(255,255,255,.06)', borderRadius: 8, overflow: 'hidden' }}>
           {[
             { value: '50%', label: 'less than retail, every time' },
             { value: 'Zero', label: 'middlemen in the chain' },
