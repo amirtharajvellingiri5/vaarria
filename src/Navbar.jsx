@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react'
 import { ShoppingBag, Search, Heart, User, Menu, X } from 'lucide-react'
 import { useBagStore } from './store/bagStore'
 import { useAuthStore } from './store/authStore'
+import { useWishlistStore } from './store/wishlistStore'
+import { useNavigate } from 'react-router-dom'
 import { ADMIN_CATEGORIES as CATEGORIES } from './utils/categories'
 
 const logo = '/vlogo.png'
@@ -235,11 +237,18 @@ const Navbar = () => {
   const [searchValue, setSearchValue] = useState('')
   const [profileOpen, setProfileOpen] = useState(false)
 
+  const navigate = useNavigate()
   const { token, customer: customerData, logout } = useAuthStore()
   const isLoggedIn = !!token
   const bagItems = useBagStore((state) => state.items)
   const setItems = useBagStore((state) => state.setItems)
   const cartCount = bagItems.reduce((sum, item) => sum + (item.qty || 0), 0)
+  const { load: loadWishlist, productIds: wishlistIds } = useWishlistStore()
+  const wishlistCount = wishlistIds.size
+
+  useEffect(() => {
+    if (customerData?.customer_id) loadWishlist(customerData.customer_id)
+  }, [customerData?.customer_id])
 
   useEffect(() => {
     if (!customerData?.customer_id) return
@@ -523,6 +532,7 @@ const Navbar = () => {
   )}
 </div>
           <button
+            onClick={() => navigate('/wishlist')}
             style={{
               background: 'none',
               border: 'none',
@@ -532,10 +542,20 @@ const Navbar = () => {
               alignItems: 'center',
               flexDirection: 'column',
               gap: '2px',
+              position: 'relative',
             }}
             className='icon-btn'
           >
-            <Heart size={20} />
+            <Heart size={20} fill={wishlistCount > 0 ? '#C9A84C' : 'none'} />
+            {wishlistCount > 0 && (
+              <span style={{
+                position: 'absolute', top: -4, right: -4,
+                background: '#050C1C', color: '#C9A84C',
+                fontSize: 9, fontWeight: 700, borderRadius: '50%',
+                width: 16, height: 16, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                border: '1.5px solid #C9A84C',
+              }}>{wishlistCount > 9 ? '9+' : wishlistCount}</span>
+            )}
             <span
               style={{
                 fontSize: '11px',

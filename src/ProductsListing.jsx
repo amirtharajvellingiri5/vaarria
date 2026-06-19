@@ -18,6 +18,9 @@ import {
 } from 'lucide-react'
 import Navbar from './Navbar'
 import Footer from './Footer'
+import { useAuthStore } from './store/authStore'
+import { useWishlistStore } from './store/wishlistStore'
+import WishlistLoginModal from './modals/WishlistLoginModal'
 
 import logo from './assets/logo.jpg'
 
@@ -468,9 +471,12 @@ const SelectedFiltersBar = ({ selectedFilters, onRemoveFilter }) => {
 }
 
 // ── Product Card ───────────────────────────────────────────────────────────────
-const ProductCard = ({ product, onViewDetails }) => {
+const ProductCard = ({ product, onViewDetails, onWishlistLoginNeeded }) => {
   const addToCart = useCartStore((state) => state.addToCart)
   const [added, setAdded] = useState(false)
+  const { customer } = useAuthStore()
+  const { toggle: toggleWishlist, isWishlisted } = useWishlistStore()
+  const wishlisted = isWishlisted(product.id)
 
   const handleAddToCart = (e) => {
     e.stopPropagation()
@@ -513,7 +519,11 @@ const ProductCard = ({ product, onViewDetails }) => {
         />
         {/* Wishlist */}
         <button
-          onClick={e => e.stopPropagation()}
+          onClick={e => {
+            e.stopPropagation()
+            if (!customer) { onWishlistLoginNeeded?.(product.id); return }
+            toggleWishlist(customer.customer_id, product.id)
+          }}
           style={{
             position: 'absolute', top: '10px', right: '10px',
             background: '#fff', border: 'none', borderRadius: '50%',
@@ -525,7 +535,7 @@ const ProductCard = ({ product, onViewDetails }) => {
           onMouseEnter={e => e.currentTarget.style.background = '#fdf6e3'}
           onMouseLeave={e => e.currentTarget.style.background = '#fff'}
         >
-          <Heart size={17} style={{ color: '#C9A84C', transition: 'fill 0.2s' }} />
+          <Heart size={17} color='#C9A84C' fill={wishlisted ? '#C9A84C' : 'none'} style={{ transition: 'fill 0.2s' }} />
         </button>
       </div>
       <div style={{ padding: '12px 14px 16px' }}>
@@ -699,6 +709,9 @@ const ListingPage = () => {
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 12
   const navigate = useNavigate()
+  const [wishlistModal, setWishlistModal] = useState({ open: false, pendingProductId: null })
+  const { customer } = useAuthStore()
+  const { toggle: toggleWishlist } = useWishlistStore()
 
   const { slug } = useParams()
   const category = ADMIN_CATEGORIES.find((c) => c.slug === slug)
@@ -922,6 +935,7 @@ const ListingPage = () => {
                       onViewDetails={(p) =>
                         window.open(`/product/${p.id}`, '_blank')
                       }
+                      onWishlistLoginNeeded={(pid) => setWishlistModal({ open: true, pendingProductId: pid })}
                     />
                   ))}
                 </div>
@@ -961,6 +975,16 @@ const ListingPage = () => {
       </div>
 
       <Footer />
+
+      {wishlistModal.open && (
+        <WishlistLoginModal
+          onClose={() => setWishlistModal({ open: false, pendingProductId: null })}
+          onLoggedIn={(c) => {
+            setWishlistModal({ open: false, pendingProductId: null })
+            if (wishlistModal.pendingProductId) toggleWishlist(c.customer_id, wishlistModal.pendingProductId)
+          }}
+        />
+      )}
     </div>
   )
 }

@@ -16,12 +16,17 @@ import {
   Play,
   Gift,
   CreditCard,
+  ArrowLeftRight,
+  RotateCcw,
+  Wallet,
 } from 'lucide-react'
 import Navbar from './Navbar'
 import Footer from './Footer'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useAuthStore } from './store/authStore'
 import { useBagStore } from './store/bagStore'
+import { useWishlistStore } from './store/wishlistStore'
+import WishlistLoginModal from './modals/WishlistLoginModal'
 
 // ─── Mock API Response ────────────────────────────────────────────────────────
 const MOCK_PRODUCT_API_RESPONSE = {
@@ -974,7 +979,9 @@ export default function ProductDetail() {
   const [sliderOpen, setSliderOpen] = useState(false)
   const [sliderIndex, setSliderIndex] = useState(0)
   const [selectedSize, setSelectedSize] = useState(null)
-  const [wishlist, setWishlist] = useState(false)
+  const [showWishlistModal, setShowWishlistModal] = useState(false)
+  const { toggle: toggleWishlist, isWishlisted } = useWishlistStore()
+  const wishlisted = product ? isWishlisted(product.id ?? productId) : false
   const [expandedSection, setExpandedSection] = useState('ratings')
   const [pincode, setPincode] = useState('560001')
   const [addedToBag, setAddedToBag] = useState(false)
@@ -984,13 +991,13 @@ export default function ProductDetail() {
   const ratingsRef = useRef(null)
   const ctaRef = useRef(null)
   const [reviewSliderOpen, setReviewSliderOpen] = useState(false)
-  const [showSticky, setShowSticky] = useState(false)
-  const [viewerCount] = useState(() => Math.floor(Math.random() * 18) + 7)
   const [dispatchSecondsLeft, setDispatchSecondsLeft] = useState(0)
   const [reviewImages, setReviewImages] = useState([])
   const [showSizeChart, setShowSizeChart] = useState(false)
   const [deliveryMessage, setDeliveryMessage] = useState('')
   const [checkingDelivery, setCheckingDelivery] = useState(false)
+  const [historyProducts, setHistoryProducts] = useState([])
+  const [relatedProducts, setRelatedProducts] = useState([])
   const hasRatings =
     ratingsData &&
     ratingsData.rating_count > 0 &&
@@ -1024,13 +1031,69 @@ export default function ProductDetail() {
     return () => clearInterval(id)
   }, [])
 
-  // Sticky CTA — show when Add to Bag button scrolls out of view
+
+  // Record view + load sliders when product is ready
   useEffect(() => {
-    if (!ctaRef.current) return
-    const obs = new IntersectionObserver(([entry]) => setShowSticky(!entry.isIntersecting), { threshold: 0 })
-    obs.observe(ctaRef.current)
-    return () => obs.disconnect()
-  }, [product])
+    if (!product || !productId) return
+    const cid = customer?.customer_id
+    const ORDERS = 'https://zq0dbjycx6.execute-api.ap-south-1.amazonaws.com/prod'
+    const LISTING = 'https://api.vaarria.com'
+
+    // Record view (best-effort, only when logged in)
+    if (cid) {
+      fetch(`${ORDERS}/history/record`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ customer_id: cid, product_id: Number(productId) }),
+      }).catch(() => {})
+    }
+
+    // View history slider
+    if (cid) {
+      fetch(`${ORDERS}/history/${cid}`, { credentials: 'include' })
+        .then(r => r.json())
+        .then(async ({ product_ids = [] }) => {
+          const ids = product_ids.filter(id => String(id) !== String(productId)).slice(0, 12)
+          const products = await Promise.all(
+            ids.map(id =>
+              fetch(`https://products-api.chatoyantvortex.workers.dev/product?id=${id}`)
+                .then(r => r.json())
+                .then(raw => ({
+                  id,
+                  title: raw.title,
+                  price: raw.pricing?.selling_price ?? raw.pricing?.mrp,
+                  image: `https://cdn.vaarria.com/app/images/${raw.inventory?.variants?.[0]?.main_image}`,
+                }))
+                .catch(() => null)
+            )
+          )
+          setHistoryProducts(products.filter(Boolean))
+        })
+        .catch(() => {})
+    }
+
+    // Related products slider — no category filter until listing DB has category_id populated
+    {
+      fetch(`${LISTING}/listings?page_size=13`)
+        .then(r => r.json())
+        .then(data => {
+          const items = (data.listings ?? data.products ?? data.data ?? data ?? [])
+            .filter(p => String(p.id ?? p.product_id) !== String(productId))
+            .slice(0, 12)
+            .map(p => ({
+              id: p.id ?? p.product_id,
+              title: p.title ?? p.name,
+              price: p.selling_price ?? p.price,
+              image: p.main_image
+                ? `https://cdn.vaarria.com/app/images/${p.main_image}`
+                : p.image_url ?? '',
+            }))
+          setRelatedProducts(items)
+        })
+        .catch(() => {})
+    }
+  }, [product, productId, customer])
 
   const checkPincode = async () => {
     if (pincode.length !== 6) {
@@ -1447,7 +1510,7 @@ export default function ProductDetail() {
         .pdp-size-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
         .pdp-section-label { font-size: 13px; font-weight: 700; color: #374151; text-transform: uppercase; letter-spacing: 0.5px; }
         .pdp-size-guide { font-size: 13px; color: #050C1C; font-weight: 600; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
-        .pdp-sizes { display: flex; flex-wrap: wrap; gap: 10px; }
+        .pdp-sizes { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 16px; }
         .pdp-size-btn { width: 56px; height: 56px; border-radius: 50%; border: 1.5px solid #e5e7eb; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 500; color: #374151; cursor: pointer; transition: all 0.15s; background: #fff; font-family: 'DM Sans', sans-serif; }
         .pdp-size-btn:hover:not([disabled]) { border-color: #C9A84C; color: #050C1C; }
         .pdp-size-btn.selected { border-color: #C9A84C; color: #C9A84C; background: #050C1C; font-weight: 700; box-shadow: 0 0 0 3px rgba(201,168,76,0.15); }
@@ -1464,7 +1527,7 @@ export default function ProductDetail() {
         .pdp-trust { display: flex; border: 1px solid #f3f4f6; border-radius: 8px; overflow: hidden; margin-bottom: 20px; }
         .pdp-trust-item { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 5px; padding: 14px 8px; border-right: 1px solid #f3f4f6; text-align: center; background: #fafafa; }
         .pdp-trust-item:last-child { border-right: none; }
-        .pdp-trust-label { font-size: 11px; color: #6b7280; font-weight: 500; }
+        .pdp-trust-label { font-size: 11px; color: #6b7280; font-weight: 500; text-align: center; line-height: 1.4; }
         .pdp-delivery { border: 1px solid #f3f4f6; border-radius: 8px; padding: 16px; margin-bottom: 20px; background: #fafafa; }
         .pdp-delivery-title { font-size: 13px; font-weight: 700; color: #374151; display: flex; align-items: center; gap: 6px; margin-bottom: 10px; }
         .pdp-pincode-row { display: flex; gap: 8px; align-items: center; }
@@ -1479,8 +1542,7 @@ export default function ProductDetail() {
         .pdp-accordion-body { padding-bottom: 20px; }
         .pdp-toast { position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%); background: #050C1C; color: #C9A84C; border: 1.5px solid #C9A84C; padding: 13px 32px; border-radius: 24px; font-size: 14px; font-weight: 600; z-index: 100; box-shadow: 0 8px 28px rgba(5,12,28,0.35); animation: toastIn 0.3s ease; font-family: 'DM Sans', sans-serif; }
         @keyframes toastIn { from { opacity: 0; transform: translateX(-50%) translateY(16px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
-        @keyframes stickySlideUp { from { transform: translateY(100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-        @media (max-width: 900px) { .pdp-outer {
+@media (max-width: 900px) { .pdp-outer {
   display: flex;
   align-items: flex-start;
   max-width: 1440px;
@@ -1582,12 +1644,8 @@ export default function ProductDetail() {
             </div>
             <div className='pdp-tax'>inclusive of all taxes</div>
 
-            {/* ── Social proof + dispatch timer ── */}
+            {/* ── Dispatch timer ── */}
             <div style={{ display: 'flex', gap: 8, marginTop: 10, flexWrap: 'wrap' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#FFF8EC', border: '1px solid #F0D080', borderRadius: 20, padding: '4px 12px', fontSize: 12, color: '#92400e', fontWeight: 600 }}>
-                <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#ef4444', display: 'inline-block', boxShadow: '0 0 0 2px #fca5a5' }} />
-                {viewerCount} people viewing this
-              </div>
               {dispatchSecondsLeft > 0 && (
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#F0FAF4', border: '1px solid #6ee7b7', borderRadius: 20, padding: '4px 12px', fontSize: 12, color: '#065f46', fontWeight: 600 }}>
                   ⚡ Order within{' '}
@@ -1642,7 +1700,7 @@ export default function ProductDetail() {
             </div>
             {/* per-size stock counter */}
             {selectedSize && product.sizeQuantities?.[selectedSize] > 0 && product.sizeQuantities[selectedSize] <= 6 && (
-              <div style={{ fontSize: 12, color: '#b45309', fontWeight: 600, marginTop: 8, display: 'flex', alignItems: 'center', gap: 5 }}>
+              <div style={{ fontSize: 12, color: '#b45309', fontWeight: 600, marginTop: 8, marginBottom: 16, display: 'flex', alignItems: 'center', gap: 5 }}>
                 <span style={{ fontSize: 14 }}>🔥</span> Only {product.sizeQuantities[selectedSize]} left in size {selectedSize} — grab it fast!
               </div>
             )}
@@ -1697,13 +1755,13 @@ export default function ProductDetail() {
             {/* ── Reassurance strip ── */}
             <div style={{ display: 'flex', gap: 0, marginBottom: 12, border: '1px solid #e8e0d0', borderRadius: 8, overflow: 'hidden', background: '#fafaf8' }}>
               {[
-                { icon: '↔', label: 'Free size exchange' },
-                { icon: '🏠', label: 'COD available' },
-                { icon: '↩', label: '7-day returns' },
+                { icon: <ArrowLeftRight size={15} color='#C9A84C' />, label: "Wrong size? We'll swap it" },
+                { icon: <Wallet size={15} color='#C9A84C' />, label: 'Pay when it arrives' },
+                { icon: <RotateCcw size={15} color='#C9A84C' />, label: "Don't love it? Return it — no questions asked" },
               ].map((item, i) => (
-                <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, padding: '9px 6px', borderRight: i < 2 ? '1px solid #e8e0d0' : 'none' }}>
-                  <span style={{ fontSize: 15 }}>{item.icon}</span>
-                  <span style={{ fontSize: 10.5, color: '#374151', fontWeight: 600, textAlign: 'center', lineHeight: 1.3 }}>{item.label}</span>
+                <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5, padding: '10px 8px', borderRight: i < 2 ? '1px solid #e8e0d0' : 'none' }}>
+                  {item.icon}
+                  <span style={{ fontSize: 10.5, color: '#374151', fontWeight: 600, textAlign: 'center', lineHeight: 1.35 }}>{item.label}</span>
                 </div>
               ))}
             </div>
@@ -1724,13 +1782,16 @@ export default function ProductDetail() {
                       : 'Add to Bag'}
               </button>
               <button
-                className={`pdp-btn-wishlist ${wishlist ? 'active' : ''}`}
-                onClick={() => setWishlist((w) => !w)}
+                className={`pdp-btn-wishlist ${wishlisted ? 'active' : ''}`}
+                onClick={() => {
+                  if (!customer) { setShowWishlistModal(true); return }
+                  toggleWishlist(customer.customer_id, product.id ?? productId)
+                }}
               >
                 <Heart
                   size={20}
-                  color={wishlist ? '#C9A84C' : '#6b7280'}
-                  fill={wishlist ? '#C9A84C' : 'none'}
+                  color={wishlisted ? '#C9A84C' : '#6b7280'}
+                  fill={wishlisted ? '#C9A84C' : 'none'}
                 />
               </button>
             </div>
@@ -1738,15 +1799,15 @@ export default function ProductDetail() {
             <div className='pdp-trust'>
               <div className='pdp-trust-item'>
                 <Truck size={18} color='#C9A84C' />
-                <span className='pdp-trust-label'>Free Delivery</span>
+                <span className='pdp-trust-label'>Ships free, always</span>
               </div>
               <div className='pdp-trust-item'>
                 <Shield size={18} color='#C9A84C' />
-                <span className='pdp-trust-label'>100% Genuine</span>
+                <span className='pdp-trust-label'>Fine fabric. Fair price. No compromise.</span>
               </div>
               <div className='pdp-trust-item'>
                 <CreditCard size={18} color='#C9A84C' />
-                <span className='pdp-trust-label'>Secure Payment</span>
+                <span className='pdp-trust-label'>Your money is safe · Instant refunds</span>
               </div>
             </div>
 
@@ -1839,31 +1900,49 @@ export default function ProductDetail() {
         </div>
       </div>
 
-      {/* ── Complete the Look ── */}
-      <div style={{ maxWidth: 1536, margin: '0 auto', padding: '32px clamp(16px,3%,32px) 48px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
-          <div style={{ height: 1, flex: 1, background: '#e8e0d0' }} />
-          <span style={{ fontSize: 13, fontWeight: 700, color: '#050C1C', letterSpacing: '0.12em', textTransform: 'uppercase', fontFamily: "'Playfair Display', Georgia, serif", whiteSpace: 'nowrap' }}>Complete the Look</span>
-          <div style={{ height: 1, flex: 1, background: '#e8e0d0' }} />
-        </div>
-        <div style={{ display: 'flex', gap: 16, overflowX: 'auto', scrollbarWidth: 'none', paddingBottom: 8 }}>
-          {[
-            { name: 'Dupatta', subtitle: 'Chiffon · Navy Blue', price: '₹499', img: 'https://cdn.vaarria.com/app/images/IMG-20220416-WA0001.jpg' },
-            { name: 'Palazzo Pants', subtitle: 'Viscose · Navy Blue', price: '₹799', img: 'https://cdn.vaarria.com/app/images/IMG-20220416-WA0002.jpg' },
-            { name: 'Jhumka Earrings', subtitle: 'Oxidised Gold', price: '₹349', img: 'https://cdn.vaarria.com/app/images/IMG-20220416-WA0005.jpg' },
-            { name: 'Potli Bag', subtitle: 'Embroidered · Gold', price: '₹599', img: 'https://cdn.vaarria.com/app/images/IMG-20220416-WA0006.jpg' },
-          ].map((item, i) => (
-            <div key={i} style={{ flexShrink: 0, width: 160, cursor: 'pointer' }}>
-              <div style={{ width: 160, height: 213, borderRadius: 8, overflow: 'hidden', background: '#f3f0eb', border: '1px solid #e8e0d0', marginBottom: 8 }}>
-                <img src={item.img} alt={item.name} style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top' }} onError={e => { e.target.style.display = 'none' }} />
+      {/* ── View History Slider ── */}
+      {historyProducts.length > 0 && (
+        <div style={{ maxWidth: 1536, margin: '0 auto', padding: '32px clamp(16px,3%,32px) 8px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
+            <div style={{ height: 1, flex: 1, background: '#e8e0d0' }} />
+            <span style={{ fontSize: 13, fontWeight: 700, color: '#050C1C', letterSpacing: '0.12em', textTransform: 'uppercase', fontFamily: "'Playfair Display', Georgia, serif", whiteSpace: 'nowrap' }}>Recently Viewed</span>
+            <div style={{ height: 1, flex: 1, background: '#e8e0d0' }} />
+          </div>
+          <div style={{ display: 'flex', gap: 16, overflowX: 'auto', scrollbarWidth: 'none', paddingBottom: 8 }}>
+            {historyProducts.map(item => (
+              <div key={item.id} style={{ flexShrink: 0, width: 160, cursor: 'pointer' }} onClick={() => window.open(`/product/${item.id}`, '_blank')}>
+                <div style={{ width: 160, height: 213, borderRadius: 8, overflow: 'hidden', background: '#f3f0eb', border: '1px solid #e8e0d0', marginBottom: 8 }}>
+                  <img src={item.image} alt={item.title} style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top' }} onError={e => { e.target.style.display = 'none' }} />
+                </div>
+                <div style={{ fontSize: 13, fontWeight: 600, color: '#1f2937', lineHeight: 1.3, WebkitLineClamp: 2, display: '-webkit-box', WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{item.title}</div>
+                <div style={{ fontSize: 13, fontWeight: 700, color: '#C9A84C', marginTop: 4 }}>₹{item.price}</div>
               </div>
-              <div style={{ fontSize: 13, fontWeight: 600, color: '#1f2937' }}>{item.name}</div>
-              <div style={{ fontSize: 11, color: '#9ca3af', marginTop: 1 }}>{item.subtitle}</div>
-              <div style={{ fontSize: 13, fontWeight: 700, color: '#C9A84C', marginTop: 3 }}>{item.price}</div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
-      </div>
+      )}
+
+      {/* ── Related Products Slider ── */}
+      {relatedProducts.length > 0 && (
+        <div style={{ maxWidth: 1536, margin: '0 auto', padding: '24px clamp(16px,3%,32px) 48px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
+            <div style={{ height: 1, flex: 1, background: '#e8e0d0' }} />
+            <span style={{ fontSize: 13, fontWeight: 700, color: '#050C1C', letterSpacing: '0.12em', textTransform: 'uppercase', fontFamily: "'Playfair Display', Georgia, serif", whiteSpace: 'nowrap' }}>You May Also Like</span>
+            <div style={{ height: 1, flex: 1, background: '#e8e0d0' }} />
+          </div>
+          <div style={{ display: 'flex', gap: 16, overflowX: 'auto', scrollbarWidth: 'none', paddingBottom: 8 }}>
+            {relatedProducts.map(item => (
+              <div key={item.id} style={{ flexShrink: 0, width: 160, cursor: 'pointer' }} onClick={() => window.open(`/product/${item.id}`, '_blank')}>
+                <div style={{ width: 160, height: 213, borderRadius: 8, overflow: 'hidden', background: '#f3f0eb', border: '1px solid #e8e0d0', marginBottom: 8 }}>
+                  <img src={item.image} alt={item.title} style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top' }} onError={e => { e.target.style.display = 'none' }} />
+                </div>
+                <div style={{ fontSize: 13, fontWeight: 600, color: '#1f2937', lineHeight: 1.3, WebkitLineClamp: 2, display: '-webkit-box', WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{item.title}</div>
+                <div style={{ fontSize: 13, fontWeight: 700, color: '#C9A84C', marginTop: 4 }}>₹{item.price}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       <Footer />
 
@@ -1886,45 +1965,16 @@ export default function ProductDetail() {
 
       {addedToBag && <div className='pdp-toast'>✓ Added to your bag!</div>}
 
-      {/* ── Sticky bottom CTA ── */}
-      {showSticky && product && (
-        <div style={{
-          position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 90,
-          background: '#050C1C', borderTop: '1px solid #C9A84C44',
-          padding: '12px 20px', display: 'flex', alignItems: 'center', gap: 14,
-          boxShadow: '0 -4px 24px rgba(5,12,28,0.4)',
-          animation: 'stickySlideUp 0.25s ease',
-        }}>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: 14, fontWeight: 700, color: '#fff', fontFamily: "'Playfair Display', Georgia, serif", overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              {product.brand} · {product.name}
-            </div>
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginTop: 2 }}>
-              <span style={{ fontSize: 16, fontWeight: 700, color: '#C9A84C' }}>₹{product.price.toLocaleString()}</span>
-              <span style={{ fontSize: 12, color: '#888', textDecoration: 'line-through' }}>₹{product.mrp.toLocaleString()}</span>
-              <span style={{ fontSize: 12, color: '#C9A84C', fontWeight: 600 }}>{product.discount}% OFF</span>
-            </div>
-          </div>
-          <button
-            onClick={handleAddToBag}
-            disabled={addingToBag || isOutOfStock}
-            style={{
-              flexShrink: 0, height: 46, padding: '0 24px',
-              background: addedToBag ? '#065f46' : '#C9A84C',
-              color: addedToBag ? '#fff' : '#050C1C',
-              border: 'none', borderRadius: 6,
-              fontSize: 13, fontWeight: 700, cursor: 'pointer',
-              display: 'flex', alignItems: 'center', gap: 7,
-              letterSpacing: '0.06em', textTransform: 'uppercase',
-              fontFamily: "'DM Sans', sans-serif",
-              transition: 'all 0.2s',
-            }}
-          >
-            <ShoppingBag size={16} />
-            {isOutOfStock ? 'Out of Stock' : addedToBag ? '✓ Added' : 'Add to Bag'}
-          </button>
-        </div>
+      {showWishlistModal && (
+        <WishlistLoginModal
+          onClose={() => setShowWishlistModal(false)}
+          onLoggedIn={(c) => {
+            setShowWishlistModal(false)
+            toggleWishlist(c.customer_id, product.id ?? productId)
+          }}
+        />
       )}
+
 
       {showSizeChart && (
         <div

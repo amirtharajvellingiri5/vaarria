@@ -1,341 +1,302 @@
-import React, { useState, useEffect } from 'react'
-import { useQuery } from '@tanstack/react-query'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { useCartStore } from './store/cartStore'
-
-
-import {
-  ShoppingBag,
-  Search,
-  Heart,
-  User,
-  ChevronLeft,
-  ChevronRight,
-  Star,
-  Menu,
-  X,
-} from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { ArrowRight, CheckCircle, RefreshCw, Wallet, Factory, Eye, ShieldCheck } from 'lucide-react'
 import Navbar from './Navbar'
-import logo from './assets/logo.jpg'
-
 import Footer from './Footer'
-import { HOME_CATEGORIES } from './utils/categories'
 
-// Mock API
-const fetchProducts = async () => {
-  await new Promise((resolve) => setTimeout(resolve, 500))
-  return [
-    {
-      id: 1,
-      name: 'Silk Saree',
-      price: 4999,
-      category: 'Sarees',
-      rating: 4.8,
-      image: '👗',
-      color: 'bg-gradient-to-br from-pink-200 to-rose-300',
-    },
-    {
-      id: 2,
-      name: 'Banarasi Saree',
-      price: 8999,
-      category: 'Sarees',
-      rating: 4.9,
-      image: '👗',
-      color: 'bg-gradient-to-br from-amber-200 to-orange-300',
-    },
-    {
-      id: 3,
-      name: 'Anarkali Suit',
-      price: 3499,
-      category: 'Suits',
-      rating: 4.7,
-      image: '👗',
-      color: 'bg-gradient-to-br from-purple-200 to-pink-300',
-    },
-    {
-      id: 4,
-      name: 'Lehenga Choli',
-      price: 12999,
-      category: 'Lehengas',
-      rating: 4.9,
-      image: '👗',
-      color: 'bg-gradient-to-br from-red-200 to-pink-300',
-    },
-    {
-      id: 5,
-      name: 'Palazzo Set',
-      price: 2499,
-      category: 'Suits',
-      rating: 4.6,
-      image: '👗',
-      color: 'bg-gradient-to-br from-blue-200 to-cyan-300',
-    },
-    {
-      id: 6,
-      name: 'Kurti Set',
-      price: 1799,
-      category: 'Kurtis',
-      rating: 4.5,
-      image: '👗',
-      color: 'bg-gradient-to-br from-green-200 to-emerald-300',
-    },
-    {
-      id: 7,
-      name: 'Designer Saree',
-      price: 6999,
-      category: 'Sarees',
-      rating: 4.8,
-      image: '👗',
-      color: 'bg-gradient-to-br from-indigo-200 to-purple-300',
-    },
-    {
-      id: 8,
-      name: 'Cotton Kurti',
-      price: 999,
-      category: 'Kurtis',
-      rating: 4.4,
-      image: '👗',
-      color: 'bg-gradient-to-br from-yellow-200 to-amber-300',
-    },
-  ]
+const GOLD = '#C9A84C'
+const NAVY = '#050C1C'
+const LISTING = 'https://api.vaarria.com'
+const CDN = 'https://cdn.vaarria.com/app/images/'
+
+const CATEGORIES = [
+  { label: 'Kurtas & Suits', slug: 'kurtas-suits', bg: '#EDE8E0' },
+  { label: 'Kurtis & Tops', slug: 'kurtis-tops', bg: '#E4DDD4' },
+  { label: 'Sarees', slug: 'sarees', bg: '#D8D0C5' },
+  { label: 'Dresses', slug: 'dresses', bg: '#CCC4B8' },
+  { label: 'Dress Materials', slug: 'dress-materials', bg: '#C0B9AE' },
+  { label: 'Dupattas & Shawls', slug: 'dupattas-shawls', bg: '#B4AEA4' },
+]
+
+const PROMISES = [
+  { icon: <Eye size={18} color={GOLD} />, title: 'Handpicked, always', body: 'Every piece is vetted by our team. If it doesn\'t meet our fabric standard, it doesn\'t go live.' },
+  { icon: <ShieldCheck size={18} color={GOLD} />, title: 'Wash guarantee', body: 'Colour holds. Fit holds. We stand behind every wash — or we replace it.' },
+  { icon: <Factory size={18} color={GOLD} />, title: 'Factory direct', body: 'We source straight from the mill and pass every rupee of that saving to you.' },
+  { icon: <RefreshCw size={18} color={GOLD} />, title: 'Free size swap', body: 'Wrong size? We swap it. No questions, no hassle.' },
+  { icon: <Wallet size={18} color={GOLD} />, title: 'Pay on delivery', body: 'Try before you commit. Cash or card when it arrives at your door.' },
+  { icon: <CheckCircle size={18} color={GOLD} />, title: 'No low-grade cuts', body: 'We reject anything that wouldn\'t pass as premium. Zero compromise on the fabric.' },
+]
+
+function useNewArrivals() {
+  const [products, setProducts] = useState([])
+  const [loading, setLoading] = useState(true)
+  useEffect(() => {
+    fetch(`${LISTING}/listings?page_size=8`)
+      .then(r => r.json())
+      .then(d => { setProducts(d.data ?? []); setLoading(false) })
+      .catch(() => setLoading(false))
+  }, [])
+  return { products, loading }
 }
 
-// Hero Slider Component
-const HeroSlider = () => {
-  const [current, setCurrent] = useState(0)
-
-  const slides = [
-    {
-      title: 'Festive Collection 2024',
-      subtitle: 'Embrace tradition with our exquisite range',
-      bg: 'bg-gradient-to-r from-rose-400 via-pink-400 to-fuchsia-400',
-      cta: 'Shop Sarees',
-    },
-    {
-      title: 'Bridal Lehengas',
-      subtitle: 'Make your special day unforgettable',
-      bg: 'bg-gradient-to-r from-red-400 via-pink-400 to-rose-400',
-      cta: 'Explore Collection',
-    },
-    {
-      title: 'Summer Essentials',
-      subtitle: 'Comfortable & stylish everyday wear',
-      bg: 'bg-gradient-to-r from-amber-400 via-orange-400 to-yellow-400',
-      cta: 'Shop Kurtis',
-    },
-  ]
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrent((prev) => (prev + 1) % slides.length)
-    }, 5000)
-    return () => clearInterval(timer)
-  }, [])
-
-  const nextSlide = () => setCurrent((prev) => (prev + 1) % slides.length)
-  const prevSlide = () =>
-    setCurrent((prev) => (prev - 1 + slides.length) % slides.length)
+export default function Home() {
+  const navigate = useNavigate()
+  const { products, loading } = useNewArrivals()
 
   return (
-    <div className='relative h-96 md:h-[500px] overflow-hidden'>
-      {slides.map((slide, index) => (
-        <div
-          key={index}
-          className={`absolute inset-0 transition-opacity duration-1000 ${
-            index === current ? 'opacity-100' : 'opacity-0'
-          } ${slide.bg}`}
-        >
-          <div className='max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 h-full flex items-center'>
-            <div className='text-white'>
-              <h2 className='text-4xl md:text-6xl font-bold mb-4 animate-fadeIn'>
-                {slide.title}
-              </h2>
-              <p className='text-xl md:text-2xl mb-8'>{slide.subtitle}</p>
-              <button className='bg-white text-pink-600 px-8 py-3 rounded-full font-semibold hover:bg-pink-50 transition transform hover:scale-105'>
-                {slide.cta}
+    <div style={{ minHeight: '100vh', background: '#FAF8F4', fontFamily: "'DM Sans', sans-serif" }}>
+      <Navbar />
+
+      {/* ── Hero ── */}
+      <section style={{ background: NAVY, padding: 'clamp(40px,6vw,80px) clamp(20px,5vw,80px)' }}>
+        <div style={{ maxWidth: 1200, margin: '0 auto', display: 'grid', gridTemplateColumns: 'minmax(0,1.2fr) minmax(0,1fr)', gap: 'clamp(24px,4vw,64px)', alignItems: 'center' }}>
+
+          <div>
+            <p style={{ fontSize: 11, letterSpacing: '.2em', textTransform: 'uppercase', color: GOLD, marginBottom: 14 }}>
+              A different kind of brand
+            </p>
+            <h1 style={{ fontSize: 'clamp(26px,4vw,44px)', fontWeight: 700, color: '#fff', lineHeight: 1.2, fontFamily: "'Playfair Display', Georgia, serif", marginBottom: 16 }}>
+              We removed <span style={{ color: GOLD }}>3 steps</span> from your wardrobe's supply chain.
+            </h1>
+            <p style={{ fontSize: 14, color: 'rgba(255,255,255,.55)', lineHeight: 1.75, marginBottom: 28, maxWidth: 440 }}>
+              Most brands mark up 4× before the fabric reaches you — mill, distributor, brand, retailer. We go direct. Same Egyptian cotton, same Italian weave. Our price is 50% less. Always.
+            </p>
+            <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+              <button
+                onClick={() => navigate('/products')}
+                style={{ background: GOLD, color: NAVY, border: 'none', padding: '12px 24px', fontSize: 13, fontWeight: 700, borderRadius: 4, cursor: 'pointer', letterSpacing: '.08em', display: 'flex', alignItems: 'center', gap: 8 }}
+              >
+                SHOP NOW <ArrowRight size={14} />
+              </button>
+              <button
+                onClick={() => document.getElementById('how-we-price').scrollIntoView({ behavior: 'smooth' })}
+                style={{ background: 'transparent', color: GOLD, border: `1px solid ${GOLD}44`, padding: '12px 24px', fontSize: 13, borderRadius: 4, cursor: 'pointer' }}
+              >
+                See how we price →
               </button>
             </div>
           </div>
-        </div>
-      ))}
 
-      <button
-        onClick={prevSlide}
-        className='absolute left-4 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white p-2 rounded-full transition'
-      >
-        <ChevronLeft size={24} className='text-pink-600' />
-      </button>
-      <button
-        onClick={nextSlide}
-        className='absolute right-4 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white p-2 rounded-full transition'
-      >
-        <ChevronRight size={24} className='text-pink-600' />
-      </button>
+          {/* Supply chain diagram */}
+          <div style={{ background: 'rgba(255,255,255,.04)', border: '1px solid rgba(255,255,255,.08)', borderRadius: 12, padding: 'clamp(16px,3vw,28px)' }}>
+            <p style={{ fontSize: 10, letterSpacing: '.14em', textTransform: 'uppercase', color: 'rgba(255,255,255,.35)', marginBottom: 20, textAlign: 'center' }}>
+              How your fabric gets to you
+            </p>
 
-      <div className='absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2'>
-        {slides.map((_, index) => (
-          <button
-            key={index}
-            onClick={() => setCurrent(index)}
-            className={`w-2 h-2 rounded-full transition ${
-              index === current ? 'bg-white w-8' : 'bg-white/50'
-            }`}
-          />
-        ))}
-      </div>
-    </div>
-  )
-}
+            {/* Others */}
+            <div style={{ marginBottom: 16 }}>
+              <p style={{ fontSize: 10, color: 'rgba(255,255,255,.3)', marginBottom: 8, letterSpacing: '.06em' }}>OTHERS</p>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                {['Mill', 'Distributor', 'Brand', 'Retailer', 'You'].map((s, i) => (
+                  <div key={s} style={{ display: 'flex', alignItems: 'center', flex: i === 4 ? 'none' : 1 }}>
+                    <div style={{ flex: 1, background: i < 4 ? 'rgba(255,255,255,.12)' : `${GOLD}22`, border: i < 4 ? '1px solid rgba(255,255,255,.1)' : `1px solid ${GOLD}44`, borderRadius: 4, padding: '6px 4px', textAlign: 'center' }}>
+                      <p style={{ fontSize: 10, color: i < 4 ? 'rgba(255,255,255,.4)' : GOLD, fontWeight: i === 4 ? 700 : 400 }}>{s}</p>
+                    </div>
+                    {i < 4 && <ArrowRight size={10} color='rgba(255,255,255,.2)' style={{ flexShrink: 0 }} />}
+                  </div>
+                ))}
+              </div>
+              <p style={{ fontSize: 10, color: 'rgba(255,255,255,.25)', marginTop: 6, textAlign: 'right' }}>
+                ends at <span style={{ textDecoration: 'line-through', color: 'rgba(255,80,80,.5)' }}>₹4,999</span>
+              </p>
+            </div>
 
-// Categories
-const Categories = () => {
-  const categories = HOME_CATEGORIES
+            <div style={{ height: 1, background: 'rgba(255,255,255,.06)', margin: '0 0 16px' }} />
 
-  return (
-    <div className='max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-12'>
-      <h3 className='text-3xl font-bold mb-8 text-center text-gray-800'>
-        Shop by Category
-      </h3>
-      <div className='grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6'>
-        {categories.map((cat) => (
-          <div
-            key={cat.name}
-            className={`${cat.bg} p-6 rounded-2xl text-center cursor-pointer hover:scale-105 transition transform shadow-md hover:shadow-xl`}
-          >
-            <div className='text-5xl mb-3'>{cat.icon}</div>
-            <h4 className='font-bold text-lg text-gray-800'>{cat.name}</h4>
-            <p className='text-sm text-gray-600 mt-1'>{cat.count} styles</p>
-          </div>
-        ))}
-      </div>
-    </div>
-  )
-}
-
-// Product Card
-const ProductCard = ({ product }) => {
-  const addToCart = useCartStore((state) => state.addToCart)
-  const [added, setAdded] = useState(false)
-
-  const handleAddToCart = () => {
-    addToCart(product)
-    setAdded(true)
-    setTimeout(() => setAdded(false), 2000)
-  }
-
-  return (
-    <div className='bg-white rounded-2xl shadow-md overflow-hidden hover:shadow-2xl transition group'>
-      <div
-        className={`${product.color} h-64 flex items-center justify-center text-7xl relative overflow-hidden`}
-      >
-        <div className='text-8xl transform group-hover:scale-110 transition'>
-          {product.image}
-        </div>
-        <button className='absolute top-3 right-3 bg-white p-2 rounded-full shadow-md hover:bg-pink-50 transition'>
-          <Heart size={18} className='text-pink-500' />
-        </button>
-      </div>
-      <div className='p-4'>
-        <div className='flex items-center justify-between mb-2'>
-          <span className='text-xs text-pink-600 uppercase font-semibold'>
-            {product.category}
-          </span>
-          <div className='flex items-center bg-green-50 px-2 py-1 rounded'>
-            <Star size={12} className='text-green-600 fill-current' />
-            <span className='text-xs ml-1 font-semibold text-green-600'>
-              {product.rating}
-            </span>
+            {/* Vaarria */}
+            <div>
+              <p style={{ fontSize: 10, color: GOLD, marginBottom: 8, letterSpacing: '.06em' }}>VAARRIA</p>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                {['Mill', 'Vaarria', 'You'].map((s, i) => (
+                  <div key={s} style={{ display: 'flex', alignItems: 'center', flex: i === 2 ? 'none' : 1 }}>
+                    <div style={{ flex: 1, background: i === 2 ? GOLD : `${GOLD}18`, border: `1px solid ${GOLD}${i === 2 ? 'ff' : '44'}`, borderRadius: 4, padding: '6px 4px', textAlign: 'center' }}>
+                      <p style={{ fontSize: 10, color: i === 2 ? NAVY : GOLD, fontWeight: 700 }}>{s}</p>
+                    </div>
+                    {i < 2 && <ArrowRight size={10} color={`${GOLD}88`} style={{ flexShrink: 0 }} />}
+                  </div>
+                ))}
+              </div>
+              <p style={{ fontSize: 10, color: GOLD, marginTop: 6, textAlign: 'right', fontWeight: 600 }}>
+                you pay <span style={{ fontSize: 14 }}>₹2,199</span> — same fabric
+              </p>
+            </div>
           </div>
         </div>
-        <h4 className='font-semibold text-lg mb-3 text-gray-800'>
-          {product.name}
-        </h4>
-        <div className='flex items-center justify-between'>
-          <span className='text-2xl font-bold text-pink-600'>
-            ₹{product.price.toLocaleString()}
-          </span>
+
+        {/* Stats bar */}
+        <div style={{ maxWidth: 1200, margin: '32px auto 0', display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 1, background: 'rgba(255,255,255,.06)', borderRadius: 8, overflow: 'hidden' }}>
+          {[
+            { value: '50%', label: 'less than retail, every time' },
+            { value: 'Zero', label: 'middlemen in the chain' },
+            { value: '∞', label: 'wash guarantee on every piece' },
+          ].map((s, i) => (
+            <div key={i} style={{ background: NAVY, padding: '16px 20px', textAlign: 'center', borderLeft: i > 0 ? '1px solid rgba(255,255,255,.06)' : 'none' }}>
+              <p style={{ fontSize: 22, fontWeight: 700, color: GOLD, fontFamily: "'Playfair Display', Georgia, serif" }}>{s.value}</p>
+              <p style={{ fontSize: 11, color: 'rgba(255,255,255,.4)', marginTop: 3 }}>{s.label}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ── Price breakdown ── */}
+      <section id='how-we-price' style={{ background: '#fff', padding: 'clamp(32px,5vw,60px) clamp(20px,5vw,80px)', borderBottom: '1px solid #e8e0d0' }}>
+        <div style={{ maxWidth: 1200, margin: '0 auto' }}>
+          <p style={{ fontSize: 10, letterSpacing: '.18em', textTransform: 'uppercase', color: '#9ca3af', marginBottom: 8 }}>The price difference, explained</p>
+          <h2 style={{ fontSize: 'clamp(20px,3vw,30px)', fontWeight: 700, color: NAVY, fontFamily: "'Playfair Display', Georgia, serif", marginBottom: 28 }}>
+            Same fabric. Less than half the price. Here's why.
+          </h2>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(220px,1fr))', gap: 16 }}>
+            <div style={{ border: '1px solid #f3f0eb', borderRadius: 10, padding: 20 }}>
+              <p style={{ fontSize: 11, color: '#9ca3af', marginBottom: 6 }}>What you pay at a typical brand</p>
+              <p style={{ fontSize: 28, fontWeight: 700, color: '#d1d5db', textDecoration: 'line-through', textDecorationColor: '#f87171', fontFamily: "'Playfair Display', Georgia, serif" }}>₹4,999</p>
+              <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 6 }}>
+                {['Mill cost: ₹800', 'Distributor margin: ₹600', 'Brand overhead: ₹1,400', 'Retailer markup: ₹1,200', 'Their profit: ₹999'].map(l => (
+                  <div key={l} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#f3f0eb', flexShrink: 0 }} />
+                    <p style={{ fontSize: 12, color: '#9ca3af' }}>{l}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div style={{ border: `1px solid ${GOLD}44`, borderRadius: 10, padding: 20, background: '#fffdf7' }}>
+              <p style={{ fontSize: 11, color: GOLD, marginBottom: 6 }}>What you pay at Vaarria</p>
+              <p style={{ fontSize: 28, fontWeight: 700, color: NAVY, fontFamily: "'Playfair Display', Georgia, serif" }}>₹2,199</p>
+              <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 6 }}>
+                {['Mill cost: ₹800', 'Quality check: ₹200', 'Fulfilment & delivery: ₹400', 'Our margin: ₹799', 'You save: ₹2,800'].map((l, i) => (
+                  <div key={l} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <div style={{ width: 6, height: 6, borderRadius: '50%', background: i === 4 ? GOLD : `${GOLD}44`, flexShrink: 0 }} />
+                    <p style={{ fontSize: 12, color: i === 4 ? NAVY : '#6b7280', fontWeight: i === 4 ? 700 : 400 }}>{l}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── Categories ── */}
+      <section style={{ padding: 'clamp(32px,5vw,56px) clamp(20px,5vw,80px)' }}>
+        <div style={{ maxWidth: 1200, margin: '0 auto' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+            <h2 style={{ fontSize: 'clamp(18px,2.5vw,24px)', fontWeight: 700, color: NAVY, fontFamily: "'Playfair Display', Georgia, serif" }}>Shop by category</h2>
+            <button onClick={() => navigate('/products')} style={{ background: 'none', border: 'none', color: GOLD, fontSize: 13, cursor: 'pointer', fontWeight: 600 }}>View all →</button>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(140px,1fr))', gap: 12 }}>
+            {CATEGORIES.map(cat => (
+              <button
+                key={cat.slug}
+                onClick={() => navigate(`/${cat.slug}`)}
+                style={{ background: cat.bg, border: 'none', borderRadius: 10, padding: '20px 12px', cursor: 'pointer', textAlign: 'center', transition: 'transform .18s', fontFamily: "'DM Sans', sans-serif" }}
+                onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-3px)'}
+                onMouseLeave={e => e.currentTarget.style.transform = 'none'}
+              >
+                <p style={{ fontSize: 13, fontWeight: 600, color: NAVY, lineHeight: 1.3 }}>{cat.label}</p>
+              </button>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── New Arrivals ── */}
+      <section style={{ background: '#fff', padding: 'clamp(32px,5vw,56px) clamp(20px,5vw,80px)', borderTop: '1px solid #e8e0d0' }}>
+        <div style={{ maxWidth: 1200, margin: '0 auto' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+            <div>
+              <p style={{ fontSize: 10, letterSpacing: '.16em', textTransform: 'uppercase', color: '#9ca3af', marginBottom: 4 }}>Handpicked</p>
+              <h2 style={{ fontSize: 'clamp(18px,2.5vw,24px)', fontWeight: 700, color: NAVY, fontFamily: "'Playfair Display', Georgia, serif" }}>New arrivals</h2>
+            </div>
+            <button onClick={() => navigate('/products')} style={{ background: 'none', border: 'none', color: GOLD, fontSize: 13, cursor: 'pointer', fontWeight: 600 }}>View all →</button>
+          </div>
+
+          {loading ? (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(180px,1fr))', gap: 16 }}>
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} style={{ borderRadius: 10, overflow: 'hidden' }}>
+                  <div style={{ background: '#e8e0d0', aspectRatio: '3/4', animation: 'homePulse 1.4s ease-in-out infinite' }} />
+                  <div style={{ padding: '10px 0', display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    <div style={{ background: '#e8e0d0', height: 12, borderRadius: 4, width: '70%', animation: 'homePulse 1.4s ease-in-out infinite' }} />
+                    <div style={{ background: '#e8e0d0', height: 12, borderRadius: 4, width: '40%', animation: 'homePulse 1.4s ease-in-out infinite' }} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(180px,1fr))', gap: 16 }}>
+              {products.map(p => (
+                <div
+                  key={p.id}
+                  style={{ cursor: 'pointer', transition: 'transform .18s' }}
+                  onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-4px)'}
+                  onMouseLeave={e => e.currentTarget.style.transform = 'none'}
+                  onClick={() => navigate(`/product/${p.id}`)}
+                >
+                  <div style={{ background: '#F1E0C8', borderRadius: 10, overflow: 'hidden', aspectRatio: '3/4', marginBottom: 10, border: '1px solid #e8e0d0' }}>
+                    {p.main_image && (
+                      <img
+                        src={`${CDN}${p.main_image}`}
+                        alt={p.title}
+                        style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top' }}
+                        onError={e => { e.target.style.display = 'none' }}
+                      />
+                    )}
+                  </div>
+                  <p style={{ fontSize: 13, fontWeight: 600, color: '#1f2937', lineHeight: 1.35, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', marginBottom: 4 }}>{p.title}</p>
+                  <p style={{ fontSize: 14, fontWeight: 700, color: GOLD }}>₹{p.price?.toLocaleString('en-IN')}</p>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* ── Our Promises ── */}
+      <section style={{ padding: 'clamp(32px,5vw,60px) clamp(20px,5vw,80px)', borderTop: '1px solid #e8e0d0' }}>
+        <div style={{ maxWidth: 1200, margin: '0 auto' }}>
+          <p style={{ fontSize: 10, letterSpacing: '.18em', textTransform: 'uppercase', color: '#9ca3af', marginBottom: 8, textAlign: 'center' }}>Why Vaarria</p>
+          <h2 style={{ fontSize: 'clamp(20px,3vw,28px)', fontWeight: 700, color: NAVY, fontFamily: "'Playfair Display', Georgia, serif", marginBottom: 32, textAlign: 'center' }}>
+            We started this company to make luxury affordable.<br />
+            <span style={{ color: GOLD, fontStyle: 'italic' }}>Here's how we keep that promise.</span>
+          </h2>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(240px,1fr))', gap: 20 }}>
+            {PROMISES.map(p => (
+              <div key={p.title} style={{ background: '#fff', border: '1px solid #e8e0d0', borderRadius: 10, padding: '18px 20px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+                  {p.icon}
+                  <p style={{ fontSize: 14, fontWeight: 600, color: NAVY }}>{p.title}</p>
+                </div>
+                <p style={{ fontSize: 13, color: '#6b7280', lineHeight: 1.65 }}>{p.body}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── Founder quote ── */}
+      <section style={{ background: NAVY, padding: 'clamp(32px,5vw,56px) clamp(20px,5vw,80px)', textAlign: 'center' }}>
+        <div style={{ maxWidth: 680, margin: '0 auto' }}>
+          <p style={{ fontSize: 'clamp(16px,2.5vw,22px)', fontWeight: 700, color: '#fff', fontFamily: "'Playfair Display', Georgia, serif", lineHeight: 1.6, marginBottom: 20 }}>
+            "We built Vaarria because we were tired of paying ₹5,000 for a fabric that costs ₹800 to make. Luxury shouldn't be a privilege — it should be a standard."
+          </p>
+          <p style={{ fontSize: 12, color: GOLD, letterSpacing: '.1em' }}>— The Vaarria Founders</p>
           <button
-            onClick={handleAddToCart}
-            className={`px-4 py-2 rounded-lg font-semibold transition transform hover:scale-105 ${
-              added
-                ? 'bg-green-500 text-white'
-                : 'bg-gradient-to-r from-pink-500 to-rose-500 text-white'
-            }`}
+            onClick={() => navigate('/products')}
+            style={{ marginTop: 28, background: GOLD, color: NAVY, border: 'none', padding: '14px 32px', fontSize: 13, fontWeight: 700, borderRadius: 4, cursor: 'pointer', letterSpacing: '.08em' }}
           >
-            {added ? '✓ Added' : 'Add to Bag'}
+            SHOP THE COLLECTION
           </button>
         </div>
-      </div>
+      </section>
+
+      <style>{`
+        @keyframes homePulse { 0%,100%{opacity:1} 50%{opacity:.5} }
+        @media(max-width:640px){
+          section > div[style*="grid-template-columns: minmax(0,1.2fr)"] {
+            grid-template-columns: 1fr !important;
+          }
+        }
+      `}</style>
+
+      <Footer />
     </div>
   )
 }
-
-// Products
-const Products = () => {
-  const { data: products, isLoading } = useQuery({
-    queryKey: ['products'],
-    queryFn: fetchProducts,
-  })
-
-  if (isLoading) {
-    return (
-      <div className='max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-12'>
-        <div className='text-center'>
-          <div className='inline-block animate-spin rounded-full h-12 w-12 border-4 border-pink-200 border-t-pink-600'></div>
-          <p className='mt-4 text-gray-600'>Loading beautiful collections...</p>
-        </div>
-      </div>
-    )
-  }
-
-  return (
-    <div className='max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-12'>
-      <div className='text-center mb-8'>
-        <h3 className='text-3xl font-bold text-gray-800 mb-2'>Trending Now</h3>
-        <p className='text-gray-600'>Handpicked styles for you</p>
-      </div>
-      <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6'>
-        {products.map((product) => (
-          <ProductCard key={product.id} product={product} />
-        ))}
-      </div>
-    </div>
-  )
-}
-
-// Promo Banner
-const PromoBanner = () => {
-  return (
-    <div className='bg-gradient-to-r from-amber-400 via-orange-400 to-pink-400 py-16'>
-      <div className='max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-white'>
-        <h3 className='text-3xl md:text-4xl font-bold mb-4'>
-          Festive Season Sale
-        </h3>
-        <p className='text-xl mb-6'>Get up to 50% off on selected items</p>
-        <button className='bg-white text-orange-600 px-8 py-3 rounded-full font-bold hover:bg-orange-50 transition transform hover:scale-105'>
-          Shop Sale
-        </button>
-      </div>
-    </div>
-  )
-}
-
-// Main App
-const queryClient = new QueryClient()
-
-const Home = () => {
-  return (
-    <QueryClientProvider client={queryClient}>
-      <div className='min-h-screen bg-gradient-to-b from-white to-pink-50'>
-        <Navbar />
-        <HeroSlider />
-        <Categories />
-        <Products />
-        <PromoBanner />
-        <Footer />
-      </div>
-    </QueryClientProvider>
-  )
-}
-
-export default Home
