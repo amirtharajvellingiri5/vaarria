@@ -1568,9 +1568,9 @@ export default function ProductDetail() {
 
           <span
             style={{ cursor: 'pointer' }}
-            onClick={() => navigate(`/category/${product.categoryId}`)}
+            onClick={() => navigate('/products')}
           >
-            {product.category}
+            {product.category || 'All Products'}
           </span>
 
           <span className='pdp-breadcrumb-sep'>›</span>
@@ -1901,15 +1901,16 @@ export default function ProductDetail() {
       </div>
 
       {/* ── View History Slider ── */}
-      {historyProducts.length > 0 && (
+      {/* ── Related Products Slider ── */}
+      {relatedProducts.length > 0 && (
         <div style={{ maxWidth: 1536, margin: '0 auto', padding: '32px clamp(16px,3%,32px) 8px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
             <div style={{ height: 1, flex: 1, background: '#e8e0d0' }} />
-            <span style={{ fontSize: 13, fontWeight: 700, color: '#050C1C', letterSpacing: '0.12em', textTransform: 'uppercase', fontFamily: "'Playfair Display', Georgia, serif", whiteSpace: 'nowrap' }}>Recently Viewed</span>
+            <span style={{ fontSize: 13, fontWeight: 700, color: '#050C1C', letterSpacing: '0.12em', textTransform: 'uppercase', fontFamily: "'Playfair Display', Georgia, serif", whiteSpace: 'nowrap' }}>You May Also Like</span>
             <div style={{ height: 1, flex: 1, background: '#e8e0d0' }} />
           </div>
           <div style={{ display: 'flex', gap: 16, overflowX: 'auto', scrollbarWidth: 'none', paddingBottom: 8 }}>
-            {historyProducts.map(item => (
+            {relatedProducts.map(item => (
               <div key={item.id} style={{ flexShrink: 0, width: 160, cursor: 'pointer' }} onClick={() => window.open(`/product/${item.id}`, '_blank')}>
                 <div style={{ width: 160, height: 213, borderRadius: 8, overflow: 'hidden', background: '#f3f0eb', border: '1px solid #e8e0d0', marginBottom: 8 }}>
                   <img src={item.image} alt={item.title} style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top' }} onError={e => { e.target.style.display = 'none' }} />
@@ -1922,16 +1923,15 @@ export default function ProductDetail() {
         </div>
       )}
 
-      {/* ── Related Products Slider ── */}
-      {relatedProducts.length > 0 && (
+      {historyProducts.length > 0 && (
         <div style={{ maxWidth: 1536, margin: '0 auto', padding: '24px clamp(16px,3%,32px) 48px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
             <div style={{ height: 1, flex: 1, background: '#e8e0d0' }} />
-            <span style={{ fontSize: 13, fontWeight: 700, color: '#050C1C', letterSpacing: '0.12em', textTransform: 'uppercase', fontFamily: "'Playfair Display', Georgia, serif", whiteSpace: 'nowrap' }}>You May Also Like</span>
+            <span style={{ fontSize: 13, fontWeight: 700, color: '#050C1C', letterSpacing: '0.12em', textTransform: 'uppercase', fontFamily: "'Playfair Display', Georgia, serif", whiteSpace: 'nowrap' }}>Recently Viewed</span>
             <div style={{ height: 1, flex: 1, background: '#e8e0d0' }} />
           </div>
           <div style={{ display: 'flex', gap: 16, overflowX: 'auto', scrollbarWidth: 'none', paddingBottom: 8 }}>
-            {relatedProducts.map(item => (
+            {historyProducts.map(item => (
               <div key={item.id} style={{ flexShrink: 0, width: 160, cursor: 'pointer' }} onClick={() => window.open(`/product/${item.id}`, '_blank')}>
                 <div style={{ width: 160, height: 213, borderRadius: 8, overflow: 'hidden', background: '#f3f0eb', border: '1px solid #e8e0d0', marginBottom: 8 }}>
                   <img src={item.image} alt={item.title} style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top' }} onError={e => { e.target.style.display = 'none' }} />
