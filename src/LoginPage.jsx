@@ -330,9 +330,8 @@ function OtpScreen({ phone, onBack, onVerified, onLogin }) {
           'https://api.vaarria.com/api/auth/msg91-login',
           {
             method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
             body: JSON.stringify({
               mobile_no: phone,
               access_token: widgetData?.message,

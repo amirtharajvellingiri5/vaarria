@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { ArrowRight, CheckCircle, RefreshCw, Wallet, Factory, Eye, ShieldCheck } from 'lucide-react'
 import Navbar from './Navbar'
 import Footer from './Footer'
+import { useAuthStore } from './store/authStore'
 
 const GOLD = '#C9A84C'
 const NAVY = '#050C1C'
@@ -39,6 +40,37 @@ function useNewArrivals() {
   return { products, loading }
 }
 
+function useRecentlyViewed(customerId) {
+  const [products, setProducts] = useState([])
+  useEffect(() => {
+    if (!customerId) return
+    const ORDERS = 'https://zq0dbjycx6.execute-api.ap-south-1.amazonaws.com/prod'
+    fetch(`${ORDERS}/history/${customerId}`, { credentials: 'include' })
+      .then(r => r.json())
+      .then(async ({ product_ids = [] }) => {
+        const ids = product_ids.slice(0, 10)
+        const results = await Promise.all(
+          ids.map(id =>
+            fetch(`https://products-api.chatoyantvortex.workers.dev/product?id=${id}`)
+              .then(r => r.json())
+              .then(raw => ({
+                id,
+                title: raw.title,
+                price: raw.pricing?.selling_price ?? raw.pricing?.mrp,
+                image: raw.inventory?.variants?.[0]?.main_image
+                  ? `${CDN}${raw.inventory.variants[0].main_image}`
+                  : '',
+              }))
+              .catch(() => null)
+          )
+        )
+        setProducts(results.filter(Boolean))
+      })
+      .catch(() => {})
+  }, [customerId])
+  return products
+}
+
 function usePriceImages() {
   const [images, setImages] = useState([])
   useEffect(() => {
@@ -52,8 +84,10 @@ function usePriceImages() {
 
 export default function Home() {
   const navigate = useNavigate()
+  const { customer } = useAuthStore()
   const { products, loading } = useNewArrivals()
   const priceImages = usePriceImages()
+  const recentlyViewed = useRecentlyViewed(customer?.customer_id)
 
   return (
     <div style={{ minHeight: '100vh', background: '#FAF8F4', fontFamily: "'DM Sans', sans-serif" }}>
@@ -315,11 +349,44 @@ export default function Home() {
         </div>
       </section>
 
+      {/* ── Recently Viewed ── */}
+      {recentlyViewed.length > 0 && (
+        <section style={{ background: '#fff', padding: 'clamp(32px,5vw,56px) clamp(20px,5vw,80px)', borderTop: '1px solid #e8e0d0' }}>
+          <div style={{ maxWidth: 1200, margin: '0 auto' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+              <div>
+                <p style={{ fontSize: 10, letterSpacing: '.16em', textTransform: 'uppercase', color: '#9ca3af', marginBottom: 4 }}>Your picks</p>
+                <h2 style={{ fontSize: 'clamp(18px,2.5vw,24px)', fontWeight: 700, color: NAVY, fontFamily: "'Playfair Display', Georgia, serif" }}>Recently viewed</h2>
+              </div>
+            </div>
+            <div style={{ display: 'flex', gap: 16, overflowX: 'auto', paddingBottom: 8, scrollbarWidth: 'thin' }}>
+              {recentlyViewed.map(p => (
+                <div
+                  key={p.id}
+                  style={{ cursor: 'pointer', transition: 'transform .18s', flexShrink: 0, width: 160 }}
+                  onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-4px)'}
+                  onMouseLeave={e => e.currentTarget.style.transform = 'none'}
+                  onClick={() => navigate(`/product/${p.id}`)}
+                >
+                  <div style={{ background: '#F1E0C8', borderRadius: 10, overflow: 'hidden', aspectRatio: '3/4', marginBottom: 10, border: '1px solid #e8e0d0' }}>
+                    {p.image && (
+                      <img src={p.image} alt={p.title} style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top' }} onError={e => { e.target.style.display = 'none' }} />
+                    )}
+                  </div>
+                  <p style={{ fontSize: 12, fontWeight: 600, color: '#1f2937', lineHeight: 1.35, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', marginBottom: 4 }}>{p.title}</p>
+                  <p style={{ fontSize: 13, fontWeight: 700, color: GOLD }}>₹{p.price?.toLocaleString('en-IN')}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* ── Founder quote ── */}
       <section style={{ background: NAVY, padding: 'clamp(32px,5vw,56px) clamp(20px,5vw,80px)', textAlign: 'center' }}>
         <div style={{ maxWidth: 680, margin: '0 auto' }}>
           <p style={{ fontSize: 'clamp(16px,2.5vw,22px)', fontWeight: 700, color: '#fff', fontFamily: "'Playfair Display', Georgia, serif", lineHeight: 1.6, marginBottom: 20 }}>
-            "We built Vaarria because we were tired of paying ₹5,000 for a fabric that costs ₹800 to make. Luxury shouldn't be a privilege — it should be a standard."
+            "We built Vaarria because we were tired of paying ₹4,999 for a fabric that costs ₹2000 to make. Luxury shouldn't be a privilege — it should be a standard."
           </p>
           <p style={{ fontSize: 12, color: GOLD, letterSpacing: '.1em' }}>— The Vaarria Founders</p>
           <button

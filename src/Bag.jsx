@@ -799,7 +799,11 @@ function CouponPanel() {
           </div>
         </div>
 
-        <button style={styles.editBtn} onClick={() => setShowCoupon(true)}>
+        <button
+          style={{ ...styles.editBtn, opacity: items.filter(i => i.selected).length === 0 ? 0.4 : 1, cursor: items.filter(i => i.selected).length === 0 ? 'not-allowed' : 'pointer' }}
+          onClick={() => setShowCoupon(true)}
+          disabled={items.filter(i => i.selected).length === 0}
+        >
           {appliedCount > 0 ? 'EDIT' : 'APPLY'}
         </button>
       </div>
@@ -814,12 +818,128 @@ function CouponPanel() {
     </div>
   )
 }
+function PaymentMethodSelector({ value, onChange, total, disabled }) {
+  const prepaidFinal = Math.round(total * 0.95)
+  const saved = total - prepaidFinal
+  const codFinal = Math.round(total * 0.98)
+  const codRemaining = codFinal - 49
+
+  return (
+    <div style={{ margin: '16px 0', opacity: disabled ? 0.45 : 1, pointerEvents: disabled ? 'none' : 'auto' }}>
+
+      {/* PRIMARY — Pay Online */}
+      <button
+        type='button'
+        onClick={() => onChange('prepaid')}
+        style={{
+          width: '100%', textAlign: 'left', cursor: 'pointer',
+          border: 'none', borderRadius: 10, padding: '14px 16px',
+          background: value === 'prepaid' ? '#050C1C' : '#f7f4ef',
+          transition: 'all 0.18s', marginBottom: 8,
+          boxShadow: value === 'prepaid' ? '0 4px 16px rgba(5,12,28,0.18)' : 'none',
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div style={{
+              width: 16, height: 16, borderRadius: '50%', flexShrink: 0,
+              border: value === 'prepaid' ? '5px solid #C9A84C' : '1.5px solid #999',
+              transition: 'all 0.15s',
+            }} />
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span style={{ fontSize: 14, fontWeight: 700, color: value === 'prepaid' ? '#C9A84C' : '#111' }}>
+                  Pay Online Now
+                </span>
+                <span style={{
+                  fontSize: 9, fontWeight: 800, letterSpacing: 0.4,
+                  color: '#fff', background: '#2e7d32',
+                  borderRadius: 3, padding: '2px 6px',
+                }}>SAVE 5%</span>
+              </div>
+              <div style={{ fontSize: 11, color: value === 'prepaid' ? 'rgba(201,168,76,0.7)' : '#888', marginTop: 2 }}>
+                UPI · Card · Net Banking
+              </div>
+            </div>
+          </div>
+          <div style={{ textAlign: 'right' }}>
+            <div style={{ fontSize: 15, fontWeight: 800, color: value === 'prepaid' ? '#C9A84C' : '#111' }}>
+              ₹{prepaidFinal.toLocaleString()}
+            </div>
+            <div style={{ fontSize: 10, color: value === 'prepaid' ? 'rgba(201,168,76,0.65)' : '#2e7d32', marginTop: 1 }}>
+              you save ₹{saved.toLocaleString()}
+            </div>
+          </div>
+        </div>
+      </button>
+
+      {/* SECONDARY — ₹49 + COD */}
+      <button
+        type='button'
+        onClick={() => onChange('cod')}
+        style={{
+          width: '100%', textAlign: 'left', cursor: 'pointer',
+          border: value === 'cod' ? '1.5px solid #C9A84C' : '1px solid #e5e7eb',
+          borderRadius: 10, padding: '11px 14px',
+          background: value === 'cod' ? '#fffbf0' : '#fff',
+          transition: 'all 0.15s', marginBottom: 6, display: 'flex',
+          alignItems: 'center', justifyContent: 'space-between',
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div style={{
+            width: 15, height: 15, borderRadius: '50%', flexShrink: 0,
+            border: value === 'cod' ? '5px solid #C9A84C' : '1.5px solid #bbb',
+            transition: 'all 0.15s',
+          }} />
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <span style={{ fontSize: 13, fontWeight: 600, color: '#111' }}>Pay ₹49 Now + COD</span>
+              <span style={{ fontSize: 9, fontWeight: 700, color: '#2e7d32', background: '#e8f5e9', borderRadius: 3, padding: '1px 5px' }}>2% OFF</span>
+            </div>
+            <div style={{ fontSize: 11, color: '#888', marginTop: 1 }}>
+              ₹49 online · ₹{codRemaining.toLocaleString()} on delivery
+            </div>
+          </div>
+        </div>
+        <div style={{ fontSize: 13, fontWeight: 700, color: '#2e7d32', whiteSpace: 'nowrap' }}>
+          ₹{codFinal.toLocaleString()}
+        </div>
+      </button>
+
+      {/* TERTIARY — Full COD as a quiet link */}
+      <button
+        type='button'
+        onClick={() => onChange('full_cod')}
+        style={{
+          width: '100%', background: 'none', border: 'none', cursor: 'pointer',
+          padding: '6px 4px', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div style={{
+            width: 14, height: 14, borderRadius: '50%', flexShrink: 0,
+            border: value === 'full_cod' ? '4px solid #C9A84C' : '1.5px solid #ccc',
+            transition: 'all 0.15s',
+          }} />
+          <span style={{ fontSize: 12, color: value === 'full_cod' ? '#C9A84C' : '#aaa', fontWeight: value === 'full_cod' ? 600 : 400 }}>
+            Full Cash on Delivery
+          </span>
+        </div>
+        <span style={{ fontSize: 12, color: '#aaa' }}>₹{total.toLocaleString()}</span>
+      </button>
+
+    </div>
+  )
+}
+
 function PricePanel({ onNeedAuth, triggerPay, onTriggerConsumed }) {
   const navigate = useNavigate()
   const { items, donationAmount, getCouponSavings } = useBagStore()
   const [paymentError, setPaymentError] = useState('')
   const [paymentLoading, setPaymentLoading] = useState(false)
   const [showEmptyBagPopup, setShowEmptyBagPopup] = useState(false)
+  const [paymentMode, setPaymentMode] = useState('prepaid')
 
   const couponSavings = getCouponSavings()
 
@@ -853,93 +973,96 @@ function PricePanel({ onNeedAuth, triggerPay, onTriggerConsumed }) {
     const token = authToken
     const customer = authCustomer
 
-    if (!window.Razorpay) {
-      alert('Payment system unavailable')
+    const baseTotal = Math.max(0, total)
+    const prepaidFinal = Math.round(baseTotal * 0.95)
+    const codFinal = Math.round(baseTotal * 0.98)
+
+    const selectedAddress = JSON.parse(localStorage.getItem('selected_address') || 'null')
+    if (!selectedAddress) {
+      onNeedAuth?.('address')
       return
+    }
+
+    const orderItems = selected.map((item) => ({
+      product_id: String(item.productId),
+      product_name: item.name,
+      quantity: item.qty,
+      unit_price: item.price,
+      size: item.size,
+      image: item.image || null,
+      bag_id: item.id,
+    }))
+
+    const clearBagAndNavigate = async (order) => {
+      const { removeItem } = useBagStore.getState()
+      await Promise.allSettled(
+        selected.map((item) =>
+          fetch(`${API_BASE}/bags/delete-bag-item/${item.id}?customer_id=${getCustomerId()}`, { method: 'DELETE' })
+            .then(() => removeItem(item.id))
+        )
+      )
+      setPaymentLoading(false)
+      navigate('/order-success', { state: order })
     }
 
     try {
       setPaymentLoading(true)
 
-      const totalAmount = Math.max(0, total)
+      if (paymentMode === 'full_cod') {
+        const { data } = await axios.post(`${API_BASE}/payments/create-order`, {
+          customer_id: String(customer.customer_id),
+          address_id: String(selectedAddress.address_id),
+          amount: 0,
+          payment_method: 'FULL_COD',
+          cod_remaining: baseTotal,
+          receipt: `order_${Date.now()}`,
+          items: orderItems,
+        })
+        await clearBagAndNavigate(data.order ?? data)
+        return
+      }
 
-      const customerName = customer.full_name || customer.name || 'Customer'
-      const customerEmail = customer.email || ''
-      const customerPhone = customer.mobile || customer.phone || customer.mobile_no || ''
-
-      const selectedAddress = JSON.parse(
-        localStorage.getItem('selected_address') || 'null',
-      )
-
-      if (!selectedAddress) {
-        onNeedAuth?.('address')
+      if (!window.Razorpay) {
+        alert('Payment system unavailable')
         setPaymentLoading(false)
         return
       }
 
+      const razorpayAmount = paymentMode === 'cod' ? 49 : prepaidFinal
+
       const { data } = await axios.post(`${API_BASE}/payments/create-order`, {
         customer_id: String(customer.customer_id),
         address_id: String(selectedAddress.address_id),
-        amount: totalAmount,
+        amount: razorpayAmount,
+        payment_method: paymentMode === 'cod' ? 'COD' : 'PREPAID',
+        cod_remaining: paymentMode === 'cod' ? codFinal - 49 : 0,
         receipt: `order_${Date.now()}`,
-        items: selected.map((item) => ({
-          product_id: String(item.productId),
-          product_name: item.name,
-          quantity: item.qty,
-          unit_price: item.price,
-          size: item.size,
-          image: item.image || null,
-          bag_id: item.id,
-        })),
+        items: orderItems,
       })
+
+      const customerName = customer.full_name || customer.name || 'Customer'
+      const customerEmail = customer.email || ''
+      const customerPhone = customer.mobile || customer.phone || customer.mobile_no || ''
 
       const options = {
         key: data.key,
         amount: data.amount,
         currency: data.currency,
         order_id: data.order_id,
-
         name: 'Aarria',
         description: 'Order Payment',
-
-        prefill: {
-          name: customerName,
-          email: customerEmail,
-          contact: customerPhone,
-        },
-
-        notes: {
-          customer_id: customer.customer_id,
-          item_count: selected.length,
-        },
+        prefill: { name: customerName, email: customerEmail, contact: customerPhone },
+        notes: { customer_id: customer.customer_id, item_count: selected.length },
 
         handler: async function (response) {
           setPaymentLoading(true)
-
           try {
-            const verifyResponse = await axios.post(
-              `${API_BASE}/payments/verify`,
-              {
-                razorpay_order_id: response.razorpay_order_id,
-                razorpay_payment_id: response.razorpay_payment_id,
-                razorpay_signature: response.razorpay_signature,
-              },
-            )
-
-            // Remove purchased items from bag
-            const { removeItem } = useBagStore.getState()
-            await Promise.allSettled(
-              selected.map((item) =>
-                fetch(`${API_BASE}/bags/delete-bag-item/${item.id}?customer_id=${getCustomerId()}`, { method: 'DELETE' })
-                  .then(() => removeItem(item.id))
-              )
-            )
-
-            setPaymentLoading(false)
-
-            navigate('/order-success', {
-              state: verifyResponse.data.order,
+            const verifyResponse = await axios.post(`${API_BASE}/payments/verify`, {
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
             })
+            await clearBagAndNavigate(verifyResponse.data.order)
           } catch (error) {
             console.error('Verification failed:', error)
             setPaymentLoading(false)
@@ -956,21 +1079,18 @@ function PricePanel({ onNeedAuth, triggerPay, onTriggerConsumed }) {
       }
 
       const rzp = new window.Razorpay(options)
-
       rzp.on('payment.failed', function (response) {
         setPaymentLoading(false)
         setPaymentError(response.error.description || 'Payment failed')
       })
-
       rzp.open()
-
       setPaymentLoading(false)
     } catch (error) {
       setPaymentLoading(false)
       console.error(error)
       alert('Unable to start payment')
     }
-  }, [selected, total, authToken, authCustomer, onNeedAuth, API_BASE, navigate])
+  }, [selected, total, paymentMode, authToken, authCustomer, onNeedAuth, API_BASE, navigate])
 
   const handlePlaceOrderRef = useRef(handlePlaceOrder)
   handlePlaceOrderRef.current = handlePlaceOrder
@@ -1011,6 +1131,32 @@ function PricePanel({ onNeedAuth, triggerPay, onTriggerConsumed }) {
         <span>₹{Math.max(0, total).toLocaleString()}</span>
       </div>
 
+      <PaymentMethodSelector
+        value={paymentMode}
+        onChange={setPaymentMode}
+        total={Math.max(0, total)}
+        disabled={selected.length === 0}
+      />
+
+      <div style={{
+        display: 'flex', gap: 6, marginBottom: 14, flexWrap: 'wrap',
+      }}>
+        {[
+          { icon: '🔒', text: 'Your money is 100% safe' },
+          { icon: '⚡', text: 'Instant refunds, no questions asked' },
+        ].map(({ icon, text }) => (
+          <div key={text} style={{
+            flex: 1, minWidth: 130,
+            background: '#f0faf4', border: '1px solid #c8e6c9',
+            borderRadius: 8, padding: '8px 10px',
+            display: 'flex', alignItems: 'center', gap: 7,
+          }}>
+            <span style={{ fontSize: 14, lineHeight: 1 }}>{icon}</span>
+            <span style={{ fontSize: 11, fontWeight: 600, color: '#2e7d32', lineHeight: 1.3 }}>{text}</span>
+          </div>
+        ))}
+      </div>
+
       <p style={styles.terms}>
   By placing the order, you agree to our{' '}
   <a
@@ -1035,9 +1181,15 @@ function PricePanel({ onNeedAuth, triggerPay, onTriggerConsumed }) {
       <button
         style={styles.placeBtn}
         onClick={handlePlaceOrder}
-        disabled={(items.length > 0 && selected.length === 0) || paymentLoading}
+        disabled={selected.length === 0 || paymentLoading}
       >
-        {paymentLoading ? 'PLEASE WAIT...' : 'PLACE ORDER'}
+        {paymentLoading
+          ? 'PLEASE WAIT...'
+          : paymentMode === 'cod'
+          ? 'PAY Rs.49 & PLACE ORDER'
+          : paymentMode === 'full_cod'
+          ? 'PLACE ORDER (PAY ON DELIVERY)'
+          : 'PLACE ORDER'}
       </button>
 
       {showEmptyBagPopup && (
@@ -1331,6 +1483,7 @@ function DrawerOtpStep({ phone, onBack, onVerified }) {
       const res = await fetch('https://api.vaarria.com/api/auth/msg91-login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({ mobile_no: phone, access_token: widgetData?.message }),
       })
       const data = await res.json()
@@ -1559,6 +1712,7 @@ function BagPage() {
   const { items, toggleSelected, setItems } = useBagStore()
   const { token, customer } = useAuthStore()
   const isLoggedIn = !!token && !!customer
+  const navigate = useNavigate()
   const [loading, setLoading] = useState(true)
   const [drawer, setDrawer] = useState({ open: false, step: 'mobile' })
   const [triggerPay, setTriggerPay] = useState(false)
@@ -1687,11 +1841,20 @@ function BagPage() {
             </>
           ) : items.length === 0 ? (
             <div style={styles.emptyState}>
-              <ShoppingBag
-                size={48}
-                style={{ color: '#ddd', marginBottom: 12 }}
-              />
-              <p style={{ color: '#aaa', fontSize: 15 }}>Your bag is empty</p>
+              <ShoppingBag size={48} style={{ color: '#ddd', marginBottom: 12 }} />
+              <p style={{ color: '#aaa', fontSize: 15, marginBottom: 20 }}>Your bag is empty</p>
+              <button
+                onClick={() => navigate('/products')}
+                style={{
+                  background: '#050C1C', color: '#C9A84C',
+                  border: '1px solid #C9A84C', borderRadius: 8,
+                  padding: '12px 32px', fontSize: 13, fontWeight: 700,
+                  cursor: 'pointer', letterSpacing: '0.06em',
+                  fontFamily: "'Playfair Display', Georgia, serif",
+                }}
+              >
+                Start Shopping
+              </button>
             </div>
           ) : (
             items.map((item) => <ItemCard key={item.id} item={item} />)

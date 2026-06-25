@@ -210,6 +210,7 @@ const ProductUpload = () => {
   const [activeTab, setActiveTab] = useState('edit')
   const [submitting, setSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState('')
+  const [isFeatured, setIsFeatured] = useState(false)
 
   const calculateFinalPrice = () => {
     const base = parseFloat(salePrice) || 0
@@ -423,6 +424,7 @@ const ProductUpload = () => {
       average_rating: 0.0,
       review_count: 0, // ✅ was missing in failing payload
     },
+    is_featured: isFeatured,
   })
 
   const handlePublish = async () => {
@@ -759,6 +761,18 @@ const ProductUpload = () => {
                       placeholder='e.g. BRAND-ESIKA-1'
                     />
                   </Field>
+                  <div className='sm:col-span-2 flex items-center gap-3 pt-1'>
+                    <button
+                      type='button'
+                      onClick={() => setIsFeatured(v => !v)}
+                      className={`w-5 h-5 rounded border flex items-center justify-center transition-colors flex-shrink-0 ${isFeatured ? 'bg-rose-500 border-rose-500' : 'bg-stone-900 border-stone-600'}`}
+                    >
+                      {isFeatured && <Check size={12} className='text-white' />}
+                    </button>
+                    <span className='text-xs font-semibold uppercase tracking-widest text-stone-400'>
+                      Feature this product (show in PDP banner)
+                    </span>
+                  </div>
                 </div>
               </Section>
 

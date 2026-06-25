@@ -24,8 +24,14 @@ import AdminOrders from './admin/orders/AdminOrders.jsx'
 import OrdersPage from './OrdersPage.jsx'
 import ReviewPage from './ReviewPage.jsx'
 import WishlistPage from './WishlistPage.jsx'
+import ProfilePage from './ProfilePage.jsx'
+import { useAuthStore } from './store/authStore'
 
 const queryClient = new QueryClient()  // ← add
+
+// Silently restore access token from refresh cookie on page load
+const { customer, refreshToken } = useAuthStore.getState()
+if (customer) refreshToken()
 
 const router = createBrowserRouter([
   { path: '/', element: <Home /> },
@@ -39,6 +45,7 @@ const router = createBrowserRouter([
   {path: '/orders', element: <OrdersPage /> },
   { path: '/review', element: <ReviewPage /> },
   { path: '/wishlist', element: <WishlistPage /> },
+  { path: '/profile', element: <ProfilePage /> },
   { path: '/refund-policy', element: <RefundPolicyPage/> },
   { path: '/privacy-policy', element: <PrivacyPolicy/> },
   { path: '/admin/products/new', element: <ProductUpload /> },
@@ -47,7 +54,7 @@ const router = createBrowserRouter([
   { path: '/admin/orders', element: <AdminOrders/> },
   { path: '/order-success', element: <OrderSuccess /> },
   { path: '/payment-failed', element: <PaymentFailed /> },
-  
+
 ])
 
 createRoot(document.getElementById('root')).render(

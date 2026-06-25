@@ -226,6 +226,199 @@ function OrderTimeline({ status }) {
   )
 }
 
+// ─── Return / Exchange Modal ──────────────────────────────────────────────────
+
+const RETURN_REASONS = [
+  'Wrong size received',
+  'Product not as described',
+  'Damaged / defective product',
+  'Wrong item delivered',
+  'Changed my mind',
+  'Better price available elsewhere',
+  'Other',
+]
+
+function ReturnExchangeModal({ order, onClose }) {
+  const [mode, setMode] = useState('RETURN')
+  const [selected, setSelected] = useState(() => new Set(order.items.map(i => i.id)))
+  const [reason, setReason] = useState('')
+  const [details, setDetails] = useState('')
+
+  const toggle = (id) => setSelected(prev => {
+    const n = new Set(prev)
+    n.has(id) ? n.delete(id) : n.add(id)
+    return n
+  })
+
+  const handleSubmit = () => {
+    const items = order.items.filter(i => selected.has(i.id)).map(i => `${i.name} (${i.size})`).join(', ')
+    const msg = `Hi, I'd like to request a ${mode === 'RETURN' ? 'return' : 'exchange'} for Order #${order.id}.\n\nItems: ${items}\nReason: ${reason}${details ? `\nDetails: ${details}` : ''}`
+    window.open(`https://wa.me/919731580157?text=${encodeURIComponent(msg)}`, '_blank')
+    onClose()
+  }
+
+  const canSubmit = selected.size > 0 && reason
+
+  return (
+    <div
+      onClick={(e) => e.target === e.currentTarget && onClose()}
+      style={{
+        position: 'fixed', inset: 0, zIndex: 200,
+        background: 'rgba(5,12,28,0.6)', backdropFilter: 'blur(3px)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16,
+      }}
+    >
+      <div style={{
+        width: '100%', maxWidth: 440, background: '#fff', borderRadius: 16,
+        boxShadow: '0 24px 64px rgba(5,12,28,0.22)', border: '1px solid #e8e0d0',
+        maxHeight: '90vh', overflowY: 'auto',
+      }}>
+        {/* Header */}
+        <div style={{
+          padding: '18px 22px 14px', borderBottom: `1px solid ${GOLD}22`,
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          position: 'sticky', top: 0, background: '#fff', zIndex: 1,
+        }}>
+          <div>
+            <h3 style={{ fontSize: 17, fontWeight: 700, color: NAVY, margin: 0, fontFamily: "'Playfair Display', Georgia, serif" }}>
+              Return / Exchange
+            </h3>
+            <p style={{ fontSize: 11, color: '#94969f', margin: '3px 0 0' }}>Order #{order.id}</p>
+          </div>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#aaa', fontSize: 20, lineHeight: 1, padding: 4 }}>×</button>
+        </div>
+
+        <div style={{ padding: '18px 22px 22px', display: 'flex', flexDirection: 'column', gap: 16 }}>
+          {/* Mode toggle */}
+          <div>
+            <p style={{ fontSize: 11, fontWeight: 700, color: '#888', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>Request type</p>
+            <div style={{ display: 'flex', gap: 10 }}>
+              {[{ v: 'RETURN', label: 'Return' }, { v: 'EXCHANGE', label: 'Exchange' }].map(({ v, label }) => (
+                <button
+                  key={v}
+                  onClick={() => setMode(v)}
+                  style={{
+                    flex: 1, padding: '10px', borderRadius: 8, cursor: 'pointer',
+                    border: mode === v ? `2px solid ${GOLD}` : '1.5px solid #e8e0d0',
+                    background: mode === v ? '#fffdf5' : '#fff',
+                    fontSize: 13, fontWeight: 600, color: mode === v ? NAVY : '#888',
+                    transition: 'all 0.15s',
+                  }}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Item selection */}
+          <div>
+            <p style={{ fontSize: 11, fontWeight: 700, color: '#888', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>Select items</p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {order.items.map(item => (
+                <div
+                  key={item.id}
+                  onClick={() => toggle(item.id)}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 10,
+                    padding: '10px 12px', borderRadius: 8, cursor: 'pointer',
+                    border: selected.has(item.id) ? `1.5px solid ${GOLD}` : '1.5px solid #e8e0d0',
+                    background: selected.has(item.id) ? '#fffdf5' : '#fff',
+                    transition: 'all 0.15s',
+                  }}
+                >
+                  <div style={{
+                    width: 18, height: 18, borderRadius: 4, flexShrink: 0,
+                    border: selected.has(item.id) ? `2px solid ${GOLD}` : '2px solid #ddd',
+                    background: selected.has(item.id) ? GOLD : '#fff',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  }}>
+                    {selected.has(item.id) && <span style={{ color: '#fff', fontSize: 11, fontWeight: 700 }}>✓</span>}
+                  </div>
+                  {item.image && (
+                    <img src={item.image} alt={item.name} style={{ width: 40, height: 50, objectFit: 'cover', borderRadius: 4, border: '1px solid #e8e0d0' }} />
+                  )}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p style={{ fontSize: 12, fontWeight: 600, color: NAVY, margin: '0 0 2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.name}</p>
+                    <p style={{ fontSize: 11, color: '#888', margin: 0 }}>Size: {item.size} · ₹{item.price?.toLocaleString('en-IN')}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Reason */}
+          <div>
+            <p style={{ fontSize: 11, fontWeight: 700, color: '#888', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>Reason <span style={{ color: GOLD }}>*</span></p>
+            <select
+              value={reason}
+              onChange={e => setReason(e.target.value)}
+              style={{
+                width: '100%', padding: '10px 12px', borderRadius: 8,
+                border: `1.5px solid ${reason ? GOLD : '#e8e0d0'}`, fontSize: 13, color: NAVY,
+                background: '#fff', outline: 'none', cursor: 'pointer',
+              }}
+            >
+              <option value="">Select a reason…</option>
+              {RETURN_REASONS.map(r => <option key={r} value={r}>{r}</option>)}
+            </select>
+          </div>
+
+          {/* Additional details */}
+          <div>
+            <p style={{ fontSize: 11, fontWeight: 700, color: '#888', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>Additional details (optional)</p>
+            <textarea
+              value={details}
+              onChange={e => setDetails(e.target.value)}
+              placeholder="Describe the issue in detail…"
+              rows={3}
+              style={{
+                width: '100%', boxSizing: 'border-box', padding: '10px 12px', borderRadius: 8,
+                border: '1.5px solid #e8e0d0', fontSize: 13, color: NAVY,
+                background: '#fff', outline: 'none', resize: 'vertical', fontFamily: 'inherit',
+              }}
+              onFocus={e => { e.target.style.borderColor = GOLD }}
+              onBlur={e => { e.target.style.borderColor = '#e8e0d0' }}
+            />
+          </div>
+
+          <div style={{ background: '#fffdf5', border: `1px solid ${GOLD}44`, borderRadius: 8, padding: '10px 12px' }}>
+            <p style={{ fontSize: 12, color: '#666', margin: 0, lineHeight: 1.6 }}>
+              Clicking submit will open WhatsApp with your request pre-filled. Our team will respond within 24 hours.
+            </p>
+          </div>
+
+          <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+            <button
+              onClick={onClose}
+              style={{
+                padding: '10px 20px', borderRadius: 8, cursor: 'pointer',
+                border: `1.5px solid ${GOLD}66`, background: '#fff',
+                fontSize: 13, fontWeight: 600, color: NAVY,
+              }}
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleSubmit}
+              disabled={!canSubmit}
+              style={{
+                padding: '10px 24px', borderRadius: 8, cursor: canSubmit ? 'pointer' : 'not-allowed',
+                border: `1px solid ${GOLD}`, background: canSubmit ? NAVY : '#f0ece4',
+                fontSize: 13, fontWeight: 700, color: canSubmit ? GOLD : '#bbb',
+                fontFamily: "'Playfair Display', Georgia, serif",
+                transition: 'all 0.15s',
+              }}
+            >
+              Submit via WhatsApp
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ─── Cancel Modal ─────────────────────────────────────────────────────────────
 
 function CancelOrderModal({ order, onClose, onCancelled }) {
@@ -540,6 +733,7 @@ function OrderCard({ order }) {
   const [expanded, setExpanded] = useState(false)
   const [showCancelModal, setShowCancelModal] = useState(false)
   const [showEditAddress, setShowEditAddress] = useState(false)
+  const [showReturnModal, setShowReturnModal] = useState(false)
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const meta = ORDER_STATUSES[order.status] || ORDER_STATUSES.PLACED
@@ -599,6 +793,21 @@ function OrderCard({ order }) {
               <StatusIcon size={11} strokeWidth={2.5} />
               {meta.label}
             </span>
+            {order.payment_method === 'PREPAID' && (
+              <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 10, background: '#dcfce7', color: '#16a34a', border: '1px solid #bbf7d0' }}>
+                Paid Online
+              </span>
+            )}
+            {order.payment_method === 'COD' && (
+              <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 10, background: '#fffdf5', color: '#b45309', border: '1px solid #fde68a' }}>
+                Rs.49 + COD
+              </span>
+            )}
+            {order.payment_method === 'FULL_COD' && (
+              <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 10, background: '#fef9ec', color: '#b45309', border: '1px solid #fde68a' }}>
+                Full COD
+              </span>
+            )}
           </div>
           <p style={{ fontSize: 12, color: '#94969f', margin: 0 }}>
             {order.items.length} item{order.items.length > 1 ? 's' : ''} ·{' '}
@@ -701,6 +910,50 @@ function OrderCard({ order }) {
             </div>
           )}
 
+          {/* Tracking info */}
+          {(order.status === 'SHIPPED' || order.status === 'OUT') && (
+            <div style={{
+              background: '#fff', borderRadius: 10, padding: '12px 16px',
+              border: '1px solid #e8e0d0', marginBottom: 14,
+            }}>
+              <p style={{ fontSize: 10, color: '#aaa', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 8 }}>
+                Shipment Tracking
+              </p>
+              {order.tracking?.courier && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                  <span style={{ fontSize: 12, color: '#666' }}>Courier</span>
+                  <span style={{ fontSize: 12, fontWeight: 600, color: NAVY }}>{order.tracking.courier}</span>
+                </div>
+              )}
+              {order.tracking?.id && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                  <span style={{ fontSize: 12, color: '#666' }}>Tracking ID</span>
+                  <span style={{ fontSize: 12, fontWeight: 600, color: NAVY, fontFamily: 'monospace' }}>{order.tracking.id}</span>
+                </div>
+              )}
+              {order.tracking?.url ? (
+                <a
+                  href={order.tracking.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  style={{
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                    width: '100%', padding: '9px', borderRadius: 8, boxSizing: 'border-box',
+                    background: NAVY, border: `1px solid ${GOLD}`, color: GOLD,
+                    fontSize: 12, fontWeight: 700, textDecoration: 'none',
+                    fontFamily: "'Playfair Display', Georgia, serif",
+                  }}
+                >
+                  <Truck size={13} /> Track Live
+                </a>
+              ) : (
+                <p style={{ fontSize: 12, color: '#94969f', margin: 0 }}>
+                  Tracking details will be updated once the courier scans your package.
+                </p>
+              )}
+            </div>
+          )}
+
           <div style={{ marginBottom: 14 }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
               <p style={{ fontSize: 10, color: '#aaa', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', margin: 0 }}>
@@ -775,10 +1028,64 @@ function OrderCard({ order }) {
                 <span style={{ fontSize: 12, fontWeight: 500, color: row.color || '#444' }}>{row.value}</span>
               </div>
             ))}
-            <div style={{ borderTop: `1px solid ${GOLD}44`, paddingTop: 8, marginTop: 6, display: 'flex', justifyContent: 'space-between' }}>
-              <span style={{ fontSize: 13, fontWeight: 700, color: NAVY }}>Total Paid</span>
-              <span style={{ fontSize: 14, fontWeight: 700, color: GOLD }}>₹{order.total.toLocaleString('en-IN')}</span>
-            </div>
+            {(() => {
+              const pm = order.payment_method
+              const codRemaining = order.cod_remaining || 0
+              if (pm === 'PREPAID') {
+                return (
+                  <>
+                    <div style={{ borderTop: `1px solid ${GOLD}44`, paddingTop: 8, marginTop: 6, display: 'flex', justifyContent: 'space-between' }}>
+                      <span style={{ fontSize: 13, fontWeight: 700, color: NAVY }}>Total Paid</span>
+                      <span style={{ fontSize: 14, fontWeight: 700, color: GOLD }}>₹{order.total.toLocaleString('en-IN')}</span>
+                    </div>
+                    <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 10, background: '#dcfce7', color: '#16a34a', border: '1px solid #bbf7d0' }}>✓ Paid Online</span>
+                      <span style={{ fontSize: 11, color: '#16a34a' }}>5% discount applied</span>
+                    </div>
+                  </>
+                )
+              } else if (pm === 'COD') {
+                return (
+                  <>
+                    <div style={{ borderTop: `1px solid ${GOLD}44`, paddingTop: 8, marginTop: 6, display: 'flex', justifyContent: 'space-between' }}>
+                      <span style={{ fontSize: 13, fontWeight: 700, color: NAVY }}>Order Total</span>
+                      <span style={{ fontSize: 14, fontWeight: 700, color: GOLD }}>₹{order.total.toLocaleString('en-IN')}</span>
+                    </div>
+                    <div style={{ marginTop: 8, background: '#fffdf5', border: `1px solid ${GOLD}44`, borderRadius: 8, padding: '8px 12px', display: 'flex', flexDirection: 'column', gap: 4 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <span style={{ fontSize: 12, color: '#666' }}>Paid online</span>
+                        <span style={{ fontSize: 12, fontWeight: 600, color: '#16a34a' }}>Rs.49</span>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <span style={{ fontSize: 12, color: '#666' }}>To pay on delivery</span>
+                        <span style={{ fontSize: 12, fontWeight: 600, color: NAVY }}>Rs.{codRemaining.toLocaleString('en-IN')}</span>
+                      </div>
+                      <div style={{ fontSize: 10, color: '#888', marginTop: 2 }}>2% discount applied on delivery amount</div>
+                    </div>
+                  </>
+                )
+              } else if (pm === 'FULL_COD') {
+                return (
+                  <>
+                    <div style={{ borderTop: `1px solid ${GOLD}44`, paddingTop: 8, marginTop: 6, display: 'flex', justifyContent: 'space-between' }}>
+                      <span style={{ fontSize: 13, fontWeight: 700, color: NAVY }}>Order Total</span>
+                      <span style={{ fontSize: 14, fontWeight: 700, color: GOLD }}>₹{order.total.toLocaleString('en-IN')}</span>
+                    </div>
+                    <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 10, background: '#fef9ec', color: '#b45309', border: '1px solid #fde68a' }}>Cash on Delivery</span>
+                      <span style={{ fontSize: 11, color: '#b45309' }}>Pay Rs.{codRemaining.toLocaleString('en-IN')} on delivery</span>
+                    </div>
+                  </>
+                )
+              } else {
+                return (
+                  <div style={{ borderTop: `1px solid ${GOLD}44`, paddingTop: 8, marginTop: 6, display: 'flex', justifyContent: 'space-between' }}>
+                    <span style={{ fontSize: 13, fontWeight: 700, color: NAVY }}>Total Paid</span>
+                    <span style={{ fontSize: 14, fontWeight: 700, color: GOLD }}>₹{order.total.toLocaleString('en-IN')}</span>
+                  </div>
+                )
+              }
+            })()}
           </div>
 
           {/* Thank you card — shown after delivery */}
@@ -833,7 +1140,7 @@ function OrderCard({ order }) {
               />
             )}
             {order.status === 'DELIVERED' && (
-              <ActionBtn icon={<RotateCcw size={13} />} label="Return / Exchange" />
+              <ActionBtn icon={<RotateCcw size={13} />} label="Return / Exchange" onClick={() => setShowReturnModal(true)} />
             )}
             {(order.status === 'PLACED' || order.status === 'CONFIRMED') && (
               <ActionBtn
@@ -882,6 +1189,13 @@ function OrderCard({ order }) {
           order={order}
           onClose={() => setShowEditAddress(false)}
           onSaved={handleAddressSaved}
+        />
+      )}
+
+      {showReturnModal && (
+        <ReturnExchangeModal
+          order={order}
+          onClose={() => setShowReturnModal(false)}
         />
       )}
     </div>

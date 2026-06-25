@@ -908,8 +908,9 @@ function SkeletonLoader() {
         @keyframes skeletonShimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
         .skeleton { background: linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 50%, #f3f4f6 75%); background-size: 200% 100%; animation: skeletonShimmer 1.2s infinite; border-radius: 4px; }
         .pdp-page { min-height: 100vh; background: #fff; font-family: 'DM Sans', sans-serif; color: #1f2937; }
-        .pdp-breadcrumb { padding: 11px clamp(16px, 3%, 32px); font-size: 12px; color: #9ca3af; display: flex; gap: 6px; align-items: center; border-bottom: 1px solid #fff; background: #fff; max-width: 1536px; margin: 0 auto; box-sizing: border-box; width: 100%; }
-        .pdp-outer { display: flex; align-items: flex-start; max-width: 1536px; margin: 0 auto; padding: 0 clamp(16px, 3%, 32px); }
+        .pdp-breadcrumb { padding: 11px 2%; font-size: 12px; color: #9ca3af; display: flex; gap: 6px; align-items: center; border-bottom: 1px solid #fff; background: #fff; }
+        .pdp-page-layout { display: flex; align-items: flex-start; padding-left: 2%; }
+        .pdp-outer { flex: 1; display: flex; align-items: flex-start; min-width: 0; padding-right: 16px; }
         .pdp-images-col { width: 52%; min-width: 0; }
         .pdp-info-col {
   width: 48%;
@@ -964,6 +965,85 @@ function SkeletonLoader() {
         </div>
       </div>
     </>
+  )
+}
+
+// ─── Featured Products Banner ─────────────────────────────────────────────────
+function FeaturedBanner({ productId }) {
+  const [products, setProducts] = useState([])
+  const [activeIndex, setActiveIndex] = useState(0)
+  const [fading, setFading] = useState(false)
+
+  useEffect(() => {
+    fetch('https://api.vaarria.com/listings?page_size=30')
+      .then(r => r.json())
+      .then(data => {
+        const list = data.listings ?? data.products ?? data.data ?? data ?? []
+        const items = (Array.isArray(list) ? list : [])
+          .filter(p => String(p.id ?? p.product_id) !== String(productId))
+          .slice(0, 20)
+          .map(p => ({
+            id: p.id ?? p.product_id,
+            title: p.title ?? p.name,
+            price: p.selling_price ?? p.sale_price ?? p.price,
+            image: p.main_image
+              ? `https://cdn.vaarria.com/app/images/${p.main_image}`
+              : p.image_url ?? '',
+          }))
+        setProducts(items)
+      })
+      .catch(() => {})
+  }, [productId])
+
+  useEffect(() => {
+    if (products.length <= 1) return
+    const id = setInterval(() => {
+      setFading(true)
+      setTimeout(() => {
+        setActiveIndex(i => (i + 1) % products.length)
+        setFading(false)
+      }, 300)
+    }, 4000)
+    return () => clearInterval(id)
+  }, [products.length])
+
+  if (!products.length) return null
+
+  const p = products[activeIndex]
+
+  return (
+    <div className='pdp-featured-banner' style={{ width: '15%', flexShrink: 0, position: 'sticky', top: 0, marginRight: 12, display: 'flex', flexDirection: 'column' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', padding: '4px 2px', gap: 4 }}>
+        <span style={{ fontSize: 9, color: '#9ca3af', fontFamily: "'DM Sans', sans-serif" }}>Sponsored</span>
+        <span style={{ fontSize: 8, color: '#9ca3af', border: '1px solid #d1d5db', borderRadius: 2, padding: '1px 3px', fontFamily: "'DM Sans', sans-serif", lineHeight: 1.2, letterSpacing: '0.05em' }}>Ad</span>
+      </div>
+      <div
+        style={{ height: '80vh', position: 'relative', border: '1px solid #e8e0d0', borderRadius: 10, overflow: 'hidden', boxShadow: '0 2px 12px rgba(5,12,28,0.06)', cursor: 'pointer' }}
+        onClick={() => window.open(`/product/${p.id}`, '_blank')}
+      >
+        <div style={{ position: 'absolute', inset: 0, opacity: fading ? 0 : 1, transition: 'opacity 0.3s ease' }}>
+          <img
+            src={p.image}
+            alt={p.title}
+            style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top', display: 'block' }}
+            onError={e => { e.target.style.display = 'none' }}
+          />
+        </div>
+        <div style={{ position: 'absolute', bottom: 72, left: 0, right: 0, display: 'flex', justifyContent: 'center', gap: 4, zIndex: 3, flexWrap: 'wrap', padding: '0 8px' }}>
+          {products.slice(0, Math.min(products.length, 10)).map((_, i) => (
+            <button
+              key={i}
+              onClick={(e) => { e.stopPropagation(); setActiveIndex(i); setFading(false) }}
+              style={{ width: i === activeIndex ? 14 : 5, height: 5, borderRadius: 3, background: i === activeIndex ? '#C9A84C' : '#d1d5db', border: 'none', cursor: 'pointer', padding: 0, transition: 'all 0.2s', flexShrink: 0 }}
+            />
+          ))}
+        </div>
+        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, zIndex: 2, background: 'linear-gradient(to top, rgba(5,12,28,0.88) 0%, rgba(5,12,28,0.5) 70%, transparent 100%)', padding: '28px 12px 12px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+          <span style={{ fontSize: 14, fontWeight: 700, color: '#C9A84C', fontFamily: "'DM Sans', sans-serif" }}>₹{p.price?.toLocaleString()}</span>
+          <span style={{ fontSize: 9, fontWeight: 700, color: 'rgba(201,168,76,0.8)', letterSpacing: '0.12em', textTransform: 'uppercase', fontFamily: "'DM Sans', sans-serif" }}>You May Also Like</span>
+        </div>
+      </div>
+    </div>
   )
 }
 
@@ -1460,7 +1540,7 @@ export default function ProductDetail() {
         @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Playfair+Display:wght@600;700&display=swap');
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         .pdp-page { min-height: 100vh; background: #fff; font-family: 'DM Sans', sans-serif; color: #1f2937; }
-        .pdp-breadcrumb { padding: 11px clamp(16px, 3%, 32px); font-size: 12px; color: #9ca3af; display: flex; gap: 6px; align-items: center; border-bottom: 1px solid #fff; background: #fff; max-width: 1536px; margin: 0 auto; box-sizing: border-box; width: 100%; }
+        .pdp-breadcrumb { padding: 11px 2%; font-size: 12px; color: #9ca3af; display: flex; gap: 6px; align-items: center; border-bottom: 1px solid #fff; background: #fff; }
         .pdp-breadcrumb a {
   color: #9ca3af;
   text-decoration: none;
@@ -1480,7 +1560,8 @@ export default function ProductDetail() {
 }
         .pdp-breadcrumb-sep { color: #d1d5db; font-size: 10px; }
         .pdp-breadcrumb-current { color: #374151; font-weight: 500; }
-        .pdp-outer { display: flex; align-items: flex-start; max-width: 1536px; margin: 0 auto; padding: 0 clamp(16px, 3%, 32px); }
+        .pdp-page-layout { display: flex; align-items: flex-start; padding-left: 2%; }
+        .pdp-outer { flex: 1; display: flex; align-items: flex-start; min-width: 0; padding-right: 12px; }
         .pdp-images-col { width: 55%; min-width: 0; padding-top: 12px; }
         .pdp-info-col {
   width: 45%;
@@ -1542,19 +1623,7 @@ export default function ProductDetail() {
         .pdp-accordion-body { padding-bottom: 20px; }
         .pdp-toast { position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%); background: #050C1C; color: #C9A84C; border: 1.5px solid #C9A84C; padding: 13px 32px; border-radius: 24px; font-size: 14px; font-weight: 600; z-index: 100; box-shadow: 0 8px 28px rgba(5,12,28,0.35); animation: toastIn 0.3s ease; font-family: 'DM Sans', sans-serif; }
         @keyframes toastIn { from { opacity: 0; transform: translateX(-50%) translateY(16px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
-@media (max-width: 900px) { .pdp-outer {
-  display: flex;
-  align-items: flex-start;
-  max-width: 1440px;
-  margin: 0 auto;
-  padding: 0 clamp(16px, 6%, 86px);
-} .pdp-images-col { width: 100%; } .pdp-info-col {
-  width: 48%;
-  min-width: 0;
-  padding: 0px 48px 48px 40px;
-  border-left: 1px solid #f3f4f6;
-  background: #fff;
-} .pdp-breadcrumb { padding: 10px 16px; } }
+@media (max-width: 900px) { .pdp-page-layout { flex-direction: column; padding-left: 0; } .pdp-outer { flex: none; width: 100%; padding-right: 0; flex-direction: column; } .pdp-images-col { width: 100%; } .pdp-info-col { width: 100%; padding: 16px; border-left: none; } .pdp-breadcrumb { padding: 10px 4%; } .pdp-featured-banner { display: none; } }
       `}</style>
 
       <div className='pdp-page'>
@@ -1578,6 +1647,7 @@ export default function ProductDetail() {
           <span className='pdp-breadcrumb-current'>{product.name}</span>
         </div>
 
+        <div className='pdp-page-layout'>
         <div className='pdp-outer'>
           {/* ─ LEFT: Gallery with thumbnail strip ─ */}
           <div className='pdp-images-col'>
@@ -1897,7 +1967,9 @@ export default function ProductDetail() {
               ))}
             </div>
           </div>
-        </div>
+        </div>{/* pdp-outer */}
+        <FeaturedBanner productId={productId} />
+        </div>{/* pdp-page-layout */}
       </div>
 
       {/* ── View History Slider ── */}

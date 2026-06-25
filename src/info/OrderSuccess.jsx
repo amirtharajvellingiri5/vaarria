@@ -8,6 +8,9 @@ export default function OrderSuccess() {
   const [checked, setChecked] = useState(false);
 
   const order = location.state;
+  const customerPhone = (() => {
+    try { return JSON.parse(localStorage.getItem('customer') || '{}').mobile_no || null } catch { return null }
+  })()
 
   useEffect(() => {
     if (!order) { navigate("/"); return; }
@@ -33,8 +36,7 @@ export default function OrderSuccess() {
           <div style={s.thankTitle}>THANK YOU</div>
           <div style={s.thankSub}>FOR CHOOSING VAARRIA</div>
           <p style={s.thankBody}>
-            Your support means the world to us. Every piece you choose is crafted with
-            passion, precision and a promise of elegance.
+            Handpicked fabric. Half the price. Straight to your door. Thank you for getting it.
           </p>
           <div style={s.thankDivider}>✦</div>
           <div style={s.thankBrand}>VAARRIA</div>
@@ -109,20 +111,62 @@ export default function OrderSuccess() {
         {/* ── Order summary card ── */}
         <div style={s.summaryCard}>
           <div style={s.summaryHeader}>Order Summary</div>
-          <InfoRow label="Order ID"    value={order.order_id} mono />
-          <InfoRow label="Payment ID"  value={order.payment_id} mono />
-          <InfoRow label="Amount Paid" value={`₹${order.amount}`} gold />
+          <InfoRow label="Order ID" value={order.order_id} mono />
+          {order.payment_method === 'PREPAID' && (
+            <>
+              <InfoRow label="Payment ID" value={order.payment_id} mono />
+              <InfoRow label="Amount Paid" value={`₹${order.amount}`} gold />
+            </>
+          )}
+          {order.payment_method === 'COD' && (
+            <>
+              <InfoRow label="Payment ID" value={order.payment_id} mono />
+              <InfoRow label="Paid Online (advance)" value={`Rs.${order.paid_online ?? 49}`} gold />
+              <InfoRow label="To Pay on Delivery" value={`Rs.${order.cod_remaining}`} />
+            </>
+          )}
+          {order.payment_method === 'FULL_COD' && (
+            <InfoRow label="To Pay on Delivery" value={`Rs.${order.cod_remaining ?? order.amount}`} gold />
+          )}
+          {!order.payment_method && (
+            <>
+              <InfoRow label="Payment ID" value={order.payment_id} mono />
+              <InfoRow label="Amount Paid" value={`₹${order.amount}`} gold />
+            </>
+          )}
           <InfoRow label="Estimated Delivery" value={order.estimated_delivery} last />
         </div>
+
+        {/* ── Payment method badge ── */}
+        {order.payment_method === 'COD' && (
+          <div style={{ ...s.notice, background: '#fffdf5', borderColor: '#fde68a', marginBottom: 12 }}>
+            <span style={{ ...s.noticeDot, background: '#b45309' }} />
+            <p style={s.noticeText}>
+              <strong style={{ color: '#b45309' }}>Rs.49 paid online</strong> · Remaining{" "}
+              <strong style={{ color: '#333' }}>Rs.{order.cod_remaining}</strong> to be paid on delivery.
+              A 2% discount has been applied.
+            </p>
+          </div>
+        )}
+        {order.payment_method === 'FULL_COD' && (
+          <div style={{ ...s.notice, background: '#fffdf5', borderColor: '#fde68a', marginBottom: 12 }}>
+            <span style={{ ...s.noticeDot, background: '#b45309' }} />
+            <p style={s.noticeText}>
+              <strong style={{ color: '#b45309' }}>Cash on Delivery</strong> · Pay{" "}
+              <strong style={{ color: '#333' }}>Rs.{order.cod_remaining ?? order.amount}</strong> when your order arrives.
+            </p>
+          </div>
+        )}
 
         {/* ── Dispatch notice ── */}
         <div style={s.notice}>
           <span style={s.noticeDot} />
           <p style={s.noticeText}>
-            You'll receive tracking details at{" "}
-            <a href="mailto:chatoyantvortex@outlook.com" style={s.noticeEmail}>
-              chatoyantvortex@outlook.com
-            </a>{" "}
+            You'll receive tracking details on{" "}
+            {customerPhone
+              ? <strong style={{ color: "#333" }}>{customerPhone}</strong>
+              : "your registered mobile number"
+            }{" "}
             once your order ships.
           </p>
         </div>
@@ -139,8 +183,13 @@ export default function OrderSuccess() {
 
         <p style={s.support}>
           Need help?{" "}
-          <a href="mailto:chatoyantvortex@outlook.com" style={s.supportLink}>
-            chatoyantvortex@outlook.com
+          <a
+            href={`https://wa.me/919731580157?text=${encodeURIComponent(`Hi, I need help with my order${order?.order_id ? ` #${order.order_id}` : ''}`)}`}
+            target="_blank"
+            rel="noreferrer"
+            style={s.supportLink}
+          >
+            Chat with us on WhatsApp
           </a>
         </p>
       </div>
