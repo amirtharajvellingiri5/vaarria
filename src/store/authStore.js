@@ -1,6 +1,7 @@
 import { create } from 'zustand'
+import { AUTH_URL } from '../config'
 
-const AUTH_API = 'https://b1ubc4krn6.execute-api.ap-south-1.amazonaws.com/prod'
+const AUTH_API = AUTH_URL
 
 const readCustomer = () => {
   const raw = localStorage.getItem('customer')

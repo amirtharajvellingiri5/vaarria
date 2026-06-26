@@ -32,6 +32,7 @@ import './constants/global.css'
 import CouponModal from './modals/CouponModal'
 import AddressModal from './modals/AddressModal'
 import { useAuthStore } from './store/authStore'
+import { AUTH_URL } from './config'
 
 // Orders handler (DynamoDB-backed) — all bag APIs go here
 const ORDERS_API_BASE =
@@ -1480,7 +1481,7 @@ function DrawerOtpStep({ phone, onBack, onVerified }) {
           typeof err === 'string' ? err : err?.message || 'Invalid OTP'
         )))
       })
-      const res = await fetch('https://b1ubc4krn6.execute-api.ap-south-1.amazonaws.com/prod/api/auth/msg91-login', {
+      const res = await fetch(`${AUTH_URL}/api/auth/msg91-login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',

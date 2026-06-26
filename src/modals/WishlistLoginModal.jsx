@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { X, Heart } from 'lucide-react'
 import { useAuthStore } from '../store/authStore'
+import { AUTH_URL } from '../config'
 
 const MSG91_WIDGET_ID = '366568623534393236303030'
 const MSG91_TOKEN_AUTH = '147259Txua8xfclqV69fd54e9P1'
@@ -120,7 +121,7 @@ function OtpStep({ phone, onBack, onSuccess }) {
       const widgetData = await new Promise((resolve, reject) => {
         window.verifyOtp(otp, resolve, err => reject(new Error(typeof err === 'string' ? err : err?.message || 'Invalid OTP')))
       })
-      const res = await fetch('https://b1ubc4krn6.execute-api.ap-south-1.amazonaws.com/prod/api/auth/msg91-login', {
+      const res = await fetch(`${AUTH_URL}/api/auth/msg91-login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ mobile_no: phone, access_token: widgetData?.message }),

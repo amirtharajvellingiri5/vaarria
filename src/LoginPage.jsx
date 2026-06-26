@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import Navbar from './Navbar'
 import { useAuthStore } from './store/authStore'
+import { AUTH_URL } from './config'
 
 // ─── MSG91 Config — replace with your real values ─────────────────────────────
 const MSG91_WIDGET_ID = '366568623534393236303030' // widgetId from MSG91 dashboard
@@ -327,7 +328,7 @@ function OtpScreen({ phone, onBack, onVerified, onLogin }) {
         })
 
         const response = await fetch(
-          'https://b1ubc4krn6.execute-api.ap-south-1.amazonaws.com/prod/api/auth/msg91-login',
+          `${AUTH_URL}/api/auth/msg91-login`,
           {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
