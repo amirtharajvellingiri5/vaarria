@@ -120,7 +120,7 @@ function OtpStep({ phone, onBack, onSuccess }) {
       const widgetData = await new Promise((resolve, reject) => {
         window.verifyOtp(otp, resolve, err => reject(new Error(typeof err === 'string' ? err : err?.message || 'Invalid OTP')))
       })
-      const res = await fetch('https://api.vaarria.com/api/auth/msg91-login', {
+      const res = await fetch('https://b1ubc4krn6.execute-api.ap-south-1.amazonaws.com/prod/api/auth/msg91-login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ mobile_no: phone, access_token: widgetData?.message }),

@@ -180,7 +180,7 @@ const fetchProductsByCategory = async (
   if (sortBy && sortMap[sortBy]) params.set('sort', sortMap[sortBy])
 
   const res = await fetch(
-    `https://api.vaarria.com/listings?${params.toString()}`,
+    `https://xei9truwoc.execute-api.ap-south-1.amazonaws.com/prod/listings?${params.toString()}`,
   )
   if (!res.ok) return []
 

@@ -7,7 +7,7 @@ import { useAuthStore } from './store/authStore'
 
 const GOLD = '#C9A84C'
 const NAVY = '#050C1C'
-const LISTING = 'https://api.vaarria.com'
+const LISTING = 'https://xei9truwoc.execute-api.ap-south-1.amazonaws.com/prod'
 const CDN = 'https://cdn.vaarria.com/app/images/'
 
 const CATEGORIES = [

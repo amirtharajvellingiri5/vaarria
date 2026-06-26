@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 
-const AUTH_API = 'https://api.vaarria.com'
+const AUTH_API = 'https://b1ubc4krn6.execute-api.ap-south-1.amazonaws.com/prod'
 
 const readCustomer = () => {
   const raw = localStorage.getItem('customer')

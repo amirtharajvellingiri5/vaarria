@@ -327,7 +327,7 @@ function OtpScreen({ phone, onBack, onVerified, onLogin }) {
         })
 
         const response = await fetch(
-          'https://api.vaarria.com/api/auth/msg91-login',
+          'https://b1ubc4krn6.execute-api.ap-south-1.amazonaws.com/prod/api/auth/msg91-login',
           {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },

@@ -263,7 +263,7 @@ const ProductEdit = ({ onBack }) => {
     setFetchError('')
     try {
       const res = await fetch(
-        `https://api.vaarria.com/product/${productId}`,
+        `https://xei9truwoc.execute-api.ap-south-1.amazonaws.com/prod/product/${productId}`,
       )
       if (!res.ok) throw new Error(`Failed to fetch product (${res.status})`)
       const data = await res.json()

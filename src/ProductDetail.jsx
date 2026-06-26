@@ -975,7 +975,7 @@ function FeaturedBanner({ productId }) {
   const [fading, setFading] = useState(false)
 
   useEffect(() => {
-    fetch('https://api.vaarria.com/listings?page_size=30')
+    fetch('https://xei9truwoc.execute-api.ap-south-1.amazonaws.com/prod/listings?page_size=30')
       .then(r => r.json())
       .then(data => {
         const list = data.listings ?? data.products ?? data.data ?? data ?? []
@@ -1117,7 +1117,7 @@ export default function ProductDetail() {
     if (!product || !productId) return
     const cid = customer?.customer_id
     const ORDERS = 'https://zq0dbjycx6.execute-api.ap-south-1.amazonaws.com/prod'
-    const LISTING = 'https://api.vaarria.com'
+    const LISTING = 'https://xei9truwoc.execute-api.ap-south-1.amazonaws.com/prod'
 
     // Record view (best-effort, only when logged in)
     if (cid) {
