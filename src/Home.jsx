@@ -4,10 +4,11 @@ import { ArrowRight, CheckCircle, RefreshCw, Wallet, Factory, Eye, ShieldCheck }
 import Navbar from './Navbar'
 import Footer from './Footer'
 import { useAuthStore } from './store/authStore'
+import { CATALOG_URL, ORDERS_URL } from './config'
 
 const GOLD = '#C9A84C'
 const NAVY = '#050C1C'
-const LISTING = 'https://xei9truwoc.execute-api.ap-south-1.amazonaws.com/prod'
+const LISTING = CATALOG_URL
 const CDN = 'https://cdn.vaarria.com/app/images/'
 
 const CATEGORIES = [
@@ -44,7 +45,7 @@ function useRecentlyViewed(customerId) {
   const [products, setProducts] = useState([])
   useEffect(() => {
     if (!customerId) return
-    const ORDERS = 'https://zq0dbjycx6.execute-api.ap-south-1.amazonaws.com/prod'
+    const ORDERS = ORDERS_URL
     fetch(`${ORDERS}/history/${customerId}`, { credentials: 'include' })
       .then(r => r.json())
       .then(async ({ product_ids = [] }) => {

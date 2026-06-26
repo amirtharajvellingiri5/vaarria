@@ -6,8 +6,8 @@ const GOLD = '#C9A84C'
 const NAVY = '#050C1C'
 import './constants/global.css'
 
-const ORDERS_API_BASE =
-  'https://zq0dbjycx6.execute-api.ap-south-1.amazonaws.com/prod'
+import { ORDERS_URL } from './config'
+const ORDERS_API_BASE = ORDERS_URL
 const CDN = 'https://cdn.vaarria.com/app/images/'
 const MAX_PHOTOS = 3
 

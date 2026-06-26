@@ -10,7 +10,8 @@ import './constants/global.css'
 const GOLD = '#C9A84C'
 const NAVY = '#050C1C'
 const PRODUCTS_API = 'https://products-api.chatoyantvortex.workers.dev/product?id='
-const ORDERS = 'https://zq0dbjycx6.execute-api.ap-south-1.amazonaws.com/prod'
+import { ORDERS_URL } from './config'
+const ORDERS = ORDERS_URL
 
 async function fetchProductCard(id) {
   const res = await fetch(`${PRODUCTS_API}${id}`)

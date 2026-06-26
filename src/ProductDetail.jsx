@@ -27,6 +27,7 @@ import { useAuthStore } from './store/authStore'
 import { useBagStore } from './store/bagStore'
 import { useWishlistStore } from './store/wishlistStore'
 import WishlistLoginModal from './modals/WishlistLoginModal'
+import { ORDERS_URL, CATALOG_URL } from './config'
 
 // ─── Mock API Response ────────────────────────────────────────────────────────
 const MOCK_PRODUCT_API_RESPONSE = {
@@ -270,7 +271,7 @@ async function fetchProduct(productId) {
 
 async function fetchRatings(productId) {
   const response = await fetch(
-    `https://zq0dbjycx6.execute-api.ap-south-1.amazonaws.com/prod/products/${productId}/ratings`,
+    `${ORDERS_URL}/products/${productId}/ratings`,
   )
 
   if (!response.ok) {
@@ -975,7 +976,7 @@ function FeaturedBanner({ productId }) {
   const [fading, setFading] = useState(false)
 
   useEffect(() => {
-    fetch('https://xei9truwoc.execute-api.ap-south-1.amazonaws.com/prod/listings?page_size=30')
+    fetch(`${CATALOG_URL}/listings?page_size=30`)
       .then(r => r.json())
       .then(data => {
         const list = data.listings ?? data.products ?? data.data ?? data ?? []
@@ -1116,8 +1117,8 @@ export default function ProductDetail() {
   useEffect(() => {
     if (!product || !productId) return
     const cid = customer?.customer_id
-    const ORDERS = 'https://zq0dbjycx6.execute-api.ap-south-1.amazonaws.com/prod'
-    const LISTING = 'https://xei9truwoc.execute-api.ap-south-1.amazonaws.com/prod'
+    const ORDERS = ORDERS_URL
+    const LISTING = CATALOG_URL
 
     // Record view (best-effort, only when logged in)
     if (cid) {
@@ -1243,7 +1244,7 @@ export default function ProductDetail() {
       const activeColor = product.colors?.find((c) => c.active)?.name || ''
 
       const response = await fetch(
-        'https://zq0dbjycx6.execute-api.ap-south-1.amazonaws.com/prod/bags/add-bag-item',
+        `${ORDERS_URL}/bags/add-bag-item`,
         {
           method: 'POST',
           headers: {
@@ -1279,7 +1280,7 @@ export default function ProductDetail() {
 
       // refresh bag store so Navbar count updates instantly
       const cid = customer?.customer_id || 1
-      fetch(`https://zq0dbjycx6.execute-api.ap-south-1.amazonaws.com/prod/bags/customers/${cid}/bag`)
+      fetch(`${ORDERS_URL}/bags/customers/${cid}/bag`)
         .then(r => r.json())
         .then(data => {
           if (Array.isArray(data?.items)) {

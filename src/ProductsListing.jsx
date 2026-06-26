@@ -26,6 +26,7 @@ import logo from './assets/logo.jpg'
 
 import { COLOR_MAP, formatColorLabel } from './constants/colors'
 import { PRODUCT_CATEGORY_NAMES, ADMIN_CATEGORIES } from './utils/categories'
+import { CATALOG_URL, INVENTORY_URL } from './config'
 
 // ── Swatch helper ─────────────────────────────────────────────────────────────
 const ColorSwatch = ({ name, size = 14 }) => {
@@ -82,7 +83,7 @@ const BASE_URL = 'https://cdn.vaarria.com/app/images/'
 const fetchSiblingCategories = async (categoryId) => {
   if (!categoryId) return []
   const res = await fetch(
-    `https://8184radc92.execute-api.ap-south-1.amazonaws.com/prod/categories/${categoryId}/siblings`,
+    `${INVENTORY_URL}/categories/${categoryId}/siblings`,
   )
   if (!res.ok) return []
   return res.json()
@@ -180,7 +181,7 @@ const fetchProductsByCategory = async (
   if (sortBy && sortMap[sortBy]) params.set('sort', sortMap[sortBy])
 
   const res = await fetch(
-    `https://xei9truwoc.execute-api.ap-south-1.amazonaws.com/prod/listings?${params.toString()}`,
+    `${CATALOG_URL}/listings?${params.toString()}`,
   )
   if (!res.ok) return []
 

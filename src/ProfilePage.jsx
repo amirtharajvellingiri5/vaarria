@@ -6,7 +6,8 @@ import axios from 'axios'
 
 const GOLD = '#C9A84C'
 const NAVY = '#050C1C'
-const API = 'https://zq0dbjycx6.execute-api.ap-south-1.amazonaws.com/prod'
+import { ORDERS_URL } from './config'
+const API = ORDERS_URL
 
 const ADDR_FIELDS = [
   { key: 'full_name',      label: 'Full Name',      required: true,  col: 1 },

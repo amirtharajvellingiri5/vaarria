@@ -5,6 +5,7 @@ import { useAuthStore } from './store/authStore'
 import { useWishlistStore } from './store/wishlistStore'
 import { useNavigate } from 'react-router-dom'
 import { ADMIN_CATEGORIES as CATEGORIES } from './utils/categories'
+import { ORDERS_URL } from './config'
 
 const logo = '/vlogo.png'
 
@@ -252,7 +253,7 @@ const Navbar = () => {
 
   useEffect(() => {
     if (!customerData?.customer_id) return
-    fetch(`https://zq0dbjycx6.execute-api.ap-south-1.amazonaws.com/prod/bags/customers/${customerData.customer_id}/bag`)
+    fetch(`${ORDERS_URL}/bags/customers/${customerData.customer_id}/bag`)
       .then(r => r.json())
       .then(data => {
         if (Array.isArray(data?.items)) {

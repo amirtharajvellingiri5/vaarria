@@ -31,8 +31,8 @@ const NAVY = '#050C1C'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-const ORDERS_API_BASE =
-  'https://zq0dbjycx6.execute-api.ap-south-1.amazonaws.com/prod'
+import { ORDERS_URL } from './config'
+const ORDERS_API_BASE = ORDERS_URL
 const CDN = 'https://cdn.vaarria.com/app/images/'
 
 const getCustomerId = () => {

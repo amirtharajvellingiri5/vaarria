@@ -32,11 +32,10 @@ import './constants/global.css'
 import CouponModal from './modals/CouponModal'
 import AddressModal from './modals/AddressModal'
 import { useAuthStore } from './store/authStore'
-import { AUTH_URL } from './config'
+import { AUTH_URL, ORDERS_URL } from './config'
 
 // Orders handler (DynamoDB-backed) — all bag APIs go here
-const ORDERS_API_BASE =
-  'https://zq0dbjycx6.execute-api.ap-south-1.amazonaws.com/prod'
+const ORDERS_API_BASE = ORDERS_URL
 
 const MSG91_WIDGET_ID = '366568623534393236303030'
 const MSG91_TOKEN_AUTH = '147259Txua8xfclqV69fd54e9P1'

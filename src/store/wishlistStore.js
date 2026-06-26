@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 
-const ORDERS = 'https://zq0dbjycx6.execute-api.ap-south-1.amazonaws.com/prod'
+import { ORDERS_URL } from '../config'
+const ORDERS = ORDERS_URL
 
 export const useWishlistStore = create((set, get) => ({
   productIds: new Set(),

@@ -18,6 +18,7 @@ import {
   Loader2,
 } from 'lucide-react'
 import { ADMIN_CATEGORIES as categories } from '../utils/categories'
+import { INVENTORY_URL } from '../config'
 
 import { COLOR_MAP, formatColorLabel } from '../constants/colors'
 
@@ -478,7 +479,7 @@ const ProductUpload = () => {
 
       // 3. API call
       const res = await fetch(
-        'https://8184radc92.execute-api.ap-south-1.amazonaws.com/prod/products',
+        `${INVENTORY_URL}/products`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },

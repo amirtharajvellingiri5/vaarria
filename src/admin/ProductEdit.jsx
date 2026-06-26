@@ -20,6 +20,7 @@ import {
 } from 'lucide-react'
 import { useParams } from 'react-router-dom'
 import { ADMIN_CATEGORIES as categories } from '../utils/categories'
+import { CATALOG_URL, INVENTORY_URL } from '../config'
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 // Replace with your actual import: import { COLOR_MAP, formatColorLabel } from '../constants/colors'
@@ -263,7 +264,7 @@ const ProductEdit = ({ onBack }) => {
     setFetchError('')
     try {
       const res = await fetch(
-        `https://xei9truwoc.execute-api.ap-south-1.amazonaws.com/prod/product/${productId}`,
+        `${CATALOG_URL}/product/${productId}`,
       )
       if (!res.ok) throw new Error(`Failed to fetch product (${res.status})`)
       const data = await res.json()
@@ -484,7 +485,7 @@ const ProductEdit = ({ onBack }) => {
 
       // 2. PUT to update API
       const res = await fetch(
-        `https://8184radc92.execute-api.ap-south-1.amazonaws.com/prod/products/${productId}`,
+        `${INVENTORY_URL}/products/${productId}`,
         {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
