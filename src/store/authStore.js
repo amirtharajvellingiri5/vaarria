@@ -35,7 +35,7 @@ export const useAuthStore = create((set, get) => ({
         credentials: 'include',
       })
       if (!res.ok) {
-        get().logout()
+        if (res.status === 401) get().logout()
         return null
       }
       const { token } = await res.json()

@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 
 import { ORDERS_URL } from '../config'
+import { authFetch } from '../utils/authFetch'
 const ORDERS = ORDERS_URL
 
 export const useWishlistStore = create((set, get) => ({
@@ -9,7 +10,7 @@ export const useWishlistStore = create((set, get) => ({
 
   async load(customerId) {
     try {
-      const res = await fetch(`${ORDERS}/wishlist/${customerId}`, { credentials: 'include' })
+      const res = await authFetch(`${ORDERS}/wishlist/${customerId}`)
       const { product_ids = [] } = await res.json()
       set({ productIds: new Set(product_ids.map(String)), loaded: true })
     } catch {
@@ -26,19 +27,17 @@ export const useWishlistStore = create((set, get) => ({
     if (isWishlisted) {
       next.delete(id)
       set({ productIds: next })
-      fetch(`${ORDERS}/wishlist/remove`, {
+      authFetch(`${ORDERS}/wishlist/remove`, {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
         body: JSON.stringify({ customer_id: customerId, product_id: Number(productId) }),
       }).catch(() => {})
     } else {
       next.add(id)
       set({ productIds: next })
-      fetch(`${ORDERS}/wishlist/add`, {
+      authFetch(`${ORDERS}/wishlist/add`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
         body: JSON.stringify({ customer_id: customerId, product_id: Number(productId) }),
       }).catch(() => {})
     }

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, User, Phone, Mail, MapPin, Plus, Pencil, Trash2, CheckCircle2, AlertCircle, Home, Briefcase } from 'lucide-react'
 import { useAuthStore } from './store/authStore'
-import axios from 'axios'
+import { authFetch } from './utils/authFetch'
 
 const GOLD = '#C9A84C'
 const NAVY = '#050C1C'
@@ -45,15 +45,26 @@ function AddressModal({ addr, customerId, onClose, onSaved }) {
     if (missing.length) { setError(`Required: ${missing.map(f => f.label).join(', ')}`); return }
     try {
       setSaving(true); setError('')
-      if (isEdit) {
-        await axios.put(`${API}/addresses/${addr.address_id}`, { ...form, customer_id: customerId })
-      } else {
-        await axios.post(`${API}/addresses`, { ...form, customer_id: customerId })
+      const res = isEdit
+        ? await authFetch(`${API}/addresses/${addr.address_id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ...form, customer_id: customerId }),
+          })
+        : await authFetch(`${API}/addresses`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ...form, customer_id: customerId }),
+          })
+      if (!res.ok) {
+        const d = (await res.json().catch(() => ({}))).detail
+        setError(Array.isArray(d) ? d.map(e => e.msg).join(', ') : d || 'Failed to save address')
+        setSaving(false)
+        return
       }
       onSaved()
     } catch (err) {
-      const d = err.response?.data?.detail
-      setError(Array.isArray(d) ? d.map(e => e.msg).join(', ') : d || 'Failed to save address')
+      setError(err.message || 'Failed to save address')
       setSaving(false)
     }
   }
@@ -243,8 +254,9 @@ export default function ProfilePage() {
   const loadAddresses = async () => {
     setAddrLoading(true)
     try {
-      const { data } = await axios.get(`${API}/addresses?customer_id=${customerId}`)
-      setAddresses(data.addresses || [])
+      const res = await authFetch(`${API}/addresses?customer_id=${customerId}`)
+      const data = await res.json()
+      setAddresses(data.items || [])
     } catch {
       setAddresses([])
     } finally {
@@ -256,7 +268,13 @@ export default function ProfilePage() {
     if (!mobileNo) return
     setSavingProfile(true); setProfileMsg(null)
     try {
-      const { data } = await axios.put(`${API}/customers/${mobileNo}`, { name, email })
+      const res = await authFetch(`${API}/customers/${mobileNo}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data?.detail || 'Failed to save.')
       // Update authStore so Navbar / other components see the new name
       if (storeLogin) {
         const token = localStorage.getItem('token') || ''
@@ -264,7 +282,7 @@ export default function ProfilePage() {
       }
       setProfileMsg({ ok: true, text: 'Profile updated.' })
     } catch (err) {
-      setProfileMsg({ ok: false, text: err.response?.data?.detail || 'Failed to save.' })
+      setProfileMsg({ ok: false, text: err.message || 'Failed to save.' })
     } finally {
       setSavingProfile(false)
     }
@@ -273,7 +291,8 @@ export default function ProfilePage() {
   const deleteAddress = async (addrId) => {
     if (!window.confirm('Delete this address?')) return
     try {
-      await axios.delete(`${API}/addresses/${addrId}`)
+      const res = await authFetch(`${API}/addresses/${addrId}?customer_id=${customerId}`, { method: 'DELETE' })
+      if (!res.ok) throw new Error()
       loadAddresses()
     } catch {
       alert('Failed to delete address.')
@@ -282,7 +301,8 @@ export default function ProfilePage() {
 
   const setDefaultAddress = async (addrId) => {
     try {
-      await axios.put(`${API}/addresses/${addrId}/select`, { customer_id: customerId })
+      const res = await authFetch(`${API}/addresses/${addrId}/select?customer_id=${customerId}`, { method: 'PUT' })
+      if (!res.ok) throw new Error()
       loadAddresses()
     } catch {
       alert('Failed to set default.')

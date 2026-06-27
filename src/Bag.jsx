@@ -34,6 +34,7 @@ import AddressModal from './modals/AddressModal'
 import { useAuthStore } from './store/authStore'
 import { AUTH_URL, ORDERS_URL } from './config'
 import { getGuestBag, saveGuestBag, clearGuestBag } from './store/bagStore'
+import { authFetch } from './utils/authFetch'
 
 // Orders handler (DynamoDB-backed) — all bag APIs go here
 const ORDERS_API_BASE = ORDERS_URL
@@ -244,7 +245,7 @@ function PinBar() {
           setLoadingAddress(true)
         }
 
-        const response = await fetch(
+        const response = await authFetch(
           `${ORDERS_API_BASE}/addresses?customer_id=${customerId}`,
         )
 
@@ -442,7 +443,7 @@ function ItemCard({ item }) {
     }
 
     try {
-      const response = await fetch(
+      const response = await authFetch(
         `${ORDERS_API_BASE}/bags/update-bag-item/${item.id}`,
         {
           method: 'PUT',
@@ -493,7 +494,7 @@ function ItemCard({ item }) {
         return
       }
 
-      const response = await fetch(
+      const response = await authFetch(
         `${ORDERS_API_BASE}/bags/delete-bag-item/${item.id}?customer_id=${getCustomerId()}`,
         {
           method: 'DELETE',
@@ -990,7 +991,7 @@ function PricePanel({ onNeedAuth, triggerPay, onTriggerConsumed, authReady }) {
     if (!selectedAddress) {
       // Try fetching from backend before showing the address drawer
       try {
-        const res = await fetch(`${API_BASE}/addresses?customer_id=${customer.customer_id}`)
+        const res = await authFetch(`${API_BASE}/addresses?customer_id=${customer.customer_id}`)
         if (res.ok) {
           const data = await res.json()
           if (data?.items?.length > 0) {
@@ -1022,7 +1023,7 @@ function PricePanel({ onNeedAuth, triggerPay, onTriggerConsumed, authReady }) {
       const { removeItem } = useBagStore.getState()
       await Promise.allSettled(
         selected.map((item) =>
-          fetch(`${API_BASE}/bags/delete-bag-item/${item.id}?customer_id=${customer.customer_id}`, { method: 'DELETE' })
+          authFetch(`${API_BASE}/bags/delete-bag-item/${item.id}?customer_id=${customer.customer_id}`, { method: 'DELETE' })
             .then(() => removeItem(item.id))
         )
       )
@@ -1627,7 +1628,7 @@ function DrawerAddressStep({ onSaved }) {
     if (!customer?.customer_id) { setError('Session error — please refresh'); return }
     try {
       setSaving(true)
-      const res = await fetch(`${ORDERS_API_BASE}/addresses`, {
+      const res = await authFetch(`${ORDERS_API_BASE}/addresses`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -1724,7 +1725,7 @@ function CheckoutDrawer({ open, initialStep, onClose, onSuccess, onAfterLogin })
               if (onAfterLogin) await onAfterLogin(cust.customer_id)
               // Check if user already has an address — if so skip the address step
               try {
-                const res = await fetch(`${ORDERS_API_BASE}/addresses?customer_id=${cust.customer_id}`)
+                const res = await authFetch(`${ORDERS_API_BASE}/addresses?customer_id=${cust.customer_id}`)
                 if (res.ok) {
                   const data = await res.json()
                   if (data?.items?.length > 0) {
@@ -1779,7 +1780,7 @@ function BagPage() {
     if (guestItems.length === 0) return
     await Promise.allSettled(
       guestItems.map(item =>
-        fetch(`${ORDERS_API_BASE}/bags/add-bag-item`, {
+        authFetch(`${ORDERS_API_BASE}/bags/add-bag-item`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -1819,7 +1820,7 @@ function BagPage() {
     const fetchBagItems = async () => {
       try {
         setLoading(true)
-        const response = await fetch(
+        const response = await authFetch(
           `${ORDERS_API_BASE}/bags/customers/${cid}/bag`,
         )
 
