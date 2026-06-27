@@ -8,14 +8,24 @@ const readCustomer = () => {
   return raw && raw !== 'undefined' ? JSON.parse(raw) : null
 }
 
+const readRefreshToken = () => {
+  const raw = localStorage.getItem('refresh_token')
+  return raw && raw !== 'undefined' ? raw : null
+}
+
 export const useAuthStore = create((set, get) => ({
   // access token is in-memory only — never persisted to localStorage
   token: null,
   customer: readCustomer(),
+  // refresh token persisted to localStorage: the httponly cookie is cross-site
+  // (vaarria.com vs amazonaws.com) and gets blocked by Safari/modern browsers,
+  // so localStorage is what actually keeps the user logged in across reloads.
+  refresh: readRefreshToken(),
 
-  login(token, customer) {
+  login(token, customer, refreshToken) {
     localStorage.setItem('customer', JSON.stringify(customer))
-    set({ token, customer })
+    if (refreshToken) localStorage.setItem('refresh_token', refreshToken)
+    set({ token, customer, refresh: refreshToken || get().refresh })
   },
 
   setToken(token) {
@@ -24,22 +34,31 @@ export const useAuthStore = create((set, get) => ({
 
   logout() {
     localStorage.removeItem('customer')
-    set({ token: null, customer: null })
+    localStorage.removeItem('refresh_token')
+    set({ token: null, customer: null, refresh: null })
     fetch(`${AUTH_API}/api/auth/logout`, { method: 'POST', credentials: 'include' }).catch(() => {})
   },
 
   async refreshToken() {
     try {
+      const stored = get().refresh
       const res = await fetch(`${AUTH_API}/api/auth/refresh`, {
         method: 'POST',
         credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(stored ? { refresh_token: stored } : {}),
       })
       if (!res.ok) {
         if (res.status === 401) get().logout()
         return null
       }
-      const { token } = await res.json()
-      set({ token })
+      const { token, refresh_token } = await res.json()
+      if (refresh_token) {
+        localStorage.setItem('refresh_token', refresh_token)
+        set({ token, refresh: refresh_token })
+      } else {
+        set({ token })
+      }
       return token
     } catch {
       return null

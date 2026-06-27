@@ -346,7 +346,7 @@ function OtpScreen({ phone, onBack, onVerified, onLogin }) {
         }
 
         setDigitState('success')
-        onLogin?.(data.token, data.customer)
+        onLogin?.(data.token, data.customer, data.refresh_token)
         setTimeout(() => onVerified?.(), 1200)
       } catch (err) {
         setDigitState('shake')

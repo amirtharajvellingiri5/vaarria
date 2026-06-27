@@ -478,6 +478,7 @@ const ProductCard = ({ product, onViewDetails, onWishlistLoginNeeded }) => {
   const { customer } = useAuthStore()
   const { toggle: toggleWishlist, isWishlisted } = useWishlistStore()
   const wishlisted = isWishlisted(product.id)
+  const soldOut = (product.stock ?? 0) <= 0
 
   const handleAddToCart = (e) => {
     e.stopPropagation()
@@ -514,10 +515,29 @@ const ProductCard = ({ product, onViewDetails, onWishlistLoginNeeded }) => {
           src={product.image}
           alt={product.name}
           className='h-full w-full object-cover object-top'
-          style={{ transition: 'transform 0.3s' }}
-          onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.04)'}
+          style={{ transition: 'transform 0.3s', filter: soldOut ? 'grayscale(0.7)' : 'none', opacity: soldOut ? 0.7 : 1 }}
+          onMouseEnter={e => { if (!soldOut) e.currentTarget.style.transform = 'scale(1.04)' }}
           onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
         />
+        {soldOut && (
+          <div
+            style={{
+              position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              pointerEvents: 'none',
+            }}
+          >
+            <span
+              style={{
+                background: 'rgba(10,10,10,0.82)', color: '#fff',
+                fontSize: '12px', fontWeight: 800, letterSpacing: '0.12em',
+                padding: '6px 14px', borderRadius: '4px', textTransform: 'uppercase',
+              }}
+            >
+              Sold Out
+            </span>
+          </div>
+        )}
         {/* Wishlist */}
         <button
           onClick={e => {

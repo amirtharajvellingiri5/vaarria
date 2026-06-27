@@ -1361,7 +1361,7 @@ export default function OrdersPage() {
         </div>
       </div>
 
-      <div style={{ maxWidth: 1200, margin: '0 auto', padding: '28px 32px' }}>
+      <div style={{ maxWidth: 1200, margin: '0 auto', padding: '28px 32px 96px' }}>
 
         {/* Page Title */}
         <div style={{ marginBottom: 22 }}>

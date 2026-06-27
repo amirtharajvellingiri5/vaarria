@@ -220,7 +220,7 @@ const s = {
     minHeight: "100vh",
     background: "#f5f4f0",
     display: "flex",
-    alignItems: "flex-start",
+    alignItems: "center",
     justifyContent: "center",
     padding: "2rem 1rem",
     fontFamily: "'Segoe UI', 'Helvetica Neue', Arial, sans-serif",
@@ -230,6 +230,8 @@ const s = {
   card: {
     width: "100%",
     maxWidth: 480,
+    maxHeight: "90vh",
+    overflowY: "auto",
     background: "#ffffff",
     borderRadius: 16,
     border: "1px solid #e8e0d0",

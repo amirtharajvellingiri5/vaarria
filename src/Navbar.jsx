@@ -239,8 +239,10 @@ const Navbar = () => {
   const [profileOpen, setProfileOpen] = useState(false)
 
   const navigate = useNavigate()
-  const { token, customer: customerData, logout } = useAuthStore()
-  const isLoggedIn = !!token
+  const { customer: customerData, logout } = useAuthStore()
+  // logged-in state is driven by the persisted customer, not the in-memory
+  // access token (which is null on reload until refresh resolves)
+  const isLoggedIn = !!customerData
   const bagItems = useBagStore((state) => state.items)
   const setItems = useBagStore((state) => state.setItems)
   const cartCount = bagItems.reduce((sum, item) => sum + (item.qty || 0), 0)
@@ -571,6 +573,7 @@ const Navbar = () => {
             </span>
           </button>
           <button
+            onClick={() => navigate('/bag')}
             style={{
               background: 'none',
               border: 'none',
@@ -584,18 +587,16 @@ const Navbar = () => {
             }}
             className='icon-btn'
           >
-            <a href='/bag'>
-              <ShoppingBag size={20} />
-              <span
-                style={{
-                  fontSize: '11px',
-                  fontWeight: 600,
-                  letterSpacing: '0.03em',
-                }}
-              >
-                Bag
-              </span>
-            </a>
+            <ShoppingBag size={20} />
+            <span
+              style={{
+                fontSize: '11px',
+                fontWeight: 600,
+                letterSpacing: '0.03em',
+              }}
+            >
+              Bag
+            </span>
             {cartCount > 0 && (
               <span
                 style={{

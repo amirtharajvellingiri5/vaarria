@@ -1694,6 +1694,18 @@ export default function ProductDetail() {
               <div style={{ flex: 1, paddingRight: 16 }}>
                 <div className='pdp-brand-name'>{product.brand}</div>
                 <div className='pdp-product-subtitle'>{product.name}</div>
+                {isOutOfStock && (
+                  <span
+                    style={{
+                      display: 'inline-block', marginTop: 10,
+                      background: 'rgba(10,10,10,0.9)', color: '#fff',
+                      fontSize: 12, fontWeight: 800, letterSpacing: '0.12em',
+                      padding: '5px 12px', borderRadius: 4, textTransform: 'uppercase',
+                    }}
+                  >
+                    Sold Out
+                  </span>
+                )}
               </div>
               <button
                 style={{

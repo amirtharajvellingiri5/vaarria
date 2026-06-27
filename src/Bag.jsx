@@ -1013,6 +1013,7 @@ function PricePanel({ onNeedAuth, triggerPay, onTriggerConsumed, authReady }) {
       quantity: item.qty,
       unit_price: item.price,
       size: item.size,
+      color: item.colorName || null,
       image: item.image || null,
       bag_id: item.id,
     }))
@@ -1361,7 +1362,11 @@ function PricePanel({ onNeedAuth, triggerPay, onTriggerConsumed, authReady }) {
               }}
             >
               <button
-                onClick={() => setPaymentError('')}
+                onClick={() => {
+                  setPaymentError('')
+                  // actually relaunch the payment, not just hide the dialog
+                  handlePlaceOrder()
+                }}
                 style={{
                   background: '#050C1C',
                   color: '#C9A84C',
@@ -1513,7 +1518,7 @@ function DrawerOtpStep({ phone, onBack, onVerified }) {
       const data = await res.json()
       if (!res.ok) throw new Error(data.detail || 'Invalid OTP')
       setSuccess(true)
-      setTimeout(() => onVerified(data.token, data.customer), 800)
+      setTimeout(() => onVerified(data.token, data.customer, data.refresh_token), 800)
     } catch (err) {
       setError(err.message)
       setDigits(['', '', '', ''])
@@ -1537,6 +1542,9 @@ function DrawerOtpStep({ phone, onBack, onVerified }) {
 
   const mm = String(Math.floor(seconds / 60)).padStart(2, '0')
   const ss = String(seconds % 60).padStart(2, '0')
+  // lock the boxes the instant all 4 are filled (verification fires immediately),
+  // not one render later when `verifying` flips
+  const locked = verifying || success || digits.every(Boolean)
 
   return (
     <div style={{ textAlign: 'center' }}>
@@ -1546,7 +1554,7 @@ function DrawerOtpStep({ phone, onBack, onVerified }) {
         {digits.map((d, i) => (
           <input
             key={i} ref={refs[i]} type='tel' inputMode='numeric' maxLength={1} value={d}
-            disabled={verifying || success}
+            disabled={locked}
             onChange={e => handleChange(i, e.target.value)}
             onKeyDown={e => handleKeyDown(i, e)}
             style={{
@@ -1554,7 +1562,9 @@ function DrawerOtpStep({ phone, onBack, onVerified }) {
               border: success ? '2px solid #2e7d32' : error ? '2px solid #e53935' : '1.5px solid #e0d5c0',
               borderRadius: 10, outline: 'none',
               background: success ? '#f1f8f1' : error ? '#fff5f5' : '#fff',
-              color: '#3A332A', transition: 'border 0.2s',
+              color: '#3A332A', transition: 'border 0.2s, opacity 0.2s',
+              opacity: locked && !success ? 0.55 : 1,
+              cursor: locked ? 'not-allowed' : 'text',
             }}
           />
         ))}
@@ -1720,8 +1730,8 @@ function CheckoutDrawer({ open, initialStep, onClose, onSuccess, onAfterLogin })
           <DrawerOtpStep
             phone={phone}
             onBack={() => setStep('mobile')}
-            onVerified={async (token, cust) => {
-              storeLogin(token, cust)
+            onVerified={async (token, cust, refresh) => {
+              storeLogin(token, cust, refresh)
               if (onAfterLogin) await onAfterLogin(cust.customer_id)
               // Check if user already has an address — if so skip the address step
               try {
