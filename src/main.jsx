@@ -29,9 +29,10 @@ import { useAuthStore } from './store/authStore'
 
 const queryClient = new QueryClient()  // ← add
 
-// Silently restore access token from refresh cookie on page load
-const { customer, refreshToken } = useAuthStore.getState()
+// Silently restore access token from refresh cookie on page load, then keep it alive
+const { customer, refreshToken, startAutoRefresh } = useAuthStore.getState()
 if (customer) refreshToken()
+startAutoRefresh()
 
 const router = createBrowserRouter([
   { path: '/', element: <Home /> },

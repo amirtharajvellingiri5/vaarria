@@ -45,4 +45,12 @@ export const useAuthStore = create((set, get) => ({
       return null
     }
   },
+
+  startAutoRefresh() {
+    // Refresh access token every 25 min (expires at 30 min)
+    const id = setInterval(() => {
+      if (get().customer) get().refreshToken()
+    }, 25 * 60 * 1000)
+    return () => clearInterval(id)
+  },
 }))

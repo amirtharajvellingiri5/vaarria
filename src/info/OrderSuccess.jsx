@@ -220,10 +220,11 @@ const s = {
     minHeight: "100vh",
     background: "#f5f4f0",
     display: "flex",
-    alignItems: "center",
+    alignItems: "flex-start",
     justifyContent: "center",
     padding: "2rem 1rem",
     fontFamily: "'Segoe UI', 'Helvetica Neue', Arial, sans-serif",
+    boxSizing: "border-box",
   },
 
   card: {
