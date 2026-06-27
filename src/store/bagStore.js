@@ -1,5 +1,19 @@
 import { create } from 'zustand'
 
+const GUEST_BAG_KEY = 'guest_bag'
+
+export const getGuestBag = () => {
+  try { return JSON.parse(localStorage.getItem(GUEST_BAG_KEY)) || [] } catch { return [] }
+}
+
+export const saveGuestBag = (items) => {
+  localStorage.setItem(GUEST_BAG_KEY, JSON.stringify(items))
+}
+
+export const clearGuestBag = () => {
+  localStorage.removeItem(GUEST_BAG_KEY)
+}
+
 export const useBagStore = create((set, get) => ({
   items: [],
 
@@ -34,6 +48,16 @@ export const useBagStore = create((set, get) => ({
   mobileMenuOpen: false,
 
   setItems: (items) => set({ items }),
+
+  addGuestItem: (item) => {
+    const existing = getGuestBag()
+    const dup = existing.find(i => i.productId === item.productId && i.size === item.size && i.colorName === item.colorName)
+    const updated = dup
+      ? existing.map(i => i === dup ? { ...i, qty: i.qty + 1 } : i)
+      : [...existing, item]
+    saveGuestBag(updated)
+    set({ items: updated })
+  },
 
   toggleSelected: (id) =>
     set((s) => ({

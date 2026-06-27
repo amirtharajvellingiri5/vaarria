@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { ShoppingBag, Search, Heart, User, Menu, X } from 'lucide-react'
-import { useBagStore } from './store/bagStore'
+import { useBagStore, getGuestBag } from './store/bagStore'
 import { useAuthStore } from './store/authStore'
 import { useWishlistStore } from './store/wishlistStore'
 import { useNavigate } from 'react-router-dom'
@@ -252,7 +252,10 @@ const Navbar = () => {
   }, [customerData?.customer_id])
 
   useEffect(() => {
-    if (!customerData?.customer_id) return
+    if (!customerData?.customer_id) {
+      setItems(getGuestBag())
+      return
+    }
     fetch(`${ORDERS_URL}/bags/customers/${customerData.customer_id}/bag`)
       .then(r => r.json())
       .then(data => {

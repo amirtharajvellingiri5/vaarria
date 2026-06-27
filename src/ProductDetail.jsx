@@ -1054,6 +1054,7 @@ export default function ProductDetail() {
   const navigate = useNavigate()
   const { customer } = useAuthStore()
   const setItems = useBagStore((state) => state.setItems)
+  const addGuestItem = useBagStore((state) => state.addGuestItem)
   const [product, setProduct] = useState(null)
   const [ratingsData, setRatingsData] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -1243,6 +1244,30 @@ export default function ProductDetail() {
     try {
       const activeColor = product.colors?.find((c) => c.active)?.name || ''
 
+      if (!customer?.customer_id) {
+        // Guest: save to localStorage, no API call
+        const guestItem = {
+          id: `guest_${product.id}_${selectedSize}_${activeColor}_${Date.now()}`,
+          productId: product.id || '',
+          name: product.name || '',
+          image: product.mediaItems?.[0]?.src || '',
+          size: selectedSize,
+          colorName: activeColor,
+          color: '#f5f5f5',
+          qty: 1,
+          price: product.price || 0,
+          mrp: product.mrp || 0,
+          couponDiscount: 0,
+          discountType: null,
+          returnDays: product.return_days || 7,
+          selected: true,
+        }
+        addGuestItem(guestItem)
+        setAddedToBag(true)
+        setTimeout(() => setAddedToBag(false), 2000)
+        return
+      }
+
       const response = await fetch(
         `${ORDERS_URL}/bags/add-bag-item`,
         {
@@ -1251,7 +1276,7 @@ export default function ProductDetail() {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            customer_id: customer?.customer_id || 1,
+            customer_id: customer.customer_id,
             product_id: product.id || '',
             address_id: null,
             size: selectedSize || '',
@@ -1279,8 +1304,7 @@ export default function ProductDetail() {
       setTimeout(() => setAddedToBag(false), 2000)
 
       // refresh bag store so Navbar count updates instantly
-      const cid = customer?.customer_id || 1
-      fetch(`${ORDERS_URL}/bags/customers/${cid}/bag`)
+      fetch(`${ORDERS_URL}/bags/customers/${customer.customer_id}/bag`)
         .then(r => r.json())
         .then(data => {
           if (Array.isArray(data?.items)) {

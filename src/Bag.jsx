@@ -33,6 +33,7 @@ import CouponModal from './modals/CouponModal'
 import AddressModal from './modals/AddressModal'
 import { useAuthStore } from './store/authStore'
 import { AUTH_URL, ORDERS_URL } from './config'
+import { getGuestBag, saveGuestBag, clearGuestBag } from './store/bagStore'
 
 // Orders handler (DynamoDB-backed) — all bag APIs go here
 const ORDERS_API_BASE = ORDERS_URL
@@ -136,7 +137,7 @@ function PricePanelSkeleton() {
 }
 
 const getCustomerId = () => {
-  try { return JSON.parse(localStorage.getItem('customer'))?.customer_id || 1 } catch { return 1 }
+  try { return JSON.parse(localStorage.getItem('customer'))?.customer_id || null } catch { return null }
 }
 
 // ─── Mock fetch (TanStack Query) ──────────────────────────────────────────────
@@ -165,17 +166,9 @@ const fetchPinDetails = async (pin) => {
 
   const office = data[0].PostOffice[0]
 
-  const deliveryDate = new Date()
-  deliveryDate.setDate(deliveryDate.getDate() + 4)
-
   return {
     city: office.District,
     state: office.State,
-    deliveryDate: deliveryDate.toLocaleDateString('en-IN', {
-      weekday: 'short',
-      day: 'numeric',
-      month: 'short',
-    }),
   }
 }
 // ─── Sub-components ──────────────────────────────────────────────────────────
@@ -411,7 +404,7 @@ function PinBar() {
         )}
         {data && (
           <div style={{ paddingLeft: 28, fontSize: 12, color: '#2e7d32' }}>
-            Deliver to {data.city} by {data.deliveryDate}
+            Deliver to {data.city} by {(() => { const d = new Date(); d.setDate(d.getDate() + 4); return d.toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' }) })()}
           </div>
         )}
         {validationError && (
@@ -438,6 +431,13 @@ function ItemCard({ item }) {
     const newQty = item.qty + delta
 
     if (newQty < 1) {
+      return
+    }
+
+    if (String(item.id).startsWith('guest_')) {
+      const updated = items.map(x => x.id === item.id ? { ...x, qty: newQty } : x)
+      setItems(updated)
+      saveGuestBag(updated)
       return
     }
 
@@ -484,6 +484,14 @@ function ItemCard({ item }) {
   const deleteBagItem = async () => {
     try {
       setDeleting(true)
+
+      if (String(item.id).startsWith('guest_')) {
+        const updated = items.filter((x) => x.id !== item.id)
+        setItems(updated)
+        saveGuestBag(updated)
+        setShowDeleteConfirm(false)
+        return
+      }
 
       const response = await fetch(
         `${ORDERS_API_BASE}/bags/delete-bag-item/${item.id}?customer_id=${getCustomerId()}`,
@@ -549,7 +557,7 @@ function ItemCard({ item }) {
         >
           <div style={{ ...styles.itemThumb, background: item.color }}>
             <img
-              src={`https://cdn.vaarria.com/app/images/${item.image}`}
+              src={item.image?.startsWith('http') ? item.image : `https://cdn.vaarria.com/app/images/${item.image}`}
               alt={item.name}
               style={{
                 width: '100%',
@@ -933,7 +941,7 @@ function PaymentMethodSelector({ value, onChange, total, disabled }) {
   )
 }
 
-function PricePanel({ onNeedAuth, triggerPay, onTriggerConsumed }) {
+function PricePanel({ onNeedAuth, triggerPay, onTriggerConsumed, authReady }) {
   const navigate = useNavigate()
   const { items, donationAmount, getCouponSavings } = useBagStore()
   const [paymentError, setPaymentError] = useState('')
@@ -966,6 +974,7 @@ function PricePanel({ onNeedAuth, triggerPay, onTriggerConsumed }) {
     if (selected.length === 0) return
 
     if (!authToken || !authCustomer) {
+      if (!authReady) return  // still refreshing — don't flash the auth drawer
       onNeedAuth?.('mobile')
       return
     }
@@ -977,7 +986,21 @@ function PricePanel({ onNeedAuth, triggerPay, onTriggerConsumed }) {
     const prepaidFinal = Math.round(baseTotal * 0.95)
     const codFinal = Math.round(baseTotal * 0.98)
 
-    const selectedAddress = JSON.parse(localStorage.getItem('selected_address') || 'null')
+    let selectedAddress = JSON.parse(localStorage.getItem('selected_address') || 'null')
+    if (!selectedAddress) {
+      // Try fetching from backend before showing the address drawer
+      try {
+        const res = await fetch(`${API_BASE}/addresses?customer_id=${customer.customer_id}`)
+        if (res.ok) {
+          const data = await res.json()
+          if (data?.items?.length > 0) {
+            const addr = data.items.find(a => a.is_default) || data.items[0]
+            localStorage.setItem('selected_address', JSON.stringify(addr))
+            selectedAddress = addr
+          }
+        }
+      } catch {}
+    }
     if (!selectedAddress) {
       onNeedAuth?.('address')
       return
@@ -994,15 +1017,15 @@ function PricePanel({ onNeedAuth, triggerPay, onTriggerConsumed }) {
     }))
 
     const clearBagAndNavigate = async (order) => {
+      setPaymentLoading(false)
+      navigate('/order-success', { state: order })
       const { removeItem } = useBagStore.getState()
       await Promise.allSettled(
         selected.map((item) =>
-          fetch(`${API_BASE}/bags/delete-bag-item/${item.id}?customer_id=${getCustomerId()}`, { method: 'DELETE' })
+          fetch(`${API_BASE}/bags/delete-bag-item/${item.id}?customer_id=${customer.customer_id}`, { method: 'DELETE' })
             .then(() => removeItem(item.id))
         )
       )
-      setPaymentLoading(false)
-      navigate('/order-success', { state: order })
     }
 
     try {
@@ -1160,7 +1183,7 @@ function PricePanel({ onNeedAuth, triggerPay, onTriggerConsumed }) {
       <p style={styles.terms}>
   By placing the order, you agree to our{' '}
   <a
-    href='http://localhost:5173/terms'
+    href='/terms'
     target='_blank'
     rel='noopener noreferrer'
     style={styles.termsLink}
@@ -1169,7 +1192,7 @@ function PricePanel({ onNeedAuth, triggerPay, onTriggerConsumed }) {
   </a>{' '}
   and{' '}
   <a
-    href='http://localhost:5173/privacy-policy'
+    href='/privacy-policy'
     target='_blank'
     rel='noopener noreferrer'
     style={styles.termsLink}
@@ -1535,6 +1558,7 @@ function DrawerOtpStep({ phone, onBack, onVerified }) {
           />
         ))}
       </div>
+      {verifying && <p style={{ color: '#C9A84C', fontSize: 13, marginBottom: 10, fontWeight: 600 }}>Verifying…</p>}
       {error && <p style={{ color: '#e53935', fontSize: 12, marginBottom: 10 }}>{error}</p>}
       {success && <p style={{ color: '#2e7d32', fontSize: 13, marginBottom: 10, fontWeight: 600 }}>✓ Verified! Setting up your account…</p>}
       {!success && (
@@ -1657,7 +1681,7 @@ function DrawerAddressStep({ onSaved }) {
   )
 }
 
-function CheckoutDrawer({ open, initialStep, onClose, onSuccess }) {
+function CheckoutDrawer({ open, initialStep, onClose, onSuccess, onAfterLogin }) {
   const [step, setStep] = useState(initialStep || 'mobile')
   const [phone, setPhone] = useState('')
   const msg91Ready = useBagMsg91()
@@ -1695,7 +1719,24 @@ function CheckoutDrawer({ open, initialStep, onClose, onSuccess }) {
           <DrawerOtpStep
             phone={phone}
             onBack={() => setStep('mobile')}
-            onVerified={(token, cust) => { storeLogin(token, cust); setStep('address') }}
+            onVerified={async (token, cust) => {
+              storeLogin(token, cust)
+              if (onAfterLogin) await onAfterLogin(cust.customer_id)
+              // Check if user already has an address — if so skip the address step
+              try {
+                const res = await fetch(`${ORDERS_API_BASE}/addresses?customer_id=${cust.customer_id}`)
+                if (res.ok) {
+                  const data = await res.json()
+                  if (data?.items?.length > 0) {
+                    const addr = data.items.find(a => a.is_default) || data.items[0]
+                    localStorage.setItem('selected_address', JSON.stringify(addr))
+                    onSuccess?.()
+                    return
+                  }
+                }
+              } catch {}
+              setStep('address')
+            }}
           />
         )}
         {step === 'address' && (
@@ -1710,12 +1751,20 @@ function CheckoutDrawer({ open, initialStep, onClose, onSuccess }) {
 // ─── Main BagPage ─────────────────────────────────────────────────────────────
 function BagPage() {
   const { items, toggleSelected, setItems } = useBagStore()
-  const { token, customer } = useAuthStore()
+  const { token, customer, refreshToken } = useAuthStore()
   const isLoggedIn = !!token && !!customer
   const navigate = useNavigate()
   const [loading, setLoading] = useState(true)
+  const [authReady, setAuthReady] = useState(!!token || !customer)
   const [drawer, setDrawer] = useState({ open: false, step: 'mobile' })
+
+  useEffect(() => {
+    if (authReady) return
+    // customer exists in localStorage but token is gone (page refresh) — restore it
+    refreshToken().finally(() => setAuthReady(true))
+  }, [])
   const [triggerPay, setTriggerPay] = useState(false)
+  const [bagRefetchKey, setBagRefetchKey] = useState(0)
   const selectedCount = items.filter((i) => i.selected).length
   const allSelected = selectedCount === items.length
 
@@ -1725,12 +1774,53 @@ function BagPage() {
     setTriggerPay(true)
   }
 
+  const syncGuestBagToBackend = async (customerId) => {
+    const guestItems = getGuestBag()
+    if (guestItems.length === 0) return
+    await Promise.allSettled(
+      guestItems.map(item =>
+        fetch(`${ORDERS_API_BASE}/bags/add-bag-item`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            customer_id: customerId,
+            product_id: item.productId,
+            address_id: null,
+            size: item.size,
+            color: item.colorName,
+            quantity: item.qty,
+            selected: true,
+          }),
+        })
+      )
+    )
+    clearGuestBag()
+    fetchedForCustomer.current = null
+    setBagRefetchKey(k => k + 1)
+  }
+
+  const fetchedForCustomer = useRef(null)
+
+  // Load guest bag from localStorage when not logged in
   useEffect(() => {
+    if (!customer?.customer_id) {
+      const guestItems = getGuestBag()
+      if (guestItems.length > 0) setItems(guestItems)
+      setLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    const cid = customer?.customer_id
+    if (!cid) { setLoading(false); return }
+    if (fetchedForCustomer.current === cid) return
+    if (fetchedForCustomer.current !== null && items.length > 0) return
+    fetchedForCustomer.current = cid
     const fetchBagItems = async () => {
       try {
         setLoading(true)
         const response = await fetch(
-          `${ORDERS_API_BASE}/bags/customers/${customer?.customer_id || 1}/bag`,
+          `${ORDERS_API_BASE}/bags/customers/${cid}/bag`,
         )
 
         const data = await response.json()
@@ -1774,7 +1864,7 @@ function BagPage() {
     }
 
     fetchBagItems()
-  }, [setItems, customer?.customer_id])
+  }, [setItems, customer?.customer_id, bagRefetchKey])
 
   return (
     <div style={styles.root}>
@@ -1897,6 +1987,7 @@ function BagPage() {
                 onNeedAuth={handleNeedAuth}
                 triggerPay={triggerPay}
                 onTriggerConsumed={() => setTriggerPay(false)}
+                authReady={authReady}
               />
             </>
           )}
@@ -1907,6 +1998,7 @@ function BagPage() {
         initialStep={drawer.step}
         onClose={() => setDrawer({ open: false, step: 'mobile' })}
         onSuccess={handleDrawerSuccess}
+        onAfterLogin={syncGuestBagToBackend}
       />
     </div>
   )
