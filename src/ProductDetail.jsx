@@ -28,6 +28,7 @@ import { useBagStore } from './store/bagStore'
 import { useWishlistStore } from './store/wishlistStore'
 import WishlistLoginModal from './modals/WishlistLoginModal'
 import { ORDERS_URL, CATALOG_URL } from './config'
+import { authFetch } from './utils/authFetch'
 
 // ─── Mock API Response ────────────────────────────────────────────────────────
 const MOCK_PRODUCT_API_RESPONSE = {
@@ -145,8 +146,13 @@ const PRODUCT_YOUTUBE_VIDEOS = [
 
 // ─── API Functions ────────────────────────────────────────────────────────────
 async function fetchProduct(productId) {
+  // Always revalidate with the worker (which serves an ETag) instead of reusing
+  // the browser disk copy. When nothing changed this is a cheap 304; the moment
+  // KV is refreshed (e.g. after an order) the worker returns the latest JSON, so
+  // the PDP never shows stale sold-out / quantity data.
   const res = await fetch(
     `https://products-api.chatoyantvortex.workers.dev/product?id=${productId}`,
+    { cache: 'no-cache' },
   )
   const raw = await res.json()
 
@@ -1014,9 +1020,8 @@ function FeaturedBanner({ productId }) {
 
   return (
     <div className='pdp-featured-banner' style={{ width: '15%', flexShrink: 0, position: 'sticky', top: 0, marginRight: 12, display: 'flex', flexDirection: 'column' }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', padding: '4px 2px', gap: 4 }}>
-        <span style={{ fontSize: 9, color: '#9ca3af', fontFamily: "'DM Sans', sans-serif" }}>Sponsored</span>
-        <span style={{ fontSize: 8, color: '#9ca3af', border: '1px solid #d1d5db', borderRadius: 2, padding: '1px 3px', fontFamily: "'DM Sans', sans-serif", lineHeight: 1.2, letterSpacing: '0.05em' }}>Ad</span>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', padding: '4px 2px', gap: 4 }}>
+        <span style={{ fontSize: 11, fontWeight: 700, color: '#C9A84C', letterSpacing: '0.08em', textTransform: 'uppercase', fontFamily: "'DM Sans', sans-serif" }}>You May Also Like</span>
       </div>
       <div
         style={{ height: '80vh', position: 'relative', border: '1px solid #e8e0d0', borderRadius: 10, overflow: 'hidden', boxShadow: '0 2px 12px rgba(5,12,28,0.06)', cursor: 'pointer' }}
@@ -1041,7 +1046,6 @@ function FeaturedBanner({ productId }) {
         </div>
         <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, zIndex: 2, background: 'linear-gradient(to top, rgba(5,12,28,0.88) 0%, rgba(5,12,28,0.5) 70%, transparent 100%)', padding: '28px 12px 12px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
           <span style={{ fontSize: 14, fontWeight: 700, color: '#C9A84C', fontFamily: "'DM Sans', sans-serif" }}>₹{p.price?.toLocaleString()}</span>
-          <span style={{ fontSize: 9, fontWeight: 700, color: 'rgba(201,168,76,0.8)', letterSpacing: '0.12em', textTransform: 'uppercase', fontFamily: "'DM Sans', sans-serif" }}>You May Also Like</span>
         </div>
       </div>
     </div>
@@ -1268,7 +1272,7 @@ export default function ProductDetail() {
         return
       }
 
-      const response = await fetch(
+      const response = await authFetch(
         `${ORDERS_URL}/bags/add-bag-item`,
         {
           method: 'POST',
@@ -1304,7 +1308,7 @@ export default function ProductDetail() {
       setTimeout(() => setAddedToBag(false), 2000)
 
       // refresh bag store so Navbar count updates instantly
-      fetch(`${ORDERS_URL}/bags/customers/${customer.customer_id}/bag`)
+      authFetch(`${ORDERS_URL}/bags/customers/${customer.customer_id}/bag`)
         .then(r => r.json())
         .then(data => {
           if (Array.isArray(data?.items)) {
@@ -1620,7 +1624,8 @@ export default function ProductDetail() {
         .pdp-size-btn { width: 56px; height: 56px; border-radius: 50%; border: 1.5px solid #e5e7eb; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 500; color: #374151; cursor: pointer; transition: all 0.15s; background: #fff; font-family: 'DM Sans', sans-serif; }
         .pdp-size-btn:hover:not([disabled]) { border-color: #C9A84C; color: #050C1C; }
         .pdp-size-btn.selected { border-color: #C9A84C; color: #C9A84C; background: #050C1C; font-weight: 700; box-shadow: 0 0 0 3px rgba(201,168,76,0.15); }
-        .pdp-size-btn[disabled] { opacity: 0.28; cursor: not-allowed; border-style: dashed; }
+        .pdp-size-btn[disabled] { cursor: not-allowed; color: #b8bdc4; background: #f3f4f6; border-color: #e5e7eb; background-image: linear-gradient(to top right, transparent calc(50% - 1px), #c4c9cf calc(50% - 1px), #c4c9cf calc(50% + 1px), transparent calc(50% + 1px)); }
+        .pdp-size-btn[disabled]:hover { border-color: #e5e7eb; color: #b8bdc4; }
         .pdp-size-warn { font-size: 12px; color: #f59e0b; margin-top: 8px; font-weight: 500; }
         .pdp-cta { display: flex; gap: 10px; margin: 22px 0 18px; }
         .pdp-btn-bag { flex: 1; height: 54px; border: 1.5px solid #C9A84C; border-radius: 4px; font-size: 15px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; letter-spacing: 0.8px; text-transform: uppercase; background: #050C1C; color: #C9A84C; transition: all 0.2s; box-shadow: none; font-family: 'DM Sans', sans-serif; }
@@ -1798,6 +1803,7 @@ export default function ProductDetail() {
                     key={s}
                     className={`pdp-size-btn ${selectedSize === s ? 'selected' : ''}`}
                     disabled={!avail}
+                    title={avail ? undefined : 'Sold out'}
                     onClick={() => avail && setSelectedSize(s)}
                   >
                     {s}

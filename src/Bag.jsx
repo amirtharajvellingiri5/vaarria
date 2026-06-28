@@ -25,7 +25,6 @@ import {
   Edit3,
 } from 'lucide-react'
 
-import axios from 'axios'
 const logo = '/vlogo.png'
 import './constants/global.css'
 
@@ -1034,15 +1033,25 @@ function PricePanel({ onNeedAuth, triggerPay, onTriggerConsumed, authReady }) {
       setPaymentLoading(true)
 
       if (paymentMode === 'full_cod') {
-        const { data } = await axios.post(`${API_BASE}/payments/create-order`, {
-          customer_id: String(customer.customer_id),
-          address_id: String(selectedAddress.address_id),
-          amount: 0,
-          payment_method: 'FULL_COD',
-          cod_remaining: baseTotal,
-          receipt: `order_${Date.now()}`,
-          items: orderItems,
+        const res = await authFetch(`${API_BASE}/payments/create-order`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            customer_id: String(customer.customer_id),
+            address_id: String(selectedAddress.address_id),
+            amount: 0,
+            payment_method: 'FULL_COD',
+            cod_remaining: baseTotal,
+            receipt: `order_${Date.now()}`,
+            items: orderItems,
+          }),
         })
+        const data = await res.json().catch(() => ({}))
+        if (!res.ok) {
+          setPaymentLoading(false)
+          setPaymentError(data.detail || 'Could not place your order. Please try again.')
+          return
+        }
         await clearBagAndNavigate(data.order ?? data)
         return
       }
@@ -1055,15 +1064,25 @@ function PricePanel({ onNeedAuth, triggerPay, onTriggerConsumed, authReady }) {
 
       const razorpayAmount = paymentMode === 'cod' ? 49 : prepaidFinal
 
-      const { data } = await axios.post(`${API_BASE}/payments/create-order`, {
-        customer_id: String(customer.customer_id),
-        address_id: String(selectedAddress.address_id),
-        amount: razorpayAmount,
-        payment_method: paymentMode === 'cod' ? 'COD' : 'PREPAID',
-        cod_remaining: paymentMode === 'cod' ? codFinal - 49 : 0,
-        receipt: `order_${Date.now()}`,
-        items: orderItems,
+      const createRes = await authFetch(`${API_BASE}/payments/create-order`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          customer_id: String(customer.customer_id),
+          address_id: String(selectedAddress.address_id),
+          amount: razorpayAmount,
+          payment_method: paymentMode === 'cod' ? 'COD' : 'PREPAID',
+          cod_remaining: paymentMode === 'cod' ? codFinal - 49 : 0,
+          receipt: `order_${Date.now()}`,
+          items: orderItems,
+        }),
       })
+      const data = await createRes.json().catch(() => ({}))
+      if (!createRes.ok) {
+        setPaymentLoading(false)
+        setPaymentError(data.detail || 'Could not start payment. Please try again.')
+        return
+      }
 
       const customerName = customer.full_name || customer.name || 'Customer'
       const customerEmail = customer.email || ''
@@ -1082,12 +1101,22 @@ function PricePanel({ onNeedAuth, triggerPay, onTriggerConsumed, authReady }) {
         handler: async function (response) {
           setPaymentLoading(true)
           try {
-            const verifyResponse = await axios.post(`${API_BASE}/payments/verify`, {
-              razorpay_order_id: response.razorpay_order_id,
-              razorpay_payment_id: response.razorpay_payment_id,
-              razorpay_signature: response.razorpay_signature,
+            const verifyRes = await authFetch(`${API_BASE}/payments/verify`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+              }),
             })
-            await clearBagAndNavigate(verifyResponse.data.order)
+            const verifyData = await verifyRes.json().catch(() => ({}))
+            if (!verifyRes.ok) {
+              setPaymentLoading(false)
+              setPaymentError(verifyData.detail || 'Payment verification failed')
+              return
+            }
+            await clearBagAndNavigate(verifyData.order)
           } catch (error) {
             console.error('Verification failed:', error)
             setPaymentLoading(false)
@@ -1113,7 +1142,7 @@ function PricePanel({ onNeedAuth, triggerPay, onTriggerConsumed, authReady }) {
     } catch (error) {
       setPaymentLoading(false)
       console.error(error)
-      alert('Unable to start payment')
+      setPaymentError('Unable to start payment. Please try again.')
     }
   }, [selected, total, paymentMode, authToken, authCustomer, onNeedAuth, API_BASE, navigate])
 

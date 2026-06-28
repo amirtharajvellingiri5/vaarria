@@ -6,6 +6,7 @@ import { useWishlistStore } from './store/wishlistStore'
 import { useNavigate } from 'react-router-dom'
 import { ADMIN_CATEGORIES as CATEGORIES } from './utils/categories'
 import { ORDERS_URL } from './config'
+import { authFetch } from './utils/authFetch'
 
 const logo = '/vlogo.png'
 
@@ -258,7 +259,7 @@ const Navbar = () => {
       setItems(getGuestBag())
       return
     }
-    fetch(`${ORDERS_URL}/bags/customers/${customerData.customer_id}/bag`)
+    authFetch(`${ORDERS_URL}/bags/customers/${customerData.customer_id}/bag`)
       .then(r => r.json())
       .then(data => {
         if (Array.isArray(data?.items)) {
