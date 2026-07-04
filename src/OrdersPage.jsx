@@ -919,10 +919,10 @@ function OrderCard({ order }) {
               <p style={{ fontSize: 10, color: '#aaa', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 8 }}>
                 Shipment Tracking
               </p>
-              {order.tracking?.courier && (
+              {order.tracking?.provider && (
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
                   <span style={{ fontSize: 12, color: '#666' }}>Courier</span>
-                  <span style={{ fontSize: 12, fontWeight: 600, color: NAVY }}>{order.tracking.courier}</span>
+                  <span style={{ fontSize: 12, fontWeight: 600, color: NAVY }}>{order.tracking.provider}</span>
                 </div>
               )}
               {order.tracking?.id && (
