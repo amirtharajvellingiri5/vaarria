@@ -700,6 +700,9 @@ export default function AdminOrders() {
     setLoading(true)
     setError('')
     try {
+      // ponytail: token is in-memory only and refreshed async on app load —
+      // wait for it so the first fetch after a hard reload isn't sent unauthenticated
+      if (!useAuthStore.getState().token) await useAuthStore.getState().refreshToken()
       const res = await fetch(`${ORDERS_API_BASE}/admin/orders-full`, { headers: authHeaders() })
       if (!res.ok) throw new Error(`Error ${res.status}`)
       const json = await res.json()
