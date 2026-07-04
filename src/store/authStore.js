@@ -23,9 +23,13 @@ export const useAuthStore = create((set, get) => ({
   refresh: readRefreshToken(),
 
   login(token, customer, refreshToken) {
+    // wipe any earlier session first so a stale refresh_token from a
+    // previous mobile number can never survive a fresh login
+    localStorage.removeItem('customer')
+    localStorage.removeItem('refresh_token')
     localStorage.setItem('customer', JSON.stringify(customer))
     if (refreshToken) localStorage.setItem('refresh_token', refreshToken)
-    set({ token, customer, refresh: refreshToken || get().refresh })
+    set({ token, customer, refresh: refreshToken || null })
   },
 
   setToken(token) {

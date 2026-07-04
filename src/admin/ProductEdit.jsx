@@ -188,7 +188,7 @@ const mapApiToState = (product) => {
     // Files are null — only set when the user picks a NEW file
     main_image_file: null,
     other_image_files: [],
-    product_id: product.id,
+    product_id: product.product_id,
   }))
 
   return {
@@ -207,7 +207,7 @@ const mapApiToState = (product) => {
     discountType: product.pricing?.discounts?.discount_type || 'FLAT',
     discountValue: String(product.pricing?.discounts?.value || ''),
     variants: variants.length > 0 ? variants : [emptyVariant()],
-    product_id: product.id,
+    product_id: product.product_id,
   }
 }
 

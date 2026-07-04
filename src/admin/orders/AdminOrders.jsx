@@ -13,7 +13,6 @@ import {
   MapPin,
   Phone,
   CreditCard,
-  ExternalLink,
   IndianRupee,
   ChevronLeft,
   ChevronRight,
@@ -364,21 +363,27 @@ function ShipModal({ order, onClose, onDone, setToast }) {
       const trackData = await trackRes.json().catch(() => ({}))
       if (!trackRes.ok) throw new Error(trackData.detail || 'Failed to save tracking')
 
-      const statusRes = await fetch(`${ORDERS_API_BASE}/admin/orders/${order.id}/status`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json', ...authHeaders() },
-        body: JSON.stringify({ status: 'SHIPPED' }),
-      })
-      const statusData = await statusRes.json().catch(() => ({}))
-      if (!statusRes.ok) throw new Error(statusData.detail || 'Failed to update status')
+      // Only fire the status transition if the order isn't already SHIPPED (or beyond) —
+      // this modal also serves as the general "Update Tracking" editor.
+      if (order.status !== 'SHIPPED') {
+        const statusRes = await fetch(`${ORDERS_API_BASE}/admin/orders/${order.id}/status`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json', ...authHeaders() },
+          body: JSON.stringify({ status: 'SHIPPED' }),
+        })
+        const statusData = await statusRes.json().catch(() => ({}))
+        if (!statusRes.ok) throw new Error(statusData.detail || 'Failed to update status')
+      }
 
-      setToast('Order marked as Shipped')
+      setToast(order.status !== 'SHIPPED' ? 'Order marked as Shipped' : 'Tracking updated')
       onDone()
     } catch (e) {
       setError(e.message || 'Update failed')
       setSaving(false)
     }
   }
+
+  const isTransition = order.status !== 'SHIPPED'
 
   return (
     <div
@@ -391,7 +396,7 @@ function ShipModal({ order, onClose, onDone, setToast }) {
             <Truck size={14} className='text-amber-400' />
           </div>
           <div>
-            <h3 className='text-sm font-bold text-stone-100'>Mark Order as Shipped</h3>
+            <h3 className='text-sm font-bold text-stone-100'>{isTransition ? 'Mark Order as Shipped' : 'Update Tracking'}</h3>
             <p className='text-xs text-stone-500'>Order #{order.id}</p>
           </div>
         </div>
@@ -443,8 +448,10 @@ function ShipModal({ order, onClose, onDone, setToast }) {
               <>
                 <Loader2 size={13} className='animate-spin' /> Saving…
               </>
-            ) : (
+            ) : isTransition ? (
               'Mark Shipped'
+            ) : (
+              'Save Tracking'
             )}
           </button>
         </div>
@@ -458,18 +465,8 @@ function ShipModal({ order, onClose, onDone, setToast }) {
 function OrderActions({ order, onUpdated, setToast }) {
   const [status, setStatus] = useState(order.status)
   const [price, setPrice] = useState(String(order.total))
-  const [provider, setProvider] = useState(order.tracking?.provider || 'Shiprocket')
-  const [trackingId, setTrackingId] = useState(order.tracking?.id || '')
-  const [trackingUrl, setTrackingUrl] = useState(order.tracking?.url || '')
-  const [urlTouched, setUrlTouched] = useState(Boolean(order.tracking?.url))
   const [saving, setSaving] = useState('')
   const [showShipModal, setShowShipModal] = useState(false)
-
-  useEffect(() => {
-    if (!urlTouched) {
-      setTrackingUrl(courierUrl(provider, trackingId))
-    }
-  }, [provider, trackingId, urlTouched])
 
   const call = async (key, url, body) => {
     setSaving(key)
@@ -557,74 +554,13 @@ function OrderActions({ order, onUpdated, setToast }) {
       </Field>
 
       {/* Tracking */}
-      <div className='border border-stone-800 rounded-xl p-3 space-y-3 bg-stone-900/40'>
-        <p className='text-[10px] font-semibold uppercase tracking-widest text-stone-500 flex items-center gap-1.5'>
-          <Truck size={12} /> Tracking
-        </p>
-        <div className='grid grid-cols-2 gap-2'>
-          <Field label='Courier'>
-            <select
-              value={provider}
-              onChange={(e) => {
-                setProvider(e.target.value)
-                setUrlTouched(false)
-              }}
-              className={inputCls}
-            >
-              {COURIERS.map((c) => (
-                <option key={c.name} value={c.name}>{c.name}</option>
-              ))}
-            </select>
-          </Field>
-          <Field label='Tracking / AWB ID'>
-            <input
-              value={trackingId}
-              onChange={(e) => {
-                setTrackingId(e.target.value)
-                setUrlTouched(false)
-              }}
-              placeholder='AWB123456789'
-              className={inputCls}
-            />
-          </Field>
-        </div>
-        <Field label='Tracking URL'>
-          <input
-            value={trackingUrl}
-            onChange={(e) => {
-              setTrackingUrl(e.target.value)
-              setUrlTouched(true)
-            }}
-            placeholder='https://…'
-            className={inputCls}
-          />
-        </Field>
-        <div className='flex items-center gap-2'>
-          <button
-            onClick={() =>
-              call('tracking', `${ORDERS_API_BASE}/admin/orders/${order.id}/tracking`, {
-                provider,
-                tracking_id: trackingId,
-                tracking_url: trackingUrl || null,
-              })
-            }
-            disabled={saving === 'tracking' || !trackingId.trim()}
-            className='px-4 py-2 rounded-lg text-xs font-semibold bg-gradient-to-r from-rose-500 to-pink-600 text-white disabled:opacity-40 disabled:cursor-not-allowed'
-          >
-            {saving === 'tracking' ? <Loader2 size={13} className='animate-spin' /> : 'Save Tracking'}
-          </button>
-          {trackingUrl && (
-            <a
-              href={trackingUrl}
-              target='_blank'
-              rel='noreferrer'
-              className='flex items-center gap-1 text-xs text-stone-400 hover:text-rose-400'
-            >
-              <ExternalLink size={12} /> Test link
-            </a>
-          )}
-        </div>
-      </div>
+      <button
+        onClick={() => setShowShipModal(true)}
+        className='w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-xs font-semibold border border-stone-700 text-stone-300 hover:border-rose-500/50 hover:text-rose-400 transition-all'
+      >
+        <Truck size={13} />
+        {order.tracking?.id ? `Update Tracking (${order.tracking.provider} · ${order.tracking.id})` : 'Update Tracking'}
+      </button>
 
       {/* Invoice */}
       <button
