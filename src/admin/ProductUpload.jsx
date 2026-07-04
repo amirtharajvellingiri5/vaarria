@@ -19,6 +19,8 @@ import {
 } from 'lucide-react'
 import { ADMIN_CATEGORIES as categories } from '../utils/categories'
 import { INVENTORY_URL } from '../config'
+import { useAuthStore } from '../store/authStore'
+const authHeaders = () => ({ Authorization: `Bearer ${useAuthStore.getState().token || ''}` })
 
 import { COLOR_MAP, formatColorLabel } from '../constants/colors'
 
@@ -482,7 +484,7 @@ const ProductUpload = () => {
         `${INVENTORY_URL}/products`,
         {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', ...authHeaders() },
           body: JSON.stringify(payload),
         },
       )

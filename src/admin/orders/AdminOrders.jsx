@@ -23,7 +23,9 @@ import {
 import AdminNav from '../AdminNav'
 
 import { ORDERS_URL } from '../../config'
+import { useAuthStore } from '../../store/authStore'
 const ORDERS_API_BASE = ORDERS_URL
+const authHeaders = () => ({ Authorization: `Bearer ${useAuthStore.getState().token || ''}` })
 const CDN = 'https://cdn.vaarria.com/app/images/'
 const PER_PAGE = 10
 
@@ -240,7 +242,7 @@ function QCFailModal({ order, item, onClose, onDone, setToast }) {
         `${ORDERS_API_BASE}/admin/orders/${order.id}/items/${item.id}/qc-fail`,
         {
           method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', ...authHeaders() },
           body: JSON.stringify({ reason: reason.trim() }),
         },
       )
@@ -358,7 +360,7 @@ function OrderActions({ order, onUpdated, setToast }) {
     try {
       const res = await fetch(url, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...authHeaders() },
         body: body ? JSON.stringify(body) : undefined,
       })
       const data = await res.json().catch(() => ({}))
@@ -698,7 +700,7 @@ export default function AdminOrders() {
     setLoading(true)
     setError('')
     try {
-      const res = await fetch(`${ORDERS_API_BASE}/admin/orders-full`)
+      const res = await fetch(`${ORDERS_API_BASE}/admin/orders-full`, { headers: authHeaders() })
       if (!res.ok) throw new Error(`Error ${res.status}`)
       const json = await res.json()
       setAllOrders(json.orders || [])

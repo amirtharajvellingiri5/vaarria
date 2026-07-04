@@ -21,6 +21,8 @@ import {
 import { useParams } from 'react-router-dom'
 import { ADMIN_CATEGORIES as categories } from '../utils/categories'
 import { CATALOG_URL, INVENTORY_URL } from '../config'
+import { useAuthStore } from '../store/authStore'
+const authHeaders = () => ({ Authorization: `Bearer ${useAuthStore.getState().token || ''}` })
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 // Replace with your actual import: import { COLOR_MAP, formatColorLabel } from '../constants/colors'
@@ -488,7 +490,7 @@ const ProductEdit = ({ onBack }) => {
         `${INVENTORY_URL}/products/${productId}`,
         {
           method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', ...authHeaders() },
           body: JSON.stringify(buildPayload(updatedVariants)),
         },
       )

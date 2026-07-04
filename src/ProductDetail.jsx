@@ -231,8 +231,27 @@ async function fetchProduct(productId) {
     }
   }
 
+  // Coupon preview — effective price after the advertised TRENDY code
+  let coupon = null
+  if (discountMeta) {
+    const { discount_type, value } = discountMeta
+    const off =
+      discount_type === 'FLAT'
+        ? value
+        : discount_type === 'PERCENTAGE'
+        ? Math.round((raw.pricing.sale_price * value) / 100)
+        : 0
+    if (off > 0 && off < raw.pricing.sale_price) {
+      coupon = {
+        code: `TRENDY${value}`,
+        effectivePrice: raw.pricing.sale_price - off,
+      }
+    }
+  }
+
   return {
     id: raw.product_id,
+    coupon,
     brand: raw.brand.name,
     brandId: raw.brand.catalogue_id,
     category: raw.category.category_name,
@@ -1077,7 +1096,6 @@ export default function ProductDetail() {
   const ratingsRef = useRef(null)
   const ctaRef = useRef(null)
   const [reviewSliderOpen, setReviewSliderOpen] = useState(false)
-  const [dispatchSecondsLeft, setDispatchSecondsLeft] = useState(0)
   const [reviewImages, setReviewImages] = useState([])
   const [showSizeChart, setShowSizeChart] = useState(false)
   const [deliveryMessage, setDeliveryMessage] = useState('')
@@ -1102,21 +1120,6 @@ export default function ProductDetail() {
     )
   }, [productId])
 
-  // Dispatch countdown — counts down to 6 PM IST
-  useEffect(() => {
-    const calcSeconds = () => {
-      const now = new Date()
-      const ist = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }))
-      const cutoff = new Date(ist)
-      cutoff.setHours(18, 0, 0, 0)
-      if (ist >= cutoff) cutoff.setDate(cutoff.getDate() + 1)
-      return Math.max(0, Math.floor((cutoff - ist) / 1000))
-    }
-    setDispatchSecondsLeft(calcSeconds())
-    const id = setInterval(() => setDispatchSecondsLeft(calcSeconds()), 1000)
-    return () => clearInterval(id)
-  }, [])
-
 
   // Record view + load sliders when product is ready
   useEffect(() => {
@@ -1127,7 +1130,7 @@ export default function ProductDetail() {
 
     // Record view (best-effort, only when logged in)
     if (cid) {
-      fetch(`${ORDERS}/history/record`, {
+      authFetch(`${ORDERS}/history/record`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -1756,19 +1759,42 @@ export default function ProductDetail() {
             </div>
             <div className='pdp-tax'>inclusive of all taxes</div>
 
-            {/* ── Dispatch timer ── */}
+            {/* ── Coupon-applied price preview ── */}
+            {product.coupon && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 10, background: '#F0FAF4', border: '1px dashed #10b981', borderRadius: 10, padding: '8px 12px', flexWrap: 'wrap' }}>
+                <span style={{ fontSize: 18, fontWeight: 800, color: '#065f46' }}>
+                  ₹{product.coupon.effectivePrice.toLocaleString()}
+                </span>
+                <span style={{ fontSize: 12, color: '#047857', fontWeight: 600 }}>
+                  with code{' '}
+                  <span style={{ background: '#10b981', color: '#fff', borderRadius: 6, padding: '1px 8px', fontWeight: 700, letterSpacing: '0.04em' }}>
+                    {product.coupon.code}
+                  </span>{' '}
+                  at checkout
+                </span>
+              </div>
+            )}
+
+            {/* ── Savings + trust badges ── */}
             <div style={{ display: 'flex', gap: 8, marginTop: 10, flexWrap: 'wrap' }}>
-              {dispatchSecondsLeft > 0 && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#F0FAF4', border: '1px solid #6ee7b7', borderRadius: 20, padding: '4px 12px', fontSize: 12, color: '#065f46', fontWeight: 600 }}>
-                  ⚡ Order within{' '}
-                  <span style={{ fontVariantNumeric: 'tabular-nums', fontFamily: 'monospace' }}>
-                    {String(Math.floor(dispatchSecondsLeft / 3600)).padStart(2, '0')}:
-                    {String(Math.floor((dispatchSecondsLeft % 3600) / 60)).padStart(2, '0')}:
-                    {String(dispatchSecondsLeft % 60).padStart(2, '0')}
+              {product.mrp > product.price && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#FFF7ED', border: '1px solid #fdba74', borderRadius: 20, padding: '4px 12px', fontSize: 12, color: '#9a3412', fontWeight: 600 }}>
+                  💰 You save{' '}
+                  <span style={{ fontWeight: 700 }}>
+                    ₹{(product.mrp - product.price).toLocaleString()}
                   </span>
-                  {' '}for same-day dispatch
+                  {' '}on this order
                 </div>
               )}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#F0FAF4', border: '1px solid #6ee7b7', borderRadius: 20, padding: '4px 12px', fontSize: 12, color: '#065f46', fontWeight: 600 }}>
+                🚚 Free Delivery
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#EFF6FF', border: '1px solid #93c5fd', borderRadius: 20, padding: '4px 12px', fontSize: 12, color: '#1e40af', fontWeight: 600 }}>
+                💵 Cash on Delivery
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#FAF5FF', border: '1px solid #d8b4fe', borderRadius: 20, padding: '4px 12px', fontSize: 12, color: '#6b21a8', fontWeight: 600 }}>
+                🔁 7-Day Easy Returns
+              </div>
             </div>
 
             <div className='pdp-hr' />
@@ -1974,7 +2000,7 @@ export default function ProductDetail() {
               </div>
             )}
 
-            {!isOutOfStock && product.availableSizes?.length < product.sizes?.length && (
+            {!isOutOfStock && product.availableSizes?.length > 0 && product.availableSizes?.length < 3 && (
               <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10, padding: '7px 10px', background: '#FFF8EC', border: '1px solid #F0D080', borderRadius: 5 }}>
                 <span style={{ fontSize: 15 }}>🔥</span>
                 <span style={{ fontSize: 12, color: '#92400e', fontWeight: 600 }}>Only a few sizes left — selling fast!</span>

@@ -19,6 +19,8 @@ import {
 
 import AdminNav from './AdminNav'
 import { CATALOG_URL, INVENTORY_URL } from '../config'
+import { useAuthStore } from '../store/authStore'
+const authHeaders = () => ({ Authorization: `Bearer ${useAuthStore.getState().token || ''}` })
 
 const CDN = 'https://cdn.vaarria.com/app/images/'
 const API = `${CATALOG_URL}/listings`
@@ -212,6 +214,7 @@ const DeleteModal = ({ product, onConfirm, onClose }) => {
     try {
       const res = await fetch(`${PRODUCTS_API}/${product.id}`, {
         method: 'DELETE',
+        headers: authHeaders(),
       })
       if (!res.ok) throw new Error(`Error ${res.status}`)
       onConfirm()
@@ -373,7 +376,7 @@ const ProductListings = () => {
 
       const createRes = await fetch(PRODUCTS_API, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...authHeaders() },
         body: JSON.stringify(payload),
       })
       if (!createRes.ok) throw new Error(await createRes.text())
@@ -392,7 +395,7 @@ const ProductListings = () => {
     try {
       const res = await fetch(
         `${INVENTORY_URL}/sync/products`,
-        { method: 'POST' },
+        { method: 'POST', headers: authHeaders() },
       )
       if (!res.ok) throw new Error(`Error ${res.status}`)
       setToast('Products synced successfully')

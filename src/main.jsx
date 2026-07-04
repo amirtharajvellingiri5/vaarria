@@ -26,6 +26,7 @@ import ReviewPage from './ReviewPage.jsx'
 import WishlistPage from './WishlistPage.jsx'
 import ProfilePage from './ProfilePage.jsx'
 import { useAuthStore } from './store/authStore'
+import AdminGate from './admin/AdminGate.jsx'
 
 const queryClient = new QueryClient()  // ← add
 
@@ -49,10 +50,10 @@ const router = createBrowserRouter([
   { path: '/profile', element: <ProfilePage /> },
   { path: '/refund-policy', element: <RefundPolicyPage/> },
   { path: '/privacy-policy', element: <PrivacyPolicy/> },
-  { path: '/admin/products/new', element: <ProductUpload /> },
-  { path: '/admin/', element: <ProductListings /> },
-  { path: '/admin/products/edit/:id', element: <ProductEdit /> },
-  { path: '/admin/orders', element: <AdminOrders/> },
+  { path: '/admin/products/new', element: <AdminGate><ProductUpload /></AdminGate> },
+  { path: '/admin/', element: <AdminGate><ProductListings /></AdminGate> },
+  { path: '/admin/products/edit/:id', element: <AdminGate><ProductEdit /></AdminGate> },
+  { path: '/admin/orders', element: <AdminGate><AdminOrders/></AdminGate> },
   { path: '/order-success', element: <OrderSuccess /> },
   { path: '/payment-failed', element: <PaymentFailed /> },
 
