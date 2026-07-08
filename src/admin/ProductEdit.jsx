@@ -23,6 +23,8 @@ import { ADMIN_CATEGORIES as categories } from '../utils/categories'
 import { CATALOG_URL, INVENTORY_URL } from '../config'
 import { useAuthStore } from '../store/authStore'
 import { MATERIALS } from '../constants/materials'
+import { DESIGNS } from '../constants/designs'
+import { BOTTOM_TYPES } from '../constants/bottomTypes'
 const authHeaders = () => ({ Authorization: `Bearer ${useAuthStore.getState().token || ''}` })
 
 // ── Constants ─────────────────────────────────────────────────────────────────
@@ -163,6 +165,16 @@ const Input = ({ placeholder, value, onChange, type = 'text', prefix, disabled }
   </div>
 )
 
+const Textarea = ({ placeholder, value, onChange, rows = 4 }) => (
+  <textarea
+    value={value}
+    onChange={(e) => onChange(e.target.value)}
+    placeholder={placeholder}
+    rows={rows}
+    className='w-full px-4 py-3 bg-stone-900 border border-stone-700 rounded-xl text-sm text-stone-100 placeholder-stone-600 focus:outline-none focus:border-rose-500 focus:ring-1 focus:ring-rose-500/30 transition-colors resize-y'
+  />
+)
+
 const Section = ({ icon: Icon, title, subtitle, children }) => (
   <div className='bg-stone-950 border border-stone-800 rounded-2xl overflow-visible'>
     <div className='flex items-center gap-3 px-6 py-4 border-b border-stone-800 bg-stone-900/50'>
@@ -215,10 +227,14 @@ const mapApiToState = (product) => {
     brandName: product.brand?.name || '',
     catalogueId: product.brand?.catalogue_id || '',
     categoryId: product.category?.category_id || 5,
-    material: product.description?.description?.Material || '',
-    sleeveLength: product.description?.description?.['Sleeve Length'] || '',
-    neck: product.description?.description?.Neck || '',
-    designStyling: product.description?.description?.['Design Styling'] || '',
+    material: product.description?.Material || '',
+    sleeveLength: product.description?.['Sleeve Length'] || '',
+    neck: product.description?.Neck || '',
+    designStyling: product.description?.['Design Styling'] || '',
+    design: product.description?.Design || '',
+    bottomType: product.description?.['Bottom Type'] || '',
+    description: product.description?.product_blurb || '',
+    highlights: product.description?.highlights || '',
     mrp: String(product.pricing?.mrp || ''),
     salePrice: String(product.pricing?.sale_price || ''),
     buyPrice: String(product.pricing?.buy_price || ''),
@@ -264,6 +280,10 @@ const ProductEdit = ({ onBack }) => {
   const [sleeveLength, setSleeveLength] = useState('')
   const [neck, setNeck] = useState('')
   const [designStyling, setDesignStyling] = useState('')
+  const [design, setDesign] = useState('')
+  const [bottomType, setBottomType] = useState('')
+  const [description, setDescription] = useState('')
+  const [highlights, setHighlights] = useState('')
   const [mrp, setMrp] = useState('')
   const [salePrice, setSalePrice] = useState('')
   const [buyPrice, setBuyPrice] = useState('')
@@ -299,6 +319,10 @@ const ProductEdit = ({ onBack }) => {
       setSleeveLength(mapped.sleeveLength)
       setNeck(mapped.neck)
       setDesignStyling(mapped.designStyling)
+      setDesign(mapped.design)
+      setBottomType(mapped.bottomType)
+      setDescription(mapped.description)
+      setHighlights(mapped.highlights)
       setMrp(mapped.mrp)
       setSalePrice(mapped.salePrice)
       setBuyPrice(mapped.buyPrice)
@@ -452,6 +476,10 @@ const ProductEdit = ({ onBack }) => {
       'Sleeve Length': sleeveLength,
       Neck: neck,
       'Design Styling': designStyling,
+      Design: design,
+      'Bottom Type': bottomType,
+      product_blurb: description,
+      highlights: highlights,
     },
     pricing: {
       mrp: parseFloat(mrp) || 0,
@@ -772,7 +800,18 @@ const ProductEdit = ({ onBack }) => {
                   <Select label='Sleeve Length' value={sleeveLength} onChange={setSleeveLength} options={['Sleeveless','Short Sleeves','Half Sleeves','3/4 Sleeves','Long Sleeves','Cap Sleeves','Bell Sleeves','Puff Sleeves']} />
                   <Select label='Neck' value={neck} onChange={setNeck} options={['Round Neck','V-Neck','Boat Neck','Mandarin Collar','Collared Neck','Square Neck','Sweetheart Neck','Keyhole Neck']} />
                   <Select label='Design Styling' value={designStyling} onChange={setDesignStyling} options={['Regular','Straight','A-Line','Flared','Anarkali','Asymmetric','Layered','Panelled']} />
+                  <Select label='Design' value={design} onChange={setDesign} options={DESIGNS} />
+                  <Select label='Bottom Type' value={bottomType} onChange={setBottomType} options={BOTTOM_TYPES} />
                 </div>
+              </Section>
+
+              <Section icon={Tag} title='Description & Product Info' subtitle='Shown on the storefront product page'>
+                <Field label='Description'>
+                  <Textarea value={description} onChange={setDescription} placeholder='Crafted from premium fabric, this piece features...' rows={4} />
+                </Field>
+                <Field label='Product Info' hint='One highlight per line'>
+                  <Textarea value={highlights} onChange={setHighlights} placeholder={'Premium fabric\nStraight fit silhouette\nThree-quarter sleeves'} rows={4} />
+                </Field>
               </Section>
 
               <Section icon={DollarSign} title='Pricing' subtitle='MRP, sale price, buy price & GST'>
@@ -890,7 +929,7 @@ const ProductEdit = ({ onBack }) => {
                   yourstore.com/products/{title ? title.toLowerCase().replace(/\s+/g, '-') : 'product-name'}
                 </p>
                 <p className='text-gray-500 text-xs mt-1'>
-                  {[material, sleeveLength, neck, designStyling].filter(Boolean).join(' · ') || 'Add description attributes to improve search visibility…'}
+                  {[material, sleeveLength, neck, designStyling, design, bottomType].filter(Boolean).join(' · ') || 'Add description attributes to improve search visibility…'}
                 </p>
               </div>
             </div>

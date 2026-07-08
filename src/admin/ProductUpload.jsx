@@ -24,6 +24,8 @@ const authHeaders = () => ({ Authorization: `Bearer ${useAuthStore.getState().to
 
 import { COLOR_MAP, formatColorLabel } from '../constants/colors'
 import { MATERIALS } from '../constants/materials'
+import { DESIGNS } from '../constants/designs'
+import { BOTTOM_TYPES } from '../constants/bottomTypes'
 
 const COLOR_OPTIONS = Object.keys(COLOR_MAP).map(formatColorLabel)
 
@@ -42,6 +44,16 @@ const Select = ({ label, options, value, onChange, required, allowCustom, multip
         searchRef.current?.focus()
       }, 0)
     }
+  }, [open])
+
+  // Close on outside click
+  useEffect(() => {
+    if (!open) return
+    const handler = (e) => {
+      if (!e.target.closest('[data-select-root]')) setOpen(false)
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
   }, [open])
 
   const filteredOptions = options.filter(
@@ -79,7 +91,7 @@ const Select = ({ label, options, value, onChange, required, allowCustom, multip
   const triggerFilled = multiple ? (value || []).length > 0 : !!value
 
   return (
-    <div className='relative'>
+    <div className='relative' data-select-root>
       {label && (
         <label className='block text-xs font-semibold uppercase tracking-widest text-rose-400 mb-1'>
           {label} {required && <span className='text-rose-500'>*</span>}
@@ -185,6 +197,16 @@ const Input = ({ placeholder, value, onChange, type = 'text', prefix }) => (
   </div>
 )
 
+const Textarea = ({ placeholder, value, onChange, rows = 4 }) => (
+  <textarea
+    value={value}
+    onChange={(e) => onChange(e.target.value)}
+    placeholder={placeholder}
+    rows={rows}
+    className='w-full px-4 py-3 bg-stone-900 border border-stone-700 rounded-xl text-sm text-stone-100 placeholder-stone-600 focus:outline-none focus:border-rose-500 focus:ring-1 focus:ring-rose-500/30 transition-colors resize-y'
+  />
+)
+
 const Section = ({ icon: Icon, title, subtitle, children }) => (
   <div className='bg-stone-950 border border-stone-800 rounded-2xl overflow-visible'>
     <div className='flex items-center gap-3 px-6 py-4 border-b border-stone-800 bg-stone-900/50'>
@@ -234,6 +256,12 @@ const ProductUpload = () => {
   const [sleeveLength, setSleeveLength] = useState('Half Sleeves')
   const [neck, setNeck] = useState('Round Neck')
   const [designStyling, setDesignStyling] = useState('Regular')
+  const [design, setDesign] = useState('')
+  const [bottomType, setBottomType] = useState('')
+
+  // Description & product info
+  const [description, setDescription] = useState('')
+  const [highlights, setHighlights] = useState('')
 
   // Pricing
   const [mrp, setMrp] = useState('2799')
@@ -438,6 +466,10 @@ const ProductUpload = () => {
       'Sleeve Length': sleeveLength,
       Neck: neck,
       'Design Styling': designStyling,
+      Design: design,
+      'Bottom Type': bottomType,
+      product_blurb: description,
+      highlights: highlights,
     },
     pricing: {
       mrp: parseFloat(mrp) || 0,
@@ -895,7 +927,44 @@ const ProductUpload = () => {
                       'Panelled',
                     ]}
                   />
+                  <Select
+                    label='Design'
+                    value={design}
+                    onChange={setDesign}
+                    options={DESIGNS}
+                    allowCustom
+                  />
+                  <Select
+                    label='Bottom Type'
+                    value={bottomType}
+                    onChange={setBottomType}
+                    options={BOTTOM_TYPES}
+                    allowCustom
+                  />
                 </div>
+              </Section>
+
+              <Section
+                icon={Tag}
+                title='Description & Product Info'
+                subtitle='Shown on the storefront product page'
+              >
+                <Field label='Description'>
+                  <Textarea
+                    value={description}
+                    onChange={setDescription}
+                    placeholder='Crafted from premium fabric, this piece features...'
+                    rows={4}
+                  />
+                </Field>
+                <Field label='Product Info' hint='One highlight per line'>
+                  <Textarea
+                    value={highlights}
+                    onChange={setHighlights}
+                    placeholder={'Premium fabric\nStraight fit silhouette\nThree-quarter sleeves'}
+                    rows={4}
+                  />
+                </Field>
               </Section>
 
               <Section
@@ -1126,7 +1195,7 @@ const ProductUpload = () => {
                     : 'product-name'}
                 </p>
                 <p className='text-gray-500 text-xs mt-1'>
-                  {[material, sleeveLength, neck, designStyling]
+                  {[material, sleeveLength, neck, designStyling, design, bottomType]
                     .filter(Boolean)
                     .join(' · ') ||
                     'Add description attributes to improve search visibility…'}
