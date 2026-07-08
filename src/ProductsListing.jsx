@@ -25,6 +25,7 @@ import WishlistLoginModal from './modals/WishlistLoginModal'
 import logo from './assets/logo.jpg'
 
 import { COLOR_MAP, formatColorLabel } from './constants/colors'
+import { MATERIALS } from './constants/materials'
 import { PRODUCT_CATEGORY_NAMES, ADMIN_CATEGORIES } from './utils/categories'
 import { CATALOG_URL, INVENTORY_URL } from './config'
 
@@ -758,7 +759,7 @@ const ListingPage = () => {
         slug: c.slug,
       })),
 
-      fabrics: ['Cotton', 'Rayon', 'Silk', 'Georgette', 'Chanderi', 'Velvet'],
+      fabrics: MATERIALS,
 
       colors: [
         'Red',

@@ -21,6 +21,8 @@ import {
   Pencil,
 } from 'lucide-react'
 import axios from 'axios'
+import { useAuthStore } from './store/authStore'
+import { CLOSED_ORDER_STATUSES } from './constants/orderStatus'
 const logo = '/vlogo.png'
 import './constants/global.css'
 
@@ -38,6 +40,11 @@ const CDN = 'https://cdn.vaarria.com/app/images/'
 const getCustomerId = () => {
   const customer = JSON.parse(localStorage.getItem('customer') || 'null')
   return customer?.customer_id ?? 1
+}
+
+const authHeaders = () => {
+  const token = useAuthStore.getState().token
+  return token ? { Authorization: `Bearer ${token}` } : {}
 }
 
 const SUPPORT_WHATSAPP = '919731580157'
@@ -136,7 +143,16 @@ const ORDER_STATUSES = {
   DELIVERED: { label: 'Delivered',        color: '#16a34a', bg: '#dcfce7', icon: CheckCircle2 },
   CANCELLED: { label: 'Cancelled',        color: '#dc2626', bg: '#fee2e2', icon: XCircle },
   RETURNED:  { label: 'Returned',         color: '#6b7280', bg: '#f3f4f6', icon: RotateCcw },
+  RETURN_INITIATED:  { label: 'Return Initiated',  color: '#b45309', bg: '#fef3c7', icon: RotateCcw },
+  REFUND_INITIATED:  { label: 'Refund Initiated',  color: '#b45309', bg: '#fef3c7', icon: Clock },
+  REFUND_CREDITED:   { label: 'Refund Credited',   color: '#16a34a', bg: '#dcfce7', icon: CheckCircle2 },
 }
+
+const RETURN_COURIER_INFO =
+  'Our reverse-pickup partner will contact you within 24-48 hours to collect the item. ' +
+  'Please keep it packed with all original tags and invoice.'
+
+const SUPPORT_PHONE_DISPLAY = '+91 97315 80157'
 
 const FILTER_OPTIONS = [
   { label: 'All Orders', value: 'ALL' },
@@ -169,7 +185,7 @@ const fetchOrders = async () => {
 function OrderTimeline({ status }) {
   const steps = ['PLACED', 'CONFIRMED', 'SHIPPED', 'OUT', 'DELIVERED']
   const idx = steps.indexOf(status)
-  const isCancelled = status === 'CANCELLED' || status === 'RETURNED'
+  const isCancelled = status !== 'DELIVERED' && CLOSED_ORDER_STATUSES.includes(status)
 
   if (isCancelled) {
     const meta = ORDER_STATUSES[status]
@@ -187,7 +203,7 @@ function OrderTimeline({ status }) {
       {steps.map((step, i) => {
         const meta = ORDER_STATUSES[step]
         const done = i <= idx
-        const active = i === idx
+        const active = i === idx && step !== 'DELIVERED'
         const circleBg = active ? NAVY : done ? '#16a34a' : '#f0f0f0'
         return (
           <React.Fragment key={step}>
@@ -238,11 +254,14 @@ const RETURN_REASONS = [
   'Other',
 ]
 
-function ReturnExchangeModal({ order, onClose }) {
+function ReturnExchangeModal({ order, onClose, onReturned }) {
   const [mode, setMode] = useState('RETURN')
   const [selected, setSelected] = useState(() => new Set(order.items.map(i => i.id)))
   const [reason, setReason] = useState('')
   const [details, setDetails] = useState('')
+  const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState('')
+  const [courierInfo, setCourierInfo] = useState('')
 
   const toggle = (id) => setSelected(prev => {
     const n = new Set(prev)
@@ -250,14 +269,75 @@ function ReturnExchangeModal({ order, onClose }) {
     return n
   })
 
-  const handleSubmit = () => {
-    const items = order.items.filter(i => selected.has(i.id)).map(i => `${i.name} (${i.size})`).join(', ')
-    const msg = `Hi, I'd like to request a ${mode === 'RETURN' ? 'return' : 'exchange'} for Order #${order.id}.\n\nItems: ${items}\nReason: ${reason}${details ? `\nDetails: ${details}` : ''}`
-    window.open(`https://wa.me/919731580157?text=${encodeURIComponent(msg)}`, '_blank')
-    onClose()
+  const handleSubmit = async () => {
+    if (mode === 'EXCHANGE') {
+      const items = order.items.filter(i => selected.has(i.id)).map(i => `${i.name} (${i.size})`).join(', ')
+      const msg = `Hi, I'd like to request an exchange for Order #${order.id}.\n\nItems: ${items}\nReason: ${reason}${details ? `\nDetails: ${details}` : ''}`
+      window.open(`https://wa.me/919731580157?text=${encodeURIComponent(msg)}`, '_blank')
+      onClose()
+      return
+    }
+
+    setSubmitting(true)
+    setError('')
+    try {
+      const res = await axios.put(
+        `${ORDERS_API_BASE}/orders/${order.id}/return?customer_id=${getCustomerId()}`,
+        { reason, details: details || null },
+        { headers: authHeaders() },
+      )
+      setCourierInfo(res.data?.courier_info || '')
+      onReturned?.()
+    } catch (err) {
+      setError(err.response?.data?.detail || 'Unable to initiate return')
+      setSubmitting(false)
+    }
   }
 
   const canSubmit = selected.size > 0 && reason
+
+  if (courierInfo) {
+    return (
+      <div
+        onClick={(e) => e.target === e.currentTarget && onClose()}
+        style={{
+          position: 'fixed', inset: 0, zIndex: 200,
+          background: 'rgba(5,12,28,0.6)', backdropFilter: 'blur(3px)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16,
+        }}
+      >
+        <div style={{
+          width: '100%', maxWidth: 420, background: '#fff', borderRadius: 16,
+          boxShadow: '0 24px 64px rgba(5,12,28,0.22)', border: '1px solid #e8e0d0',
+          padding: '26px 24px 22px', textAlign: 'center',
+        }}>
+          <div style={{
+            width: 52, height: 52, borderRadius: '50%', background: '#ecfdf5',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 14px',
+          }}>
+            <span style={{ color: '#16a34a', fontSize: 26 }}>✓</span>
+          </div>
+          <h3 style={{ fontSize: 17, fontWeight: 700, color: NAVY, margin: '0 0 8px', fontFamily: "'Playfair Display', Georgia, serif" }}>
+            Return initiated
+          </h3>
+          <p style={{ fontSize: 13, color: '#444', margin: '0 0 16px', lineHeight: 1.6 }}>
+            {courierInfo}
+          </p>
+          <button
+            onClick={onClose}
+            style={{
+              padding: '10px 28px', borderRadius: 8, cursor: 'pointer',
+              border: `1px solid ${GOLD}`, background: NAVY,
+              fontSize: 13, fontWeight: 700, color: GOLD,
+              fontFamily: "'Playfair Display', Georgia, serif",
+            }}
+          >
+            Done
+          </button>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div
@@ -384,33 +464,40 @@ function ReturnExchangeModal({ order, onClose }) {
 
           <div style={{ background: '#fffdf5', border: `1px solid ${GOLD}44`, borderRadius: 8, padding: '10px 12px' }}>
             <p style={{ fontSize: 12, color: '#666', margin: 0, lineHeight: 1.6 }}>
-              Clicking submit will open WhatsApp with your request pre-filled. Our team will respond within 24 hours.
+              {mode === 'RETURN'
+                ? "We'll initiate your return right away and share reverse-pickup courier details."
+                : 'Clicking submit will open WhatsApp with your request pre-filled. Our team will respond within 24 hours.'}
             </p>
           </div>
+
+          {error && (
+            <p style={{ fontSize: 12, color: '#dc2626', margin: 0 }}>{error}</p>
+          )}
 
           <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
             <button
               onClick={onClose}
+              disabled={submitting}
               style={{
-                padding: '10px 20px', borderRadius: 8, cursor: 'pointer',
+                padding: '10px 20px', borderRadius: 8, cursor: submitting ? 'not-allowed' : 'pointer',
                 border: `1.5px solid ${GOLD}66`, background: '#fff',
-                fontSize: 13, fontWeight: 600, color: NAVY,
+                fontSize: 13, fontWeight: 600, color: NAVY, opacity: submitting ? 0.6 : 1,
               }}
             >
               Cancel
             </button>
             <button
               onClick={handleSubmit}
-              disabled={!canSubmit}
+              disabled={!canSubmit || submitting}
               style={{
-                padding: '10px 24px', borderRadius: 8, cursor: canSubmit ? 'pointer' : 'not-allowed',
-                border: `1px solid ${GOLD}`, background: canSubmit ? NAVY : '#f0ece4',
-                fontSize: 13, fontWeight: 700, color: canSubmit ? GOLD : '#bbb',
+                padding: '10px 24px', borderRadius: 8, cursor: (canSubmit && !submitting) ? 'pointer' : 'not-allowed',
+                border: `1px solid ${GOLD}`, background: (canSubmit && !submitting) ? NAVY : '#f0ece4',
+                fontSize: 13, fontWeight: 700, color: (canSubmit && !submitting) ? GOLD : '#bbb',
                 fontFamily: "'Playfair Display', Georgia, serif",
                 transition: 'all 0.15s',
               }}
             >
-              Submit via WhatsApp
+              {submitting ? 'Submitting…' : mode === 'RETURN' ? 'Submit Return' : 'Submit via WhatsApp'}
             </button>
           </div>
         </div>
@@ -431,6 +518,8 @@ function CancelOrderModal({ order, onClose, onCancelled }) {
       setError('')
       await axios.put(
         `${ORDERS_API_BASE}/orders/${order.id}/cancel?customer_id=${getCustomerId()}`,
+        null,
+        { headers: authHeaders() },
       )
       onCancelled()
     } catch (err) {
@@ -562,6 +651,7 @@ function EditAddressModal({ order, onClose, onSaved }) {
       await axios.put(
         `${ORDERS_API_BASE}/addresses/${order.address_id}`,
         { ...form, customer_id: customerId },
+        { headers: authHeaders() },
       )
       onSaved()
     } catch (err) {
@@ -749,6 +839,10 @@ function OrderCard({ order }) {
     queryClient.invalidateQueries({ queryKey: ['orders'] })
   }
 
+  const handleReturned = () => {
+    queryClient.invalidateQueries({ queryKey: ['orders'] })
+  }
+
   return (
     <div
       style={{
@@ -897,7 +991,21 @@ function OrderCard({ order }) {
         <div style={{ borderTop: `1px solid ${GOLD}22`, padding: '14px 18px', background: '#fdfcf9' }}>
           <OrderTimeline status={order.status} />
 
-          {order.status !== 'DELIVERED' && order.status !== 'CANCELLED' && order.status !== 'RETURNED' && (
+          {order.status === 'RETURN_INITIATED' && (
+            <div style={{
+              background: '#fef3c7', border: '1px solid #b4530944',
+              borderRadius: 10, padding: '12px 16px', marginBottom: 14,
+            }}>
+              <p style={{ fontSize: 12, color: '#78350f', margin: 0, lineHeight: 1.5 }}>
+                {RETURN_COURIER_INFO}
+              </p>
+              <p style={{ fontSize: 12, color: '#78350f', margin: '8px 0 0', lineHeight: 1.5 }}>
+                For further queries, contact customer care at <b>{SUPPORT_PHONE_DISPLAY}</b>.
+              </p>
+            </div>
+          )}
+
+          {!CLOSED_ORDER_STATUSES.includes(order.status) && (
             <div style={{
               display: 'flex', alignItems: 'center', gap: 6,
               background: '#fffdf5', border: `1px solid ${GOLD}44`,
@@ -959,7 +1067,7 @@ function OrderCard({ order }) {
               <p style={{ fontSize: 10, color: '#aaa', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', margin: 0 }}>
                 Delivery Address
               </p>
-              {order.status !== 'DELIVERED' && order.status !== 'CANCELLED' && order.status !== 'RETURNED' && (
+              {!CLOSED_ORDER_STATUSES.includes(order.status) && (
                 <button
                   onClick={() => setShowEditAddress(true)}
                   style={{
@@ -1196,6 +1304,7 @@ function OrderCard({ order }) {
         <ReturnExchangeModal
           order={order}
           onClose={() => setShowReturnModal(false)}
+          onReturned={handleReturned}
         />
       )}
     </div>

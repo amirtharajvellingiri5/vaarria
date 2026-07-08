@@ -23,6 +23,7 @@ import { useAuthStore } from '../store/authStore'
 const authHeaders = () => ({ Authorization: `Bearer ${useAuthStore.getState().token || ''}` })
 
 import { COLOR_MAP, formatColorLabel } from '../constants/colors'
+import { MATERIALS } from '../constants/materials'
 
 const COLOR_OPTIONS = Object.keys(COLOR_MAP).map(formatColorLabel)
 
@@ -30,7 +31,7 @@ const COLOR_OPTIONS = Object.keys(COLOR_MAP).map(formatColorLabel)
 const uid = () => Math.random().toString(36).slice(2)
 
 // ── Sub-components ────────────────────────────────────────────────────────────
-const Select = ({ label, options, value, onChange, required }) => {
+const Select = ({ label, options, value, onChange, required, allowCustom }) => {
   const [open, setOpen] = useState(false)
   const [search, setSearch] = useState('')
   const searchRef = useRef(null)
@@ -47,6 +48,12 @@ const Select = ({ label, options, value, onChange, required }) => {
     (o) =>
       typeof o === 'string' && o.toLowerCase().includes(search.toLowerCase()),
   )
+
+  const trimmedSearch = search.trim()
+  const showAddCustom =
+    allowCustom &&
+    trimmedSearch &&
+    !options.some((o) => o.toLowerCase() === trimmedSearch.toLowerCase())
 
   return (
     <div className='relative'>
@@ -88,24 +95,37 @@ const Select = ({ label, options, value, onChange, required }) => {
 
           {/* Options */}
           <div className='max-h-60 overflow-y-auto'>
-            {filteredOptions.length > 0 ? (
-              filteredOptions.map((o) => (
-                <button
-                  key={o}
-                  type='button'
-                  onClick={() => {
-                    onChange(o)
-                    setOpen(false)
-                    setSearch('')
-                  }}
-                  className='w-full text-left px-4 py-2.5 text-sm text-stone-300 hover:bg-rose-500/10 hover:text-rose-400 transition-colors flex items-center gap-2'
-                >
-                  {value === o && <Check size={12} className='text-rose-400' />}
-                  {value !== o && <span className='w-3' />}
-                  {o}
-                </button>
-              ))
-            ) : (
+            {filteredOptions.map((o) => (
+              <button
+                key={o}
+                type='button'
+                onClick={() => {
+                  onChange(o)
+                  setOpen(false)
+                  setSearch('')
+                }}
+                className='w-full text-left px-4 py-2.5 text-sm text-stone-300 hover:bg-rose-500/10 hover:text-rose-400 transition-colors flex items-center gap-2'
+              >
+                {value === o && <Check size={12} className='text-rose-400' />}
+                {value !== o && <span className='w-3' />}
+                {o}
+              </button>
+            ))}
+            {showAddCustom && (
+              <button
+                type='button'
+                onClick={() => {
+                  onChange(trimmedSearch)
+                  setOpen(false)
+                  setSearch('')
+                }}
+                className='w-full text-left px-4 py-2.5 text-sm text-rose-400 hover:bg-rose-500/10 transition-colors flex items-center gap-2 border-t border-stone-800'
+              >
+                <Plus size={12} />
+                Add "{trimmedSearch}"
+              </button>
+            )}
+            {filteredOptions.length === 0 && !showAddCustom && (
               <div className='px-4 py-3 text-sm text-stone-500'>
                 No results found
               </div>
@@ -808,33 +828,8 @@ const ProductUpload = () => {
                     label='Material'
                     value={material}
                     onChange={setMaterial}
-                    options={[
-                      'Cotton',
-                      'Polyester',
-                      'Cotton Blend',
-                      'Rayon',
-                      'Viscose',
-                      'Poly Cotton',
-                      'Georgette',
-                      'Chiffon',
-                      'Silk',
-                      'Art Silk',
-                      'Cotton Silk',
-                      'Linen',
-                      'Linen Blend',
-                      'Khadi',
-                      'Chanderi',
-                      'Banarasi Silk',
-                      'Satin',
-                      'Organza',
-                      'Velvet',
-                      'Denim',
-                      'Knitted',
-                      'Spandex',
-                      'Lycra',
-                      'Rayon Blend',
-                      'Silk Blend',
-                    ]}
+                    options={MATERIALS}
+                    allowCustom
                   />
                   <Select
                     label='Sleeve Length'
