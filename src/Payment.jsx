@@ -1,7 +1,7 @@
 import axios from "axios";
+import { PAYMENT_URL } from "./config";
 
-const API_BASE =
-  "https://d8obcfi1ua.execute-api.ap-south-1.amazonaws.com/prod";
+const API_BASE = PAYMENT_URL;
 
 function RazorpayPayment() {
   const payNow = async () => {

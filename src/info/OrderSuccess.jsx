@@ -1,79 +1,179 @@
 import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { Check, Package } from "lucide-react";
-import logo from "../assets/logo.jpg";
 
 export default function OrderSuccess() {
   const location = useLocation();
   const navigate = useNavigate();
   const [visible, setVisible] = useState(false);
+  const [checked, setChecked] = useState(false);
 
   const order = location.state;
+  const customerPhone = (() => {
+    try { return JSON.parse(localStorage.getItem('customer') || '{}').mobile_no || null } catch { return null }
+  })()
 
   useEffect(() => {
     if (!order) { navigate("/"); return; }
-    const t = setTimeout(() => setVisible(true), 80);
-    return () => clearTimeout(t);
+    const t1 = setTimeout(() => setVisible(true), 80);
+    const t2 = setTimeout(() => setChecked(true), 400);
+    return () => { clearTimeout(t1); clearTimeout(t2); };
   }, [order, navigate]);
 
   if (!order) return null;
 
   return (
     <div style={s.page}>
-      <div
-        style={{
-          ...s.card,
-          opacity: visible ? 1 : 0,
-          transform: visible ? "translateY(0)" : "translateY(20px)",
-          transition: "opacity 0.4s ease, transform 0.4s ease",
-        }}
-      >
-        {/* ── Logo ── */}
-        <div style={s.logoArea}>
-          <img src={logo} alt="Aarria" style={s.logo} />
+      <div style={{
+        ...s.card,
+        opacity: visible ? 1 : 0,
+        transform: visible ? "translateY(0)" : "translateY(24px)",
+        transition: "opacity 0.5s ease, transform 0.5s ease",
+      }}>
+
+        {/* ── Thank You Card ── */}
+        <div style={s.thankCard}>
+          <img src="/vlogo__1_-removebg-preview.png" alt="Vaarria" style={{ height: 64, objectFit: 'contain', marginBottom: 4 }} />
+          <div style={s.thankTitle}>THANK YOU</div>
+          <div style={s.thankSub}>FOR CHOOSING VAARRIA</div>
+          <p style={s.thankBody}>
+            Handpicked fabric. Half the price. Straight to your door. Thank you for getting it.
+          </p>
+          <div style={s.thankDivider}>✦</div>
+          <div style={s.thankBrand}>VAARRIA</div>
+          <div style={s.thankTagline}>WHERE ELEGANCE FINDS FORM</div>
         </div>
 
-        {/* ── Green tick ── */}
-        <div style={s.tickWrap}>
-          <div style={s.tickCircle}>
-            <Check size={36} color="#fff" strokeWidth={2.8} />
-          </div>
+        {/* ── Animated tick ── */}
+        <div style={s.tickOuter}>
+          <svg width="90" height="90" viewBox="0 0 90 90" style={{ overflow: 'visible' }}>
+            <defs>
+              {/* bangle metallic gradient — light top-left, dark bottom-right, bright specular */}
+              <linearGradient id="bangleGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%"   stopColor="#fffbe8" />
+                <stop offset="18%"  stopColor="#f5d060" />
+                <stop offset="38%"  stopColor="#C9A84C" />
+                <stop offset="55%"  stopColor="#8a6820" />
+                <stop offset="72%"  stopColor="#C9A84C" />
+                <stop offset="88%"  stopColor="#f0c040" />
+                <stop offset="100%" stopColor="#fffbe8" />
+              </linearGradient>
+              {/* soft drop shadow for depth */}
+              <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+                <feDropShadow dx="0" dy="3" stdDeviation="4" floodColor="#8a6820" floodOpacity="0.45" />
+              </filter>
+            </defs>
+            {/* bangle ring — thick stroke with metallic gradient */}
+            <circle
+              cx="45" cy="45" r="38"
+              fill="none"
+              stroke="url(#bangleGrad)"
+              strokeWidth="9"
+              strokeDasharray="239"
+              strokeDashoffset={checked ? 0 : 239}
+              strokeLinecap="round"
+              filter="url(#shadow)"
+              style={{ transition: "stroke-dashoffset 0.7s cubic-bezier(.4,0,.2,1)", transformOrigin: "center", transform: "rotate(-90deg)" }}
+            />
+            {/* specular highlight arc — thin bright streak at top */}
+            <circle
+              cx="45" cy="45" r="38"
+              fill="none"
+              stroke="#fffde0"
+              strokeWidth="2"
+              strokeDasharray="40 199"
+              strokeDashoffset={checked ? -20 : 239}
+              strokeLinecap="round"
+              opacity="0.7"
+              style={{ transition: "stroke-dashoffset 0.7s cubic-bezier(.4,0,.2,1) 0.1s", transformOrigin: "center", transform: "rotate(-120deg)" }}
+            />
+            {/* tick */}
+            <polyline
+              points="27,46 39,58 63,32"
+              fill="none"
+              stroke="url(#bangleGrad)"
+              strokeWidth="5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeDasharray="50"
+              strokeDashoffset={checked ? 0 : 50}
+              filter="url(#shadow)"
+              style={{ transition: "stroke-dashoffset 0.4s ease 0.6s" }}
+            />
+          </svg>
         </div>
 
         {/* ── Heading ── */}
-        <h1 style={s.title}>Order Confirmed!</h1>
+        <h1 style={s.title}>Thank you for your order</h1>
         <p style={s.subtitle}>
-          Thank you for shopping with Aarria.{"\n"}
-          A confirmation has been sent to your email.
+          Your order has been confirmed and is being prepared with care.
         </p>
 
-        {/* ── Divider ── */}
-        <div style={s.dividerRow}>
-          <div style={s.dividerLine} />
-          <span style={s.dividerLabel}>Order Summary</span>
-          <div style={s.dividerLine} />
+        {/* ── Order summary card ── */}
+        <div style={s.summaryCard}>
+          <div style={s.summaryHeader}>Order Summary</div>
+          <InfoRow label="Order ID" value={order.order_id} mono />
+          {order.payment_method === 'PREPAID' && (
+            <>
+              <InfoRow label="Payment ID" value={order.payment_id} mono />
+              <InfoRow label="Amount Paid" value={`₹${order.amount}`} gold />
+            </>
+          )}
+          {order.payment_method === 'COD' && (
+            <>
+              <InfoRow label="Payment ID" value={order.payment_id} mono />
+              <InfoRow label="Paid Online (advance)" value={`Rs.${order.paid_online ?? 49}`} gold />
+              <InfoRow label="To Pay on Delivery" value={`Rs.${order.cod_remaining}`} />
+            </>
+          )}
+          {order.payment_method === 'FULL_COD' && (
+            <InfoRow label="To Pay on Delivery" value={`Rs.${order.cod_remaining ?? order.amount}`} gold />
+          )}
+          {!order.payment_method && (
+            <>
+              <InfoRow label="Payment ID" value={order.payment_id} mono />
+              <InfoRow label="Amount Paid" value={`₹${order.amount}`} gold />
+            </>
+          )}
+          <InfoRow label="Estimated Delivery" value={order.estimated_delivery} last />
         </div>
 
-        {/* ── Info rows ── */}
-        <div style={s.infoBox}>
-          <InfoRow label="Order ID"    value={order.order_id} />
-          <InfoRow label="Payment ID"  value={order.payment_id} />
-          <InfoRow label="Amount Paid" value={`₹${order.amount}`} highlight />
-          <InfoRow label="Delivery By" value={order.estimated_delivery} last />
-        </div>
+        {/* ── Payment method badge ── */}
+        {order.payment_method === 'COD' && (
+          <div style={{ ...s.notice, background: '#fffdf5', borderColor: '#fde68a', marginBottom: 12 }}>
+            <span style={{ ...s.noticeDot, background: '#b45309' }} />
+            <p style={s.noticeText}>
+              <strong style={{ color: '#b45309' }}>Rs.49 paid online</strong> · Remaining{" "}
+              <strong style={{ color: '#333' }}>Rs.{order.cod_remaining}</strong> to be paid on delivery.
+              A 2% discount has been applied.
+            </p>
+          </div>
+        )}
+        {order.payment_method === 'FULL_COD' && (
+          <div style={{ ...s.notice, background: '#fffdf5', borderColor: '#fde68a', marginBottom: 12 }}>
+            <span style={{ ...s.noticeDot, background: '#b45309' }} />
+            <p style={s.noticeText}>
+              <strong style={{ color: '#b45309' }}>Cash on Delivery</strong> · Pay{" "}
+              <strong style={{ color: '#333' }}>Rs.{order.cod_remaining ?? order.amount}</strong> when your order arrives.
+            </p>
+          </div>
+        )}
 
-        {/* ── Delivery notice ── */}
-        <div style={s.deliveryBanner}>
-          <Package size={18} color="#16a34a" strokeWidth={1.8} style={{ flexShrink: 0, marginTop: 1 }} />
-          <p style={s.deliveryText}>
-            Your order is being prepared and will be dispatched soon.
-            You'll receive tracking info via email once it ships.
+        {/* ── Dispatch notice ── */}
+        <div style={s.notice}>
+          <span style={s.noticeDot} />
+          <p style={s.noticeText}>
+            You'll receive tracking details on{" "}
+            {customerPhone
+              ? <strong style={{ color: "#333" }}>{customerPhone}</strong>
+              : "your registered mobile number"
+            }{" "}
+            once your order ships.
           </p>
         </div>
 
         {/* ── Actions ── */}
         <div style={s.actions}>
-          <button style={s.btnPrimary}   onClick={() => navigate("/orders")}>
+          <button style={s.btnPrimary} onClick={() => navigate("/orders")}>
             View My Orders
           </button>
           <button style={s.btnSecondary} onClick={() => navigate("/")}>
@@ -81,10 +181,15 @@ export default function OrderSuccess() {
           </button>
         </div>
 
-        <p style={s.supportNote}>
-          Questions?&nbsp;
-          <a href="mailto:support@aarria.in" style={s.supportLink}>
-            support@aarria.in
+        <p style={s.support}>
+          Need help?{" "}
+          <a
+            href={`https://wa.me/919731580157?text=${encodeURIComponent(`Hi, I need help with my order${order?.order_id ? ` #${order.order_id}` : ''}`)}`}
+            target="_blank"
+            rel="noreferrer"
+            style={s.supportLink}
+          >
+            Chat with us on WhatsApp
           </a>
         </p>
       </div>
@@ -92,158 +197,212 @@ export default function OrderSuccess() {
   );
 }
 
-function InfoRow({ label, value, highlight, last }) {
+function InfoRow({ label, value, gold, mono, last }) {
   return (
-    <div style={{ ...s.infoRow, ...(last ? { borderBottom: "none" } : {}) }}>
-      <span style={s.infoLabel}>{label}</span>
-      <span style={{ ...s.infoValue, ...(highlight ? s.infoHighlight : {}) }}>
+    <div style={{ ...s.row, ...(last ? { borderBottom: "none" } : {}) }}>
+      <span style={s.rowLabel}>{label}</span>
+      <span style={{
+        ...s.rowValue,
+        ...(gold ? { color: "#C9A84C", fontWeight: 700, fontSize: 15 } : {}),
+        ...(mono ? { fontFamily: "monospace", fontSize: 12, color: "#555" } : {}),
+      }}>
         {value}
       </span>
     </div>
   );
 }
 
-/* ─────────────────────────── Styles ─────────────────────────── */
-const PINK  = "#A65A66";
-const GREEN = "#16a34a";
-const BORDER = "#ede8e3";
+const GOLD = "#C9A84C";
+const NAVY = "#050C1C";
 
 const s = {
   page: {
     minHeight: "100vh",
-    background: "#faf8f6",
+    background: "#f5f4f0",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
     padding: "2rem 1rem",
     fontFamily: "'Segoe UI', 'Helvetica Neue', Arial, sans-serif",
+    boxSizing: "border-box",
   },
 
   card: {
     width: "100%",
-    maxWidth: 520,
+    maxWidth: 480,
+    maxHeight: "90vh",
+    overflowY: "auto",
     background: "#ffffff",
     borderRadius: 16,
-    border: `1px solid ${BORDER}`,
-    boxShadow: "0 4px 32px rgba(0,0,0,0.07)",
-    padding: "36px 36px 28px",
+    border: "1px solid #e8e0d0",
+    boxShadow: "0 8px 40px rgba(0,0,0,0.08)",
+    padding: "36px 32px 28px",
     display: "flex",
     flexDirection: "column",
     alignItems: "center",
     textAlign: "center",
   },
 
-  // tick halo (10px box-shadow ring) extends beyond the circle,
-  // so margins here include that overflow
-  logoArea: { marginBottom: 28 },
-
-  logo: {
-    height: 56,
-    width: "auto",
-    objectFit: "contain",
+  thankCard: {
+    width: "100%",
+    background: NAVY,
+    borderRadius: 12,
+    border: `1px solid ${GOLD}44`,
+    padding: "28px 24px 22px",
+    marginBottom: 28,
+    textAlign: "center",
+    boxShadow: `0 4px 24px rgba(5,12,28,0.18), inset 0 0 0 1px ${GOLD}22`,
+  },
+  vaMonogram: {
+    fontSize: 36,
+    fontWeight: 800,
+    color: GOLD,
+    fontFamily: "'Playfair Display', Georgia, serif",
+    letterSpacing: "0.08em",
+    marginBottom: 10,
+  },
+  thankTitle: {
+    fontSize: 22,
+    fontWeight: 700,
+    color: GOLD,
+    fontFamily: "'Playfair Display', Georgia, serif",
+    letterSpacing: "0.18em",
+    marginBottom: 4,
+  },
+  thankSub: {
+    fontSize: 10,
+    fontWeight: 600,
+    color: `${GOLD}99`,
+    letterSpacing: "0.18em",
+    textTransform: "uppercase",
+    marginBottom: 14,
+  },
+  thankBody: {
+    fontSize: 12.5,
+    color: "#c8c8d4",
+    lineHeight: 1.75,
+    margin: "0 0 14px",
+    maxWidth: 300,
+    marginLeft: "auto",
+    marginRight: "auto",
+  },
+  thankDivider: {
+    color: GOLD,
+    fontSize: 14,
+    marginBottom: 10,
+  },
+  thankBrand: {
+    fontSize: 15,
+    fontWeight: 700,
+    color: GOLD,
+    fontFamily: "'Playfair Display', Georgia, serif",
+    letterSpacing: "0.22em",
+    marginBottom: 3,
+  },
+  thankTagline: {
+    fontSize: 9,
+    color: `${GOLD}88`,
+    letterSpacing: "0.2em",
+    textTransform: "uppercase",
   },
 
-  tickWrap: { marginBottom: 26 },
-
-  tickCircle: {
-    width: 72,
-    height: 72,
-    borderRadius: "50%",
-    background: GREEN,
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    boxShadow: "0 0 0 10px #dcfce7",
+  tickOuter: {
+    marginBottom: 24,
   },
 
   title: {
-    fontSize: 26,
+    fontSize: 22,
     fontWeight: 700,
-    color: "#111827",
-    margin: "0 0 8px",
-    letterSpacing: "-0.3px",
+    color: NAVY,
+    margin: "0 0 10px",
+    fontFamily: "'Playfair Display', Georgia, serif",
+    letterSpacing: 0.2,
   },
 
   subtitle: {
-    fontSize: 14,
+    fontSize: 13.5,
     color: "#6b7280",
-    lineHeight: 1.65,
-    whiteSpace: "pre-line",
+    lineHeight: 1.7,
     margin: "0 0 28px",
+    maxWidth: 340,
   },
 
-  dividerRow: {
-    display: "flex",
-    alignItems: "center",
-    gap: 10,
+  summaryCard: {
     width: "100%",
+    border: "1px solid #e8e0d0",
+    borderRadius: 10,
+    overflow: "hidden",
     marginBottom: 16,
+    background: "#fdfcf9",
   },
-  dividerLine: { flex: 1, height: 1, background: BORDER },
-  dividerLabel: {
-    fontSize: 11,
-    fontWeight: 600,
+
+  summaryHeader: {
+    fontSize: 10,
+    fontWeight: 700,
     letterSpacing: "0.12em",
     textTransform: "uppercase",
-    color: "#9ca3af",
-    whiteSpace: "nowrap",
+    color: "#aaa",
+    padding: "10px 16px",
+    borderBottom: "1px solid #e8e0d0",
+    textAlign: "left",
   },
 
-  infoBox: {
-    width: "100%",
-    border: `1px solid ${BORDER}`,
-    borderRadius: 12,
-    overflow: "hidden",
-    marginBottom: 14,
-    background: "#fdfcfb",
-  },
-
-  infoRow: {
+  row: {
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
-    padding: "13px 18px",
-    borderBottom: `1px solid ${BORDER}`,
+    padding: "12px 16px",
+    borderBottom: "1px solid #f0ece4",
   },
 
-  infoLabel: {
+  rowLabel: {
     fontSize: 13,
-    color: "#6b7280",
+    color: "#888",
     fontWeight: 400,
   },
 
-  infoValue: {
+  rowValue: {
     fontSize: 13.5,
     fontWeight: 600,
-    color: "#111827",
-    maxWidth: "55%",
+    color: NAVY,
+    maxWidth: "58%",
     textAlign: "right",
     wordBreak: "break-all",
   },
 
-  infoHighlight: {
-    color: GREEN,
-    fontSize: 15,
-  },
-
-  deliveryBanner: {
+  notice: {
     display: "flex",
     alignItems: "flex-start",
     gap: 10,
     width: "100%",
-    background: "#f0fdf4",
-    border: "1px solid #bbf7d0",
-    borderRadius: 10,
-    padding: "12px 16px",
+    background: "#fffdf5",
+    border: `1px solid ${GOLD}33`,
+    borderRadius: 8,
+    padding: "12px 14px",
     marginBottom: 24,
     textAlign: "left",
   },
 
-  deliveryText: {
+  noticeDot: {
+    width: 7,
+    height: 7,
+    borderRadius: "50%",
+    background: GOLD,
+    flexShrink: 0,
+    marginTop: 5,
+  },
+
+  noticeText: {
     fontSize: 12.5,
-    color: "#374151",
-    lineHeight: 1.6,
+    color: "#555",
+    lineHeight: 1.65,
     margin: 0,
+  },
+
+  noticeEmail: {
+    color: GOLD,
+    textDecoration: "none",
+    fontWeight: 600,
   },
 
   actions: {
@@ -257,38 +416,38 @@ const s = {
   btnPrimary: {
     width: "100%",
     padding: "13px",
-    background: PINK,
-    color: "#fff",
-    border: "none",
+    background: NAVY,
+    color: GOLD,
+    border: `1px solid ${GOLD}`,
     borderRadius: 8,
-    fontSize: 13.5,
+    fontSize: 13,
     fontWeight: 700,
-    letterSpacing: "0.04em",
+    letterSpacing: "0.06em",
     cursor: "pointer",
-    fontFamily: "inherit",
+    fontFamily: "'Playfair Display', Georgia, serif",
   },
 
   btnSecondary: {
     width: "100%",
     padding: "13px",
     background: "#fff",
-    color: "#374151",
-    border: "1px solid #d1d5db",
+    color: "#555",
+    border: "1px solid #ddd",
     borderRadius: 8,
-    fontSize: 13.5,
+    fontSize: 13,
     fontWeight: 600,
     letterSpacing: "0.04em",
     cursor: "pointer",
     fontFamily: "inherit",
   },
 
-  supportNote: {
+  support: {
     fontSize: 12,
-    color: "#9ca3af",
+    color: "#aaa",
   },
 
   supportLink: {
-    color: PINK,
+    color: GOLD,
     textDecoration: "none",
     fontWeight: 500,
   },

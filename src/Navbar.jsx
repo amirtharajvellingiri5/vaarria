@@ -1,8 +1,12 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { ShoppingBag, Search, Heart, User, Menu, X } from 'lucide-react'
-import { useCartStore } from './store/cartStore'
+import { useBagStore, getGuestBag } from './store/bagStore'
 import { useAuthStore } from './store/authStore'
+import { useWishlistStore } from './store/wishlistStore'
+import { useNavigate } from 'react-router-dom'
 import { ADMIN_CATEGORIES as CATEGORIES } from './utils/categories'
+import { ORDERS_URL } from './config'
+import { authFetch } from './utils/authFetch'
 
 const logo = '/vlogo.png'
 
@@ -235,10 +239,35 @@ const Navbar = () => {
   const [searchValue, setSearchValue] = useState('')
   const [profileOpen, setProfileOpen] = useState(false)
 
-  const { token, customer: customerData, logout } = useAuthStore()
-  const isLoggedIn = !!token
-  const cart = useCartStore((state) => state.cart)
-  const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0)
+  const navigate = useNavigate()
+  const { customer: customerData, logout } = useAuthStore()
+  // logged-in state is driven by the persisted customer, not the in-memory
+  // access token (which is null on reload until refresh resolves)
+  const isLoggedIn = !!customerData
+  const bagItems = useBagStore((state) => state.items)
+  const setItems = useBagStore((state) => state.setItems)
+  const cartCount = bagItems.reduce((sum, item) => sum + (item.qty || 0), 0)
+  const { load: loadWishlist, productIds: wishlistIds } = useWishlistStore()
+  const wishlistCount = wishlistIds.size
+
+  useEffect(() => {
+    if (customerData?.customer_id) loadWishlist(customerData.customer_id)
+  }, [customerData?.customer_id])
+
+  useEffect(() => {
+    if (!customerData?.customer_id) {
+      setItems(getGuestBag())
+      return
+    }
+    authFetch(`${ORDERS_URL}/bags/customers/${customerData.customer_id}/bag`)
+      .then(r => r.json())
+      .then(data => {
+        if (Array.isArray(data?.items)) {
+          setItems(data.items.map(item => ({ id: item.bag_id, qty: item.quantity })))
+        }
+      })
+      .catch(() => {})
+  }, [customerData?.customer_id, setItems])
 
   return (
     <nav
@@ -339,7 +368,7 @@ const Navbar = () => {
                         left: '14px',
                         right: '14px',
                         height: '2px',
-                        background: '#A65A66',
+                        background: '#16a34a',
                         borderRadius: '1px 1px 0 0',
                       }}
                     />
@@ -510,6 +539,7 @@ const Navbar = () => {
   )}
 </div>
           <button
+            onClick={() => navigate('/wishlist')}
             style={{
               background: 'none',
               border: 'none',
@@ -519,10 +549,20 @@ const Navbar = () => {
               alignItems: 'center',
               flexDirection: 'column',
               gap: '2px',
+              position: 'relative',
             }}
             className='icon-btn'
           >
-            <Heart size={20} />
+            <Heart size={20} fill={wishlistCount > 0 ? '#C9A84C' : 'none'} />
+            {wishlistCount > 0 && (
+              <span style={{
+                position: 'absolute', top: -4, right: -4,
+                background: '#050C1C', color: '#C9A84C',
+                fontSize: 9, fontWeight: 700, borderRadius: '50%',
+                width: 16, height: 16, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                border: '1.5px solid #C9A84C',
+              }}>{wishlistCount > 9 ? '9+' : wishlistCount}</span>
+            )}
             <span
               style={{
                 fontSize: '11px',
@@ -534,6 +574,7 @@ const Navbar = () => {
             </span>
           </button>
           <button
+            onClick={() => navigate('/bag')}
             style={{
               background: 'none',
               border: 'none',
@@ -547,25 +588,23 @@ const Navbar = () => {
             }}
             className='icon-btn'
           >
-            <a href='/bag'>
-              <ShoppingBag size={20} />
-              <span
-                style={{
-                  fontSize: '11px',
-                  fontWeight: 600,
-                  letterSpacing: '0.03em',
-                }}
-              >
-                Bag
-              </span>
-            </a>
+            <ShoppingBag size={20} />
+            <span
+              style={{
+                fontSize: '11px',
+                fontWeight: 600,
+                letterSpacing: '0.03em',
+              }}
+            >
+              Bag
+            </span>
             {cartCount > 0 && (
               <span
                 style={{
                   position: 'absolute',
                   top: '-4px',
                   right: '-6px',
-                  background: '#A65A66',
+                  background: '#16a34a',
                   color: '#fff',
                   fontSize: '10px',
                   borderRadius: '50%',
@@ -661,7 +700,7 @@ const Navbar = () => {
                   <span
                     style={{
                       fontSize: '9px',
-                      background: '#A65A66',
+                      background: '#16a34a',
                       color: '#fff',
                       borderRadius: '3px',
                       padding: '1px 5px',

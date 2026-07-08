@@ -18,11 +18,13 @@ import {
 } from 'lucide-react'
 
 import AdminNav from './AdminNav'
+import { CATALOG_URL, INVENTORY_URL } from '../config'
+import { useAuthStore } from '../store/authStore'
+const authHeaders = () => ({ Authorization: `Bearer ${useAuthStore.getState().token || ''}` })
 
 const CDN = 'https://cdn.vaarria.com/app/images/'
-const API = 'https://api.vaarria.com/listings'
-const PRODUCTS_API =
-  'https://8184radc92.execute-api.ap-south-1.amazonaws.com/prod/products'
+const API = `${CATALOG_URL}/listings`
+const PRODUCTS_API = `${INVENTORY_URL}/products`
 const PAGE_SIZE = 10
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -212,6 +214,7 @@ const DeleteModal = ({ product, onConfirm, onClose }) => {
     try {
       const res = await fetch(`${PRODUCTS_API}/${product.id}`, {
         method: 'DELETE',
+        headers: authHeaders(),
       })
       if (!res.ok) throw new Error(`Error ${res.status}`)
       onConfirm()
@@ -331,7 +334,7 @@ const ProductListings = () => {
     setCloningId(p.id)
     try {
       // fetch the full product — listing rows only carry summary fields
-      const res = await fetch(`https://api.vaarria.com/product/${p.id}`)
+      const res = await fetch(`${CATALOG_URL}/product/${p.id}`)
       if (!res.ok) throw new Error(`Error ${res.status}`)
       const full = await res.json()
 
@@ -373,7 +376,7 @@ const ProductListings = () => {
 
       const createRes = await fetch(PRODUCTS_API, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...authHeaders() },
         body: JSON.stringify(payload),
       })
       if (!createRes.ok) throw new Error(await createRes.text())
@@ -391,8 +394,8 @@ const ProductListings = () => {
     setSyncing(true)
     try {
       const res = await fetch(
-        'https://8184radc92.execute-api.ap-south-1.amazonaws.com/prod//sync/products',
-        { method: 'POST' },
+        `${INVENTORY_URL}/sync/products`,
+        { method: 'POST', headers: authHeaders() },
       )
       if (!res.ok) throw new Error(`Error ${res.status}`)
       setToast('Products synced successfully')

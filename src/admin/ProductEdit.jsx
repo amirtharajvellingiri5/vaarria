@@ -20,6 +20,9 @@ import {
 } from 'lucide-react'
 import { useParams } from 'react-router-dom'
 import { ADMIN_CATEGORIES as categories } from '../utils/categories'
+import { CATALOG_URL, INVENTORY_URL } from '../config'
+import { useAuthStore } from '../store/authStore'
+const authHeaders = () => ({ Authorization: `Bearer ${useAuthStore.getState().token || ''}` })
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 // Replace with your actual import: import { COLOR_MAP, formatColorLabel } from '../constants/colors'
@@ -185,7 +188,7 @@ const mapApiToState = (product) => {
     // Files are null — only set when the user picks a NEW file
     main_image_file: null,
     other_image_files: [],
-    product_id: product.id,
+    product_id: product.product_id,
   }))
 
   return {
@@ -204,7 +207,7 @@ const mapApiToState = (product) => {
     discountType: product.pricing?.discounts?.discount_type || 'FLAT',
     discountValue: String(product.pricing?.discounts?.value || ''),
     variants: variants.length > 0 ? variants : [emptyVariant()],
-    product_id: product.id,
+    product_id: product.product_id,
   }
 }
 
@@ -263,7 +266,7 @@ const ProductEdit = ({ onBack }) => {
     setFetchError('')
     try {
       const res = await fetch(
-        `https://api.vaarria.com/product/${productId}`,
+        `${CATALOG_URL}/product/${productId}`,
       )
       if (!res.ok) throw new Error(`Failed to fetch product (${res.status})`)
       const data = await res.json()
@@ -484,10 +487,10 @@ const ProductEdit = ({ onBack }) => {
 
       // 2. PUT to update API
       const res = await fetch(
-        `https://8184radc92.execute-api.ap-south-1.amazonaws.com/prod/products/${productId}`,
+        `${INVENTORY_URL}/products/${productId}`,
         {
           method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', ...authHeaders() },
           body: JSON.stringify(buildPayload(updatedVariants)),
         },
       )

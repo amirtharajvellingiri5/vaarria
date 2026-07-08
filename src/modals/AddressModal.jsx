@@ -1,8 +1,9 @@
 import { useState } from 'react'
 import { X, Trash2 } from 'lucide-react'
 
-const ORDERS_API_BASE =
-  'https://zq0dbjycx6.execute-api.ap-south-1.amazonaws.com/prod'
+import { ORDERS_URL } from '../config'
+import { authFetch } from '../utils/authFetch'
+const ORDERS_API_BASE = ORDERS_URL
 
 const GOLD = '#C9A84C'
 const NAVY = '#050C1C'
@@ -39,7 +40,7 @@ export default function AddressModal({
   const handleDeleteAddress = async (addressId) => {
     try {
       setDeletingId(addressId)
-      const response = await fetch(
+      const response = await authFetch(
         `${ORDERS_API_BASE}/addresses/${addressId}?customer_id=${customerId}`,
         { method: 'DELETE' },
       )
@@ -67,7 +68,7 @@ export default function AddressModal({
   const handleSaveAddress = async () => {
     try {
       setLoading(true)
-      const response = await fetch(`${ORDERS_API_BASE}/addresses`, {
+      const response = await authFetch(`${ORDERS_API_BASE}/addresses`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ customer_id: customerId, ...form }),
@@ -187,7 +188,7 @@ export default function AddressModal({
                                 if (isSelected || !onSelectAddress) return
                                 try {
                                   const customer = JSON.parse(localStorage.getItem('customer') || 'null')
-                                  const response = await fetch(
+                                  const response = await authFetch(
                                     `${ORDERS_API_BASE}/addresses/${address.address_id}/select?customer_id=${customer.customer_id}`,
                                     { method: 'PUT' },
                                   )

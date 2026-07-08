@@ -2,11 +2,12 @@ import React, { useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { Star, ArrowLeft, Camera, X, CheckCircle2, Loader2, ShoppingBag } from 'lucide-react'
 import axios from 'axios'
-import logo from './assets/logo.jpg'
+const GOLD = '#C9A84C'
+const NAVY = '#050C1C'
 import './constants/global.css'
 
-const ORDERS_API_BASE =
-  'https://zq0dbjycx6.execute-api.ap-south-1.amazonaws.com/prod'
+import { ORDERS_URL } from './config'
+const ORDERS_API_BASE = ORDERS_URL
 const CDN = 'https://cdn.vaarria.com/app/images/'
 const MAX_PHOTOS = 3
 
@@ -113,8 +114,8 @@ export default function ReviewPage() {
             <ArrowLeft size={18} />
           </button>
           <img
-            src={logo}
-            alt="Aarria"
+            src="/vlogo.png"
+            alt="Vaarria"
             onClick={() => navigate('/products')}
             style={{ height: 40, objectFit: 'contain', cursor: 'pointer' }}
           />
@@ -148,41 +149,87 @@ export default function ReviewPage() {
             </button>
           </div>
         ) : done ? (
-          <div style={{ background: '#fff', borderRadius: 12, padding: '60px 20px', textAlign: 'center', border: '1px solid #f0f0f0' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            {/* Thank you card — back side */}
             <div style={{
-              width: 72, height: 72, borderRadius: '50%', background: '#dcfce7',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px',
+              background: NAVY, borderRadius: 12, border: `1px solid ${GOLD}44`,
+              padding: '28px 24px', textAlign: 'center',
+              boxShadow: `inset 0 0 0 1px ${GOLD}18`,
             }}>
-              <CheckCircle2 size={36} color="#16a34a" strokeWidth={1.8} />
+              <img src="/vlogo__1_-removebg-preview.png" alt="Vaarria" style={{ height: 52, objectFit: 'contain', marginBottom: 8 }} />
+              <div style={{ fontSize: 13, color: GOLD, fontFamily: "'Playfair Display', Georgia, serif", fontStyle: 'italic', marginBottom: 8, lineHeight: 1.6 }}>
+                We truly appreciate your trust in us.
+              </div>
+              <div style={{ fontSize: 12, color: '#c8c8d4', lineHeight: 1.7, marginBottom: 16 }}>
+                If there's anything we can do to make your experience even better, we're always here for you.
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'center', gap: 28, marginBottom: 14 }}>
+                {[{ icon: '✦', label: 'Premium Quality' }, { icon: '✿', label: 'Crafted with Care' }, { icon: '♡', label: 'Made for You' }].map(({ icon, label }) => (
+                  <div key={label} style={{ textAlign: 'center' }}>
+                    <div style={{ fontSize: 14, color: GOLD, marginBottom: 3 }}>{icon}</div>
+                    <div style={{ fontSize: 9, color: `${GOLD}99`, letterSpacing: '0.08em', textTransform: 'uppercase' }}>{label}</div>
+                  </div>
+                ))}
+              </div>
+              <div style={{ fontSize: 9, color: `${GOLD}77`, letterSpacing: '0.18em', textTransform: 'uppercase' }}>
+                ♥ With love, The Vaarria Team
+              </div>
             </div>
-            <h3 style={{ fontSize: 18, fontWeight: 700, color: '#3A332A', marginBottom: 8 }}>
-              {wasUpdate ? 'Review updated!' : 'Thank you for your review!'}
-            </h3>
-            <p style={{ fontSize: 13, color: '#94969f', marginBottom: 24 }}>
-              Your feedback helps other shoppers choose better.
-            </p>
-            <div style={{ display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap' }}>
-              <button
-                onClick={() => navigate('/orders')}
-                style={{
-                  background: '#A65A66', color: '#fff', border: 'none', borderRadius: 6,
-                  padding: '12px 28px', fontSize: 13, fontWeight: 700, cursor: 'pointer',
-                }}
-              >
-                BACK TO MY ORDERS
-              </button>
-              <button
-                onClick={() => window.open(`/product/${selected?.product_id}`, '_blank')}
-                style={{
-                  background: '#fff', color: '#555', border: '1.5px solid #d0d0d0', borderRadius: 6,
-                  padding: '12px 28px', fontSize: 13, fontWeight: 700, cursor: 'pointer',
-                }}
-              >
-                VIEW PRODUCT
-              </button>
+
+            <div style={{ background: '#fff', borderRadius: 12, padding: '32px 20px', textAlign: 'center', border: '1px solid #f0f0f0' }}>
+              <div style={{
+                width: 64, height: 64, borderRadius: '50%', background: '#dcfce7',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 14px',
+              }}>
+                <CheckCircle2 size={32} color="#16a34a" strokeWidth={1.8} />
+              </div>
+              <h3 style={{ fontSize: 18, fontWeight: 700, color: NAVY, marginBottom: 6, fontFamily: "'Playfair Display', Georgia, serif" }}>
+                {wasUpdate ? 'Review updated!' : 'Thank you for your review!'}
+              </h3>
+              <p style={{ fontSize: 13, color: '#94969f', marginBottom: 22 }}>
+                Your feedback helps other shoppers choose better.
+              </p>
+              <div style={{ display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap' }}>
+                <button
+                  onClick={() => navigate('/orders')}
+                  style={{
+                    background: NAVY, color: GOLD, border: `1px solid ${GOLD}`, borderRadius: 8,
+                    padding: '12px 28px', fontSize: 13, fontWeight: 700, cursor: 'pointer',
+                    fontFamily: "'Playfair Display', Georgia, serif",
+                  }}
+                >
+                  BACK TO MY ORDERS
+                </button>
+                <button
+                  onClick={() => window.open(`/product/${selected?.product_id}`, '_blank')}
+                  style={{
+                    background: '#fff', color: '#555', border: '1.5px solid #d0d0d0', borderRadius: 8,
+                    padding: '12px 28px', fontSize: 13, fontWeight: 700, cursor: 'pointer',
+                  }}
+                >
+                  VIEW PRODUCT
+                </button>
+              </div>
             </div>
           </div>
         ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+            {/* Appreciation nudge above the review form */}
+            <div style={{
+              background: NAVY, borderRadius: 10, border: `1px solid ${GOLD}44`,
+              padding: '14px 18px', display: 'flex', alignItems: 'center', gap: 14,
+            }}>
+              <div style={{ fontSize: 22, color: GOLD, flexShrink: 0 }}>✦</div>
+              <div>
+                <div style={{ fontSize: 12.5, color: GOLD, fontFamily: "'Playfair Display', Georgia, serif", fontStyle: 'italic', marginBottom: 2 }}>
+                  We truly appreciate your trust in us.
+                </div>
+                <div style={{ fontSize: 11, color: '#c8c8d4', lineHeight: 1.5 }}>
+                  Your honest review helps us craft a better experience for everyone.
+                </div>
+              </div>
+            </div>
+
           <div style={{ background: '#fff', borderRadius: 12, border: '1px solid #f0f0f0', padding: 24 }}>
             <h1 style={{ fontSize: 19, fontWeight: 800, color: '#3A332A', margin: '0 0 4px', letterSpacing: -0.4 }}>
               Rate &amp; Review
@@ -348,6 +395,7 @@ export default function ReviewPage() {
               )}
             </button>
             <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
+          </div>
           </div>
         )}
       </div>

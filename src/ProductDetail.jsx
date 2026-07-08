@@ -16,10 +16,19 @@ import {
   Play,
   Gift,
   CreditCard,
+  ArrowLeftRight,
+  RotateCcw,
+  Wallet,
 } from 'lucide-react'
 import Navbar from './Navbar'
 import Footer from './Footer'
 import { useParams, useNavigate } from 'react-router-dom'
+import { useAuthStore } from './store/authStore'
+import { useBagStore } from './store/bagStore'
+import { useWishlistStore } from './store/wishlistStore'
+import WishlistLoginModal from './modals/WishlistLoginModal'
+import { ORDERS_URL, CATALOG_URL } from './config'
+import { authFetch } from './utils/authFetch'
 
 // ─── Mock API Response ────────────────────────────────────────────────────────
 const MOCK_PRODUCT_API_RESPONSE = {
@@ -137,8 +146,13 @@ const PRODUCT_YOUTUBE_VIDEOS = [
 
 // ─── API Functions ────────────────────────────────────────────────────────────
 async function fetchProduct(productId) {
+  // Always revalidate with the worker (which serves an ETag) instead of reusing
+  // the browser disk copy. When nothing changed this is a cheap 304; the moment
+  // KV is refreshed (e.g. after an order) the worker returns the latest JSON, so
+  // the PDP never shows stale sold-out / quantity data.
   const res = await fetch(
     `https://products-api.chatoyantvortex.workers.dev/product?id=${productId}`,
+    { cache: 'no-cache' },
   )
   const raw = await res.json()
 
@@ -217,8 +231,27 @@ async function fetchProduct(productId) {
     }
   }
 
+  // Coupon preview — effective price after the advertised TRENDY code
+  let coupon = null
+  if (discountMeta) {
+    const { discount_type, value } = discountMeta
+    const off =
+      discount_type === 'FLAT'
+        ? value
+        : discount_type === 'PERCENTAGE'
+        ? Math.round((raw.pricing.sale_price * value) / 100)
+        : 0
+    if (off > 0 && off < raw.pricing.sale_price) {
+      coupon = {
+        code: `TRENDY${value}`,
+        effectivePrice: raw.pricing.sale_price - off,
+      }
+    }
+  }
+
   return {
     id: raw.product_id,
+    coupon,
     brand: raw.brand.name,
     brandId: raw.brand.catalogue_id,
     category: raw.category.category_name,
@@ -233,6 +266,7 @@ async function fetchProduct(productId) {
     reviewCount: raw.ratings.review_count ?? 0,
     sizes,
     availableSizes,
+    sizeQuantities: Object.fromEntries(variant.sizes.map((s) => [s.size, s.quantity])),
     colors: raw.inventory.variants.map((v) => ({
       name: v.color,
       hex: v.color_hex ?? '#cccccc',
@@ -262,7 +296,7 @@ async function fetchProduct(productId) {
 
 async function fetchRatings(productId) {
   const response = await fetch(
-    `https://zq0dbjycx6.execute-api.ap-south-1.amazonaws.com/prod/products/${productId}/ratings`,
+    `${ORDERS_URL}/products/${productId}/ratings`,
   )
 
   if (!response.ok) {
@@ -900,8 +934,9 @@ function SkeletonLoader() {
         @keyframes skeletonShimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
         .skeleton { background: linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 50%, #f3f4f6 75%); background-size: 200% 100%; animation: skeletonShimmer 1.2s infinite; border-radius: 4px; }
         .pdp-page { min-height: 100vh; background: #fff; font-family: 'DM Sans', sans-serif; color: #1f2937; }
-        .pdp-breadcrumb { padding: 11px clamp(16px, 3%, 32px); font-size: 12px; color: #9ca3af; display: flex; gap: 6px; align-items: center; border-bottom: 1px solid #fff; background: #fff; max-width: 1536px; margin: 0 auto; box-sizing: border-box; width: 100%; }
-        .pdp-outer { display: flex; align-items: flex-start; max-width: 1536px; margin: 0 auto; padding: 0 clamp(16px, 3%, 32px); }
+        .pdp-breadcrumb { padding: 11px 2%; font-size: 12px; color: #9ca3af; display: flex; gap: 6px; align-items: center; border-bottom: 1px solid #fff; background: #fff; }
+        .pdp-page-layout { display: flex; align-items: flex-start; padding-left: 2%; }
+        .pdp-outer { flex: 1; display: flex; align-items: flex-start; min-width: 0; padding-right: 16px; }
         .pdp-images-col { width: 52%; min-width: 0; }
         .pdp-info-col {
   width: 48%;
@@ -959,17 +994,99 @@ function SkeletonLoader() {
   )
 }
 
+// ─── Featured Products Banner ─────────────────────────────────────────────────
+function FeaturedBanner({ productId }) {
+  const [products, setProducts] = useState([])
+  const [activeIndex, setActiveIndex] = useState(0)
+  const [fading, setFading] = useState(false)
+
+  useEffect(() => {
+    fetch(`${CATALOG_URL}/listings?page_size=30`)
+      .then(r => r.json())
+      .then(data => {
+        const list = data.listings ?? data.products ?? data.data ?? data ?? []
+        const items = (Array.isArray(list) ? list : [])
+          .filter(p => String(p.id ?? p.product_id) !== String(productId))
+          .slice(0, 20)
+          .map(p => ({
+            id: p.id ?? p.product_id,
+            title: p.title ?? p.name,
+            price: p.selling_price ?? p.sale_price ?? p.price,
+            image: p.main_image
+              ? `https://cdn.vaarria.com/app/images/${p.main_image}`
+              : p.image_url ?? '',
+          }))
+        setProducts(items)
+      })
+      .catch(() => {})
+  }, [productId])
+
+  useEffect(() => {
+    if (products.length <= 1) return
+    const id = setInterval(() => {
+      setFading(true)
+      setTimeout(() => {
+        setActiveIndex(i => (i + 1) % products.length)
+        setFading(false)
+      }, 300)
+    }, 4000)
+    return () => clearInterval(id)
+  }, [products.length])
+
+  if (!products.length) return null
+
+  const p = products[activeIndex]
+
+  return (
+    <div className='pdp-featured-banner' style={{ width: '15%', flexShrink: 0, position: 'sticky', top: 0, marginRight: 12, display: 'flex', flexDirection: 'column' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', padding: '4px 2px', gap: 4 }}>
+        <span style={{ fontSize: 11, fontWeight: 700, color: '#C9A84C', letterSpacing: '0.08em', textTransform: 'uppercase', fontFamily: "'DM Sans', sans-serif" }}>You May Also Like</span>
+      </div>
+      <div
+        style={{ height: '80vh', position: 'relative', border: '1px solid #e8e0d0', borderRadius: 10, overflow: 'hidden', boxShadow: '0 2px 12px rgba(5,12,28,0.06)', cursor: 'pointer' }}
+        onClick={() => window.open(`/product/${p.id}`, '_blank')}
+      >
+        <div style={{ position: 'absolute', inset: 0, opacity: fading ? 0 : 1, transition: 'opacity 0.3s ease' }}>
+          <img
+            src={p.image}
+            alt={p.title}
+            style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top', display: 'block' }}
+            onError={e => { e.target.style.display = 'none' }}
+          />
+        </div>
+        <div style={{ position: 'absolute', bottom: 72, left: 0, right: 0, display: 'flex', justifyContent: 'center', gap: 4, zIndex: 3, flexWrap: 'wrap', padding: '0 8px' }}>
+          {products.slice(0, Math.min(products.length, 10)).map((_, i) => (
+            <button
+              key={i}
+              onClick={(e) => { e.stopPropagation(); setActiveIndex(i); setFading(false) }}
+              style={{ width: i === activeIndex ? 14 : 5, height: 5, borderRadius: 3, background: i === activeIndex ? '#C9A84C' : '#d1d5db', border: 'none', cursor: 'pointer', padding: 0, transition: 'all 0.2s', flexShrink: 0 }}
+            />
+          ))}
+        </div>
+        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, zIndex: 2, background: 'linear-gradient(to top, rgba(5,12,28,0.88) 0%, rgba(5,12,28,0.5) 70%, transparent 100%)', padding: '28px 12px 12px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+          <span style={{ fontSize: 14, fontWeight: 700, color: '#C9A84C', fontFamily: "'DM Sans', sans-serif" }}>₹{p.price?.toLocaleString()}</span>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ─── Main Product Detail Page ─────────────────────────────────────────────────
 export default function ProductDetail() {
   const { id: productId } = useParams()
   const navigate = useNavigate()
+  const { customer } = useAuthStore()
+  const setItems = useBagStore((state) => state.setItems)
+  const addGuestItem = useBagStore((state) => state.addGuestItem)
   const [product, setProduct] = useState(null)
   const [ratingsData, setRatingsData] = useState(null)
   const [loading, setLoading] = useState(true)
   const [sliderOpen, setSliderOpen] = useState(false)
   const [sliderIndex, setSliderIndex] = useState(0)
   const [selectedSize, setSelectedSize] = useState(null)
-  const [wishlist, setWishlist] = useState(false)
+  const [showWishlistModal, setShowWishlistModal] = useState(false)
+  const { toggle: toggleWishlist, isWishlisted } = useWishlistStore()
+  const wishlisted = product ? isWishlisted(product.id ?? productId) : false
   const [expandedSection, setExpandedSection] = useState('ratings')
   const [pincode, setPincode] = useState('560001')
   const [addedToBag, setAddedToBag] = useState(false)
@@ -977,11 +1094,14 @@ export default function ProductDetail() {
   const [bagError, setBagError] = useState('')
   const [addingToBag, setAddingToBag] = useState(false)
   const ratingsRef = useRef(null)
+  const ctaRef = useRef(null)
   const [reviewSliderOpen, setReviewSliderOpen] = useState(false)
   const [reviewImages, setReviewImages] = useState([])
   const [showSizeChart, setShowSizeChart] = useState(false)
   const [deliveryMessage, setDeliveryMessage] = useState('')
   const [checkingDelivery, setCheckingDelivery] = useState(false)
+  const [historyProducts, setHistoryProducts] = useState([])
+  const [relatedProducts, setRelatedProducts] = useState([])
   const hasRatings =
     ratingsData &&
     ratingsData.rating_count > 0 &&
@@ -999,6 +1119,70 @@ export default function ProductDetail() {
       },
     )
   }, [productId])
+
+
+  // Record view + load sliders when product is ready
+  useEffect(() => {
+    if (!product || !productId) return
+    const cid = customer?.customer_id
+    const ORDERS = ORDERS_URL
+    const LISTING = CATALOG_URL
+
+    // Record view (best-effort, only when logged in)
+    if (cid) {
+      authFetch(`${ORDERS}/history/record`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ customer_id: cid, product_id: Number(productId) }),
+      }).catch(() => {})
+    }
+
+    // View history slider
+    if (cid) {
+      fetch(`${ORDERS}/history/${cid}`, { credentials: 'include' })
+        .then(r => r.json())
+        .then(async ({ product_ids = [] }) => {
+          const ids = product_ids.filter(id => String(id) !== String(productId)).slice(0, 12)
+          const products = await Promise.all(
+            ids.map(id =>
+              fetch(`https://products-api.chatoyantvortex.workers.dev/product?id=${id}`)
+                .then(r => r.json())
+                .then(raw => ({
+                  id,
+                  title: raw.title,
+                  price: raw.pricing?.selling_price ?? raw.pricing?.mrp,
+                  image: `https://cdn.vaarria.com/app/images/${raw.inventory?.variants?.[0]?.main_image}`,
+                }))
+                .catch(() => null)
+            )
+          )
+          setHistoryProducts(products.filter(Boolean))
+        })
+        .catch(() => {})
+    }
+
+    // Related products slider — no category filter until listing DB has category_id populated
+    {
+      fetch(`${LISTING}/listings?page_size=13`)
+        .then(r => r.json())
+        .then(data => {
+          const items = (data.listings ?? data.products ?? data.data ?? data ?? [])
+            .filter(p => String(p.id ?? p.product_id) !== String(productId))
+            .slice(0, 12)
+            .map(p => ({
+              id: p.id ?? p.product_id,
+              title: p.title ?? p.name,
+              price: p.selling_price ?? p.price,
+              image: p.main_image
+                ? `https://cdn.vaarria.com/app/images/${p.main_image}`
+                : p.image_url ?? '',
+            }))
+          setRelatedProducts(items)
+        })
+        .catch(() => {})
+    }
+  }, [product, productId, customer])
 
   const checkPincode = async () => {
     if (pincode.length !== 6) {
@@ -1067,15 +1251,39 @@ export default function ProductDetail() {
     try {
       const activeColor = product.colors?.find((c) => c.active)?.name || ''
 
-      const response = await fetch(
-        'https://zq0dbjycx6.execute-api.ap-south-1.amazonaws.com/prod/bags/add-bag-item',
+      if (!customer?.customer_id) {
+        // Guest: save to localStorage, no API call
+        const guestItem = {
+          id: `guest_${product.id}_${selectedSize}_${activeColor}_${Date.now()}`,
+          productId: product.id || '',
+          name: product.name || '',
+          image: product.mediaItems?.[0]?.src || '',
+          size: selectedSize,
+          colorName: activeColor,
+          color: '#f5f5f5',
+          qty: 1,
+          price: product.price || 0,
+          mrp: product.mrp || 0,
+          couponDiscount: 0,
+          discountType: null,
+          returnDays: product.return_days || 7,
+          selected: true,
+        }
+        addGuestItem(guestItem)
+        setAddedToBag(true)
+        setTimeout(() => setAddedToBag(false), 2000)
+        return
+      }
+
+      const response = await authFetch(
+        `${ORDERS_URL}/bags/add-bag-item`,
         {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            customer_id: 1,
+            customer_id: customer.customer_id,
             product_id: product.id || '',
             address_id: null,
             size: selectedSize || '',
@@ -1100,10 +1308,17 @@ export default function ProductDetail() {
       }
 
       setAddedToBag(true)
+      setTimeout(() => setAddedToBag(false), 2000)
 
-      setTimeout(() => {
-        setAddedToBag(false)
-      }, 2000)
+      // refresh bag store so Navbar count updates instantly
+      authFetch(`${ORDERS_URL}/bags/customers/${customer.customer_id}/bag`)
+        .then(r => r.json())
+        .then(data => {
+          if (Array.isArray(data?.items)) {
+            setItems(data.items.map(item => ({ id: item.bag_id, qty: item.quantity })))
+          }
+        })
+        .catch(() => {})
     } catch (error) {
       setBagError(error.message || 'Unable to add item to bag')
     } finally {
@@ -1357,7 +1572,7 @@ export default function ProductDetail() {
         @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Playfair+Display:wght@600;700&display=swap');
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         .pdp-page { min-height: 100vh; background: #fff; font-family: 'DM Sans', sans-serif; color: #1f2937; }
-        .pdp-breadcrumb { padding: 11px clamp(16px, 3%, 32px); font-size: 12px; color: #9ca3af; display: flex; gap: 6px; align-items: center; border-bottom: 1px solid #fff; background: #fff; max-width: 1536px; margin: 0 auto; box-sizing: border-box; width: 100%; }
+        .pdp-breadcrumb { padding: 11px 2%; font-size: 12px; color: #9ca3af; display: flex; gap: 6px; align-items: center; border-bottom: 1px solid #fff; background: #fff; }
         .pdp-breadcrumb a {
   color: #9ca3af;
   text-decoration: none;
@@ -1377,7 +1592,8 @@ export default function ProductDetail() {
 }
         .pdp-breadcrumb-sep { color: #d1d5db; font-size: 10px; }
         .pdp-breadcrumb-current { color: #374151; font-weight: 500; }
-        .pdp-outer { display: flex; align-items: flex-start; max-width: 1536px; margin: 0 auto; padding: 0 clamp(16px, 3%, 32px); }
+        .pdp-page-layout { display: flex; align-items: flex-start; padding-left: 2%; }
+        .pdp-outer { flex: 1; display: flex; align-items: flex-start; min-width: 0; padding-right: 12px; }
         .pdp-images-col { width: 55%; min-width: 0; padding-top: 12px; }
         .pdp-info-col {
   width: 45%;
@@ -1407,11 +1623,12 @@ export default function ProductDetail() {
         .pdp-size-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
         .pdp-section-label { font-size: 13px; font-weight: 700; color: #374151; text-transform: uppercase; letter-spacing: 0.5px; }
         .pdp-size-guide { font-size: 13px; color: #050C1C; font-weight: 600; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
-        .pdp-sizes { display: flex; flex-wrap: wrap; gap: 10px; }
+        .pdp-sizes { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 16px; }
         .pdp-size-btn { width: 56px; height: 56px; border-radius: 50%; border: 1.5px solid #e5e7eb; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 500; color: #374151; cursor: pointer; transition: all 0.15s; background: #fff; font-family: 'DM Sans', sans-serif; }
         .pdp-size-btn:hover:not([disabled]) { border-color: #C9A84C; color: #050C1C; }
         .pdp-size-btn.selected { border-color: #C9A84C; color: #C9A84C; background: #050C1C; font-weight: 700; box-shadow: 0 0 0 3px rgba(201,168,76,0.15); }
-        .pdp-size-btn[disabled] { opacity: 0.28; cursor: not-allowed; border-style: dashed; }
+        .pdp-size-btn[disabled] { cursor: not-allowed; color: #b8bdc4; background: #f3f4f6; border-color: #e5e7eb; background-image: linear-gradient(to top right, transparent calc(50% - 1px), #c4c9cf calc(50% - 1px), #c4c9cf calc(50% + 1px), transparent calc(50% + 1px)); }
+        .pdp-size-btn[disabled]:hover { border-color: #e5e7eb; color: #b8bdc4; }
         .pdp-size-warn { font-size: 12px; color: #f59e0b; margin-top: 8px; font-weight: 500; }
         .pdp-cta { display: flex; gap: 10px; margin: 22px 0 18px; }
         .pdp-btn-bag { flex: 1; height: 54px; border: 1.5px solid #C9A84C; border-radius: 4px; font-size: 15px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; letter-spacing: 0.8px; text-transform: uppercase; background: #050C1C; color: #C9A84C; transition: all 0.2s; box-shadow: none; font-family: 'DM Sans', sans-serif; }
@@ -1424,7 +1641,7 @@ export default function ProductDetail() {
         .pdp-trust { display: flex; border: 1px solid #f3f4f6; border-radius: 8px; overflow: hidden; margin-bottom: 20px; }
         .pdp-trust-item { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 5px; padding: 14px 8px; border-right: 1px solid #f3f4f6; text-align: center; background: #fafafa; }
         .pdp-trust-item:last-child { border-right: none; }
-        .pdp-trust-label { font-size: 11px; color: #6b7280; font-weight: 500; }
+        .pdp-trust-label { font-size: 11px; color: #6b7280; font-weight: 500; text-align: center; line-height: 1.4; }
         .pdp-delivery { border: 1px solid #f3f4f6; border-radius: 8px; padding: 16px; margin-bottom: 20px; background: #fafafa; }
         .pdp-delivery-title { font-size: 13px; font-weight: 700; color: #374151; display: flex; align-items: center; gap: 6px; margin-bottom: 10px; }
         .pdp-pincode-row { display: flex; gap: 8px; align-items: center; }
@@ -1439,19 +1656,7 @@ export default function ProductDetail() {
         .pdp-accordion-body { padding-bottom: 20px; }
         .pdp-toast { position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%); background: #050C1C; color: #C9A84C; border: 1.5px solid #C9A84C; padding: 13px 32px; border-radius: 24px; font-size: 14px; font-weight: 600; z-index: 100; box-shadow: 0 8px 28px rgba(5,12,28,0.35); animation: toastIn 0.3s ease; font-family: 'DM Sans', sans-serif; }
         @keyframes toastIn { from { opacity: 0; transform: translateX(-50%) translateY(16px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
-        @media (max-width: 900px) { .pdp-outer {
-  display: flex;
-  align-items: flex-start;
-  max-width: 1440px;
-  margin: 0 auto;
-  padding: 0 clamp(16px, 6%, 86px);
-} .pdp-images-col { width: 100%; } .pdp-info-col {
-  width: 48%;
-  min-width: 0;
-  padding: 0px 48px 48px 40px;
-  border-left: 1px solid #f3f4f6;
-  background: #fff;
-} .pdp-breadcrumb { padding: 10px 16px; } }
+@media (max-width: 900px) { .pdp-page-layout { flex-direction: column; padding-left: 0; } .pdp-outer { flex: none; width: 100%; padding-right: 0; flex-direction: column; } .pdp-images-col { width: 100%; } .pdp-info-col { width: 100%; padding: 16px; border-left: none; } .pdp-breadcrumb { padding: 10px 4%; } .pdp-featured-banner { display: none; } }
       `}</style>
 
       <div className='pdp-page'>
@@ -1465,9 +1670,9 @@ export default function ProductDetail() {
 
           <span
             style={{ cursor: 'pointer' }}
-            onClick={() => navigate(`/category/${product.categoryId}`)}
+            onClick={() => navigate('/products')}
           >
-            {product.category}
+            {product.category || 'All Products'}
           </span>
 
           <span className='pdp-breadcrumb-sep'>›</span>
@@ -1475,6 +1680,7 @@ export default function ProductDetail() {
           <span className='pdp-breadcrumb-current'>{product.name}</span>
         </div>
 
+        <div className='pdp-page-layout'>
         <div className='pdp-outer'>
           {/* ─ LEFT: Gallery with thumbnail strip ─ */}
           <div className='pdp-images-col'>
@@ -1496,6 +1702,18 @@ export default function ProductDetail() {
               <div style={{ flex: 1, paddingRight: 16 }}>
                 <div className='pdp-brand-name'>{product.brand}</div>
                 <div className='pdp-product-subtitle'>{product.name}</div>
+                {isOutOfStock && (
+                  <span
+                    style={{
+                      display: 'inline-block', marginTop: 10,
+                      background: 'rgba(10,10,10,0.9)', color: '#fff',
+                      fontSize: 12, fontWeight: 800, letterSpacing: '0.12em',
+                      padding: '5px 12px', borderRadius: 4, textTransform: 'uppercase',
+                    }}
+                  >
+                    Sold Out
+                  </span>
+                )}
               </div>
               <button
                 style={{
@@ -1541,6 +1759,44 @@ export default function ProductDetail() {
             </div>
             <div className='pdp-tax'>inclusive of all taxes</div>
 
+            {/* ── Coupon-applied price preview ── */}
+            {product.coupon && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 10, background: '#F0FAF4', border: '1px dashed #10b981', borderRadius: 10, padding: '8px 12px', flexWrap: 'wrap' }}>
+                <span style={{ fontSize: 18, fontWeight: 800, color: '#065f46' }}>
+                  ₹{product.coupon.effectivePrice.toLocaleString()}
+                </span>
+                <span style={{ fontSize: 12, color: '#047857', fontWeight: 600 }}>
+                  with code{' '}
+                  <span style={{ background: '#10b981', color: '#fff', borderRadius: 6, padding: '1px 8px', fontWeight: 700, letterSpacing: '0.04em' }}>
+                    {product.coupon.code}
+                  </span>{' '}
+                  at checkout
+                </span>
+              </div>
+            )}
+
+            {/* ── Savings + trust badges ── */}
+            <div style={{ display: 'flex', gap: 8, marginTop: 10, flexWrap: 'wrap' }}>
+              {product.mrp > product.price && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#FFF7ED', border: '1px solid #fdba74', borderRadius: 20, padding: '4px 12px', fontSize: 12, color: '#9a3412', fontWeight: 600 }}>
+                  💰 You save{' '}
+                  <span style={{ fontWeight: 700 }}>
+                    ₹{(product.mrp - product.price).toLocaleString()}
+                  </span>
+                  {' '}on this order
+                </div>
+              )}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#F0FAF4', border: '1px solid #6ee7b7', borderRadius: 20, padding: '4px 12px', fontSize: 12, color: '#065f46', fontWeight: 600 }}>
+                🚚 Free Delivery
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#EFF6FF', border: '1px solid #93c5fd', borderRadius: 20, padding: '4px 12px', fontSize: 12, color: '#1e40af', fontWeight: 600 }}>
+                💵 Cash on Delivery
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#FAF5FF', border: '1px solid #d8b4fe', borderRadius: 20, padding: '4px 12px', fontSize: 12, color: '#6b21a8', fontWeight: 600 }}>
+                🔁 7-Day Easy Returns
+              </div>
+            </div>
+
             <div className='pdp-hr' />
 
             <div className='pdp-offers-title'>Available Offers</div>
@@ -1573,6 +1829,7 @@ export default function ProductDetail() {
                     key={s}
                     className={`pdp-size-btn ${selectedSize === s ? 'selected' : ''}`}
                     disabled={!avail}
+                    title={avail ? undefined : 'Sold out'}
                     onClick={() => avail && setSelectedSize(s)}
                   >
                     {s}
@@ -1580,15 +1837,14 @@ export default function ProductDetail() {
                 )
               })}
             </div>
+            {/* per-size stock counter */}
+            {selectedSize && product.sizeQuantities?.[selectedSize] > 0 && product.sizeQuantities[selectedSize] <= 6 && (
+              <div style={{ fontSize: 12, color: '#b45309', fontWeight: 600, marginTop: 8, marginBottom: 16, display: 'flex', alignItems: 'center', gap: 5 }}>
+                <span style={{ fontSize: 14 }}>🔥</span> Only {product.sizeQuantities[selectedSize]} left in size {selectedSize} — grab it fast!
+              </div>
+            )}
             {isOutOfStock && (
-              <div
-                style={{
-                  fontSize: 12,
-                  color: '#ef4444',
-                  marginTop: 8,
-                  fontWeight: 600,
-                }}
-              >
+              <div style={{ fontSize: 12, color: '#ef4444', marginTop: 8, fontWeight: 600 }}>
                 Out of stock
               </div>
             )}
@@ -1612,7 +1868,44 @@ export default function ProductDetail() {
               </div>
             )}
 
-            <div className='pdp-cta'>
+            {/* ── Top review quote ── */}
+            {hasRatings && ratingsData.reviews[0] && (
+              <div style={{ margin: '14px 0 10px', padding: '12px 14px', background: '#FDFAF3', border: '1px solid #E8D9A0', borderRadius: 8, position: 'relative' }}>
+                <div style={{ fontSize: 28, color: '#C9A84C', lineHeight: 1, position: 'absolute', top: 6, left: 10, opacity: 0.5, fontFamily: 'Georgia, serif' }}>"</div>
+                <p style={{ fontSize: 12.5, color: '#374151', lineHeight: 1.65, margin: '6px 0 8px', paddingLeft: 16 }}>
+                  {ratingsData.reviews[0].body}
+                </p>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 2, background: 'linear-gradient(135deg,#10b981,#059669)', color: '#fff', borderRadius: 8, padding: '1px 7px', fontSize: 11, fontWeight: 600 }}>
+                    <Star size={9} fill='#fff' strokeWidth={0} /> {ratingsData.reviews[0].rating}
+                  </span>
+                  <span style={{ fontSize: 12, color: '#6b7280', fontWeight: 600 }}>{ratingsData.reviews[0].user}</span>
+                  <span style={{ fontSize: 11, color: '#9ca3af' }}>· Verified Buyer</span>
+                </div>
+                <button
+                  onClick={scrollToRatings}
+                  style={{ marginTop: 10, background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 700, color: '#C9A84C', letterSpacing: '0.04em', padding: 0, textDecoration: 'underline', textUnderlineOffset: 3 }}
+                >
+                  See all {ratingsData?.review_count} reviews ↓
+                </button>
+              </div>
+            )}
+
+            {/* ── Reassurance strip ── */}
+            <div style={{ display: 'flex', gap: 0, marginBottom: 12, border: '1px solid #e8e0d0', borderRadius: 8, overflow: 'hidden', background: '#fafaf8' }}>
+              {[
+                { icon: <ArrowLeftRight size={15} color='#C9A84C' />, label: "Wrong size? We'll swap it" },
+                { icon: <Wallet size={15} color='#C9A84C' />, label: 'Pay when it arrives' },
+                { icon: <RotateCcw size={15} color='#C9A84C' />, label: "Don't love it? Return it — no questions asked" },
+              ].map((item, i) => (
+                <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5, padding: '10px 8px', borderRight: i < 2 ? '1px solid #e8e0d0' : 'none' }}>
+                  {item.icon}
+                  <span style={{ fontSize: 10.5, color: '#374151', fontWeight: 600, textAlign: 'center', lineHeight: 1.35 }}>{item.label}</span>
+                </div>
+              ))}
+            </div>
+
+            <div className='pdp-cta' ref={ctaRef}>
               <button
                 className={`pdp-btn-bag ${addedToBag ? 'added' : ''}`}
                 onClick={handleAddToBag}
@@ -1628,13 +1921,16 @@ export default function ProductDetail() {
                       : 'Add to Bag'}
               </button>
               <button
-                className={`pdp-btn-wishlist ${wishlist ? 'active' : ''}`}
-                onClick={() => setWishlist((w) => !w)}
+                className={`pdp-btn-wishlist ${wishlisted ? 'active' : ''}`}
+                onClick={() => {
+                  if (!customer) { setShowWishlistModal(true); return }
+                  toggleWishlist(customer.customer_id, product.id ?? productId)
+                }}
               >
                 <Heart
                   size={20}
-                  color={wishlist ? '#C9A84C' : '#6b7280'}
-                  fill={wishlist ? '#C9A84C' : 'none'}
+                  color={wishlisted ? '#C9A84C' : '#6b7280'}
+                  fill={wishlisted ? '#C9A84C' : 'none'}
                 />
               </button>
             </div>
@@ -1642,15 +1938,15 @@ export default function ProductDetail() {
             <div className='pdp-trust'>
               <div className='pdp-trust-item'>
                 <Truck size={18} color='#C9A84C' />
-                <span className='pdp-trust-label'>Free Delivery</span>
-              </div>
-              <div className='pdp-trust-item'>
-                <RefreshCw size={18} color='#C9A84C' />
-                <span className='pdp-trust-label'>7-Day Returns</span>
+                <span className='pdp-trust-label'>Ships free, always</span>
               </div>
               <div className='pdp-trust-item'>
                 <Shield size={18} color='#C9A84C' />
-                <span className='pdp-trust-label'>100% Genuine</span>
+                <span className='pdp-trust-label'>Fine fabric. Fair price. No compromise.</span>
+              </div>
+              <div className='pdp-trust-item'>
+                <CreditCard size={18} color='#C9A84C' />
+                <span className='pdp-trust-label'>Your money is safe · Instant refunds</span>
               </div>
             </div>
 
@@ -1704,7 +2000,7 @@ export default function ProductDetail() {
               </div>
             )}
 
-            {!isOutOfStock && product.availableSizes?.length < product.sizes?.length && (
+            {!isOutOfStock && product.availableSizes?.length > 0 && product.availableSizes?.length < 3 && (
               <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10, padding: '7px 10px', background: '#FFF8EC', border: '1px solid #F0D080', borderRadius: 5 }}>
                 <span style={{ fontSize: 15 }}>🔥</span>
                 <span style={{ fontSize: 12, color: '#92400e', fontWeight: 600 }}>Only a few sizes left — selling fast!</span>
@@ -1740,8 +2036,54 @@ export default function ProductDetail() {
               ))}
             </div>
           </div>
-        </div>
+        </div>{/* pdp-outer */}
+        <FeaturedBanner productId={productId} />
+        </div>{/* pdp-page-layout */}
       </div>
+
+      {/* ── View History Slider ── */}
+      {/* ── Related Products Slider ── */}
+      {relatedProducts.length > 0 && (
+        <div style={{ maxWidth: 1536, margin: '0 auto', padding: '32px clamp(16px,3%,32px) 8px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
+            <div style={{ height: 1, flex: 1, background: '#e8e0d0' }} />
+            <span style={{ fontSize: 13, fontWeight: 700, color: '#050C1C', letterSpacing: '0.12em', textTransform: 'uppercase', fontFamily: "'Playfair Display', Georgia, serif", whiteSpace: 'nowrap' }}>You May Also Like</span>
+            <div style={{ height: 1, flex: 1, background: '#e8e0d0' }} />
+          </div>
+          <div style={{ display: 'flex', gap: 16, overflowX: 'auto', scrollbarWidth: 'none', paddingBottom: 8 }}>
+            {relatedProducts.map(item => (
+              <div key={item.id} style={{ flexShrink: 0, width: 160, cursor: 'pointer' }} onClick={() => window.open(`/product/${item.id}`, '_blank')}>
+                <div style={{ width: 160, height: 213, borderRadius: 8, overflow: 'hidden', background: '#f3f0eb', border: '1px solid #e8e0d0', marginBottom: 8 }}>
+                  <img src={item.image} alt={item.title} style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top' }} onError={e => { e.target.style.display = 'none' }} />
+                </div>
+                <div style={{ fontSize: 13, fontWeight: 600, color: '#1f2937', lineHeight: 1.3, WebkitLineClamp: 2, display: '-webkit-box', WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{item.title}</div>
+                <div style={{ fontSize: 13, fontWeight: 700, color: '#C9A84C', marginTop: 4 }}>₹{item.price}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {historyProducts.length > 0 && (
+        <div style={{ maxWidth: 1536, margin: '0 auto', padding: '24px clamp(16px,3%,32px) 48px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
+            <div style={{ height: 1, flex: 1, background: '#e8e0d0' }} />
+            <span style={{ fontSize: 13, fontWeight: 700, color: '#050C1C', letterSpacing: '0.12em', textTransform: 'uppercase', fontFamily: "'Playfair Display', Georgia, serif", whiteSpace: 'nowrap' }}>Recently Viewed</span>
+            <div style={{ height: 1, flex: 1, background: '#e8e0d0' }} />
+          </div>
+          <div style={{ display: 'flex', gap: 16, overflowX: 'auto', scrollbarWidth: 'none', paddingBottom: 8 }}>
+            {historyProducts.map(item => (
+              <div key={item.id} style={{ flexShrink: 0, width: 160, cursor: 'pointer' }} onClick={() => window.open(`/product/${item.id}`, '_blank')}>
+                <div style={{ width: 160, height: 213, borderRadius: 8, overflow: 'hidden', background: '#f3f0eb', border: '1px solid #e8e0d0', marginBottom: 8 }}>
+                  <img src={item.image} alt={item.title} style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top' }} onError={e => { e.target.style.display = 'none' }} />
+                </div>
+                <div style={{ fontSize: 13, fontWeight: 600, color: '#1f2937', lineHeight: 1.3, WebkitLineClamp: 2, display: '-webkit-box', WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{item.title}</div>
+                <div style={{ fontSize: 13, fontWeight: 700, color: '#C9A84C', marginTop: 4 }}>₹{item.price}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       <Footer />
 
@@ -1763,6 +2105,17 @@ export default function ProductDetail() {
       )}
 
       {addedToBag && <div className='pdp-toast'>✓ Added to your bag!</div>}
+
+      {showWishlistModal && (
+        <WishlistLoginModal
+          onClose={() => setShowWishlistModal(false)}
+          onLoggedIn={(c) => {
+            setShowWishlistModal(false)
+            toggleWishlist(c.customer_id, product.id ?? productId)
+          }}
+        />
+      )}
+
 
       {showSizeChart && (
         <div

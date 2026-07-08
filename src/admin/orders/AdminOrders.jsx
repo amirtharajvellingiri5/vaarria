@@ -13,7 +13,6 @@ import {
   MapPin,
   Phone,
   CreditCard,
-  ExternalLink,
   IndianRupee,
   ChevronLeft,
   ChevronRight,
@@ -22,8 +21,11 @@ import {
 
 import AdminNav from '../AdminNav'
 
-const ORDERS_API_BASE =
-  'https://zq0dbjycx6.execute-api.ap-south-1.amazonaws.com/prod'
+import { ORDERS_URL } from '../../config'
+import { useAuthStore } from '../../store/authStore'
+import { COURIERS, courierUrl } from '../../couriers'
+const ORDERS_API_BASE = ORDERS_URL
+const authHeaders = () => ({ Authorization: `Bearer ${useAuthStore.getState().token || ''}` })
 const CDN = 'https://cdn.vaarria.com/app/images/'
 const PER_PAGE = 10
 
@@ -49,25 +51,24 @@ const STATUS_STYLES = {
   RETURNED:  'bg-stone-500/10 text-stone-400 border-stone-500/20',
 }
 
-// Indian courier providers — {id} is replaced with the tracking/AWB number
-const COURIERS = [
-  { name: 'Shiprocket', url: 'https://shiprocket.co/tracking/{id}' },
-  { name: 'Delhivery', url: 'https://www.delhivery.com/track/package/{id}' },
-  { name: 'Blue Dart', url: 'https://www.bluedart.com/trackdartresultthirdparty?trackFor=0&trackNo={id}' },
-  { name: 'DTDC', url: 'https://www.dtdc.in/tracking.asp?strCnno={id}' },
-  { name: 'Ekart', url: 'https://ekartlogistics.com/shipmenttrack/{id}' },
-  { name: 'XpressBees', url: 'https://www.xpressbees.com/shipment/tracking?awbNo={id}' },
-  { name: 'India Post', url: 'https://www.indiapost.gov.in/_layouts/15/DOP.Portal.Tracking/TrackConsignment.aspx' },
-  { name: 'Other', url: '' },
-]
+const formatINR = (n) => `₹${Number(n || 0).toLocaleString('en-IN')}`
 
-const courierUrl = (provider, trackingId) => {
-  const courier = COURIERS.find((c) => c.name === provider)
-  if (!courier?.url) return ''
-  return courier.url.replace('{id}', encodeURIComponent(trackingId || ''))
+// backend stamp is yyyymmddhhmmssmmm, not ISO — parse the first 14 chars manually
+const parseStamp = (s) => {
+  if (!s || s.length < 14) return null
+  return new Date(
+    +s.slice(0, 4), +s.slice(4, 6) - 1, +s.slice(6, 8),
+    +s.slice(8, 10), +s.slice(10, 12), +s.slice(12, 14),
+  )
 }
 
-const formatINR = (n) => `₹${Number(n || 0).toLocaleString('en-IN')}`
+const ARCHIVE_AFTER_DAYS = 8
+const isArchived = (o) => {
+  if (o.status !== 'DELIVERED') return false
+  const deliveredAt = parseStamp(o.updated_at)
+  if (!deliveredAt) return false
+  return Date.now() - deliveredAt.getTime() >= ARCHIVE_AFTER_DAYS * 86400000
+}
 
 const addressLines = (a) =>
   [
@@ -240,7 +241,7 @@ function QCFailModal({ order, item, onClose, onDone, setToast }) {
         `${ORDERS_API_BASE}/admin/orders/${order.id}/items/${item.id}/qc-fail`,
         {
           method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', ...authHeaders() },
           body: JSON.stringify({ reason: reason.trim() }),
         },
       )
@@ -336,29 +337,143 @@ function QCFailModal({ order, item, onClose, onDone, setToast }) {
   )
 }
 
+// ─── Ship modal ───────────────────────────────────────────────────────────────
+
+function ShipModal({ order, onClose, onDone, setToast }) {
+  const [provider, setProvider] = useState(order.tracking?.provider || 'Shiprocket')
+  const [trackingId, setTrackingId] = useState(order.tracking?.id || '')
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
+
+  const submit = async () => {
+    if (!trackingId.trim()) return
+    setSaving(true)
+    setError('')
+    try {
+      // Save tracking first so the SHIPPED dispatch SMS picks up the courier/AWB info.
+      const trackRes = await fetch(`${ORDERS_API_BASE}/admin/orders/${order.id}/tracking`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', ...authHeaders() },
+        body: JSON.stringify({
+          provider,
+          tracking_id: trackingId.trim(),
+          tracking_url: courierUrl(provider, trackingId.trim()) || null,
+        }),
+      })
+      const trackData = await trackRes.json().catch(() => ({}))
+      if (!trackRes.ok) throw new Error(trackData.detail || 'Failed to save tracking')
+
+      // Only fire the status transition if the order isn't already SHIPPED (or beyond) —
+      // this modal also serves as the general "Update Tracking" editor.
+      if (order.status !== 'SHIPPED') {
+        const statusRes = await fetch(`${ORDERS_API_BASE}/admin/orders/${order.id}/status`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json', ...authHeaders() },
+          body: JSON.stringify({ status: 'SHIPPED' }),
+        })
+        const statusData = await statusRes.json().catch(() => ({}))
+        if (!statusRes.ok) throw new Error(statusData.detail || 'Failed to update status')
+      }
+
+      setToast(order.status !== 'SHIPPED' ? 'Order marked as Shipped' : 'Tracking updated')
+      onDone()
+    } catch (e) {
+      setError(e.message || 'Update failed')
+      setSaving(false)
+    }
+  }
+
+  const isTransition = order.status !== 'SHIPPED'
+
+  return (
+    <div
+      onClick={(e) => e.target === e.currentTarget && !saving && onClose()}
+      className='fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4'
+    >
+      <div className='w-full max-w-md bg-stone-950 border border-stone-800 rounded-2xl overflow-hidden shadow-2xl'>
+        <div className='flex items-center gap-3 px-6 py-4 border-b border-stone-800 bg-stone-900/50'>
+          <div className='w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center'>
+            <Truck size={14} className='text-amber-400' />
+          </div>
+          <div>
+            <h3 className='text-sm font-bold text-stone-100'>{isTransition ? 'Mark Order as Shipped' : 'Update Tracking'}</h3>
+            <p className='text-xs text-stone-500'>Order #{order.id}</p>
+          </div>
+        </div>
+
+        <div className='p-6 space-y-3'>
+          <div className='grid grid-cols-2 gap-2'>
+            <Field label='Courier'>
+              <select
+                value={provider}
+                onChange={(e) => setProvider(e.target.value)}
+                className={inputCls}
+              >
+                {COURIERS.map((c) => (
+                  <option key={c.name} value={c.name}>{c.name}</option>
+                ))}
+              </select>
+            </Field>
+            <Field label='Tracking / AWB ID'>
+              <input
+                value={trackingId}
+                onChange={(e) => setTrackingId(e.target.value)}
+                placeholder='AWB123456789'
+                className={inputCls}
+              />
+            </Field>
+          </div>
+
+          {error && (
+            <p className='text-xs text-rose-400 flex items-center gap-1.5'>
+              <AlertTriangle size={12} /> {error}
+            </p>
+          )}
+        </div>
+
+        <div className='flex items-center justify-end gap-3 px-6 py-4 border-t border-stone-800 bg-stone-900/30'>
+          <button
+            onClick={onClose}
+            disabled={saving}
+            className='px-4 py-2 rounded-xl text-sm font-semibold border border-stone-700 text-stone-300 hover:border-stone-500 transition-colors disabled:opacity-40'
+          >
+            Cancel
+          </button>
+          <button
+            onClick={submit}
+            disabled={saving || !trackingId.trim()}
+            className='flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold bg-gradient-to-r from-rose-500 to-pink-600 text-white transition-colors disabled:opacity-50'
+          >
+            {saving ? (
+              <>
+                <Loader2 size={13} className='animate-spin' /> Saving…
+              </>
+            ) : isTransition ? (
+              'Mark Shipped'
+            ) : (
+              'Save Tracking'
+            )}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ─── Expanded order panel ─────────────────────────────────────────────────────
 
 function OrderActions({ order, onUpdated, setToast }) {
   const [status, setStatus] = useState(order.status)
   const [price, setPrice] = useState(String(order.total))
-  const [provider, setProvider] = useState(order.tracking?.provider || 'Shiprocket')
-  const [trackingId, setTrackingId] = useState(order.tracking?.id || '')
-  const [trackingUrl, setTrackingUrl] = useState(order.tracking?.url || '')
-  const [urlTouched, setUrlTouched] = useState(Boolean(order.tracking?.url))
   const [saving, setSaving] = useState('')
-
-  useEffect(() => {
-    if (!urlTouched) {
-      setTrackingUrl(courierUrl(provider, trackingId))
-    }
-  }, [provider, trackingId, urlTouched])
+  const [showShipModal, setShowShipModal] = useState(false)
 
   const call = async (key, url, body) => {
     setSaving(key)
     try {
       const res = await fetch(url, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...authHeaders() },
         body: body ? JSON.stringify(body) : undefined,
       })
       const data = await res.json().catch(() => ({}))
@@ -387,9 +502,13 @@ function OrderActions({ order, onUpdated, setToast }) {
             ))}
           </select>
           <button
-            onClick={() =>
+            onClick={() => {
+              if (status === 'SHIPPED' && order.status !== 'SHIPPED') {
+                setShowShipModal(true)
+                return
+              }
               call('status', `${ORDERS_API_BASE}/admin/orders/${order.id}/status`, { status })
-            }
+            }}
             disabled={saving === 'status' || status === order.status}
             className='px-4 py-2 rounded-lg text-xs font-semibold bg-gradient-to-r from-rose-500 to-pink-600 text-white disabled:opacity-40 disabled:cursor-not-allowed whitespace-nowrap'
           >
@@ -397,6 +516,18 @@ function OrderActions({ order, onUpdated, setToast }) {
           </button>
         </div>
       </Field>
+
+      {showShipModal && (
+        <ShipModal
+          order={order}
+          onClose={() => setShowShipModal(false)}
+          onDone={() => {
+            setShowShipModal(false)
+            onUpdated()
+          }}
+          setToast={setToast}
+        />
+      )}
 
       {/* Price */}
       <Field label='Total Amount (₹)'>
@@ -423,74 +554,13 @@ function OrderActions({ order, onUpdated, setToast }) {
       </Field>
 
       {/* Tracking */}
-      <div className='border border-stone-800 rounded-xl p-3 space-y-3 bg-stone-900/40'>
-        <p className='text-[10px] font-semibold uppercase tracking-widest text-stone-500 flex items-center gap-1.5'>
-          <Truck size={12} /> Tracking
-        </p>
-        <div className='grid grid-cols-2 gap-2'>
-          <Field label='Courier'>
-            <select
-              value={provider}
-              onChange={(e) => {
-                setProvider(e.target.value)
-                setUrlTouched(false)
-              }}
-              className={inputCls}
-            >
-              {COURIERS.map((c) => (
-                <option key={c.name} value={c.name}>{c.name}</option>
-              ))}
-            </select>
-          </Field>
-          <Field label='Tracking / AWB ID'>
-            <input
-              value={trackingId}
-              onChange={(e) => {
-                setTrackingId(e.target.value)
-                setUrlTouched(false)
-              }}
-              placeholder='AWB123456789'
-              className={inputCls}
-            />
-          </Field>
-        </div>
-        <Field label='Tracking URL'>
-          <input
-            value={trackingUrl}
-            onChange={(e) => {
-              setTrackingUrl(e.target.value)
-              setUrlTouched(true)
-            }}
-            placeholder='https://…'
-            className={inputCls}
-          />
-        </Field>
-        <div className='flex items-center gap-2'>
-          <button
-            onClick={() =>
-              call('tracking', `${ORDERS_API_BASE}/admin/orders/${order.id}/tracking`, {
-                provider,
-                tracking_id: trackingId,
-                tracking_url: trackingUrl || null,
-              })
-            }
-            disabled={saving === 'tracking' || !trackingId.trim()}
-            className='px-4 py-2 rounded-lg text-xs font-semibold bg-gradient-to-r from-rose-500 to-pink-600 text-white disabled:opacity-40 disabled:cursor-not-allowed'
-          >
-            {saving === 'tracking' ? <Loader2 size={13} className='animate-spin' /> : 'Save Tracking'}
-          </button>
-          {trackingUrl && (
-            <a
-              href={trackingUrl}
-              target='_blank'
-              rel='noreferrer'
-              className='flex items-center gap-1 text-xs text-stone-400 hover:text-rose-400'
-            >
-              <ExternalLink size={12} /> Test link
-            </a>
-          )}
-        </div>
-      </div>
+      <button
+        onClick={() => setShowShipModal(true)}
+        className='w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-xs font-semibold border border-stone-700 text-stone-300 hover:border-rose-500/50 hover:text-rose-400 transition-all'
+      >
+        <Truck size={13} />
+        {order.tracking?.id ? `Update Tracking (${order.tracking.provider} · ${order.tracking.id})` : 'Update Tracking'}
+      </button>
 
       {/* Invoice */}
       <button
@@ -693,12 +763,16 @@ export default function AdminOrders() {
   const [paymentFilter, setPaymentFilter] = useState('ALL')
   const [sortDir, setSortDir] = useState('desc')
   const [page, setPage] = useState(1)
+  const [tab, setTab] = useState('active')
 
   const fetchOrders = async () => {
     setLoading(true)
     setError('')
     try {
-      const res = await fetch(`${ORDERS_API_BASE}/admin/orders-full`)
+      // ponytail: token is in-memory only and refreshed async on app load —
+      // wait for it so the first fetch after a hard reload isn't sent unauthenticated
+      if (!useAuthStore.getState().token) await useAuthStore.getState().refreshToken()
+      const res = await fetch(`${ORDERS_API_BASE}/admin/orders-full`, { headers: authHeaders() })
       if (!res.ok) throw new Error(`Error ${res.status}`)
       const json = await res.json()
       setAllOrders(json.orders || [])
@@ -720,7 +794,7 @@ export default function AdminOrders() {
   }, [toast])
 
   const filtered = useMemo(() => {
-    let list = [...allOrders]
+    let list = allOrders.filter((o) => (tab === 'archived' ? isArchived(o) : !isArchived(o)))
 
     if (statusFilter === 'QC_FAILED') {
       list = list.filter((o) =>
@@ -752,7 +826,7 @@ export default function AdminOrders() {
     )
 
     return list
-  }, [allOrders, statusFilter, paymentFilter, search, sortDir])
+  }, [allOrders, tab, statusFilter, paymentFilter, search, sortDir])
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PER_PAGE))
   const safePage = Math.min(page, totalPages)
@@ -760,7 +834,9 @@ export default function AdminOrders() {
 
   useEffect(() => {
     setPage(1)
-  }, [search, statusFilter, paymentFilter])
+  }, [search, statusFilter, paymentFilter, tab])
+
+  const archivedCount = useMemo(() => allOrders.filter(isArchived).length, [allOrders])
 
   const stats = useMemo(() => {
     const paid = allOrders.filter((o) => o.payment_status === 'PAID')
@@ -813,6 +889,26 @@ export default function AdminOrders() {
               </p>
               <p className={`text-xl font-bold ${color}`}>{val}</p>
             </div>
+          ))}
+        </div>
+
+        {/* Tabs */}
+        <div className='flex gap-2'>
+          {[
+            { key: 'active', label: 'Active', count: stats.total - archivedCount },
+            { key: 'archived', label: 'Archived', count: archivedCount },
+          ].map(({ key, label, count }) => (
+            <button
+              key={key}
+              onClick={() => setTab(key)}
+              className={`px-4 py-2 rounded-xl text-sm font-semibold border transition-colors ${
+                tab === key
+                  ? 'border-rose-500 text-rose-400 bg-rose-500/10'
+                  : 'border-stone-700 text-stone-400 hover:border-stone-500'
+              }`}
+            >
+              {label} <span className='text-xs opacity-70'>({count})</span>
+            </button>
           ))}
         </div>
 

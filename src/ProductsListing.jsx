@@ -18,11 +18,15 @@ import {
 } from 'lucide-react'
 import Navbar from './Navbar'
 import Footer from './Footer'
+import { useAuthStore } from './store/authStore'
+import { useWishlistStore } from './store/wishlistStore'
+import WishlistLoginModal from './modals/WishlistLoginModal'
 
 import logo from './assets/logo.jpg'
 
 import { COLOR_MAP, formatColorLabel } from './constants/colors'
 import { PRODUCT_CATEGORY_NAMES, ADMIN_CATEGORIES } from './utils/categories'
+import { CATALOG_URL, INVENTORY_URL } from './config'
 
 // ── Swatch helper ─────────────────────────────────────────────────────────────
 const ColorSwatch = ({ name, size = 14 }) => {
@@ -79,7 +83,7 @@ const BASE_URL = 'https://cdn.vaarria.com/app/images/'
 const fetchSiblingCategories = async (categoryId) => {
   if (!categoryId) return []
   const res = await fetch(
-    `https://8184radc92.execute-api.ap-south-1.amazonaws.com/prod/categories/${categoryId}/siblings`,
+    `${INVENTORY_URL}/categories/${categoryId}/siblings`,
   )
   if (!res.ok) return []
   return res.json()
@@ -177,7 +181,7 @@ const fetchProductsByCategory = async (
   if (sortBy && sortMap[sortBy]) params.set('sort', sortMap[sortBy])
 
   const res = await fetch(
-    `https://api.vaarria.com/listings?${params.toString()}`,
+    `${CATALOG_URL}/listings?${params.toString()}`,
   )
   if (!res.ok) return []
 
@@ -468,9 +472,13 @@ const SelectedFiltersBar = ({ selectedFilters, onRemoveFilter }) => {
 }
 
 // ── Product Card ───────────────────────────────────────────────────────────────
-const ProductCard = ({ product, onViewDetails }) => {
+const ProductCard = ({ product, onViewDetails, onWishlistLoginNeeded }) => {
   const addToCart = useCartStore((state) => state.addToCart)
   const [added, setAdded] = useState(false)
+  const { customer } = useAuthStore()
+  const { toggle: toggleWishlist, isWishlisted } = useWishlistStore()
+  const wishlisted = isWishlisted(product.id)
+  const soldOut = (product.stock ?? 0) <= 0
 
   const handleAddToCart = (e) => {
     e.stopPropagation()
@@ -507,13 +515,36 @@ const ProductCard = ({ product, onViewDetails }) => {
           src={product.image}
           alt={product.name}
           className='h-full w-full object-cover object-top'
-          style={{ transition: 'transform 0.3s' }}
-          onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.04)'}
+          style={{ transition: 'transform 0.3s', filter: soldOut ? 'grayscale(0.7)' : 'none', opacity: soldOut ? 0.7 : 1 }}
+          onMouseEnter={e => { if (!soldOut) e.currentTarget.style.transform = 'scale(1.04)' }}
           onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
         />
+        {soldOut && (
+          <div
+            style={{
+              position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              pointerEvents: 'none',
+            }}
+          >
+            <span
+              style={{
+                background: 'rgba(10,10,10,0.82)', color: '#fff',
+                fontSize: '12px', fontWeight: 800, letterSpacing: '0.12em',
+                padding: '6px 14px', borderRadius: '4px', textTransform: 'uppercase',
+              }}
+            >
+              Sold Out
+            </span>
+          </div>
+        )}
         {/* Wishlist */}
         <button
-          onClick={e => e.stopPropagation()}
+          onClick={e => {
+            e.stopPropagation()
+            if (!customer) { onWishlistLoginNeeded?.(product.id); return }
+            toggleWishlist(customer.customer_id, product.id)
+          }}
           style={{
             position: 'absolute', top: '10px', right: '10px',
             background: '#fff', border: 'none', borderRadius: '50%',
@@ -525,7 +556,7 @@ const ProductCard = ({ product, onViewDetails }) => {
           onMouseEnter={e => e.currentTarget.style.background = '#fdf6e3'}
           onMouseLeave={e => e.currentTarget.style.background = '#fff'}
         >
-          <Heart size={17} style={{ color: '#C9A84C', transition: 'fill 0.2s' }} />
+          <Heart size={17} color='#C9A84C' fill={wishlisted ? '#C9A84C' : 'none'} style={{ transition: 'fill 0.2s' }} />
         </button>
       </div>
       <div style={{ padding: '12px 14px 16px' }}>
@@ -699,6 +730,9 @@ const ListingPage = () => {
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 12
   const navigate = useNavigate()
+  const [wishlistModal, setWishlistModal] = useState({ open: false, pendingProductId: null })
+  const { customer } = useAuthStore()
+  const { toggle: toggleWishlist } = useWishlistStore()
 
   const { slug } = useParams()
   const category = ADMIN_CATEGORIES.find((c) => c.slug === slug)
@@ -922,6 +956,7 @@ const ListingPage = () => {
                       onViewDetails={(p) =>
                         window.open(`/product/${p.id}`, '_blank')
                       }
+                      onWishlistLoginNeeded={(pid) => setWishlistModal({ open: true, pendingProductId: pid })}
                     />
                   ))}
                 </div>
@@ -961,6 +996,16 @@ const ListingPage = () => {
       </div>
 
       <Footer />
+
+      {wishlistModal.open && (
+        <WishlistLoginModal
+          onClose={() => setWishlistModal({ open: false, pendingProductId: null })}
+          onLoggedIn={(c) => {
+            setWishlistModal({ open: false, pendingProductId: null })
+            if (wishlistModal.pendingProductId) toggleWishlist(c.customer_id, wishlistModal.pendingProductId)
+          }}
+        />
+      )}
     </div>
   )
 }

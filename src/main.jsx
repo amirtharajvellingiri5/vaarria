@@ -23,8 +23,17 @@ import PaymentFailed from './info/PaymentFailed.jsx'
 import AdminOrders from './admin/orders/AdminOrders.jsx'
 import OrdersPage from './OrdersPage.jsx'
 import ReviewPage from './ReviewPage.jsx'
+import WishlistPage from './WishlistPage.jsx'
+import ProfilePage from './ProfilePage.jsx'
+import { useAuthStore } from './store/authStore'
+import AdminGate from './admin/AdminGate.jsx'
 
 const queryClient = new QueryClient()  // ← add
+
+// Silently restore access token from refresh cookie on page load, then keep it alive
+const { customer, refreshToken, startAutoRefresh } = useAuthStore.getState()
+if (customer) refreshToken()
+startAutoRefresh()
 
 const router = createBrowserRouter([
   { path: '/', element: <Home /> },
@@ -37,15 +46,17 @@ const router = createBrowserRouter([
   { path: '/terms', element: <TermsAndConditionsPage/> },
   {path: '/orders', element: <OrdersPage /> },
   { path: '/review', element: <ReviewPage /> },
+  { path: '/wishlist', element: <WishlistPage /> },
+  { path: '/profile', element: <ProfilePage /> },
   { path: '/refund-policy', element: <RefundPolicyPage/> },
   { path: '/privacy-policy', element: <PrivacyPolicy/> },
-  { path: '/admin/products/new', element: <ProductUpload /> },
-  { path: '/admin/', element: <ProductListings /> },
-  { path: '/admin/products/edit/:id', element: <ProductEdit /> },
-  { path: '/admin/orders', element: <AdminOrders/> },
+  { path: '/admin/products/new', element: <AdminGate><ProductUpload /></AdminGate> },
+  { path: '/admin/', element: <AdminGate><ProductListings /></AdminGate> },
+  { path: '/admin/products/edit/:id', element: <AdminGate><ProductEdit /></AdminGate> },
+  { path: '/admin/orders', element: <AdminGate><AdminOrders/></AdminGate> },
   { path: '/order-success', element: <OrderSuccess /> },
   { path: '/payment-failed', element: <PaymentFailed /> },
-  
+
 ])
 
 createRoot(document.getElementById('root')).render(
