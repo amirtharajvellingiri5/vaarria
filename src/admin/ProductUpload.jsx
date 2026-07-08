@@ -24,6 +24,8 @@ const authHeaders = () => ({ Authorization: `Bearer ${useAuthStore.getState().to
 
 import { COLOR_MAP, formatColorLabel } from '../constants/colors'
 import { MATERIALS } from '../constants/materials'
+import { DESIGNS } from '../constants/designs'
+import { BOTTOM_TYPES } from '../constants/bottomTypes'
 
 const COLOR_OPTIONS = Object.keys(COLOR_MAP).map(formatColorLabel)
 
@@ -31,7 +33,7 @@ const COLOR_OPTIONS = Object.keys(COLOR_MAP).map(formatColorLabel)
 const uid = () => Math.random().toString(36).slice(2)
 
 // ── Sub-components ────────────────────────────────────────────────────────────
-const Select = ({ label, options, value, onChange, required, allowCustom }) => {
+const Select = ({ label, options, value, onChange, required, allowCustom, multiple }) => {
   const [open, setOpen] = useState(false)
   const [search, setSearch] = useState('')
   const searchRef = useRef(null)
@@ -42,6 +44,16 @@ const Select = ({ label, options, value, onChange, required, allowCustom }) => {
         searchRef.current?.focus()
       }, 0)
     }
+  }, [open])
+
+  // Close on outside click
+  useEffect(() => {
+    if (!open) return
+    const handler = (e) => {
+      if (!e.target.closest('[data-select-root]')) setOpen(false)
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
   }, [open])
 
   const filteredOptions = options.filter(
@@ -55,8 +67,31 @@ const Select = ({ label, options, value, onChange, required, allowCustom }) => {
     trimmedSearch &&
     !options.some((o) => o.toLowerCase() === trimmedSearch.toLowerCase())
 
+  const isSelected = (o) => (multiple ? (value || []).includes(o) : value === o)
+
+  const selectOption = (o) => {
+    if (multiple) {
+      const current = value || []
+      onChange(
+        current.includes(o) ? current.filter((c) => c !== o) : [...current, o],
+      )
+      // dropdown stays open so more colors can be picked; trigger toggles it closed
+    } else {
+      onChange(o)
+      setOpen(false)
+      setSearch('')
+    }
+  }
+
+  const triggerLabel = multiple
+    ? (value || []).length
+      ? value.join(', ')
+      : `Select ${label}`
+    : value || `Select ${label}`
+  const triggerFilled = multiple ? (value || []).length > 0 : !!value
+
   return (
-    <div className='relative'>
+    <div className='relative' data-select-root>
       {label && (
         <label className='block text-xs font-semibold uppercase tracking-widest text-rose-400 mb-1'>
           {label} {required && <span className='text-rose-500'>*</span>}
@@ -69,8 +104,8 @@ const Select = ({ label, options, value, onChange, required, allowCustom }) => {
         onClick={() => setOpen(!open)}
         className='w-full flex items-center justify-between px-4 py-3 bg-stone-900 border border-stone-700 rounded-xl text-sm text-stone-200 hover:border-rose-500 transition-colors'
       >
-        <span className={value ? 'text-stone-100' : 'text-stone-500'}>
-          {value || `Select ${label}`}
+        <span className={triggerFilled ? 'text-stone-100' : 'text-stone-500'}>
+          {triggerLabel}
         </span>
         <ChevronDown
           size={14}
@@ -99,15 +134,11 @@ const Select = ({ label, options, value, onChange, required, allowCustom }) => {
               <button
                 key={o}
                 type='button'
-                onClick={() => {
-                  onChange(o)
-                  setOpen(false)
-                  setSearch('')
-                }}
+                onClick={() => selectOption(o)}
                 className='w-full text-left px-4 py-2.5 text-sm text-stone-300 hover:bg-rose-500/10 hover:text-rose-400 transition-colors flex items-center gap-2'
               >
-                {value === o && <Check size={12} className='text-rose-400' />}
-                {value !== o && <span className='w-3' />}
+                {isSelected(o) && <Check size={12} className='text-rose-400' />}
+                {!isSelected(o) && <span className='w-3' />}
                 {o}
               </button>
             ))}
@@ -166,6 +197,16 @@ const Input = ({ placeholder, value, onChange, type = 'text', prefix }) => (
   </div>
 )
 
+const Textarea = ({ placeholder, value, onChange, rows = 4 }) => (
+  <textarea
+    value={value}
+    onChange={(e) => onChange(e.target.value)}
+    placeholder={placeholder}
+    rows={rows}
+    className='w-full px-4 py-3 bg-stone-900 border border-stone-700 rounded-xl text-sm text-stone-100 placeholder-stone-600 focus:outline-none focus:border-rose-500 focus:ring-1 focus:ring-rose-500/30 transition-colors resize-y'
+  />
+)
+
 const Section = ({ icon: Icon, title, subtitle, children }) => (
   <div className='bg-stone-950 border border-stone-800 rounded-2xl overflow-visible'>
     <div className='flex items-center gap-3 px-6 py-4 border-b border-stone-800 bg-stone-900/50'>
@@ -183,7 +224,7 @@ const Section = ({ icon: Icon, title, subtitle, children }) => (
 
 const emptyVariant = () => ({
   id: uid(),
-  color: 'Red',
+  colors: ['Red'],
   sizes: ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL', '4XL', 'Free Size'].map(
     (s) => ({ size: s, quantity: '' }),
   ),
@@ -215,14 +256,20 @@ const ProductUpload = () => {
   const [sleeveLength, setSleeveLength] = useState('Half Sleeves')
   const [neck, setNeck] = useState('Round Neck')
   const [designStyling, setDesignStyling] = useState('Regular')
+  const [design, setDesign] = useState('')
+  const [bottomType, setBottomType] = useState('')
+
+  // Description & product info
+  const [description, setDescription] = useState('')
+  const [highlights, setHighlights] = useState('')
 
   // Pricing
   const [mrp, setMrp] = useState('2799')
   const [salePrice, setSalePrice] = useState('1399')
   const [buyPrice, setBuyPrice] = useState('900')
   const [gst, setGst] = useState('5')
-  const [discountType, setDiscountType] = useState('FLAT')
-  const [discountValue, setDiscountValue] = useState('300')
+  const [discountType, setDiscountType] = useState('')
+  const [discountValue, setDiscountValue] = useState('')
 
   // Variants
   const [variants, setVariants] = useState([emptyVariant()])
@@ -419,6 +466,10 @@ const ProductUpload = () => {
       'Sleeve Length': sleeveLength,
       Neck: neck,
       'Design Styling': designStyling,
+      Design: design,
+      'Bottom Type': bottomType,
+      product_blurb: description,
+      highlights: highlights,
     },
     pricing: {
       mrp: parseFloat(mrp) || 0,
@@ -433,7 +484,7 @@ const ProductUpload = () => {
 
     inventory: {
       variants: variants.map((v) => ({
-        color: v.color,
+        color: v.colors.join(', '),
         sizes: v.sizes
           .filter((s) => s.quantity !== '')
           .map((s) => ({ size: s.size, quantity: parseInt(s.quantity) || 0 })),
@@ -486,7 +537,7 @@ const ProductUpload = () => {
         ...buildPayload(),
         inventory: {
           variants: updatedVariants.map((v) => ({
-            color: v.color,
+            color: v.colors.join(', '),
             sizes: v.sizes
               .filter((s) => s.quantity !== '')
               .map((s) => ({
@@ -539,7 +590,7 @@ const ProductUpload = () => {
     { label: 'Sale price set', done: !!salePrice },
     {
       label: 'At least one variant',
-      done: variants.length > 0 && variants[0].color !== '',
+      done: variants.length > 0 && variants[0].colors?.length > 0,
     },
     {
       label: 'Main image uploaded',
@@ -612,9 +663,9 @@ const ProductUpload = () => {
                   </span>
                 )}
             </div>
-            {firstVariant?.color && (
+            {firstVariant?.colors?.length > 0 && (
               <p className='text-xs text-gray-400 mt-2'>
-                Color: {firstVariant.color}
+                {firstVariant.colors.length > 1 ? 'Colors' : 'Color'}: {firstVariant.colors.join(', ')}
               </p>
             )}
             {firstVariant?.sizes?.some((s) => s.quantity !== '') && (
@@ -876,7 +927,44 @@ const ProductUpload = () => {
                       'Panelled',
                     ]}
                   />
+                  <Select
+                    label='Design'
+                    value={design}
+                    onChange={setDesign}
+                    options={DESIGNS}
+                    allowCustom
+                  />
+                  <Select
+                    label='Bottom Type'
+                    value={bottomType}
+                    onChange={setBottomType}
+                    options={BOTTOM_TYPES}
+                    allowCustom
+                  />
                 </div>
+              </Section>
+
+              <Section
+                icon={Tag}
+                title='Description & Product Info'
+                subtitle='Shown on the storefront product page'
+              >
+                <Field label='Description'>
+                  <Textarea
+                    value={description}
+                    onChange={setDescription}
+                    placeholder='Crafted from premium fabric, this piece features...'
+                    rows={4}
+                  />
+                </Field>
+                <Field label='Product Info' hint='One highlight per line'>
+                  <Textarea
+                    value={highlights}
+                    onChange={setHighlights}
+                    placeholder={'Premium fabric\nStraight fit silhouette\nThree-quarter sleeves'}
+                    rows={4}
+                  />
+                </Field>
               </Section>
 
               <Section
@@ -1000,8 +1088,8 @@ const ProductUpload = () => {
                       key={variant.id}
                       variant={variant}
                       index={vi}
-                      onColorChange={(val) =>
-                        setVariantField(variant.id, 'color', val)
+                      onColorsChange={(val) =>
+                        setVariantField(variant.id, 'colors', val)
                       }
                       onSizeQtyChange={(size, qty) =>
                         setVariantSize(variant.id, size, qty)
@@ -1107,7 +1195,7 @@ const ProductUpload = () => {
                     : 'product-name'}
                 </p>
                 <p className='text-gray-500 text-xs mt-1'>
-                  {[material, sleeveLength, neck, designStyling]
+                  {[material, sleeveLength, neck, designStyling, design, bottomType]
                     .filter(Boolean)
                     .join(' · ') ||
                     'Add description attributes to improve search visibility…'}
@@ -1125,7 +1213,7 @@ const ProductUpload = () => {
 const VariantCard = ({
   variant,
   index,
-  onColorChange,
+  onColorsChange,
   onSizeQtyChange,
   onMainImage,
   onRemoveMainImage,
@@ -1146,7 +1234,7 @@ const VariantCard = ({
       <div className='flex items-center justify-between px-5 py-3 border-b border-stone-800 bg-stone-900/60'>
         <span className='text-xs font-semibold uppercase tracking-widest text-rose-400'>
           Variant {index + 1}
-          {variant.color ? ` · ${variant.color}` : ''}
+          {variant.colors?.length ? ` · ${variant.colors.join(', ')}` : ''}
         </span>
         {onRemoveVariant && (
           <button
@@ -1159,15 +1247,18 @@ const VariantCard = ({
       </div>
 
       <div className='p-5 space-y-5'>
-        {/* Color */}
+        {/* Color(s) */}
         <Select
           label='Color'
           required
-          value={variant.color}
-          onChange={onColorChange}
+          value={variant.colors}
+          onChange={onColorsChange}
           options={COLOR_OPTIONS}
-
+          multiple
         />
+        <p className='-mt-3 text-xs text-stone-500'>
+          Pick multiple colors if this variant (same images, sizes & stock) comes in more than one color.
+        </p>
 
         {/* Sizes */}
         <div>

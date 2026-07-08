@@ -23,6 +23,8 @@ import { ADMIN_CATEGORIES as categories } from '../utils/categories'
 import { CATALOG_URL, INVENTORY_URL } from '../config'
 import { useAuthStore } from '../store/authStore'
 import { MATERIALS } from '../constants/materials'
+import { DESIGNS } from '../constants/designs'
+import { BOTTOM_TYPES } from '../constants/bottomTypes'
 const authHeaders = () => ({ Authorization: `Bearer ${useAuthStore.getState().token || ''}` })
 
 // ── Constants ─────────────────────────────────────────────────────────────────
@@ -42,7 +44,7 @@ const uid = () => Math.random().toString(36).slice(2)
 const ALL_SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL', '4XL', 'Free Size']
 
 // ── Sub-components ────────────────────────────────────────────────────────────
-const Select = ({ label, options, value, onChange, required }) => {
+const Select = ({ label, options, value, onChange, required, multiple }) => {
   const [open, setOpen] = useState(false)
   const [search, setSearch] = useState('')
   const searchRef = useRef(null)
@@ -65,6 +67,24 @@ const Select = ({ label, options, value, onChange, required }) => {
     (o) => typeof o === 'string' && o.toLowerCase().includes(search.toLowerCase()),
   )
 
+  const isSelected = (o) => (multiple ? (value || []).includes(o) : value === o)
+
+  const selectOption = (o) => {
+    if (multiple) {
+      const current = value || []
+      onChange(current.includes(o) ? current.filter((c) => c !== o) : [...current, o])
+    } else {
+      onChange(o)
+      setOpen(false)
+      setSearch('')
+    }
+  }
+
+  const triggerLabel = multiple
+    ? (value || []).length ? value.join(', ') : `Select ${label}`
+    : value || `Select ${label}`
+  const triggerFilled = multiple ? (value || []).length > 0 : !!value
+
   return (
     <div className='relative' data-select-root>
       {label && (
@@ -77,8 +97,8 @@ const Select = ({ label, options, value, onChange, required }) => {
         onClick={() => setOpen(!open)}
         className='w-full flex items-center justify-between px-4 py-3 bg-stone-900 border border-stone-700 rounded-xl text-sm text-stone-200 hover:border-rose-500 transition-colors'
       >
-        <span className={value ? 'text-stone-100' : 'text-stone-500'}>
-          {value || `Select ${label}`}
+        <span className={triggerFilled ? 'text-stone-100' : 'text-stone-500'}>
+          {triggerLabel}
         </span>
         <ChevronDown size={14} className={`transition-transform ${open ? 'rotate-180' : ''}`} />
       </button>
@@ -100,10 +120,10 @@ const Select = ({ label, options, value, onChange, required }) => {
                 <button
                   key={o}
                   type='button'
-                  onClick={() => { onChange(o); setOpen(false); setSearch('') }}
+                  onClick={() => selectOption(o)}
                   className='w-full text-left px-4 py-2.5 text-sm text-stone-300 hover:bg-rose-500/10 hover:text-rose-400 transition-colors flex items-center gap-2'
                 >
-                  {value === o ? <Check size={12} className='text-rose-400' /> : <span className='w-3' />}
+                  {isSelected(o) ? <Check size={12} className='text-rose-400' /> : <span className='w-3' />}
                   {o}
                 </button>
               ))
@@ -145,6 +165,16 @@ const Input = ({ placeholder, value, onChange, type = 'text', prefix, disabled }
   </div>
 )
 
+const Textarea = ({ placeholder, value, onChange, rows = 4 }) => (
+  <textarea
+    value={value}
+    onChange={(e) => onChange(e.target.value)}
+    placeholder={placeholder}
+    rows={rows}
+    className='w-full px-4 py-3 bg-stone-900 border border-stone-700 rounded-xl text-sm text-stone-100 placeholder-stone-600 focus:outline-none focus:border-rose-500 focus:ring-1 focus:ring-rose-500/30 transition-colors resize-y'
+  />
+)
+
 const Section = ({ icon: Icon, title, subtitle, children }) => (
   <div className='bg-stone-950 border border-stone-800 rounded-2xl overflow-visible'>
     <div className='flex items-center gap-3 px-6 py-4 border-b border-stone-800 bg-stone-900/50'>
@@ -169,7 +199,7 @@ const Section = ({ icon: Icon, title, subtitle, children }) => (
 const mapApiToState = (product) => {
   const variants = (product.inventory?.variants || []).map((v) => ({
     id: uid(),
-    color: v.color || 'Red',
+    colors: (v.color || 'Red').split(',').map((c) => c.trim()).filter(Boolean),
     sizes: ALL_SIZES.map((s) => {
       const found = (v.sizes || []).find((sz) => sz.size === s)
       return { size: s, quantity: found ? String(found.quantity) : '' }
@@ -197,10 +227,14 @@ const mapApiToState = (product) => {
     brandName: product.brand?.name || '',
     catalogueId: product.brand?.catalogue_id || '',
     categoryId: product.category?.category_id || 5,
-    material: product.description?.description?.Material || '',
-    sleeveLength: product.description?.description?.['Sleeve Length'] || '',
-    neck: product.description?.description?.Neck || '',
-    designStyling: product.description?.description?.['Design Styling'] || '',
+    material: product.description?.Material || '',
+    sleeveLength: product.description?.['Sleeve Length'] || '',
+    neck: product.description?.Neck || '',
+    designStyling: product.description?.['Design Styling'] || '',
+    design: product.description?.Design || '',
+    bottomType: product.description?.['Bottom Type'] || '',
+    description: product.description?.product_blurb || '',
+    highlights: product.description?.highlights || '',
     mrp: String(product.pricing?.mrp || ''),
     salePrice: String(product.pricing?.sale_price || ''),
     buyPrice: String(product.pricing?.buy_price || ''),
@@ -214,7 +248,7 @@ const mapApiToState = (product) => {
 
 const emptyVariant = () => ({
   id: uid(),
-  color: 'Red',
+  colors: ['Red'],
   sizes: ALL_SIZES.map((s) => ({ size: s, quantity: '' })),
   main_image_preview: null,
   other_image_previews: [],
@@ -246,6 +280,10 @@ const ProductEdit = ({ onBack }) => {
   const [sleeveLength, setSleeveLength] = useState('')
   const [neck, setNeck] = useState('')
   const [designStyling, setDesignStyling] = useState('')
+  const [design, setDesign] = useState('')
+  const [bottomType, setBottomType] = useState('')
+  const [description, setDescription] = useState('')
+  const [highlights, setHighlights] = useState('')
   const [mrp, setMrp] = useState('')
   const [salePrice, setSalePrice] = useState('')
   const [buyPrice, setBuyPrice] = useState('')
@@ -281,6 +319,10 @@ const ProductEdit = ({ onBack }) => {
       setSleeveLength(mapped.sleeveLength)
       setNeck(mapped.neck)
       setDesignStyling(mapped.designStyling)
+      setDesign(mapped.design)
+      setBottomType(mapped.bottomType)
+      setDescription(mapped.description)
+      setHighlights(mapped.highlights)
       setMrp(mapped.mrp)
       setSalePrice(mapped.salePrice)
       setBuyPrice(mapped.buyPrice)
@@ -434,6 +476,10 @@ const ProductEdit = ({ onBack }) => {
       'Sleeve Length': sleeveLength,
       Neck: neck,
       'Design Styling': designStyling,
+      Design: design,
+      'Bottom Type': bottomType,
+      product_blurb: description,
+      highlights: highlights,
     },
     pricing: {
       mrp: parseFloat(mrp) || 0,
@@ -444,7 +490,7 @@ const ProductEdit = ({ onBack }) => {
     },
     inventory: {
       variants: updatedVariants.map((v) => ({
-        color: v.color,
+        color: v.colors.join(', '),
         sizes: v.sizes.filter((s) => s.quantity !== '').map((s) => ({ size: s.size, quantity: parseInt(s.quantity) || 0 })),
         main_image: v.main_image_filename,
         other_images: v.other_image_filenames.filter((f) => f.filename).map((f) => f.filename),
@@ -524,7 +570,7 @@ const ProductEdit = ({ onBack }) => {
     { label: 'Category selected', done: !!categoryId },
     { label: 'MRP set', done: !!mrp },
     { label: 'Sale price set', done: !!salePrice },
-    { label: 'At least one variant', done: variants.length > 0 && variants[0].color !== '' },
+    { label: 'At least one variant', done: variants.length > 0 && variants[0].colors?.length > 0 },
     { label: 'Main image present', done: variants.some((v) => v.main_image_filename !== '' || v.main_image_file !== null) },
   ]
   const completeness = Math.round((checks.filter((c) => c.done).length / checks.length) * 100)
@@ -574,7 +620,11 @@ const ProductEdit = ({ onBack }) => {
                 <span className='text-sm text-gray-400 line-through'>₹{parseFloat(mrp).toLocaleString()}</span>
               )}
             </div>
-            {firstVariant?.color && <p className='text-xs text-gray-400 mt-2'>Color: {firstVariant.color}</p>}
+            {firstVariant?.colors?.length > 0 && (
+              <p className='text-xs text-gray-400 mt-2'>
+                {firstVariant.colors.length > 1 ? 'Colors' : 'Color'}: {firstVariant.colors.join(', ')}
+              </p>
+            )}
             {firstVariant?.sizes?.some((s) => s.quantity !== '') && (
               <div className='flex gap-1 mt-3 flex-wrap'>
                 {firstVariant.sizes.filter((s) => s.quantity !== '').map((s) => (
@@ -750,7 +800,18 @@ const ProductEdit = ({ onBack }) => {
                   <Select label='Sleeve Length' value={sleeveLength} onChange={setSleeveLength} options={['Sleeveless','Short Sleeves','Half Sleeves','3/4 Sleeves','Long Sleeves','Cap Sleeves','Bell Sleeves','Puff Sleeves']} />
                   <Select label='Neck' value={neck} onChange={setNeck} options={['Round Neck','V-Neck','Boat Neck','Mandarin Collar','Collared Neck','Square Neck','Sweetheart Neck','Keyhole Neck']} />
                   <Select label='Design Styling' value={designStyling} onChange={setDesignStyling} options={['Regular','Straight','A-Line','Flared','Anarkali','Asymmetric','Layered','Panelled']} />
+                  <Select label='Design' value={design} onChange={setDesign} options={DESIGNS} />
+                  <Select label='Bottom Type' value={bottomType} onChange={setBottomType} options={BOTTOM_TYPES} />
                 </div>
+              </Section>
+
+              <Section icon={Tag} title='Description & Product Info' subtitle='Shown on the storefront product page'>
+                <Field label='Description'>
+                  <Textarea value={description} onChange={setDescription} placeholder='Crafted from premium fabric, this piece features...' rows={4} />
+                </Field>
+                <Field label='Product Info' hint='One highlight per line'>
+                  <Textarea value={highlights} onChange={setHighlights} placeholder={'Premium fabric\nStraight fit silhouette\nThree-quarter sleeves'} rows={4} />
+                </Field>
               </Section>
 
               <Section icon={DollarSign} title='Pricing' subtitle='MRP, sale price, buy price & GST'>
@@ -803,7 +864,7 @@ const ProductEdit = ({ onBack }) => {
                       key={variant.id}
                       variant={variant}
                       index={vi}
-                      onColorChange={(val) => setVariantField(variant.id, 'color', val)}
+                      onColorsChange={(val) => setVariantField(variant.id, 'colors', val)}
                       onSizeQtyChange={(size, qty) => setVariantSize(variant.id, size, qty)}
                       onMainImage={(e) => handleMainImage(variant.id, e)}
                       onRemoveMainImage={() => removeMainImage(variant.id)}
@@ -868,7 +929,7 @@ const ProductEdit = ({ onBack }) => {
                   yourstore.com/products/{title ? title.toLowerCase().replace(/\s+/g, '-') : 'product-name'}
                 </p>
                 <p className='text-gray-500 text-xs mt-1'>
-                  {[material, sleeveLength, neck, designStyling].filter(Boolean).join(' · ') || 'Add description attributes to improve search visibility…'}
+                  {[material, sleeveLength, neck, designStyling, design, bottomType].filter(Boolean).join(' · ') || 'Add description attributes to improve search visibility…'}
                 </p>
               </div>
             </div>
@@ -882,7 +943,7 @@ const ProductEdit = ({ onBack }) => {
 // ── Variant Card ──────────────────────────────────────────────────────────────
 const VariantCard = ({
   variant, index,
-  onColorChange, onSizeQtyChange,
+  onColorsChange, onSizeQtyChange,
   onMainImage, onRemoveMainImage,
   onOtherImages, onRemoveOtherImage,
   onRemoveVariant,
@@ -895,7 +956,7 @@ const VariantCard = ({
     <div className='border border-stone-800 rounded-2xl overflow-hidden bg-stone-900/30'>
       <div className='flex items-center justify-between px-5 py-3 border-b border-stone-800 bg-stone-900/60'>
         <span className='text-xs font-semibold uppercase tracking-widest text-rose-400'>
-          Variant {index + 1}{variant.color ? ` · ${variant.color}` : ''}
+          Variant {index + 1}{variant.colors?.length ? ` · ${variant.colors.join(', ')}` : ''}
         </span>
         {onRemoveVariant && (
           <button onClick={onRemoveVariant} className='p-1 text-stone-600 hover:text-rose-400 transition-colors'>
@@ -905,7 +966,10 @@ const VariantCard = ({
       </div>
 
       <div className='p-5 space-y-5'>
-        <Select label='Color' required value={variant.color} onChange={onColorChange} options={COLOR_OPTIONS} />
+        <Select label='Color' required value={variant.colors} onChange={onColorsChange} options={COLOR_OPTIONS} multiple />
+        <p className='-mt-3 text-xs text-stone-500'>
+          Pick multiple colors if this variant (same images, sizes & stock) comes in more than one color.
+        </p>
 
         <div>
           <label className='block text-xs font-semibold uppercase tracking-widest text-rose-400 mb-3'>Sizes & Quantities</label>

@@ -187,8 +187,11 @@ async function fetchProduct(productId) {
     .filter((s) => s.quantity > 0)
     .map((s) => s.size)
 
-  const desc = raw.description?.description ?? {}
+  const { product_blurb, highlights: highlightsRaw, ...desc } = raw.description ?? {}
   const details = { 'Style Code': raw.style_code ?? '—', ...desc }
+  Object.keys(details).forEach((k) => {
+    if (details[k] === '' || details[k] == null) delete details[k]
+  })
   const discount = Math.round(
     ((raw.pricing.mrp - raw.pricing.sale_price) / raw.pricing.mrp) * 100,
   )
@@ -272,10 +275,10 @@ async function fetchProduct(productId) {
       hex: v.color_hex ?? '#cccccc',
       active: v.color === variant.color,
     })),
-    description: raw.description?.product_blurb ?? raw.title,
-    highlights:
-      raw.description?.highlights ??
-      Object.entries(desc).map(([k, v]) => `${k}: ${v}`),
+    description: product_blurb ?? raw.title,
+    highlights: highlightsRaw
+      ? highlightsRaw.split('\n').map((s) => s.trim()).filter(Boolean)
+      : Object.entries(desc).map(([k, v]) => `${k}: ${v}`),
     details,
     deliveryInfo: raw.delivery ?? { days: '3-5 Business Days', cod: true },
     offers: [
