@@ -24,31 +24,26 @@ import AdminNav from '../AdminNav'
 import { ORDERS_URL } from '../../config'
 import { useAuthStore } from '../../store/authStore'
 import { COURIERS, courierUrl } from '../../couriers'
+import { ORDER_STATUS_KEYS } from '../../constants/orderStatus'
 const ORDERS_API_BASE = ORDERS_URL
 const authHeaders = () => ({ Authorization: `Bearer ${useAuthStore.getState().token || ''}` })
 const CDN = 'https://cdn.vaarria.com/app/images/'
 const PER_PAGE = 10
 
-const STATUSES = [
-  'CREATED',
-  'PLACED',
-  'CONFIRMED',
-  'SHIPPED',
-  'OUT',
-  'DELIVERED',
-  'CANCELLED',
-  'RETURNED',
-]
+const STATUSES = ORDER_STATUS_KEYS
 
 const STATUS_STYLES = {
-  CREATED:   'bg-stone-500/10 text-stone-400 border-stone-500/20',
-  PLACED:    'bg-violet-500/10 text-violet-400 border-violet-500/20',
-  CONFIRMED: 'bg-sky-500/10 text-sky-400 border-sky-500/20',
-  SHIPPED:   'bg-amber-500/10 text-amber-400 border-amber-500/20',
-  OUT:       'bg-cyan-500/10 text-cyan-400 border-cyan-500/20',
-  DELIVERED: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
-  CANCELLED: 'bg-rose-500/10 text-rose-400 border-rose-500/20',
-  RETURNED:  'bg-stone-500/10 text-stone-400 border-stone-500/20',
+  CREATED:          'bg-stone-500/10 text-stone-400 border-stone-500/20',
+  PLACED:           'bg-violet-500/10 text-violet-400 border-violet-500/20',
+  CONFIRMED:        'bg-sky-500/10 text-sky-400 border-sky-500/20',
+  SHIPPED:          'bg-amber-500/10 text-amber-400 border-amber-500/20',
+  OUT:              'bg-cyan-500/10 text-cyan-400 border-cyan-500/20',
+  DELIVERED:        'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
+  CANCELLED:        'bg-rose-500/10 text-rose-400 border-rose-500/20',
+  RETURN_INITIATED: 'bg-orange-500/10 text-orange-400 border-orange-500/20',
+  RETURNED:         'bg-stone-500/10 text-stone-400 border-stone-500/20',
+  REFUND_INITIATED: 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20',
+  REFUND_CREDITED:  'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
 }
 
 const formatINR = (n) => `₹${Number(n || 0).toLocaleString('en-IN')}`
@@ -460,6 +455,201 @@ function ShipModal({ order, onClose, onDone, setToast }) {
   )
 }
 
+// ─── Return pickup-date modal ───────────────────────────────────────────────────
+
+function ReturnPickupModal({ order, onClose, onDone, setToast }) {
+  const [pickupDate, setPickupDate] = useState('')
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
+
+  const submit = async () => {
+    if (!pickupDate) return
+    setSaving(true)
+    setError('')
+    try {
+      const res = await fetch(`${ORDERS_API_BASE}/admin/orders/${order.id}/status`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', ...authHeaders() },
+        body: JSON.stringify({ status: 'RETURN_INITIATED', pickup_date: pickupDate }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) throw new Error(data.detail || 'Failed to update status')
+
+      setToast('Return initiated')
+      onDone()
+    } catch (e) {
+      setError(e.message || 'Update failed')
+      setSaving(false)
+    }
+  }
+
+  return (
+    <div
+      onClick={(e) => e.target === e.currentTarget && !saving && onClose()}
+      className='fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4'
+    >
+      <div className='w-full max-w-md bg-stone-950 border border-stone-800 rounded-2xl overflow-hidden shadow-2xl'>
+        <div className='flex items-center gap-3 px-6 py-4 border-b border-stone-800 bg-stone-900/50'>
+          <div className='w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center'>
+            <Truck size={14} className='text-amber-400' />
+          </div>
+          <div>
+            <h3 className='text-sm font-bold text-stone-100'>Schedule Return Pickup</h3>
+            <p className='text-xs text-stone-500'>Order #{order.id}</p>
+          </div>
+        </div>
+
+        <div className='p-6 space-y-3'>
+          <Field label='Pickup Date'>
+            <input
+              type='date'
+              value={pickupDate}
+              onChange={(e) => setPickupDate(e.target.value)}
+              className={inputCls}
+            />
+          </Field>
+          <p className='text-xs text-stone-500'>Sent to the customer in the return-confirmation SMS.</p>
+
+          {error && (
+            <p className='text-xs text-rose-400 flex items-center gap-1.5'>
+              <AlertTriangle size={12} /> {error}
+            </p>
+          )}
+        </div>
+
+        <div className='flex items-center justify-end gap-3 px-6 py-4 border-t border-stone-800 bg-stone-900/30'>
+          <button
+            onClick={onClose}
+            disabled={saving}
+            className='px-4 py-2 rounded-xl text-sm font-semibold border border-stone-700 text-stone-300 hover:border-stone-500 transition-colors disabled:opacity-40'
+          >
+            Cancel
+          </button>
+          <button
+            onClick={submit}
+            disabled={saving || !pickupDate}
+            className='flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold bg-gradient-to-r from-rose-500 to-pink-600 text-white transition-colors disabled:opacity-50'
+          >
+            {saving ? (
+              <>
+                <Loader2 size={13} className='animate-spin' /> Saving…
+              </>
+            ) : (
+              'Confirm Pickup Date'
+            )}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ─── Return tracking modal ─────────────────────────────────────────────────────
+
+function ReturnTrackingModal({ order, onClose, onDone, setToast }) {
+  const [provider, setProvider] = useState(order.return_tracking?.provider || 'Shiprocket')
+  const [trackingId, setTrackingId] = useState(order.return_tracking?.id || '')
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
+
+  const submit = async () => {
+    if (!trackingId.trim()) return
+    setSaving(true)
+    setError('')
+    try {
+      const res = await fetch(`${ORDERS_API_BASE}/admin/orders/${order.id}/return-tracking`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', ...authHeaders() },
+        body: JSON.stringify({
+          provider,
+          tracking_id: trackingId.trim(),
+          tracking_url: courierUrl(provider, trackingId.trim()) || null,
+        }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) throw new Error(data.detail || 'Failed to save return tracking')
+
+      setToast('Return tracking updated')
+      onDone()
+    } catch (e) {
+      setError(e.message || 'Update failed')
+      setSaving(false)
+    }
+  }
+
+  return (
+    <div
+      onClick={(e) => e.target === e.currentTarget && !saving && onClose()}
+      className='fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4'
+    >
+      <div className='w-full max-w-md bg-stone-950 border border-stone-800 rounded-2xl overflow-hidden shadow-2xl'>
+        <div className='flex items-center gap-3 px-6 py-4 border-b border-stone-800 bg-stone-900/50'>
+          <div className='w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center'>
+            <Truck size={14} className='text-amber-400' />
+          </div>
+          <div>
+            <h3 className='text-sm font-bold text-stone-100'>Return Tracking</h3>
+            <p className='text-xs text-stone-500'>Order #{order.id}</p>
+          </div>
+        </div>
+
+        <div className='p-6 space-y-3'>
+          <div className='grid grid-cols-2 gap-2'>
+            <Field label='Courier'>
+              <select
+                value={provider}
+                onChange={(e) => setProvider(e.target.value)}
+                className={inputCls}
+              >
+                {COURIERS.map((c) => (
+                  <option key={c.name} value={c.name}>{c.name}</option>
+                ))}
+              </select>
+            </Field>
+            <Field label='Tracking / AWB ID'>
+              <input
+                value={trackingId}
+                onChange={(e) => setTrackingId(e.target.value)}
+                placeholder='AWB123456789'
+                className={inputCls}
+              />
+            </Field>
+          </div>
+
+          {error && (
+            <p className='text-xs text-rose-400 flex items-center gap-1.5'>
+              <AlertTriangle size={12} /> {error}
+            </p>
+          )}
+        </div>
+
+        <div className='flex items-center justify-end gap-3 px-6 py-4 border-t border-stone-800 bg-stone-900/30'>
+          <button
+            onClick={onClose}
+            disabled={saving}
+            className='px-4 py-2 rounded-xl text-sm font-semibold border border-stone-700 text-stone-300 hover:border-stone-500 transition-colors disabled:opacity-40'
+          >
+            Cancel
+          </button>
+          <button
+            onClick={submit}
+            disabled={saving || !trackingId.trim()}
+            className='flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold bg-gradient-to-r from-rose-500 to-pink-600 text-white transition-colors disabled:opacity-50'
+          >
+            {saving ? (
+              <>
+                <Loader2 size={13} className='animate-spin' /> Saving…
+              </>
+            ) : (
+              'Save Return Tracking'
+            )}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ─── Expanded order panel ─────────────────────────────────────────────────────
 
 function OrderActions({ order, onUpdated, setToast }) {
@@ -467,6 +657,8 @@ function OrderActions({ order, onUpdated, setToast }) {
   const [price, setPrice] = useState(String(order.total))
   const [saving, setSaving] = useState('')
   const [showShipModal, setShowShipModal] = useState(false)
+  const [showReturnTrackingModal, setShowReturnTrackingModal] = useState(false)
+  const [showReturnPickupModal, setShowReturnPickupModal] = useState(false)
 
   const call = async (key, url, body) => {
     setSaving(key)
@@ -507,6 +699,10 @@ function OrderActions({ order, onUpdated, setToast }) {
                 setShowShipModal(true)
                 return
               }
+              if (status === 'RETURN_INITIATED' && order.status !== 'RETURN_INITIATED') {
+                setShowReturnPickupModal(true)
+                return
+              }
               call('status', `${ORDERS_API_BASE}/admin/orders/${order.id}/status`, { status })
             }}
             disabled={saving === 'status' || status === order.status}
@@ -523,6 +719,18 @@ function OrderActions({ order, onUpdated, setToast }) {
           onClose={() => setShowShipModal(false)}
           onDone={() => {
             setShowShipModal(false)
+            onUpdated()
+          }}
+          setToast={setToast}
+        />
+      )}
+
+      {showReturnPickupModal && (
+        <ReturnPickupModal
+          order={order}
+          onClose={() => setShowReturnPickupModal(false)}
+          onDone={() => {
+            setShowReturnPickupModal(false)
             onUpdated()
           }}
           setToast={setToast}
@@ -561,6 +769,29 @@ function OrderActions({ order, onUpdated, setToast }) {
         <Truck size={13} />
         {order.tracking?.id ? `Update Tracking (${order.tracking.provider} · ${order.tracking.id})` : 'Update Tracking'}
       </button>
+
+      {/* Return tracking */}
+      <button
+        onClick={() => setShowReturnTrackingModal(true)}
+        className='w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-xs font-semibold border border-stone-700 text-stone-300 hover:border-rose-500/50 hover:text-rose-400 transition-all'
+      >
+        <Truck size={13} />
+        {order.return_tracking?.id
+          ? `Return Tracking (${order.return_tracking.provider} · ${order.return_tracking.id})`
+          : 'Return Tracking'}
+      </button>
+
+      {showReturnTrackingModal && (
+        <ReturnTrackingModal
+          order={order}
+          onClose={() => setShowReturnTrackingModal(false)}
+          onDone={() => {
+            setShowReturnTrackingModal(false)
+            onUpdated()
+          }}
+          setToast={setToast}
+        />
+      )}
 
       {/* Invoice */}
       <button
@@ -601,6 +832,11 @@ function OrderRow({ order, onUpdated, setToast }) {
             {order.tracking?.id && (
               <span className='text-[10px] text-stone-400 border border-stone-700 rounded-full px-2 py-0.5'>
                 {order.tracking.provider} · {order.tracking.id}
+              </span>
+            )}
+            {order.return_tracking?.id && (
+              <span className='text-[10px] text-stone-400 border border-stone-700 rounded-full px-2 py-0.5'>
+                Return: {order.return_tracking.provider} · {order.return_tracking.id}
               </span>
             )}
             {qcFailedCount > 0 && (
@@ -722,6 +958,17 @@ function OrderRow({ order, onUpdated, setToast }) {
                 {' · '}ETA: {order.estimated_delivery || '—'}
               </p>
             </div>
+            {order.return_reason && (
+              <div>
+                <p className='text-[10px] font-semibold uppercase tracking-widest text-stone-500 mb-2 flex items-center gap-1.5'>
+                  <AlertTriangle size={12} /> Return Reason
+                </p>
+                <p className='text-xs text-rose-400 leading-relaxed'>
+                  {order.return_reason}
+                  {order.return_details ? ` — ${order.return_details}` : ''}
+                </p>
+              </div>
+            )}
           </div>
 
           {/* Actions */}

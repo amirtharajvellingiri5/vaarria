@@ -22,6 +22,7 @@ import { useParams } from 'react-router-dom'
 import { ADMIN_CATEGORIES as categories } from '../utils/categories'
 import { CATALOG_URL, INVENTORY_URL } from '../config'
 import { useAuthStore } from '../store/authStore'
+import { MATERIALS } from '../constants/materials'
 const authHeaders = () => ({ Authorization: `Bearer ${useAuthStore.getState().token || ''}` })
 
 // ── Constants ─────────────────────────────────────────────────────────────────
@@ -195,7 +196,7 @@ const mapApiToState = (product) => {
     title: product.title || '',
     brandName: product.brand?.name || '',
     catalogueId: product.brand?.catalogue_id || '',
-    categoryId: product.category?.category_id || 4,
+    categoryId: product.category?.category_id || 5,
     material: product.description?.description?.Material || '',
     sleeveLength: product.description?.description?.['Sleeve Length'] || '',
     neck: product.description?.description?.Neck || '',
@@ -240,7 +241,7 @@ const ProductEdit = ({ onBack }) => {
   const [title, setTitle] = useState('')
   const [brandName, setBrandName] = useState('')
   const [catalogueId, setCatalogueId] = useState('')
-  const [categoryId, setCategoryId] = useState(4)
+  const [categoryId, setCategoryId] = useState(5)
   const [material, setMaterial] = useState('')
   const [sleeveLength, setSleeveLength] = useState('')
   const [neck, setNeck] = useState('')
@@ -745,7 +746,7 @@ const ProductEdit = ({ onBack }) => {
 
               <Section icon={Tag} title='Description Attributes' subtitle='Fabric, sleeve, neck, styling'>
                 <div className='grid grid-cols-1 sm:grid-cols-2 gap-5'>
-                  <Select label='Material' value={material} onChange={setMaterial} options={['Cotton','Polyester','Cotton Blend','Rayon','Viscose','Poly Cotton','Georgette','Chiffon','Silk','Art Silk','Cotton Silk','Linen','Linen Blend','Khadi','Chanderi','Banarasi Silk','Satin','Organza','Velvet','Denim','Knitted','Spandex','Lycra','Rayon Blend','Silk Blend']} />
+                  <Select label='Material' value={material} onChange={setMaterial} options={MATERIALS} />
                   <Select label='Sleeve Length' value={sleeveLength} onChange={setSleeveLength} options={['Sleeveless','Short Sleeves','Half Sleeves','3/4 Sleeves','Long Sleeves','Cap Sleeves','Bell Sleeves','Puff Sleeves']} />
                   <Select label='Neck' value={neck} onChange={setNeck} options={['Round Neck','V-Neck','Boat Neck','Mandarin Collar','Collared Neck','Square Neck','Sweetheart Neck','Keyhole Neck']} />
                   <Select label='Design Styling' value={designStyling} onChange={setDesignStyling} options={['Regular','Straight','A-Line','Flared','Anarkali','Asymmetric','Layered','Panelled']} />
