@@ -26,6 +26,14 @@ import { COLOR_MAP, formatColorLabel } from '../constants/colors'
 import { MATERIALS } from '../constants/materials'
 import { DESIGNS } from '../constants/designs'
 import { BOTTOM_TYPES } from '../constants/bottomTypes'
+import {
+  PATTERNS,
+  SAREE_TYPES,
+  BLOUSE_TYPES,
+  NUMBER_OF_BLOUSES,
+  SAREE_LENGTHS,
+  SAREE_WEIGHTS,
+} from '../constants/sareeAttributes'
 
 const COLOR_OPTIONS = Object.keys(COLOR_MAP).map(formatColorLabel)
 
@@ -250,6 +258,8 @@ const ProductUpload = () => {
 
   // Category
   const [categoryId, setCategoryId] = useState(4) // default Kurtas & Suits
+  const isSaree =
+    categories.find((c) => c.category_id === categoryId)?.slug === 'sarees'
 
   // Description attributes
   const [material, setMaterial] = useState('Cotton')
@@ -258,6 +268,16 @@ const ProductUpload = () => {
   const [designStyling, setDesignStyling] = useState('Regular')
   const [design, setDesign] = useState('')
   const [bottomType, setBottomType] = useState('')
+
+  // Saree-only description attributes
+  const [sareeColor, setSareeColor] = useState('')
+  const [pattern, setPattern] = useState('')
+  const [sareeType, setSareeType] = useState('')
+  const [numberOfBlouses, setNumberOfBlouses] = useState('1')
+  const [blouseType, setBlouseType] = useState('')
+  const [sareeLength, setSareeLength] = useState('')
+  const [blouseMaterial, setBlouseMaterial] = useState('')
+  const [sareeWeight, setSareeWeight] = useState('')
 
   // Description & product info
   const [description, setDescription] = useState('')
@@ -461,16 +481,31 @@ const ProductUpload = () => {
       category_id: categoryId,
       category_name: categories.find((c) => c.category_id === categoryId)?.name,
     },
-    description: {
-      Material: material,
-      'Sleeve Length': sleeveLength,
-      Neck: neck,
-      'Design Styling': designStyling,
-      Design: design,
-      'Bottom Type': bottomType,
-      product_blurb: description,
-      highlights: highlights,
-    },
+    description: isSaree
+      ? {
+          Material: material,
+          Color: sareeColor,
+          Design: design,
+          Pattern: pattern,
+          Type: sareeType,
+          'Number of Blouses': numberOfBlouses,
+          'Blouse Type': blouseType,
+          'Saree Length': sareeLength,
+          'Blouse Material': blouseMaterial,
+          'Saree Weight': sareeWeight,
+          product_blurb: description,
+          highlights: highlights,
+        }
+      : {
+          Material: material,
+          'Sleeve Length': sleeveLength,
+          Neck: neck,
+          'Design Styling': designStyling,
+          Design: design,
+          'Bottom Type': bottomType,
+          product_blurb: description,
+          highlights: highlights,
+        },
     pricing: {
       mrp: parseFloat(mrp) || 0,
       sale_price: parseFloat(salePrice) || 0,
@@ -872,76 +907,155 @@ const ProductUpload = () => {
               <Section
                 icon={Tag}
                 title='Description Attributes'
-                subtitle='Fabric, sleeve, neck, styling'
+                subtitle={
+                  isSaree
+                    ? 'Fabric, blouse & saree specifics'
+                    : 'Fabric, sleeve, neck, styling'
+                }
               >
-                <div className='grid grid-cols-1 sm:grid-cols-2 gap-5'>
-                  <Select
-                    label='Material'
-                    value={material}
-                    onChange={setMaterial}
-                    options={MATERIALS}
-                    allowCustom
-                  />
-                  <Select
-                    label='Sleeve Length'
-                    value={sleeveLength}
-                    onChange={setSleeveLength}
-                    options={[
-                      'Sleeveless',
-                      'Short Sleeves',
-                      'Half Sleeves',
-                      '3/4 Sleeves',
-                      'Long Sleeves',
-                      'Cap Sleeves',
-                      'Bell Sleeves',
-                      'Puff Sleeves',
-                    ]}
-                  />
-                  <Select
-                    label='Neck'
-                    value={neck}
-                    onChange={setNeck}
-                    options={[
-                      'Round Neck',
-                      'V-Neck',
-                      'Boat Neck',
-                      'Mandarin Collar',
-                      'Collared Neck',
-                      'Square Neck',
-                      'Sweetheart Neck',
-                      'Keyhole Neck',
-                    ]}
-                  />
-                  <Select
-                    label='Design Styling'
-                    value={designStyling}
-                    onChange={setDesignStyling}
-                    options={[
-                      'Regular',
-                      'Straight',
-                      'A-Line',
-                      'Flared',
-                      'Anarkali',
-                      'Asymmetric',
-                      'Layered',
-                      'Panelled',
-                    ]}
-                  />
-                  <Select
-                    label='Design'
-                    value={design}
-                    onChange={setDesign}
-                    options={DESIGNS}
-                    allowCustom
-                  />
-                  <Select
-                    label='Bottom Type'
-                    value={bottomType}
-                    onChange={setBottomType}
-                    options={BOTTOM_TYPES}
-                    allowCustom
-                  />
-                </div>
+                {isSaree ? (
+                  <div className='grid grid-cols-1 sm:grid-cols-2 gap-5'>
+                    <Select
+                      label='Material'
+                      value={material}
+                      onChange={setMaterial}
+                      options={MATERIALS}
+                      allowCustom
+                    />
+                    <Select
+                      label='Color'
+                      value={sareeColor}
+                      onChange={setSareeColor}
+                      options={COLOR_OPTIONS}
+                      allowCustom
+                    />
+                    <Select
+                      label='Design'
+                      value={design}
+                      onChange={setDesign}
+                      options={DESIGNS}
+                      allowCustom
+                    />
+                    <Select
+                      label='Pattern'
+                      value={pattern}
+                      onChange={setPattern}
+                      options={PATTERNS}
+                      allowCustom
+                    />
+                    <Select
+                      label='Type'
+                      value={sareeType}
+                      onChange={setSareeType}
+                      options={SAREE_TYPES}
+                      allowCustom
+                    />
+                    <Select
+                      label='Number of Blouses'
+                      value={numberOfBlouses}
+                      onChange={setNumberOfBlouses}
+                      options={NUMBER_OF_BLOUSES}
+                      allowCustom
+                    />
+                    <Select
+                      label='Blouse Type'
+                      value={blouseType}
+                      onChange={setBlouseType}
+                      options={BLOUSE_TYPES}
+                      allowCustom
+                    />
+                    <Select
+                      label='Saree Length'
+                      value={sareeLength}
+                      onChange={setSareeLength}
+                      options={SAREE_LENGTHS}
+                      allowCustom
+                    />
+                    <Select
+                      label='Blouse Material'
+                      value={blouseMaterial}
+                      onChange={setBlouseMaterial}
+                      options={MATERIALS}
+                      allowCustom
+                    />
+                    <Select
+                      label='Saree Weight'
+                      value={sareeWeight}
+                      onChange={setSareeWeight}
+                      options={SAREE_WEIGHTS}
+                      allowCustom
+                    />
+                  </div>
+                ) : (
+                  <div className='grid grid-cols-1 sm:grid-cols-2 gap-5'>
+                    <Select
+                      label='Material'
+                      value={material}
+                      onChange={setMaterial}
+                      options={MATERIALS}
+                      allowCustom
+                    />
+                    <Select
+                      label='Sleeve Length'
+                      value={sleeveLength}
+                      onChange={setSleeveLength}
+                      options={[
+                        'Sleeveless',
+                        'Short Sleeves',
+                        'Half Sleeves',
+                        '3/4 Sleeves',
+                        'Long Sleeves',
+                        'Cap Sleeves',
+                        'Bell Sleeves',
+                        'Puff Sleeves',
+                      ]}
+                    />
+                    <Select
+                      label='Neck'
+                      value={neck}
+                      onChange={setNeck}
+                      options={[
+                        'Round Neck',
+                        'V-Neck',
+                        'Boat Neck',
+                        'Mandarin Collar',
+                        'Collared Neck',
+                        'Square Neck',
+                        'Sweetheart Neck',
+                        'Keyhole Neck',
+                      ]}
+                    />
+                    <Select
+                      label='Design Styling'
+                      value={designStyling}
+                      onChange={setDesignStyling}
+                      options={[
+                        'Regular',
+                        'Straight',
+                        'A-Line',
+                        'Flared',
+                        'Anarkali',
+                        'Asymmetric',
+                        'Layered',
+                        'Panelled',
+                      ]}
+                    />
+                    <Select
+                      label='Design'
+                      value={design}
+                      onChange={setDesign}
+                      options={DESIGNS}
+                      allowCustom
+                    />
+                    <Select
+                      label='Bottom Type'
+                      value={bottomType}
+                      onChange={setBottomType}
+                      options={BOTTOM_TYPES}
+                      allowCustom
+                    />
+                  </div>
+                )}
               </Section>
 
               <Section
@@ -1195,7 +1309,10 @@ const ProductUpload = () => {
                     : 'product-name'}
                 </p>
                 <p className='text-gray-500 text-xs mt-1'>
-                  {[material, sleeveLength, neck, designStyling, design, bottomType]
+                  {(isSaree
+                    ? [material, sareeColor, design, pattern, sareeType]
+                    : [material, sleeveLength, neck, designStyling, design, bottomType]
+                  )
                     .filter(Boolean)
                     .join(' · ') ||
                     'Add description attributes to improve search visibility…'}
