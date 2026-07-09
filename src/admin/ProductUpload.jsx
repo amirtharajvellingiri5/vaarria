@@ -257,7 +257,7 @@ const ProductUpload = () => {
   const [catalogueId, setCatalogueId] = useState('123')
 
   // Category
-  const [categoryId, setCategoryId] = useState(4) // default Kurtas & Suits
+  const [categoryId, setCategoryId] = useState(null)
   const isSaree =
     categories.find((c) => c.category_id === categoryId)?.slug === 'sarees'
 
@@ -537,6 +537,11 @@ const ProductUpload = () => {
   })
 
   const handlePublish = async () => {
+    if (!categories.some((c) => c.category_id === categoryId)) {
+      alert('Please select a category before publishing.')
+      return
+    }
+
     setSubmitting(true)
     setSubmitError('')
 
@@ -620,7 +625,10 @@ const ProductUpload = () => {
   const checks = [
     { label: 'Title filled', done: title.length > 2 },
     { label: 'Brand name set', done: brandName.length > 0 },
-    { label: 'Category selected', done: !!categoryId },
+    {
+      label: 'Category selected',
+      done: categories.some((c) => c.category_id === categoryId),
+    },
     { label: 'MRP set', done: !!mrp },
     { label: 'Sale price set', done: !!salePrice },
     {
