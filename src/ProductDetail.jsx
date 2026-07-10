@@ -154,6 +154,9 @@ async function fetchProduct(productId) {
     `https://products-api.chatoyantvortex.workers.dev/product?id=${productId}`,
     { cache: 'no-cache' },
   )
+  if (!res.ok) {
+    throw new Error(res.status === 404 ? 'Product not found' : 'Failed to load product')
+  }
   const raw = await res.json()
 
   const discountMeta = raw.pricing?.discounts
@@ -1084,6 +1087,7 @@ export default function ProductDetail() {
   const [product, setProduct] = useState(null)
   const [ratingsData, setRatingsData] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [notFound, setNotFound] = useState(false)
   const [sliderOpen, setSliderOpen] = useState(false)
   const [sliderIndex, setSliderIndex] = useState(0)
   const [selectedSize, setSelectedSize] = useState(null)
@@ -1114,13 +1118,17 @@ export default function ProductDetail() {
 
   useEffect(() => {
     setLoading(true)
-    Promise.all([fetchProduct(productId), fetchRatings(productId)]).then(
-      ([prod, ratings]) => {
+    setNotFound(false)
+    Promise.all([fetchProduct(productId), fetchRatings(productId).catch(() => null)])
+      .then(([prod, ratings]) => {
         setProduct(prod)
         setRatingsData(ratings)
         setLoading(false)
-      },
-    )
+      })
+      .catch(() => {
+        setNotFound(true)
+        setLoading(false)
+      })
   }, [productId])
 
 
@@ -1330,6 +1338,19 @@ export default function ProductDetail() {
   }
 
   if (loading) return <SkeletonLoader />
+
+  if (notFound) {
+    return (
+      <>
+        <Navbar />
+        <div style={{ minHeight: '50vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 12, padding: '80px 20px', textAlign: 'center' }}>
+          <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: 22 }}>Product not found</h2>
+          <p style={{ color: '#6b7280', fontSize: 14 }}>This product may have been removed or is no longer available.</p>
+        </div>
+        <Footer />
+      </>
+    )
+  }
 
   const accordionSections = [
     {

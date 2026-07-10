@@ -1,0 +1,5 @@
+export const STITCH_TYPES = ['Semi-Stitched', 'Unstitched']
+export const PACK_SIZES = ['1', '2', '3']
+export const WEIGHTS = ['Light (<500g)', 'Medium (500g-800g)', 'Heavy (>800g)']
+export const LENGTH_TYPES = ['Full Length', 'Ankle Length']
+export const LINING_OPTIONS = ['Yes', 'No']

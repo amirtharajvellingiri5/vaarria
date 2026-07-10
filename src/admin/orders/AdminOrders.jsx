@@ -172,6 +172,7 @@ const printInvoice = (order) => {
   win.print()
 }
 
+
 // ─── Small bits ───────────────────────────────────────────────────────────────
 
 const StatusBadge = ({ status }) => (

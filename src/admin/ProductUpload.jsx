@@ -29,11 +29,19 @@ import { BOTTOM_TYPES } from '../constants/bottomTypes'
 import {
   PATTERNS,
   SAREE_TYPES,
+  BLOUSE_INCLUDED,
   BLOUSE_TYPES,
   NUMBER_OF_BLOUSES,
   SAREE_LENGTHS,
   SAREE_WEIGHTS,
 } from '../constants/sareeAttributes'
+import {
+  STITCH_TYPES,
+  PACK_SIZES,
+  WEIGHTS,
+  LENGTH_TYPES,
+  LINING_OPTIONS,
+} from '../constants/categoryAttributes'
 
 const COLOR_OPTIONS = Object.keys(COLOR_MAP).map(formatColorLabel)
 
@@ -230,12 +238,16 @@ const Section = ({ icon: Icon, title, subtitle, children }) => (
   </div>
 )
 
+const SIZE_LIST = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL', '4XL', 'Free Size']
+
+const emptySizes = () => SIZE_LIST.map((s) => ({ size: s, quantity: '' }))
+
 const emptyVariant = () => ({
   id: uid(),
   colors: ['Red'],
-  sizes: ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL', '4XL', 'Free Size'].map(
-    (s) => ({ size: s, quantity: '' }),
-  ),
+  sizes: emptySizes(),
+  // ponytail: flat per-size grid reused for shawl/top/bottom; only rendered for dress-materials
+  componentSizes: { shawl: emptySizes(), top: emptySizes(), bottom: emptySizes() },
 
   main_image_preview: null,
   other_image_previews: [],
@@ -257,9 +269,12 @@ const ProductUpload = () => {
   const [catalogueId, setCatalogueId] = useState('123')
 
   // Category
-  const [categoryId, setCategoryId] = useState(4) // default Kurtas & Suits
-  const isSaree =
-    categories.find((c) => c.category_id === categoryId)?.slug === 'sarees'
+  const [categoryId, setCategoryId] = useState(null)
+  const categorySlug = categories.find((c) => c.category_id === categoryId)?.slug
+  const isSaree = categorySlug === 'sarees'
+  const isDressMaterial = categorySlug === 'dress-materials'
+  const isLegging = categorySlug === 'leggings'
+  const categoryType = isSaree ? 'saree' : isDressMaterial ? 'dress-material' : 'standard'
 
   // Description attributes
   const [material, setMaterial] = useState('Cotton')
@@ -273,11 +288,30 @@ const ProductUpload = () => {
   const [sareeColor, setSareeColor] = useState('')
   const [pattern, setPattern] = useState('')
   const [sareeType, setSareeType] = useState('')
+  const [blouseIncluded, setBlouseIncluded] = useState('With Blouse')
   const [numberOfBlouses, setNumberOfBlouses] = useState('1')
   const [blouseType, setBlouseType] = useState('')
+  const [blouseDesign, setBlouseDesign] = useState('')
   const [sareeLength, setSareeLength] = useState('')
   const [blouseMaterial, setBlouseMaterial] = useState('')
   const [sareeWeight, setSareeWeight] = useState('')
+
+  // Dress-material-only description attributes
+  const [dmShawlMaterial, setDmShawlMaterial] = useState('')
+  const [dmTopMaterial, setDmTopMaterial] = useState('')
+  const [dmBottomMaterial, setDmBottomMaterial] = useState('')
+  const [dmShawlDesign, setDmShawlDesign] = useState('')
+  const [dmTopDesign, setDmTopDesign] = useState('')
+  const [dmBottomDesign, setDmBottomDesign] = useState('')
+  const [dmStitchType, setDmStitchType] = useState('')
+  const [dmWeight, setDmWeight] = useState('')
+  const [dmPackSize, setDmPackSize] = useState('1')
+  const [dmTopLining, setDmTopLining] = useState('')
+
+  // Leggings-only description attributes
+  const [legLength, setLegLength] = useState('')
+  const [legColour, setLegColour] = useState('')
+  const [legWeight, setLegWeight] = useState('')
 
   // Description & product info
   const [description, setDescription] = useState('')
@@ -341,6 +375,23 @@ const ProductUpload = () => {
               sizes: v.sizes.map((s) =>
                 s.size === size ? { ...s, quantity: qty } : s,
               ),
+            }
+          : v,
+      ),
+    )
+
+  const setVariantComponentSize = (variantId, component, size, qty) =>
+    setVariants((prev) =>
+      prev.map((v) =>
+        v.id === variantId
+          ? {
+              ...v,
+              componentSizes: {
+                ...v.componentSizes,
+                [component]: v.componentSizes[component].map((s) =>
+                  s.size === size ? { ...s, quantity: qty } : s,
+                ),
+              },
             }
           : v,
       ),
@@ -474,6 +525,46 @@ const ProductUpload = () => {
 
   // ── Build payload ──────────────────────────────────────────────────────────
   // FIX: title is now included; reviewed_on is included in ratings
+  const buildInventoryVariants = (list) =>
+    list.map((v) => {
+      const base = {
+        color: v.colors.join(', '),
+        main_image: v.main_image_filename, // ✅ server filename from upload API
+        other_images: v.other_image_filenames // ✅ server filenames from upload API
+          .filter((f) => f.filename)
+          .map((f) => f.filename),
+      }
+
+      if (isDressMaterial) {
+        const comp = (key) =>
+          v.componentSizes[key]
+            .filter((s) => s.quantity !== '')
+            .map((s) => ({ size: s.size, quantity: parseInt(s.quantity) || 0 }))
+        return {
+          ...base,
+          component_sizes: { shawl: comp('shawl'), top: comp('top'), bottom: comp('bottom') },
+        }
+      }
+
+      if (isSaree) {
+        const freeSize = v.sizes.find((s) => s.size === 'Free Size')
+        return {
+          ...base,
+          sizes:
+            freeSize && freeSize.quantity !== ''
+              ? [{ size: 'Free Size', quantity: parseInt(freeSize.quantity) || 0 }]
+              : [],
+        }
+      }
+
+      return {
+        ...base,
+        sizes: v.sizes
+          .filter((s) => s.quantity !== '')
+          .map((s) => ({ size: s.size, quantity: parseInt(s.quantity) || 0 })),
+      }
+    })
+
   const buildPayload = () => ({
     title, // ✅ was missing in failing payload
     brand: { name: brandName, catalogue_id: catalogueId },
@@ -485,14 +576,41 @@ const ProductUpload = () => {
       ? {
           Material: material,
           Color: sareeColor,
+          'Blouse Included': blouseIncluded,
           Design: design,
           Pattern: pattern,
           Type: sareeType,
           'Number of Blouses': numberOfBlouses,
           'Blouse Type': blouseType,
+          'Blouse Design': blouseDesign,
           'Saree Length': sareeLength,
           'Blouse Material': blouseMaterial,
           'Saree Weight': sareeWeight,
+          product_blurb: description,
+          highlights: highlights,
+        }
+      : isDressMaterial
+      ? {
+          'Shawl Material': dmShawlMaterial,
+          'Top Material': dmTopMaterial,
+          'Bottom Material': dmBottomMaterial,
+          'Shawl Design': dmShawlDesign,
+          'Top Design': dmTopDesign,
+          'Bottom Design': dmBottomDesign,
+          Type: dmStitchType,
+          Weight: dmWeight,
+          'Pack Of': dmPackSize,
+          'Top Lining': dmTopLining,
+          product_blurb: description,
+          highlights: highlights,
+        }
+      : isLegging
+      ? {
+          Material: material,
+          'Length Type': legLength,
+          Color: legColour,
+          Design: design,
+          Weight: legWeight,
           product_blurb: description,
           highlights: highlights,
         }
@@ -518,16 +636,7 @@ const ProductUpload = () => {
     },
 
     inventory: {
-      variants: variants.map((v) => ({
-        color: v.colors.join(', '),
-        sizes: v.sizes
-          .filter((s) => s.quantity !== '')
-          .map((s) => ({ size: s.size, quantity: parseInt(s.quantity) || 0 })),
-        main_image: v.main_image_filename, // ✅ server filename from upload API
-        other_images: v.other_image_filenames // ✅ server filenames from upload API
-          .filter((f) => f.filename)
-          .map((f) => f.filename),
-      })),
+      variants: buildInventoryVariants(variants),
     },
     ratings: {
       average_rating: 0.0,
@@ -537,6 +646,11 @@ const ProductUpload = () => {
   })
 
   const handlePublish = async () => {
+    if (!categories.some((c) => c.category_id === categoryId)) {
+      alert('Please select a category before publishing.')
+      return
+    }
+
     setSubmitting(true)
     setSubmitError('')
 
@@ -571,17 +685,7 @@ const ProductUpload = () => {
       const payload = {
         ...buildPayload(),
         inventory: {
-          variants: updatedVariants.map((v) => ({
-            color: v.colors.join(', '),
-            sizes: v.sizes
-              .filter((s) => s.quantity !== '')
-              .map((s) => ({
-                size: s.size,
-                quantity: parseInt(s.quantity) || 0,
-              })),
-            main_image: v.main_image_filename,
-            other_images: v.other_image_filenames.map((f) => f.filename),
-          })),
+          variants: buildInventoryVariants(updatedVariants),
         },
       }
 
@@ -620,7 +724,10 @@ const ProductUpload = () => {
   const checks = [
     { label: 'Title filled', done: title.length > 2 },
     { label: 'Brand name set', done: brandName.length > 0 },
-    { label: 'Category selected', done: !!categoryId },
+    {
+      label: 'Category selected',
+      done: categories.some((c) => c.category_id === categoryId),
+    },
     { label: 'MRP set', done: !!mrp },
     { label: 'Sale price set', done: !!salePrice },
     {
@@ -910,6 +1017,10 @@ const ProductUpload = () => {
                 subtitle={
                   isSaree
                     ? 'Fabric, blouse & saree specifics'
+                    : isDressMaterial
+                    ? 'Shawl, top & bottom specifics'
+                    : isLegging
+                    ? 'Fabric, length & fit'
                     : 'Fabric, sleeve, neck, styling'
                 }
               >
@@ -951,6 +1062,12 @@ const ProductUpload = () => {
                       allowCustom
                     />
                     <Select
+                      label='Blouse Included'
+                      value={blouseIncluded}
+                      onChange={setBlouseIncluded}
+                      options={BLOUSE_INCLUDED}
+                    />
+                    <Select
                       label='Number of Blouses'
                       value={numberOfBlouses}
                       onChange={setNumberOfBlouses}
@@ -962,6 +1079,13 @@ const ProductUpload = () => {
                       value={blouseType}
                       onChange={setBlouseType}
                       options={BLOUSE_TYPES}
+                      allowCustom
+                    />
+                    <Select
+                      label='Blouse Design'
+                      value={blouseDesign}
+                      onChange={setBlouseDesign}
+                      options={DESIGNS}
                       allowCustom
                     />
                     <Select
@@ -984,6 +1108,112 @@ const ProductUpload = () => {
                       onChange={setSareeWeight}
                       options={SAREE_WEIGHTS}
                       allowCustom
+                    />
+                  </div>
+                ) : isDressMaterial ? (
+                  <div className='grid grid-cols-1 sm:grid-cols-2 gap-5'>
+                    <Select
+                      label='Shawl Material'
+                      value={dmShawlMaterial}
+                      onChange={setDmShawlMaterial}
+                      options={MATERIALS}
+                      allowCustom
+                    />
+                    <Select
+                      label='Shawl Design Pattern'
+                      value={dmShawlDesign}
+                      onChange={setDmShawlDesign}
+                      options={DESIGNS}
+                      allowCustom
+                    />
+                    <Select
+                      label='Top Material'
+                      value={dmTopMaterial}
+                      onChange={setDmTopMaterial}
+                      options={MATERIALS}
+                      allowCustom
+                    />
+                    <Select
+                      label='Top Design Pattern'
+                      value={dmTopDesign}
+                      onChange={setDmTopDesign}
+                      options={DESIGNS}
+                      allowCustom
+                    />
+                    <Select
+                      label='Bottom Material'
+                      value={dmBottomMaterial}
+                      onChange={setDmBottomMaterial}
+                      options={MATERIALS}
+                      allowCustom
+                    />
+                    <Select
+                      label='Bottom Design Pattern'
+                      value={dmBottomDesign}
+                      onChange={setDmBottomDesign}
+                      options={DESIGNS}
+                      allowCustom
+                    />
+                    <Select
+                      label='Type'
+                      value={dmStitchType}
+                      onChange={setDmStitchType}
+                      options={STITCH_TYPES}
+                    />
+                    <Select
+                      label='Weight'
+                      value={dmWeight}
+                      onChange={setDmWeight}
+                      options={WEIGHTS}
+                    />
+                    <Select
+                      label='Pack Of'
+                      value={dmPackSize}
+                      onChange={setDmPackSize}
+                      options={PACK_SIZES}
+                    />
+                    {/* ponytail: "check if top has lining" — added as a field here, remove if not needed */}
+                    <Select
+                      label='Top Lining'
+                      value={dmTopLining}
+                      onChange={setDmTopLining}
+                      options={LINING_OPTIONS}
+                    />
+                  </div>
+                ) : isLegging ? (
+                  <div className='grid grid-cols-1 sm:grid-cols-2 gap-5'>
+                    <Select
+                      label='Material'
+                      value={material}
+                      onChange={setMaterial}
+                      options={MATERIALS}
+                      allowCustom
+                    />
+                    <Select
+                      label='Length Type'
+                      value={legLength}
+                      onChange={setLegLength}
+                      options={LENGTH_TYPES}
+                    />
+                    <Select
+                      label='Colour'
+                      value={legColour}
+                      onChange={setLegColour}
+                      options={COLOR_OPTIONS}
+                      allowCustom
+                    />
+                    <Select
+                      label='Design Pattern'
+                      value={design}
+                      onChange={setDesign}
+                      options={DESIGNS}
+                      allowCustom
+                    />
+                    <Select
+                      label='Weight'
+                      value={legWeight}
+                      onChange={setLegWeight}
+                      options={WEIGHTS}
                     />
                   </div>
                 ) : (
@@ -1208,6 +1438,10 @@ const ProductUpload = () => {
                       onSizeQtyChange={(size, qty) =>
                         setVariantSize(variant.id, size, qty)
                       }
+                      categoryType={categoryType}
+                      onComponentSizeQtyChange={(component, size, qty) =>
+                        setVariantComponentSize(variant.id, component, size, qty)
+                      }
                       onMainImage={(e) => handleMainImage(variant.id, e)}
                       onRemoveMainImage={() => removeMainImage(variant.id)}
                       onOtherImages={(e) => handleOtherImages(variant.id, e)}
@@ -1311,6 +1545,10 @@ const ProductUpload = () => {
                 <p className='text-gray-500 text-xs mt-1'>
                   {(isSaree
                     ? [material, sareeColor, design, pattern, sareeType]
+                    : isDressMaterial
+                    ? [dmShawlMaterial, dmTopMaterial, dmBottomMaterial, dmStitchType]
+                    : isLegging
+                    ? [material, legLength, legColour, design]
                     : [material, sleeveLength, neck, designStyling, design, bottomType]
                   )
                     .filter(Boolean)
@@ -1332,6 +1570,8 @@ const VariantCard = ({
   index,
   onColorsChange,
   onSizeQtyChange,
+  categoryType,
+  onComponentSizeQtyChange,
   onMainImage,
   onRemoveMainImage,
   onOtherImages,
@@ -1378,34 +1618,85 @@ const VariantCard = ({
         </p>
 
         {/* Sizes */}
-        <div>
-          <label className='block text-xs font-semibold uppercase tracking-widest text-rose-400 mb-3'>
-            Sizes & Quantities
-          </label>
-          <div className='grid grid-cols-2 sm:grid-cols-4 gap-3'>
-            {variant.sizes.map(({ size, quantity }) => (
-              <div key={size} className='space-y-1'>
-                <div
-                  className={`text-center text-xs font-semibold py-1.5 rounded-lg border transition-colors ${
-                    quantity !== '' && parseInt(quantity) > 0
-                      ? 'border-rose-500 bg-rose-500/10 text-rose-300'
-                      : 'border-stone-700 text-stone-500'
-                  }`}
-                >
-                  {size}
+        {categoryType === 'saree' ? (
+          <div>
+            <label className='block text-xs font-semibold uppercase tracking-widest text-rose-400 mb-3'>
+              Stock (Free Size)
+            </label>
+            <input
+              type='number'
+              min='0'
+              value={variant.sizes.find((s) => s.size === 'Free Size')?.quantity ?? ''}
+              onChange={(e) => onSizeQtyChange('Free Size', e.target.value)}
+              placeholder='Qty'
+              className='w-full max-w-[140px] text-center px-2 py-2 bg-stone-900 border border-stone-700 rounded-lg text-sm text-stone-100 placeholder-stone-600 focus:outline-none focus:border-rose-500 transition-colors'
+            />
+          </div>
+        ) : categoryType === 'dress-material' ? (
+          <div className='space-y-5'>
+            {['shawl', 'top', 'bottom'].map((component) => (
+              <div key={component}>
+                <label className='block text-xs font-semibold uppercase tracking-widest text-rose-400 mb-3 capitalize'>
+                  {component} · Sizes & Quantities
+                </label>
+                <div className='grid grid-cols-2 sm:grid-cols-4 gap-3'>
+                  {variant.componentSizes[component].map(({ size, quantity }) => (
+                    <div key={size} className='space-y-1'>
+                      <div
+                        className={`text-center text-xs font-semibold py-1.5 rounded-lg border transition-colors ${
+                          quantity !== '' && parseInt(quantity) > 0
+                            ? 'border-rose-500 bg-rose-500/10 text-rose-300'
+                            : 'border-stone-700 text-stone-500'
+                        }`}
+                      >
+                        {size}
+                      </div>
+                      <input
+                        type='number'
+                        min='0'
+                        value={quantity}
+                        onChange={(e) =>
+                          onComponentSizeQtyChange(component, size, e.target.value)
+                        }
+                        placeholder='Qty'
+                        className='w-full text-center px-2 py-2 bg-stone-900 border border-stone-700 rounded-lg text-sm text-stone-100 placeholder-stone-600 focus:outline-none focus:border-rose-500 transition-colors'
+                      />
+                    </div>
+                  ))}
                 </div>
-                <input
-                  type='number'
-                  min='0'
-                  value={quantity}
-                  onChange={(e) => onSizeQtyChange(size, e.target.value)}
-                  placeholder='Qty'
-                  className='w-full text-center px-2 py-2 bg-stone-900 border border-stone-700 rounded-lg text-sm text-stone-100 placeholder-stone-600 focus:outline-none focus:border-rose-500 transition-colors'
-                />
               </div>
             ))}
           </div>
-        </div>
+        ) : (
+          <div>
+            <label className='block text-xs font-semibold uppercase tracking-widest text-rose-400 mb-3'>
+              Sizes & Quantities
+            </label>
+            <div className='grid grid-cols-2 sm:grid-cols-4 gap-3'>
+              {variant.sizes.map(({ size, quantity }) => (
+                <div key={size} className='space-y-1'>
+                  <div
+                    className={`text-center text-xs font-semibold py-1.5 rounded-lg border transition-colors ${
+                      quantity !== '' && parseInt(quantity) > 0
+                        ? 'border-rose-500 bg-rose-500/10 text-rose-300'
+                        : 'border-stone-700 text-stone-500'
+                    }`}
+                  >
+                    {size}
+                  </div>
+                  <input
+                    type='number'
+                    min='0'
+                    value={quantity}
+                    onChange={(e) => onSizeQtyChange(size, e.target.value)}
+                    placeholder='Qty'
+                    className='w-full text-center px-2 py-2 bg-stone-900 border border-stone-700 rounded-lg text-sm text-stone-100 placeholder-stone-600 focus:outline-none focus:border-rose-500 transition-colors'
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Main Image */}
         <div>

@@ -20,10 +20,12 @@ export const SAREE_TYPES = [
   'Ready to Wear',
 ]
 
-export const BLOUSE_TYPES = ['Unstitched', 'Readymade']
+export const BLOUSE_INCLUDED = ['With Blouse', 'Without Blouse']
+
+export const BLOUSE_TYPES = ['Stitched', 'Unstitched']
 
 export const NUMBER_OF_BLOUSES = ['0', '1', '2']
 
 export const SAREE_LENGTHS = ['5.5 m', '6 m', '6.3 m']
 
-export const SAREE_WEIGHTS = ['Light (<500g)', 'Medium (500g-800g)', 'Heavy (>800g)']
+export { WEIGHTS as SAREE_WEIGHTS } from './categoryAttributes'
