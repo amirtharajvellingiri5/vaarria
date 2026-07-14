@@ -567,6 +567,7 @@ const ProductUpload = () => {
 
   const buildPayload = () => ({
     title, // ✅ was missing in failing payload
+    fabric: isDressMaterial ? (dmTopMaterial || dmShawlMaterial || dmBottomMaterial || null) : material,
     brand: { name: brandName, catalogue_id: catalogueId },
     category: {
       category_id: categoryId,

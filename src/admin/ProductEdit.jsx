@@ -464,6 +464,7 @@ const ProductEdit = ({ onBack }) => {
   const buildPayload = (updatedVariants) => ({
     product_id: productId,
     title,
+    fabric: material,
     brand: { name: brandName, catalogue_id: catalogueId },
     category: {
   category_name: categories.find(
