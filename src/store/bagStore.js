@@ -44,7 +44,6 @@ export const useBagStore = create((set, get) => ({
   },
 
   platformFee: 23,
-  donationAmount: 0,
   mobileMenuOpen: false,
 
   setItems: (items) => set({ items }),
@@ -75,9 +74,6 @@ export const useBagStore = create((set, get) => ({
         i.id === id ? { ...i, qty: Math.max(1, i.qty + delta) } : i,
       ),
     })),
-
-  setDonation: (amt) =>
-    set((s) => ({ donationAmount: s.donationAmount === amt ? 0 : amt })),
 
   toggleMobileMenu: () => set((s) => ({ mobileMenuOpen: !s.mobileMenuOpen })),
 }))

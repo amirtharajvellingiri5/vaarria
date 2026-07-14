@@ -943,7 +943,7 @@ function PaymentMethodSelector({ value, onChange, total, disabled }) {
 
 function PricePanel({ onNeedAuth, triggerPay, onTriggerConsumed, authReady }) {
   const navigate = useNavigate()
-  const { items, donationAmount, getCouponSavings } = useBagStore()
+  const { items, getCouponSavings, appliedCouponIds } = useBagStore()
   const [paymentError, setPaymentError] = useState('')
   const [paymentLoading, setPaymentLoading] = useState(false)
   const [showEmptyBagPopup, setShowEmptyBagPopup] = useState(false)
@@ -964,7 +964,7 @@ function PricePanel({ onNeedAuth, triggerPay, onTriggerConsumed, authReady }) {
   )
 
   const discountOnMrp = totalMrp - totalPrice
-  const total = totalPrice - couponSavings + donationAmount
+  const total = totalPrice - couponSavings
 
   const API_BASE = ORDERS_API_BASE
   const { token: authToken, customer: authCustomer } = useAuthStore()
@@ -1015,6 +1015,7 @@ function PricePanel({ onNeedAuth, triggerPay, onTriggerConsumed, authReady }) {
       color: item.colorName || null,
       image: item.image || null,
       bag_id: item.id,
+      coupon_applied: appliedCouponIds.has(item.id) && item.couponDiscount > 0,
     }))
 
     const clearBagAndNavigate = async (order) => {
@@ -1172,10 +1173,6 @@ function PricePanel({ onNeedAuth, triggerPay, onTriggerConsumed, authReady }) {
         />
 
         <PriceRow label='Coupon Discount' value={`- ₹${couponSavings}`} green />
-
-        {donationAmount > 0 && (
-          <PriceRow label='Donation' value={`₹${donationAmount}`} />
-        )}
       </div>
 
       <div style={styles.priceDivider} />
