@@ -482,10 +482,7 @@ const openProduct = (id) => {
 }
 
 const openEditProduct = (id) => {
-  window.open(
-    `http://localhost:5173/admin/products/edit/${id}`,
-    '_blank',
-  )
+  window.open(`/admin/products/edit/${id}`, '_blank')
 }
   const pageNums = (() => {
     const nums = []

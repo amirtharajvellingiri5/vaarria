@@ -38,8 +38,6 @@ const MENU_DATA = [
         {
           title: 'Indian & Fusion Wear',
           links: [
-            { slug: 'kurtas-suits', url: getCategoryUrl('kurtas-suits') },
-            { slug: 'kurtis-tops', url: getCategoryUrl('kurtis-tops') },
             { slug: 'sarees', url: getCategoryUrl('sarees') },
             { slug: 'dress-materials', url: getCategoryUrl('dress-materials') },
             { slug: 'dupattas-shawls', url: getCategoryUrl('dupattas-shawls') },
@@ -93,8 +91,6 @@ const MENU_DATA = [
           {
             title: 'Indian & Fusion Wear',
             links: [
-              { slug: 'kurtas-suits', url: getCategoryUrl('kurtas-suits') },
-              { slug: 'kurtis-tops', url: getCategoryUrl('kurtis-tops') },
               { slug: 'sarees', url: getCategoryUrl('sarees') },
               { slug: 'dress-materials', url: getCategoryUrl('dress-materials') },
               { slug: 'dupattas-shawls', url: getCategoryUrl('dupattas-shawls') },

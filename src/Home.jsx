@@ -12,8 +12,6 @@ const LISTING = CATALOG_URL
 const CDN = 'https://cdn.vaarria.com/app/images/'
 
 const CATEGORIES = [
-  { label: 'Kurtas & Suits', slug: 'kurtas-suits', bg: '#EDE8E0' },
-  { label: 'Kurtis & Tops', slug: 'kurtis-tops', bg: '#E4DDD4' },
   { label: 'Sarees', slug: 'sarees', bg: '#D8D0C5' },
   { label: 'Dresses', slug: 'dresses', bg: '#CCC4B8' },
   { label: 'Dress Materials', slug: 'dress-materials', bg: '#C0B9AE' },
