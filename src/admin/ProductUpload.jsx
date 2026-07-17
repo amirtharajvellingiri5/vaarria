@@ -188,6 +188,73 @@ const Select = ({ label, options, value, onChange, required, allowCustom, multip
   )
 }
 
+const LIGHT_HEXES = ['#ffffff', '#f5f0e8', '#fdd835', '#ffc107', '#a5d6a7', '#bbdefb', '#81d4fa', '#f8bbd0', '#bcaaa4']
+
+// ponytail: value stays a comma-joined string so shared ss*Color state keeps working
+// unmodified in the single-select ComponentAttrs branches (isSuitSetTopDupatta/Kurti)
+const ColorPlate = ({ label, value, onChange, required }) => {
+  const selectedColors = value ? value.split(',').map((s) => s.trim()).filter(Boolean) : []
+
+  const toggle = (o) => {
+    const next = selectedColors.includes(o) ? selectedColors.filter((c) => c !== o) : [...selectedColors, o]
+    onChange(next.join(', '))
+  }
+
+  return (
+    <div>
+      {label && (
+        <label className='block text-xs font-semibold uppercase tracking-widest text-rose-400 mb-1'>
+          {label} {required && <span className='text-rose-500'>*</span>}
+        </label>
+      )}
+      {selectedColors.length > 0 && (
+        <div className='flex flex-wrap gap-1.5 mb-2'>
+          {selectedColors.map((o) => (
+            <span
+              key={o}
+              className='inline-flex items-center gap-1 pl-2 pr-1 py-0.5 rounded-full bg-stone-800 border border-stone-700 text-xs text-stone-300'
+            >
+              {o}
+              <button
+                type='button'
+                title={`Remove ${o}`}
+                onClick={() => toggle(o)}
+                className='rounded-full p-0.5 hover:bg-stone-700 text-stone-400 hover:text-stone-200'
+              >
+                <X size={10} />
+              </button>
+            </span>
+          ))}
+        </div>
+      )}
+      <div className='flex flex-wrap gap-2'>
+        {COLOR_OPTIONS.map((o) => {
+          const hex = COLOR_MAP[o.toLowerCase()]
+          const selected = selectedColors.includes(o)
+          return (
+            <button
+              key={o}
+              type='button'
+              title={o}
+              onClick={() => toggle(o)}
+              className={`w-7 h-7 rounded-md border-2 flex items-center justify-center shrink-0 transition-colors ${
+                selected ? 'border-rose-500' : 'border-stone-700 hover:border-stone-500'
+              }`}
+              style={
+                hex
+                  ? { backgroundColor: hex }
+                  : { background: 'repeating-linear-gradient(45deg, #78716c 0 4px, #292524 4px 8px)' }
+              }
+            >
+              {selected && <Check size={12} className={!hex || LIGHT_HEXES.includes(hex) ? 'text-stone-900' : 'text-white'} />}
+            </button>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
 const Field = ({ label, required, hint, children }) => (
   <div>
     {label && (
@@ -308,7 +375,7 @@ const emptyVariant = () => ({
 // entry and inventory payload building for multi-piece categories.
 const COMPONENTS_BY_TYPE = {
   'dress-material': ['shawl', 'top', 'bottom'],
-  'suit-set-3pc': ['shawl', 'top', 'bottom'],
+  // ponytail: suit-set-3pc intentionally omitted — sizes captured once as common (not per shawl/top/bottom)
   'suit-set-top-dupatta': ['shawl', 'top'],
   'suit-set-top-kurti': ['top', 'kurti'],
 }
@@ -323,7 +390,7 @@ const ProductUpload = () => {
   const [catalogueId, setCatalogueId] = useState('123')
 
   // Category
-  const [categoryId, setCategoryId] = useState(null)
+  const [categoryId, setCategoryId] = useState(14) // ponytail: 14 = Suit Set (3 Piece), default per request
   const categorySlug = categories.find((c) => c.category_id === categoryId)?.slug
   const isSaree = categorySlug === 'sarees'
   const isDressMaterial = categorySlug === 'dress-materials'
@@ -629,7 +696,10 @@ const ProductUpload = () => {
   const buildInventoryVariants = (list) =>
     list.map((v) => {
       const base = {
-        color: v.colors.join(', '),
+        // ponytail: suit-set-3pc color already captured per-part in Description Attributes
+        color: isSuitSet3pc
+          ? [ssTopColor, ssBottomColor, ssShawlColor].filter(Boolean).join(', ')
+          : v.colors.join(', '),
         main_image: v.main_image_filename, // ✅ server filename from upload API
         other_images: v.other_image_filenames // ✅ server filenames from upload API
           .filter((f) => f.filename)
@@ -1475,18 +1545,40 @@ const ProductUpload = () => {
                     <Select label='Weight' value={shawlWeight} onChange={setShawlWeight} options={WEIGHTS} />
                   </div>
                 ) : isSuitSet3pc ? (
-                  <div className='grid grid-cols-1 sm:grid-cols-2 gap-5'>
-                    <ComponentAttrs label='Top' material={ssTopMaterial} onMaterialChange={setSsTopMaterial} pattern={ssTopPattern} onPatternChange={setSsTopPattern} design={ssTopDesign} onDesignChange={setSsTopDesign} color={ssTopColor} onColorChange={setSsTopColor} />
-                    <ComponentAttrs label='Bottom' material={ssBottomMaterial} onMaterialChange={setSsBottomMaterial} pattern={ssBottomPattern} onPatternChange={setSsBottomPattern} design={ssBottomDesign} onDesignChange={setSsBottomDesign} color={ssBottomColor} onColorChange={setSsBottomColor} />
-                    <ComponentAttrs label='Shawl' material={ssShawlMaterial} onMaterialChange={setSsShawlMaterial} pattern={ssShawlPattern} onPatternChange={setSsShawlPattern} design={ssShawlDesign} onDesignChange={setSsShawlDesign} color={ssShawlColor} onColorChange={setSsShawlColor} />
-                    <Select label='Product Type' value={ssProductType} onChange={setSsProductType} options={PRODUCT_TYPES} />
-                    <Select label='Weight' value={ssWeight} onChange={setSsWeight} options={WEIGHTS} />
-                    <Select label='Top Length' value={topLength} onChange={setTopLength} options={TOP_LENGTHS} allowCustom />
-                    <Select label='Sleeve Length' value={sleeveLength} onChange={setSleeveLength} options={SLEEVE_LENGTH_OPTIONS} />
-                    <Select label='Bottom Type' value={bottomType} onChange={setBottomType} options={BOTTOM_TYPES} allowCustom />
-                    <Select label='Dupatta Size' value={ssDupattaSize} onChange={setSsDupattaSize} options={DUPATTA_SIZES} allowCustom />
-                    <Select label='Pack Of' value={ssPackSize} onChange={setSsPackSize} options={PACK_SIZES} />
-                    <Select label='Neck Design' value={neck} onChange={setNeck} options={NECK_OPTIONS} />
+                  <div className='space-y-5'>
+                    <div className='grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-stone-800'>
+                      <div className='space-y-5 sm:pr-5'>
+                        <h4 className='text-xs font-bold text-stone-400 uppercase tracking-wide'>Top</h4>
+                        <ColorPlate label='Colour' value={ssTopColor} onChange={setSsTopColor} />
+                        <Select label='Material' value={ssTopMaterial} onChange={setSsTopMaterial} options={MATERIALS} allowCustom />
+                        <Select label='Pattern' value={ssTopPattern} onChange={setSsTopPattern} options={PATTERNS} allowCustom />
+                        <Select label='Design' value={ssTopDesign} onChange={setSsTopDesign} options={DESIGNS} allowCustom />
+                      </div>
+                      <div className='space-y-5 pt-5 sm:pt-0 sm:px-5'>
+                        <h4 className='text-xs font-bold text-stone-400 uppercase tracking-wide'>Bottom</h4>
+                        <ColorPlate label='Colour' value={ssBottomColor} onChange={setSsBottomColor} />
+                        <Select label='Material' value={ssBottomMaterial} onChange={setSsBottomMaterial} options={MATERIALS} allowCustom />
+                        <Select label='Pattern' value={ssBottomPattern} onChange={setSsBottomPattern} options={PATTERNS} allowCustom />
+                        <Select label='Design' value={ssBottomDesign} onChange={setSsBottomDesign} options={DESIGNS} allowCustom />
+                      </div>
+                      <div className='space-y-5 pt-5 sm:pt-0 sm:pl-5'>
+                        <h4 className='text-xs font-bold text-stone-400 uppercase tracking-wide'>Shawl</h4>
+                        <ColorPlate label='Colour' value={ssShawlColor} onChange={setSsShawlColor} />
+                        <Select label='Material' value={ssShawlMaterial} onChange={setSsShawlMaterial} options={MATERIALS} allowCustom />
+                        <Select label='Pattern' value={ssShawlPattern} onChange={setSsShawlPattern} options={PATTERNS} allowCustom />
+                        <Select label='Design' value={ssShawlDesign} onChange={setSsShawlDesign} options={DESIGNS} allowCustom />
+                      </div>
+                    </div>
+                    <div className='grid grid-cols-1 sm:grid-cols-2 gap-5'>
+                      <Select label='Product Type' value={ssProductType} onChange={setSsProductType} options={PRODUCT_TYPES} />
+                      <Select label='Weight' value={ssWeight} onChange={setSsWeight} options={WEIGHTS} />
+                      <Select label='Top Length' value={topLength} onChange={setTopLength} options={TOP_LENGTHS} allowCustom />
+                      <Select label='Sleeve Length' value={sleeveLength} onChange={setSleeveLength} options={SLEEVE_LENGTH_OPTIONS} />
+                      <Select label='Bottom Type' value={bottomType} onChange={setBottomType} options={BOTTOM_TYPES} allowCustom />
+                      <Select label='Dupatta Size' value={ssDupattaSize} onChange={setSsDupattaSize} options={DUPATTA_SIZES} allowCustom />
+                      <Select label='Pack Of' value={ssPackSize} onChange={setSsPackSize} options={PACK_SIZES} />
+                      <Select label='Neck Design' value={neck} onChange={setNeck} options={NECK_OPTIONS} />
+                    </div>
                   </div>
                 ) : isSuitSetTopDupatta ? (
                   <div className='grid grid-cols-1 sm:grid-cols-2 gap-5'>
@@ -1878,7 +1970,7 @@ const VariantCard = ({
       <div className='flex items-center justify-between px-5 py-3 border-b border-stone-800 bg-stone-900/60'>
         <span className='text-xs font-semibold uppercase tracking-widest text-rose-400'>
           Variant {index + 1}
-          {variant.colors?.length ? ` · ${variant.colors.join(', ')}` : ''}
+          {categoryType !== 'suit-set-3pc' && variant.colors?.length ? ` · ${variant.colors.join(', ')}` : ''}
         </span>
         {onRemoveVariant && (
           <button
@@ -1891,18 +1983,22 @@ const VariantCard = ({
       </div>
 
       <div className='p-5 space-y-5'>
-        {/* Color(s) */}
-        <Select
-          label='Color'
-          required
-          value={variant.colors}
-          onChange={onColorsChange}
-          options={COLOR_OPTIONS}
-          multiple
-        />
-        <p className='-mt-3 text-xs text-stone-500'>
-          Pick multiple colors if this variant (same images, sizes & stock) comes in more than one color.
-        </p>
+        {/* Color(s) — captured per-part in Description Attributes for suit-set-3pc */}
+        {categoryType !== 'suit-set-3pc' && (
+          <>
+            <Select
+              label='Color'
+              required
+              value={variant.colors}
+              onChange={onColorsChange}
+              options={COLOR_OPTIONS}
+              multiple
+            />
+            <p className='-mt-3 text-xs text-stone-500'>
+              Pick multiple colors if this variant (same images, sizes & stock) comes in more than one color.
+            </p>
+          </>
+        )}
 
         {/* Sizes */}
         {categoryType === 'saree' ? (
