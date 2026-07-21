@@ -41,7 +41,6 @@ import {
   PACK_SIZES,
   WEIGHTS,
   LENGTH_TYPES,
-  LINING_OPTIONS,
   PRODUCT_TYPES,
   TOP_LENGTHS,
   DUPATTA_SIZES,
@@ -191,7 +190,7 @@ const Select = ({ label, options, value, onChange, required, allowCustom, multip
 const LIGHT_HEXES = ['#ffffff', '#f5f0e8', '#fdd835', '#ffc107', '#a5d6a7', '#bbdefb', '#81d4fa', '#f8bbd0', '#bcaaa4']
 
 // ponytail: value stays a comma-joined string so shared ss*Color state keeps working
-// unmodified in the single-select ComponentAttrs branches (isSuitSetTopDupatta/Kurti)
+// used by isSuitSet3pc/isSuitSetTopDupatta/isSuitSetTopKurti segregated color sections
 const ColorPlate = ({ label, value, onChange, required }) => {
   const selectedColors = value ? value.split(',').map((s) => s.trim()).filter(Boolean) : []
 
@@ -316,25 +315,6 @@ const NECK_OPTIONS = [
   'Keyhole Neck',
 ]
 
-const ComponentAttrs = ({
-  label,
-  material,
-  onMaterialChange,
-  pattern,
-  onPatternChange,
-  design,
-  onDesignChange,
-  color,
-  onColorChange,
-}) => (
-  <>
-    <Select label={`${label} Material`} value={material} onChange={onMaterialChange} options={MATERIALS} allowCustom />
-    <Select label={`${label} Pattern`} value={pattern} onChange={onPatternChange} options={PATTERNS} allowCustom />
-    <Select label={`${label} Design`} value={design} onChange={onDesignChange} options={DESIGNS} allowCustom />
-    <Select label={`${label} Colour`} value={color} onChange={onColorChange} options={COLOR_OPTIONS} allowCustom />
-  </>
-)
-
 const Section = ({ icon: Icon, title, subtitle, children }) => (
   <div className='bg-stone-950 border border-stone-800 rounded-2xl overflow-visible'>
     <div className='flex items-center gap-3 px-6 py-4 border-b border-stone-800 bg-stone-900/50'>
@@ -373,12 +353,12 @@ const emptyVariant = () => ({
 
 // Which componentSizes keys apply per categoryType — drives both variant stock
 // entry and inventory payload building for multi-piece categories.
-const COMPONENTS_BY_TYPE = {
-  'dress-material': ['shawl', 'top', 'bottom'],
-  // ponytail: suit-set-3pc intentionally omitted — sizes captured once as common (not per shawl/top/bottom)
-  'suit-set-top-dupatta': ['shawl', 'top'],
-  'suit-set-top-kurti': ['top', 'kurti'],
-}
+// ponytail: all multi-part categories now capture size once as common (not per shawl/top/bottom/kurti);
+// kept as an empty map (rather than deleting the branch) in case a future category needs per-part sizes again
+const COMPONENTS_BY_TYPE = {}
+
+// Categories with per-part color captured in Description Attributes (ColorPlate) — hide the flat Color picker
+const PER_PART_COLOR_TYPES = ['suit-set-3pc', 'suit-set-top-dupatta', 'suit-set-top-kurti', 'dress-material']
 
 // ── Main Component ────────────────────────────────────────────────────────────
 const ProductUpload = () => {
@@ -437,17 +417,24 @@ const ProductUpload = () => {
   const [blousePattern, setBlousePattern] = useState('')
   const [blouseBorder, setBlouseBorder] = useState('')
 
-  // Dress-material-only description attributes
+  // Dress-material-only description attributes — mirrors suit-set-3pc's per-part fields,
+  // except it's always unstitched fabric (dmStitchType defaults to 'Unstitched')
+  const [dmShawlColor, setDmShawlColor] = useState('')
   const [dmShawlMaterial, setDmShawlMaterial] = useState('')
-  const [dmTopMaterial, setDmTopMaterial] = useState('')
-  const [dmBottomMaterial, setDmBottomMaterial] = useState('')
+  const [dmShawlPattern, setDmShawlPattern] = useState('')
   const [dmShawlDesign, setDmShawlDesign] = useState('')
+  const [dmTopColor, setDmTopColor] = useState('')
+  const [dmTopMaterial, setDmTopMaterial] = useState('')
+  const [dmTopPattern, setDmTopPattern] = useState('')
   const [dmTopDesign, setDmTopDesign] = useState('')
+  const [dmBottomColor, setDmBottomColor] = useState('')
+  const [dmBottomMaterial, setDmBottomMaterial] = useState('')
+  const [dmBottomPattern, setDmBottomPattern] = useState('')
   const [dmBottomDesign, setDmBottomDesign] = useState('')
-  const [dmStitchType, setDmStitchType] = useState('')
+  const [dmStitchType, setDmStitchType] = useState('Unstitched')
   const [dmWeight, setDmWeight] = useState('')
+  const [dmDupattaSize, setDmDupattaSize] = useState('')
   const [dmPackSize, setDmPackSize] = useState('1')
-  const [dmTopLining, setDmTopLining] = useState('')
 
   // Leggings-only description attributes
   const [legLength, setLegLength] = useState('')
@@ -696,9 +683,15 @@ const ProductUpload = () => {
   const buildInventoryVariants = (list) =>
     list.map((v) => {
       const base = {
-        // ponytail: suit-set-3pc color already captured per-part in Description Attributes
+        // ponytail: suit-set-* / dress-material colors already captured per-part in Description Attributes
         color: isSuitSet3pc
           ? [ssTopColor, ssBottomColor, ssShawlColor].filter(Boolean).join(', ')
+          : isDressMaterial
+          ? [dmTopColor, dmBottomColor, dmShawlColor].filter(Boolean).join(', ')
+          : isSuitSetTopDupatta
+          ? [ssTopColor, ssShawlColor].filter(Boolean).join(', ')
+          : isSuitSetTopKurti
+          ? [ssTopColor, ssKurtiColor].filter(Boolean).join(', ')
           : v.colors.join(', '),
         main_image: v.main_image_filename, // ✅ server filename from upload API
         other_images: v.other_image_filenames // ✅ server filenames from upload API
@@ -776,16 +769,26 @@ const ProductUpload = () => {
         }
       : isDressMaterial
       ? {
-          'Shawl Material': dmShawlMaterial,
           'Top Material': dmTopMaterial,
-          'Bottom Material': dmBottomMaterial,
-          'Shawl Design': dmShawlDesign,
+          'Top Pattern': dmTopPattern,
           'Top Design': dmTopDesign,
+          'Top Colour': dmTopColor,
+          'Bottom Material': dmBottomMaterial,
+          'Bottom Pattern': dmBottomPattern,
           'Bottom Design': dmBottomDesign,
+          'Bottom Colour': dmBottomColor,
+          'Shawl Material': dmShawlMaterial,
+          'Shawl Pattern': dmShawlPattern,
+          'Shawl Design': dmShawlDesign,
+          'Shawl Colour': dmShawlColor,
           Type: dmStitchType,
           Weight: dmWeight,
+          'Top Length': topLength,
+          'Sleeve Length': sleeveLength,
+          'Bottom Type': bottomType,
+          'Dupatta Size': dmDupattaSize,
           'Pack Of': dmPackSize,
-          'Top Lining': dmTopLining,
+          'Neck Design': neck,
           product_blurb: description,
           highlights: highlights,
         }
@@ -1288,15 +1291,13 @@ const ProductUpload = () => {
                 subtitle={
                   isSaree
                     ? 'Fabric, blouse & saree specifics'
-                    : isDressMaterial
-                    ? 'Shawl, top & bottom specifics'
                     : isLegging
                     ? 'Fabric, length & fit'
                     : isKurtisTops
                     ? 'Fabric, sleeve, neck, styling & length'
                     : isShawlCategory
                     ? 'Colour, material, design & size'
-                    : isSuitSet3pc || isSuitSetTopDupatta || isSuitSetTopKurti
+                    : isSuitSet3pc || isSuitSetTopDupatta || isSuitSetTopKurti || isDressMaterial
                     ? 'Per-component fabric, fit & set details'
                     : 'Fabric, sleeve, neck, styling'
                 }
@@ -1416,74 +1417,41 @@ const ProductUpload = () => {
                     />
                   </div>
                 ) : isDressMaterial ? (
-                  <div className='grid grid-cols-1 sm:grid-cols-2 gap-5'>
-                    <Select
-                      label='Shawl Material'
-                      value={dmShawlMaterial}
-                      onChange={setDmShawlMaterial}
-                      options={MATERIALS}
-                      allowCustom
-                    />
-                    <Select
-                      label='Shawl Design Pattern'
-                      value={dmShawlDesign}
-                      onChange={setDmShawlDesign}
-                      options={DESIGNS}
-                      allowCustom
-                    />
-                    <Select
-                      label='Top Material'
-                      value={dmTopMaterial}
-                      onChange={setDmTopMaterial}
-                      options={MATERIALS}
-                      allowCustom
-                    />
-                    <Select
-                      label='Top Design Pattern'
-                      value={dmTopDesign}
-                      onChange={setDmTopDesign}
-                      options={DESIGNS}
-                      allowCustom
-                    />
-                    <Select
-                      label='Bottom Material'
-                      value={dmBottomMaterial}
-                      onChange={setDmBottomMaterial}
-                      options={MATERIALS}
-                      allowCustom
-                    />
-                    <Select
-                      label='Bottom Design Pattern'
-                      value={dmBottomDesign}
-                      onChange={setDmBottomDesign}
-                      options={DESIGNS}
-                      allowCustom
-                    />
-                    <Select
-                      label='Type'
-                      value={dmStitchType}
-                      onChange={setDmStitchType}
-                      options={STITCH_TYPES}
-                    />
-                    <Select
-                      label='Weight'
-                      value={dmWeight}
-                      onChange={setDmWeight}
-                      options={WEIGHTS}
-                    />
-                    <Select
-                      label='Pack Of'
-                      value={dmPackSize}
-                      onChange={setDmPackSize}
-                      options={PACK_SIZES}
-                    />
-                    {/* ponytail: "check if top has lining" — added as a field here, remove if not needed */}
-                    <Select
-                      label='Top Lining'
-                      value={dmTopLining}
-                      onChange={setDmTopLining}
-                      options={LINING_OPTIONS}
-                    />
+                  <div className='space-y-5'>
+                    <div className='grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-stone-800'>
+                      <div className='space-y-5 sm:pr-5'>
+                        <h4 className='text-xs font-bold text-stone-400 uppercase tracking-wide'>Top</h4>
+                        <ColorPlate label='Colour' value={dmTopColor} onChange={setDmTopColor} />
+                        <Select label='Material' value={dmTopMaterial} onChange={setDmTopMaterial} options={MATERIALS} allowCustom />
+                        <Select label='Pattern' value={dmTopPattern} onChange={setDmTopPattern} options={PATTERNS} allowCustom />
+                        <Select label='Design' value={dmTopDesign} onChange={setDmTopDesign} options={DESIGNS} allowCustom />
+                      </div>
+                      <div className='space-y-5 pt-5 sm:pt-0 sm:px-5'>
+                        <h4 className='text-xs font-bold text-stone-400 uppercase tracking-wide'>Bottom</h4>
+                        <ColorPlate label='Colour' value={dmBottomColor} onChange={setDmBottomColor} />
+                        <Select label='Material' value={dmBottomMaterial} onChange={setDmBottomMaterial} options={MATERIALS} allowCustom />
+                        <Select label='Pattern' value={dmBottomPattern} onChange={setDmBottomPattern} options={PATTERNS} allowCustom />
+                        <Select label='Design' value={dmBottomDesign} onChange={setDmBottomDesign} options={DESIGNS} allowCustom />
+                      </div>
+                      <div className='space-y-5 pt-5 sm:pt-0 sm:pl-5'>
+                        <h4 className='text-xs font-bold text-stone-400 uppercase tracking-wide'>Shawl</h4>
+                        <ColorPlate label='Colour' value={dmShawlColor} onChange={setDmShawlColor} />
+                        <Select label='Material' value={dmShawlMaterial} onChange={setDmShawlMaterial} options={MATERIALS} allowCustom />
+                        <Select label='Pattern' value={dmShawlPattern} onChange={setDmShawlPattern} options={PATTERNS} allowCustom />
+                        <Select label='Design' value={dmShawlDesign} onChange={setDmShawlDesign} options={DESIGNS} allowCustom />
+                      </div>
+                    </div>
+                    <div className='grid grid-cols-1 sm:grid-cols-2 gap-5'>
+                      {/* ponytail: dress-material is always unstitched fabric — same field as suit-set's Product Type, locked to Unstitched/Semi-Stitched */}
+                      <Select label='Type' value={dmStitchType} onChange={setDmStitchType} options={STITCH_TYPES} />
+                      <Select label='Weight' value={dmWeight} onChange={setDmWeight} options={WEIGHTS} />
+                      <Select label='Top Length' value={topLength} onChange={setTopLength} options={TOP_LENGTHS} allowCustom />
+                      <Select label='Sleeve Length' value={sleeveLength} onChange={setSleeveLength} options={SLEEVE_LENGTH_OPTIONS} />
+                      <Select label='Bottom Type' value={bottomType} onChange={setBottomType} options={BOTTOM_TYPES} allowCustom />
+                      <Select label='Dupatta Size' value={dmDupattaSize} onChange={setDmDupattaSize} options={DUPATTA_SIZES} allowCustom />
+                      <Select label='Pack Of' value={dmPackSize} onChange={setDmPackSize} options={PACK_SIZES} />
+                      <Select label='Neck Design' value={neck} onChange={setNeck} options={NECK_OPTIONS} />
+                    </div>
                   </div>
                 ) : isLegging ? (
                   <div className='grid grid-cols-1 sm:grid-cols-2 gap-5'>
@@ -1581,27 +1549,59 @@ const ProductUpload = () => {
                     </div>
                   </div>
                 ) : isSuitSetTopDupatta ? (
-                  <div className='grid grid-cols-1 sm:grid-cols-2 gap-5'>
-                    <ComponentAttrs label='Top' material={ssTopMaterial} onMaterialChange={setSsTopMaterial} pattern={ssTopPattern} onPatternChange={setSsTopPattern} design={ssTopDesign} onDesignChange={setSsTopDesign} color={ssTopColor} onColorChange={setSsTopColor} />
-                    <ComponentAttrs label='Dupatta' material={ssShawlMaterial} onMaterialChange={setSsShawlMaterial} pattern={ssShawlPattern} onPatternChange={setSsShawlPattern} design={ssShawlDesign} onDesignChange={setSsShawlDesign} color={ssShawlColor} onColorChange={setSsShawlColor} />
-                    <Select label='Product Type' value={ssProductType} onChange={setSsProductType} options={PRODUCT_TYPES} />
-                    <Select label='Weight' value={ssWeight} onChange={setSsWeight} options={WEIGHTS} />
-                    <Select label='Top Length' value={topLength} onChange={setTopLength} options={TOP_LENGTHS} allowCustom />
-                    <Select label='Sleeve Length' value={sleeveLength} onChange={setSleeveLength} options={SLEEVE_LENGTH_OPTIONS} />
-                    <Select label='Dupatta Size' value={ssDupattaSize} onChange={setSsDupattaSize} options={DUPATTA_SIZES} allowCustom />
-                    <Select label='Pack Of' value={ssPackSize} onChange={setSsPackSize} options={PACK_SIZES} />
-                    <Select label='Neck Design' value={neck} onChange={setNeck} options={NECK_OPTIONS} />
+                  <div>
+                    <div className='grid grid-cols-1 sm:grid-cols-2 sm:divide-x divide-stone-800 gap-5 sm:gap-0'>
+                      <div className='sm:pr-5 space-y-5'>
+                        <p className='text-xs font-semibold uppercase tracking-widest text-stone-500'>Top</p>
+                        <ColorPlate label='Colour' value={ssTopColor} onChange={setSsTopColor} />
+                        <Select label='Material' value={ssTopMaterial} onChange={setSsTopMaterial} options={MATERIALS} allowCustom />
+                        <Select label='Pattern' value={ssTopPattern} onChange={setSsTopPattern} options={PATTERNS} allowCustom />
+                        <Select label='Design' value={ssTopDesign} onChange={setSsTopDesign} options={DESIGNS} allowCustom />
+                      </div>
+                      <div className='sm:pl-5 space-y-5'>
+                        <p className='text-xs font-semibold uppercase tracking-widest text-stone-500'>Dupatta</p>
+                        <ColorPlate label='Colour' value={ssShawlColor} onChange={setSsShawlColor} />
+                        <Select label='Material' value={ssShawlMaterial} onChange={setSsShawlMaterial} options={MATERIALS} allowCustom />
+                        <Select label='Pattern' value={ssShawlPattern} onChange={setSsShawlPattern} options={PATTERNS} allowCustom />
+                        <Select label='Design' value={ssShawlDesign} onChange={setSsShawlDesign} options={DESIGNS} allowCustom />
+                      </div>
+                    </div>
+                    <div className='grid grid-cols-1 sm:grid-cols-2 gap-5 mt-5'>
+                      <Select label='Product Type' value={ssProductType} onChange={setSsProductType} options={PRODUCT_TYPES} />
+                      <Select label='Weight' value={ssWeight} onChange={setSsWeight} options={WEIGHTS} />
+                      <Select label='Top Length' value={topLength} onChange={setTopLength} options={TOP_LENGTHS} allowCustom />
+                      <Select label='Sleeve Length' value={sleeveLength} onChange={setSleeveLength} options={SLEEVE_LENGTH_OPTIONS} />
+                      <Select label='Dupatta Size' value={ssDupattaSize} onChange={setSsDupattaSize} options={DUPATTA_SIZES} allowCustom />
+                      <Select label='Pack Of' value={ssPackSize} onChange={setSsPackSize} options={PACK_SIZES} />
+                      <Select label='Neck Design' value={neck} onChange={setNeck} options={NECK_OPTIONS} />
+                    </div>
                   </div>
                 ) : isSuitSetTopKurti ? (
-                  <div className='grid grid-cols-1 sm:grid-cols-2 gap-5'>
-                    <ComponentAttrs label='Top' material={ssTopMaterial} onMaterialChange={setSsTopMaterial} pattern={ssTopPattern} onPatternChange={setSsTopPattern} design={ssTopDesign} onDesignChange={setSsTopDesign} color={ssTopColor} onColorChange={setSsTopColor} />
-                    <ComponentAttrs label='Kurti' material={ssKurtiMaterial} onMaterialChange={setSsKurtiMaterial} pattern={ssKurtiPattern} onPatternChange={setSsKurtiPattern} design={ssKurtiDesign} onDesignChange={setSsKurtiDesign} color={ssKurtiColor} onColorChange={setSsKurtiColor} />
-                    <Select label='Product Type' value={ssProductType} onChange={setSsProductType} options={PRODUCT_TYPES} />
-                    <Select label='Weight' value={ssWeight} onChange={setSsWeight} options={WEIGHTS} />
-                    <Select label='Top Length' value={topLength} onChange={setTopLength} options={TOP_LENGTHS} allowCustom />
-                    <Select label='Sleeve Length' value={sleeveLength} onChange={setSleeveLength} options={SLEEVE_LENGTH_OPTIONS} />
-                    <Select label='Pack Of' value={ssPackSize} onChange={setSsPackSize} options={PACK_SIZES} />
-                    <Select label='Neck Design' value={neck} onChange={setNeck} options={NECK_OPTIONS} />
+                  <div>
+                    <div className='grid grid-cols-1 sm:grid-cols-2 sm:divide-x divide-stone-800 gap-5 sm:gap-0'>
+                      <div className='sm:pr-5 space-y-5'>
+                        <p className='text-xs font-semibold uppercase tracking-widest text-stone-500'>Top</p>
+                        <ColorPlate label='Colour' value={ssTopColor} onChange={setSsTopColor} />
+                        <Select label='Material' value={ssTopMaterial} onChange={setSsTopMaterial} options={MATERIALS} allowCustom />
+                        <Select label='Pattern' value={ssTopPattern} onChange={setSsTopPattern} options={PATTERNS} allowCustom />
+                        <Select label='Design' value={ssTopDesign} onChange={setSsTopDesign} options={DESIGNS} allowCustom />
+                      </div>
+                      <div className='sm:pl-5 space-y-5'>
+                        <p className='text-xs font-semibold uppercase tracking-widest text-stone-500'>Kurti</p>
+                        <ColorPlate label='Colour' value={ssKurtiColor} onChange={setSsKurtiColor} />
+                        <Select label='Material' value={ssKurtiMaterial} onChange={setSsKurtiMaterial} options={MATERIALS} allowCustom />
+                        <Select label='Pattern' value={ssKurtiPattern} onChange={setSsKurtiPattern} options={PATTERNS} allowCustom />
+                        <Select label='Design' value={ssKurtiDesign} onChange={setSsKurtiDesign} options={DESIGNS} allowCustom />
+                      </div>
+                    </div>
+                    <div className='grid grid-cols-1 sm:grid-cols-2 gap-5 mt-5'>
+                      <Select label='Product Type' value={ssProductType} onChange={setSsProductType} options={PRODUCT_TYPES} />
+                      <Select label='Weight' value={ssWeight} onChange={setSsWeight} options={WEIGHTS} />
+                      <Select label='Top Length' value={topLength} onChange={setTopLength} options={TOP_LENGTHS} allowCustom />
+                      <Select label='Sleeve Length' value={sleeveLength} onChange={setSleeveLength} options={SLEEVE_LENGTH_OPTIONS} />
+                      <Select label='Pack Of' value={ssPackSize} onChange={setSsPackSize} options={PACK_SIZES} />
+                      <Select label='Neck Design' value={neck} onChange={setNeck} options={NECK_OPTIONS} />
+                    </div>
                   </div>
                 ) : (
                   <div className='grid grid-cols-1 sm:grid-cols-2 gap-5'>
@@ -1915,7 +1915,7 @@ const ProductUpload = () => {
                   {(isSaree
                     ? [material, sareeColor, design, pattern, sareeType]
                     : isDressMaterial
-                    ? [dmShawlMaterial, dmTopMaterial, dmBottomMaterial, dmStitchType]
+                    ? [dmTopMaterial, dmBottomMaterial, dmShawlMaterial, dmStitchType, topLength]
                     : isLegging
                     ? [material, legLength, legColour, design]
                     : isKurtisTops
@@ -1967,24 +1967,9 @@ const VariantCard = ({
 
   return (
     <div className='border border-stone-800 rounded-2xl overflow-hidden bg-stone-900/30'>
-      <div className='flex items-center justify-between px-5 py-3 border-b border-stone-800 bg-stone-900/60'>
-        <span className='text-xs font-semibold uppercase tracking-widest text-rose-400'>
-          Variant {index + 1}
-          {categoryType !== 'suit-set-3pc' && variant.colors?.length ? ` · ${variant.colors.join(', ')}` : ''}
-        </span>
-        {onRemoveVariant && (
-          <button
-            onClick={onRemoveVariant}
-            className='p-1 text-stone-600 hover:text-rose-400 transition-colors'
-          >
-            <Trash2 size={14} />
-          </button>
-        )}
-      </div>
-
       <div className='p-5 space-y-5'>
-        {/* Color(s) — captured per-part in Description Attributes for suit-set-3pc */}
-        {categoryType !== 'suit-set-3pc' && (
+        {/* Color(s) — captured per-part in Description Attributes for suit-set-* categories */}
+        {!PER_PART_COLOR_TYPES.includes(categoryType) && (
           <>
             <Select
               label='Color'

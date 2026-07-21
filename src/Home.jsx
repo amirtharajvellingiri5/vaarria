@@ -13,9 +13,15 @@ const CDN = 'https://cdn.vaarria.com/app/images/'
 
 const CATEGORIES = [
   { label: 'Sarees', slug: 'sarees', bg: '#D8D0C5' },
-  { label: 'Dresses', slug: 'dresses', bg: '#CCC4B8' },
   { label: 'Dress Materials', slug: 'dress-materials', bg: '#C0B9AE' },
   { label: 'Dupattas & Shawls', slug: 'dupattas-shawls', bg: '#B4AEA4' },
+  { label: 'Dresses', slug: 'dresses', bg: '#CCC4B8' },
+  { label: 'Tunics', slug: 'tunics', bg: '#A89F91' },
+  { label: 'Leggings', slug: 'leggings', bg: '#D3C7B3' },
+  { label: 'Straight Pants', slug: 'straight-pants', bg: '#BDB09B' },
+  { label: 'Suit Set (3 Piece)', slug: 'suit-set-3pc', bg: '#C7B8A3' },
+  { label: 'Suit Set (Top & Dupatta)', slug: 'suit-set-top-dupatta', bg: '#AE9F89' },
+  { label: 'Suit Set (Top & Kurti)', slug: 'suit-set-top-kurti', bg: '#DED2BE' },
 ]
 
 const PROMISES = [
