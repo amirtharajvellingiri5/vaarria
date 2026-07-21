@@ -124,13 +124,8 @@ export default function AdminNav({ children }) {
     <div className='sticky top-0 z-50 bg-stone-950/95 backdrop-blur border-b border-stone-800'>
       <div className='max-w-7xl mx-auto px-6 h-16 flex items-center gap-6'>
         {/* Brand */}
-        <a href='/admin' className='flex items-baseline gap-1.5 flex-shrink-0 no-underline'>
-          <span
-            className='font-bold text-rose-500'
-            style={{ fontFamily: "'Playfair Display', serif", fontSize: 20 }}
-          >
-            aarria
-          </span>
+        <a href='/admin' className='flex items-center gap-1.5 flex-shrink-0 no-underline'>
+          <img src='/vlogo.png' alt='VAARRIA' style={{ height: 32, width: 'auto', objectFit: 'contain' }} />
           <span className='text-[10px] uppercase tracking-widest text-stone-500 font-semibold'>
             Admin
           </span>

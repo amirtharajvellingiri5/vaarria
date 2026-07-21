@@ -67,14 +67,14 @@ const MENU_DATA = [
         },
       ],
     },
-    ,
     {
       sections: [
         {
-          title: 'Nightwear',
+          title: 'Suit Sets',
           links: [
-            { slug: 'leggings', url: getCategoryUrl('leggings') },
-            { slug: 'straight-pants', url: getCategoryUrl('straight-pants') },
+            { slug: 'suit-set-3pc', url: getCategoryUrl('suit-set-3pc') },
+            { slug: 'suit-set-top-dupatta', url: getCategoryUrl('suit-set-top-dupatta') },
+            { slug: 'suit-set-top-kurti', url: getCategoryUrl('suit-set-top-kurti') },
           ],
         },
       ],
@@ -94,6 +94,18 @@ const MENU_DATA = [
               { slug: 'sarees', url: getCategoryUrl('sarees') },
               { slug: 'dress-materials', url: getCategoryUrl('dress-materials') },
               { slug: 'dupattas-shawls', url: getCategoryUrl('dupattas-shawls') },
+            ],
+          },
+        ],
+      },
+      {
+        sections: [
+          {
+            title: 'Suit Sets',
+            links: [
+              { slug: 'suit-set-3pc', url: getCategoryUrl('suit-set-3pc') },
+              { slug: 'suit-set-top-dupatta', url: getCategoryUrl('suit-set-top-dupatta') },
+              { slug: 'suit-set-top-kurti', url: getCategoryUrl('suit-set-top-kurti') },
             ],
           },
         ],
