@@ -51,7 +51,6 @@ import {
 
 const COLOR_OPTIONS = Object.keys(COLOR_MAP).map(formatColorLabel)
 
-
 const uid = () => Math.random().toString(36).slice(2)
 
 // ── Sub-components ────────────────────────────────────────────────────────────
