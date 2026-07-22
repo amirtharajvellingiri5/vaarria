@@ -1638,14 +1638,14 @@ const ProductUpload = () => {
                     </div>
                     <div className='grid grid-cols-1 sm:grid-cols-2 gap-5'>
                       <Select label='Kurti Type' value={ssKurtiType} onChange={setSsKurtiType} options={KURTI_TYPES} allowCustom />
-                      <Select label='Product Type' value={ssProductType} onChange={setSsProductType} options={PRODUCT_TYPES} />
-                      <Select label='Weight' value={ssWeight} onChange={setSsWeight} options={WEIGHTS} />
+                      <Select label='Product Type' value={ssProductType} onChange={setSsProductType} options={PRODUCT_TYPES} allowCustom />
+                      <Select label='Weight' value={ssWeight} onChange={setSsWeight} options={WEIGHTS} allowCustom />
                       <Select label='Top Length' value={topLength} onChange={setTopLength} options={TOP_LENGTHS} allowCustom />
-                      <Select label='Sleeve Length' value={sleeveLength} onChange={setSleeveLength} options={SLEEVE_LENGTH_OPTIONS} />
+                      <Select label='Sleeve Length' value={sleeveLength} onChange={setSleeveLength} options={SLEEVE_LENGTH_OPTIONS} allowCustom />
                       <Select label='Bottom Type' value={bottomType} onChange={setBottomType} options={BOTTOM_TYPES} allowCustom />
                       <Select label='Dupatta Size' value={ssDupattaSize} onChange={setSsDupattaSize} options={DUPATTA_SIZES} allowCustom />
-                      <Select label='Pack Of' value={ssPackSize} onChange={setSsPackSize} options={PACK_SIZES} />
-                      <Select label='Neck Design' value={neck} onChange={setNeck} options={NECK_OPTIONS} />
+                      <Select label='Pack Of' value={ssPackSize} onChange={setSsPackSize} options={PACK_SIZES} allowCustom />
+                      <Select label='Neck Design' value={neck} onChange={setNeck} options={NECK_OPTIONS} allowCustom />
                       <Select label='Occasion' value={occasion} onChange={setOccasion} options={OCCASIONS} allowCustom />
                     </div>
                   </div>
