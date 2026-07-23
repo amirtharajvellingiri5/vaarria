@@ -190,7 +190,7 @@ async function fetchProduct(productId) {
     .filter((s) => s.quantity > 0)
     .map((s) => s.size)
 
-  const { product_blurb, highlights: highlightsRaw, ...desc } = raw.description ?? {}
+  const { product_blurb, highlights: highlightsRaw, Weight, ...desc } = raw.description ?? {}
   const details = { 'Style Code': raw.style_code ?? '—', ...desc }
   Object.keys(details).forEach((k) => {
     if (details[k] === '' || details[k] == null) delete details[k]
@@ -279,9 +279,6 @@ async function fetchProduct(productId) {
       active: v.color === variant.color,
     })),
     description: product_blurb ?? raw.title,
-    highlights: highlightsRaw
-      ? highlightsRaw.split('\n').map((s) => s.trim()).filter(Boolean)
-      : Object.entries(desc).map(([k, v]) => `${k}: ${v}`),
     details,
     deliveryInfo: raw.delivery ?? { days: '3-5 Business Days', cod: true },
     offers: [
@@ -1368,33 +1365,6 @@ export default function ProductDetail() {
           >
             {product.description}
           </p>
-          <p
-            style={{
-              fontSize: 12,
-              fontWeight: 700,
-              color: '#374151',
-              textTransform: 'uppercase',
-              letterSpacing: '0.6px',
-              marginBottom: 8,
-            }}
-          >
-            Product Highlights
-          </p>
-          <ul style={{ paddingLeft: 18, margin: 0 }}>
-            {product.highlights.map((h, i) => (
-              <li
-                key={i}
-                style={{
-                  fontSize: 13.5,
-                  color: '#555',
-                  marginBottom: 5,
-                  lineHeight: 1.65,
-                }}
-              >
-                {h}
-              </li>
-            ))}
-          </ul>
         </>
       ),
     },
@@ -2011,18 +1981,6 @@ export default function ProductDetail() {
                 </div>
               )}
             </div>
-
-            {product.highlights?.length > 0 && (
-              <div style={{ margin: '4px 0 12px', padding: '12px 14px', background: '#F9F6F0', borderRadius: 6, border: '1px solid #efe8d8' }}>
-                <div style={{ fontSize: 11, fontWeight: 700, color: '#050C1C', letterSpacing: '0.07em', textTransform: 'uppercase', marginBottom: 8 }}>Product Highlights</div>
-                {product.highlights.slice(0, 4).map((h, i) => (
-                  <div key={i} style={{ fontSize: 13, color: '#374151', lineHeight: 1.6, display: 'flex', alignItems: 'flex-start', gap: 6 }}>
-                    <span style={{ color: '#C9A84C', fontWeight: 700, flexShrink: 0 }}>·</span>
-                    <span>{h}</span>
-                  </div>
-                ))}
-              </div>
-            )}
 
             {!isOutOfStock && product.availableSizes?.length > 0 && product.availableSizes?.length < 3 && (
               <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10, padding: '7px 10px', background: '#FFF8EC', border: '1px solid #F0D080', borderRadius: 5 }}>

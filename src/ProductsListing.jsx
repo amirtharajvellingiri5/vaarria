@@ -105,6 +105,7 @@ const fetchProductsByCategory = async (
       id: item.id,
       name: item.title,
       price: item.price,
+      mrp: item.mrp || 0,
       image: item.main_image
         ? BASE_URL + item.main_image
         : item.images?.length
@@ -193,6 +194,7 @@ const fetchProductsByCategory = async (
     id: item.id,
     name: item.title || item.name,
     price: item.price || item.sale_price || 0,
+    mrp: item.mrp || 0,
     image: item.image || (item.images?.length ? BASE_URL + item.images[0] : ''),
     stock: item.stock ?? 0,
     category: item.category || 'Ethnic',
@@ -569,11 +571,17 @@ const ProductCard = ({ product, onViewDetails, onWishlistLoginNeeded }) => {
           <span style={{ fontSize: '18px', fontWeight: 800, color: '#0a0a0a', fontFamily: "'Playfair Display', Georgia, serif", letterSpacing: '-0.01em' }}>
             ₹{product.price.toLocaleString('en-IN')}
           </span>
-          <span style={{ fontSize: '11px', color: '#C9A84C', fontWeight: 700, letterSpacing: '0.04em' }}>30% OFF</span>
+          {product.mrp > product.price && (
+            <span style={{ fontSize: '11px', color: '#C9A84C', fontWeight: 700, letterSpacing: '0.04em' }}>
+              {Math.round(((product.mrp - product.price) / product.mrp) * 100)}% OFF
+            </span>
+          )}
         </div>
-        <span style={{ fontSize: '11px', color: '#c0b8b0', textDecoration: 'line-through' }}>
-          ₹{Math.round(product.price * 1.4).toLocaleString('en-IN')}
-        </span>
+        {product.mrp > product.price && (
+          <span style={{ fontSize: '11px', color: '#c0b8b0', textDecoration: 'line-through' }}>
+            ₹{product.mrp.toLocaleString('en-IN')}
+          </span>
+        )}
       </div>
     </div>
   )

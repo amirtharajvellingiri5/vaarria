@@ -493,7 +493,6 @@ const ProductUpload = () => {
 
   // Description & product info
   const [description, setDescription] = useState('')
-  const [highlights, setHighlights] = useState('')
 
   // Pricing
   const [mrp, setMrp] = useState('2799')
@@ -790,7 +789,6 @@ const ProductUpload = () => {
           'Blouse Size': blouseSize,
           Occasion: occasion,
           product_blurb: description,
-          highlights: highlights,
         }
       : isDressMaterial
       ? {
@@ -819,7 +817,6 @@ const ProductUpload = () => {
           'Neck Design': neck,
           Occasion: occasion,
           product_blurb: description,
-          highlights: highlights,
         }
       : isLegging
       ? {
@@ -830,7 +827,6 @@ const ProductUpload = () => {
           Weight: legWeight,
           Occasion: occasion,
           product_blurb: description,
-          highlights: highlights,
         }
       : isKurtisTops
       ? {
@@ -841,7 +837,6 @@ const ProductUpload = () => {
           Design: design,
           'Top Length': topLength,
           product_blurb: description,
-          highlights: highlights,
         }
       : isShawlCategory
       ? {
@@ -853,7 +848,6 @@ const ProductUpload = () => {
           Weight: shawlWeight,
           Occasion: occasion,
           product_blurb: description,
-          highlights: highlights,
         }
       : isSuitSet3pc
       ? {
@@ -877,7 +871,6 @@ const ProductUpload = () => {
           'Neck Design': neck,
           Occasion: occasion,
           product_blurb: description,
-          highlights: highlights,
         }
       : isSuitSetTopDupatta
       ? {
@@ -898,7 +891,6 @@ const ProductUpload = () => {
           'Neck Design': neck,
           Occasion: occasion,
           product_blurb: description,
-          highlights: highlights,
         }
       : isSuitSetTopKurti
       ? {
@@ -918,7 +910,6 @@ const ProductUpload = () => {
           'Neck Design': neck,
           Occasion: occasion,
           product_blurb: description,
-          highlights: highlights,
         }
       : isDresses
       ? {
@@ -932,7 +923,6 @@ const ProductUpload = () => {
           Weight: dressWeight,
           Occasion: occasion,
           product_blurb: description,
-          highlights: highlights,
         }
       : isTunics
       ? {
@@ -946,7 +936,6 @@ const ProductUpload = () => {
           'Top Type': tunicTopType,
           Occasion: occasion,
           product_blurb: description,
-          highlights: highlights,
         }
       : isStraightPants
       ? {
@@ -960,7 +949,6 @@ const ProductUpload = () => {
           Weight: pantsWeight,
           Occasion: occasion,
           product_blurb: description,
-          highlights: highlights,
         }
       : {
           Material: material,
@@ -971,7 +959,6 @@ const ProductUpload = () => {
           'Bottom Type': bottomType,
           Occasion: occasion,
           product_blurb: description,
-          highlights: highlights,
         },
     pricing: {
       mrp: parseFloat(mrp) || 0,
@@ -1819,7 +1806,7 @@ const ProductUpload = () => {
 
               <Section
                 icon={Tag}
-                title='Description & Product Info'
+                title='Description'
                 subtitle='Shown on the storefront product page'
               >
                 <Field label='Description'>
@@ -1827,14 +1814,6 @@ const ProductUpload = () => {
                     value={description}
                     onChange={setDescription}
                     placeholder='Crafted from premium fabric, this piece features...'
-                    rows={4}
-                  />
-                </Field>
-                <Field label='Product Info' hint='One highlight per line'>
-                  <Textarea
-                    value={highlights}
-                    onChange={setHighlights}
-                    placeholder={'Premium fabric\nStraight fit silhouette\nThree-quarter sleeves'}
                     rows={4}
                   />
                 </Field>
