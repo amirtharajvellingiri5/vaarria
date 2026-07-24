@@ -27,7 +27,7 @@ import logo from './assets/logo.jpg'
 import { COLOR_MAP, formatColorLabel } from './constants/colors'
 import { MATERIALS } from './constants/materials'
 import { PRODUCT_CATEGORY_NAMES, ADMIN_CATEGORIES } from './utils/categories'
-import { CATALOG_URL, INVENTORY_URL } from './config'
+import { INVENTORY_URL } from './config'
 
 // ── Swatch helper ─────────────────────────────────────────────────────────────
 const ColorSwatch = ({ name, size = 14 }) => {
@@ -80,6 +80,7 @@ const ColorSwatch = ({ name, size = 14 }) => {
 }
 
 const BASE_URL = 'https://cdn.vaarria.com/app/images/'
+const PRODUCTS_API_URL = 'https://products-api.chatoyantvortex.workers.dev'
 
 const fetchSiblingCategories = async (categoryId) => {
   if (!categoryId) return []
@@ -98,7 +99,7 @@ const fetchProductsByCategory = async (
 ) => {
   if (!categoryId) {
     const response = await fetch(
-      'https://products-api.chatoyantvortex.workers.dev/products?page=1',
+      `${PRODUCTS_API_URL}/products?page=1`,
     )
     const data = await response.json()
     return data.data.map((item) => ({
@@ -123,7 +124,7 @@ const fetchProductsByCategory = async (
   }
 
   // Build query string from active filters
-  const params = new URLSearchParams({ category_id: categoryId })
+  const params = new URLSearchParams({ category_id: categoryId, page_size: '100' })
   // Fabric
   activeFilters.fabric?.forEach((fabric) => {
     params.append('fabric', fabric)
@@ -183,7 +184,7 @@ const fetchProductsByCategory = async (
   if (sortBy && sortMap[sortBy]) params.set('sort', sortMap[sortBy])
 
   const res = await fetch(
-    `${CATALOG_URL}/listings?${params.toString()}`,
+    `${PRODUCTS_API_URL}/products/by-category?${params.toString()}`,
   )
   if (!res.ok) return []
 
@@ -193,19 +194,23 @@ const fetchProductsByCategory = async (
   return items.map((item) => ({
     id: item.id,
     name: item.title || item.name,
-    price: item.price || item.sale_price || 0,
+    price: item.price || 0,
     mrp: item.mrp || 0,
-    image: item.image || (item.images?.length ? BASE_URL + item.images[0] : ''),
+    image: item.main_image
+      ? BASE_URL + item.main_image
+      : item.images?.length
+        ? BASE_URL + item.images[0]
+        : '',
     stock: item.stock ?? 0,
-    category: item.category || 'Ethnic',
-    rating: item.rating ?? 4.0,
+    category: 'Ethnic',
+    rating: 4.0,
     fabric: item.fabric || 'Cotton',
-    color: item.color || 'Red',
-    size: item.size,
-    neckType: item.neckType,
-    sleeveLength: item.sleeveLength,
-    bgColor: item.bgColor || 'bg-gradient-to-br from-pink-200 to-red-300',
-    description: item.description || item.title || item.name || '',
+    color: item.colors?.[0] || 'Red',
+    size: item.sizes,
+    neckType: undefined,
+    sleeveLength: undefined,
+    bgColor: 'bg-gradient-to-br from-pink-200 to-red-300',
+    description: item.title || item.name || '',
   }))
 }
 
@@ -759,28 +764,31 @@ const ListingPage = () => {
     queryFn: () => fetchProductsByCategory(categoryId, selectedFilters, sortBy),
   })
 
+  const { data: availableFilters } = useQuery({
+    queryKey: ['availableFilters', categoryId],
+    queryFn: async () => {
+      if (!categoryId) return {}
+      const res = await fetch(
+        `${PRODUCTS_API_URL}/products/by-category/filters?category_id=${categoryId}`,
+      )
+      if (!res.ok) return {}
+      return res.json()
+    },
+  })
+
   const { data: filters, isLoading: filtersLoading } = useQuery({
-    queryKey: ['filters', siblingCategories],
+    queryKey: ['filters', siblingCategories, availableFilters],
     queryFn: async () => ({
       categories: siblingCategories.map((c) => ({
         name: c.category_name,
         slug: c.slug,
       })),
 
-      fabrics: MATERIALS,
+      fabrics: availableFilters?.fabrics?.length ? availableFilters.fabrics : MATERIALS,
 
-      colors: [
-        'Red',
-        'Blue',
-        'Green',
-        'Yellow',
-        'Pink',
-        'Purple',
-        'Black',
-        'White',
-      ],
+      colors: availableFilters?.colors || [],
 
-      sizes: ['XS', 'S', 'M', 'L', 'XL', 'XXL'],
+      sizes: availableFilters?.sizes || [],
 
       neckTypes: ['Round Neck', 'V-Neck', 'Boat Neck', 'Mandarin Collar'],
 
