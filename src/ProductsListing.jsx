@@ -98,11 +98,20 @@ const fetchProductsByCategory = async (
   sortBy = 'price-low',
 ) => {
   if (!categoryId) {
-    const response = await fetch(
-      `${PRODUCTS_API_URL}/products?page=1`,
-    )
-    const data = await response.json()
-    return data.data.map((item) => ({
+    // "All" menu — walk every synced page so all categories' products show,
+    // not just the first 100 (page 1).
+    const items = []
+    let page = 1
+    while (true) {
+      const response = await fetch(`${PRODUCTS_API_URL}/products?page=${page}`)
+      if (!response.ok) break
+      const data = await response.json()
+      items.push(...(data.data || []))
+      if (!data.has_next) break
+      page += 1
+    }
+
+    return items.map((item) => ({
       id: item.id,
       name: item.title,
       price: item.price,
@@ -112,11 +121,11 @@ const fetchProductsByCategory = async (
         : item.images?.length
           ? BASE_URL + item.images[0]
           : '',
-      stock: item.stock,
+      stock: item.stock ?? 0,
       category: 'Ethnic',
       rating: 4.2,
-      fabric: 'Cotton',
-      color: 'Red',
+      fabric: item.fabric || 'Cotton',
+      color: item.colors?.[0] || 'Red',
       occasion: 'Casual',
       bgColor: 'bg-gradient-to-br from-pink-200 to-red-300',
       description: item.title,
