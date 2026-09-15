@@ -34,6 +34,7 @@ const NAVY = '#050C1C'
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 import { ORDERS_URL } from './config'
+import { authHeaders } from './utils/authHeaders'
 const ORDERS_API_BASE = ORDERS_URL
 const CDN = 'https://cdn.vaarria.com/app/images/'
 
@@ -42,10 +43,6 @@ const getCustomerId = () => {
   return customer?.customer_id ?? 1
 }
 
-const authHeaders = () => {
-  const token = useAuthStore.getState().token
-  return token ? { Authorization: `Bearer ${token}` } : {}
-}
 
 const SUPPORT_WHATSAPP = '919731580157'
 

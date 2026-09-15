@@ -1,5 +1,6 @@
 import { Navigate, useLocation } from 'react-router-dom'
 import { useAuthStore } from '../store/authStore'
+import { getE2eAuth } from '../utils/e2e'
 
 const ADMIN_MOBILE_NUMBERS = new Set(['9731580157', '8553797479'])
 
@@ -13,7 +14,7 @@ export default function AdminGate({ children }) {
   const location = useLocation()
   const customer = useAuthStore((s) => s.customer)
 
-  if (AUTH_DISABLED) return children
+  if (AUTH_DISABLED || getE2eAuth()) return children
 
   if (!customer || !ADMIN_MOBILE_NUMBERS.has(normalizeMobile(customer.mobile_no))) {
     return (

@@ -9,6 +9,7 @@ import './index.css'
 import Home from './Home.jsx'
 import { useAuthStore } from './store/authStore'
 import AdminGate from './admin/AdminGate.jsx'
+import { seedE2eAuth } from './utils/e2e'
 
 // ponytail: Home stays eager — it's the landing route, so lazying it would only
 // buy a second round-trip before first paint. Everything else ships as its own
@@ -35,6 +36,7 @@ const NoStockProducts = lazy(() => import('./admin/NoStockProducts.jsx'))
 const OrphanReport = lazy(() => import('./admin/OrphanReport.jsx'))
 const CategorySync = lazy(() => import('./admin/CategorySync.jsx'))
 const TestReports = lazy(() => import('./admin/TestReports.jsx'))
+const TestCases = lazy(() => import('./admin/TestCases.jsx'))
 
 // ponytail: same markup + classes as the pre-JS shell in index.html, so a route
 // chunk downloading looks identical to a cold boot instead of flashing blank
@@ -73,6 +75,7 @@ const router = createBrowserRouter([
   { path: '/admin/products/orphans', element: <AdminGate><OrphanReport /></AdminGate> },
   { path: '/admin/products/sync', element: <AdminGate><CategorySync /></AdminGate> },
   { path: '/test/reports', element: <AdminGate><TestReports /></AdminGate> },
+  { path: '/test/cases', element: <AdminGate><TestCases /></AdminGate> },
   { path: '/order-success', element: <OrderSuccess /> },
   { path: '/payment-failed', element: <PaymentFailed /> },
 
@@ -85,6 +88,7 @@ const router = createBrowserRouter([
 const NEEDS_TOKEN_ON_MOUNT = /^\/(admin|orders)\b/
 
 async function bootstrap() {
+  seedE2eAuth() // ponytail: stash ?e2e=<code> before any API call fires
   const { customer, refreshToken, startAutoRefresh } = useAuthStore.getState()
   if (customer) {
     const refreshing = refreshToken()

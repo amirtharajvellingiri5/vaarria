@@ -30,11 +30,11 @@ import {
   PATTERNS, SAREE_TYPES, BLOUSE_INCLUDED, BLOUSE_TYPES, BORDER_TYPES,
   NUMBER_OF_BLOUSES, SAREE_LENGTHS, SAREE_WEIGHTS,
 } from '../constants/sareeAttributes'
+import { authHeaders } from '../utils/authHeaders'
 import {
   PACK_SIZES, WEIGHTS, LENGTH_TYPES, PRODUCT_TYPES,
   TOP_LENGTHS, DUPATTA_SIZES, OCCASIONS, TOP_TYPES, KURTI_TYPES,
 } from '../constants/categoryAttributes'
-const authHeaders = () => ({ Authorization: `Bearer ${useAuthStore.getState().token || ''}` })
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 const COLOR_OPTIONS = Object.keys(COLOR_MAP).map(formatColorLabel)

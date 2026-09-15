@@ -25,8 +25,8 @@ import { ORDERS_URL } from '../../config'
 import { useAuthStore } from '../../store/authStore'
 import { COURIERS, courierUrl } from '../../couriers'
 import { ORDER_STATUS_KEYS } from '../../constants/orderStatus'
+import { authHeaders } from '../../utils/authHeaders'
 const ORDERS_API_BASE = ORDERS_URL
-const authHeaders = () => ({ Authorization: `Bearer ${useAuthStore.getState().token || ''}` })
 const CDN = 'https://cdn.vaarria.com/app/images/'
 const PER_PAGE = 10
 

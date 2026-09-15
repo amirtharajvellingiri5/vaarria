@@ -14,7 +14,7 @@ import {
 import AdminNav from './AdminNav'
 import { CATALOG_URL, INVENTORY_URL } from '../config'
 import { useAuthStore } from '../store/authStore'
-const authHeaders = () => ({ Authorization: `Bearer ${useAuthStore.getState().token || ''}` })
+import { authHeaders } from '../utils/authHeaders'
 
 const CDN = 'https://cdn.vaarria.com/app/images/'
 const API = `${CATALOG_URL}/listings`

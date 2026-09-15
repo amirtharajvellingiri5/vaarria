@@ -4,7 +4,7 @@ import { RefreshCw, AlertTriangle, Clock, Loader2 } from 'lucide-react'
 import AdminNav from './AdminNav'
 import { INVENTORY_URL } from '../config'
 import { useAuthStore } from '../store/authStore'
-const authHeaders = () => ({ Authorization: `Bearer ${useAuthStore.getState().token || ''}` })
+import { authHeaders } from '../utils/authHeaders'
 
 const STATUS_API = `${INVENTORY_URL}/products/category-cache-status`
 

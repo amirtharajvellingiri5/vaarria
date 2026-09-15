@@ -20,7 +20,6 @@ import {
 import { ADMIN_CATEGORIES as categories } from '../utils/categories'
 import { INVENTORY_URL } from '../config'
 import { useAuthStore } from '../store/authStore'
-const authHeaders = () => ({ Authorization: `Bearer ${useAuthStore.getState().token || ''}` })
 
 import { COLOR_MAP, formatColorLabel } from '../constants/colors'
 import { MATERIALS } from '../constants/materials'
@@ -36,6 +35,7 @@ import {
   SAREE_LENGTHS,
   SAREE_WEIGHTS,
 } from '../constants/sareeAttributes'
+import { authHeaders } from '../utils/authHeaders'
 import {
   PACK_SIZES,
   WEIGHTS,

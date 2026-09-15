@@ -71,6 +71,12 @@ const MENU_LINKS = [
     icon: FileText,
     isActive: (path) => path.startsWith('/test/reports'),
   },
+  {
+    label: 'Test Cases',
+    href: '/test/cases',
+    icon: FileText,
+    isActive: (path) => path.startsWith('/test/cases'),
+  },
 ]
 
 const THEMES = [
