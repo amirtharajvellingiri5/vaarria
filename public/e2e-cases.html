@@ -1,99 +1,34 @@
-<!doctype html>
-<html lang="en"><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>E2E Test Cases</title>
-<style>
-  body { margin:0; font:14px/1.5 -apple-system,Segoe UI,Roboto,sans-serif;
-         background:#0c0a09; color:#e7e5e4; padding:24px; }
-  header h1 { font-size:18px; margin:0 0 4px; }
-  header p { color:#a8a29e; margin:0 0 20px; font-size:12px; }
-  .grid { display:grid; gap:16px; grid-template-columns:repeat(auto-fill,minmax(320px,1fr)); }
-  .grp { background:#1c1917; border:1px solid #292524; border-radius:16px; padding:16px; }
-  .grp-head { display:flex; align-items:center; justify-content:space-between; }
-  .grp-head h2 { font-size:14px; margin:0; color:#fda4af; }
-  .count { background:#292524; color:#d6d3d1; font-size:11px; font-weight:700;
-            padding:2px 8px; border-radius:999px; }
-  .desc { color:#a8a29e; font-size:12px; margin:6px 0 10px; }
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>E2E Test Cases</title><style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; }
+  body { margin:0; font:14px/1.5 -apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif;
+         background:#0c0a09; color:#e7e5e4; padding:24px 20px 40px; }
+  header { max-width:1200px; margin:0 auto 20px; }
+  header h1 { font-size:19px; margin:0 0 6px; letter-spacing:.2px; }
+  header .sub { color:#a8a29e; font-size:12px; margin:0; }
+  .badges { display:flex; flex-wrap:wrap; gap:8px; margin:14px 0 0; }
+  .badge { font-size:12px; font-weight:700; padding:5px 12px; border-radius:999px;
+           border:1px solid #292524; background:#1c1917; }
+  .badge.pass { color:#86efac; border-color:#14532d; background:#0f2417; }
+  .badge.fail { color:#fca5a5; border-color:#7f1d1d; background:#2a1414; }
+  .badge.skip { color:#fcd34d; border-color:#78350f; background:#241a08; }
+  .badge.dim  { color:#d6d3d1; }
+  .grid { max-width:1200px; margin:0 auto; display:grid; gap:16px;
+          grid-template-columns:repeat(auto-fill,minmax(340px,1fr)); }
+  .grp { background:#1c1917; border:1px solid #292524; border-radius:16px;
+         padding:16px 18px; }
+  .grp-head { display:flex; align-items:baseline; justify-content:space-between; gap:10px; }
+  .grp-head h2 { font-size:15px; margin:0; color:#fda4af; }
+  .grp-head .n { font-size:11px; font-weight:700; color:#d6d3d1;
+                 background:#292524; padding:2px 9px; border-radius:999px; white-space:nowrap; }
+  .desc { color:#a8a29e; font-size:12px; margin:6px 0 12px; }
   ul { list-style:none; margin:0; padding:0; }
-  li { padding:5px 0; border-top:1px solid #292524; }
-  code { font:12px/1.4 ui-monospace,SFMono-Regular,Menlo,monospace; color:#e7e5e4; word-break:break-all; }
-</style></head>
-<body>
-  <header>
-    <h1>E2E Test Cases &middot; 56 total</h1>
-    <p>Auto-generated from <code>pytest --collect-only</code>. Grouped by feature.</p>
-  </header>
-  <div class="grid">
-        <section class="grp">
-          <div class="grp-head">
-            <h2>Add Product</h2>
-            <span class="count">10</span>
-          </div>
-          <p class="desc">Create one product for each admin category (ids 7-16)</p>
-          <ul><li><code>test_add_product_per_category[Sarees]</code></li><li><code>test_add_product_per_category[Dress Materials]</code></li><li><code>test_add_product_per_category[Dupattas &amp; Shawls]</code></li><li><code>test_add_product_per_category[Dresses]</code></li><li><code>test_add_product_per_category[Tunics]</code></li><li><code>test_add_product_per_category[Leggings]</code></li><li><code>test_add_product_per_category[Straight Pants]</code></li><li><code>test_add_product_per_category[3-Piece Suit Sets]</code></li><li><code>test_add_product_per_category[2-Piece Sets]</code></li><li><code>test_add_product_per_category[Kurtis]</code></li></ul>
-        </section>
-        <section class="grp">
-          <div class="grp-head">
-            <h2>Admin UI</h2>
-            <span class="count">2</span>
-          </div>
-          <p class="desc">e2e bypass gets past AdminGate; admin forms load</p>
-          <ul><li><code>test_admin_gate_bypassed_with_e2e_code[chromium]</code></li><li><code>test_add_product_form_loads[chromium]</code></li></ul>
-        </section>
-        <section class="grp">
-          <div class="grp-head">
-            <h2>COD Checkout</h2>
-            <span class="count">1</span>
-          </div>
-          <p class="desc">Place a FULL_COD order then cancel it (self-cleaning)</p>
-          <ul><li><code>test_full_cod_place_then_cancel</code></li></ul>
-        </section>
-        <section class="grp">
-          <div class="grp-head">
-            <h2>Clone &amp; Add</h2>
-            <span class="count">1</span>
-          </div>
-          <p class="desc">Clone an existing product into an independent copy</p>
-          <ul><li><code>test_clone_product_creates_independent_copy</code></li></ul>
-        </section>
-        <section class="grp">
-          <div class="grp-head">
-            <h2>Edit Product</h2>
-            <span class="count">1</span>
-          </div>
-          <p class="desc">Update an existing product&#x27;s title and price</p>
-          <ul><li><code>test_edit_product_updates_title_and_price</code></li></ul>
-        </section>
-        <section class="grp">
-          <div class="grp-head">
-            <h2>Listing</h2>
-            <span class="count">8</span>
-          </div>
-          <p class="desc">Storefront product listing</p>
-          <ul><li><code>test_products_page_lists_cards[chromium]</code></li><li><code>test_filter_sidebar_shows_all_sections[chromium]</code></li><li><code>test_selecting_price_filter_shows_chip_and_can_be_removed[chromium]</code></li><li><code>test_clear_all_appears_when_filter_selected_and_resets[chromium]</code></li><li><code>test_sort_dropdown_updates_label_and_orders_products[chromium]</code></li><li><code>test_wishlist_click_prompts_login_for_guest[chromium]</code></li><li><code>test_pagination_navigates_when_multiple_pages[chromium]</code></li><li><code>test_no_products_found_shows_empty_state[chromium]</code></li></ul>
-        </section>
-        <section class="grp">
-          <div class="grp-head">
-            <h2>Listing Filters</h2>
-            <span class="count">30</span>
-          </div>
-          <p class="desc">Filters, sort and pagination on the listing</p>
-          <ul><li><code>test_filter_applies_and_clears_per_category[chromium-sarees-Color]</code></li><li><code>test_filter_applies_and_clears_per_category[chromium-sarees-Price]</code></li><li><code>test_filter_applies_and_clears_per_category[chromium-sarees-Fabric]</code></li><li><code>test_filter_applies_and_clears_per_category[chromium-dress-materials-Color]</code></li><li><code>test_filter_applies_and_clears_per_category[chromium-dress-materials-Price]</code></li><li><code>test_filter_applies_and_clears_per_category[chromium-dress-materials-Fabric]</code></li><li><code>test_filter_applies_and_clears_per_category[chromium-dupattas-shawls-Color]</code></li><li><code>test_filter_applies_and_clears_per_category[chromium-dupattas-shawls-Price]</code></li><li><code>test_filter_applies_and_clears_per_category[chromium-dupattas-shawls-Fabric]</code></li><li><code>test_filter_applies_and_clears_per_category[chromium-dresses-Color]</code></li><li><code>test_filter_applies_and_clears_per_category[chromium-dresses-Price]</code></li><li><code>test_filter_applies_and_clears_per_category[chromium-dresses-Fabric]</code></li><li><code>test_filter_applies_and_clears_per_category[chromium-tunics-Color]</code></li><li><code>test_filter_applies_and_clears_per_category[chromium-tunics-Price]</code></li><li><code>test_filter_applies_and_clears_per_category[chromium-tunics-Fabric]</code></li><li><code>test_filter_applies_and_clears_per_category[chromium-leggings-Color]</code></li><li><code>test_filter_applies_and_clears_per_category[chromium-leggings-Price]</code></li><li><code>test_filter_applies_and_clears_per_category[chromium-leggings-Fabric]</code></li><li><code>test_filter_applies_and_clears_per_category[chromium-straight-pants-Color]</code></li><li><code>test_filter_applies_and_clears_per_category[chromium-straight-pants-Price]</code></li><li><code>test_filter_applies_and_clears_per_category[chromium-straight-pants-Fabric]</code></li><li><code>test_filter_applies_and_clears_per_category[chromium-suit-set-3pc-Color]</code></li><li><code>test_filter_applies_and_clears_per_category[chromium-suit-set-3pc-Price]</code></li><li><code>test_filter_applies_and_clears_per_category[chromium-suit-set-3pc-Fabric]</code></li><li><code>test_filter_applies_and_clears_per_category[chromium-suit-set-top-dupatta-Color]</code></li><li><code>test_filter_applies_and_clears_per_category[chromium-suit-set-top-dupatta-Price]</code></li><li><code>test_filter_applies_and_clears_per_category[chromium-suit-set-top-dupatta-Fabric]</code></li><li><code>test_filter_applies_and_clears_per_category[chromium-suit-set-top-kurti-Color]</code></li><li><code>test_filter_applies_and_clears_per_category[chromium-suit-set-top-kurti-Price]</code></li><li><code>test_filter_applies_and_clears_per_category[chromium-suit-set-top-kurti-Fabric]</code></li></ul>
-        </section>
-        <section class="grp">
-          <div class="grp-head">
-            <h2>Login UI</h2>
-            <span class="count">2</span>
-          </div>
-          <p class="desc">Login screen validation (OTP step needs real SMS — skipped)</p>
-          <ul><li><code>test_login_screen_enables_continue_once_valid[chromium]</code></li><li><code>test_full_login_flow</code></li></ul>
-        </section>
-        <section class="grp">
-          <div class="grp-head">
-            <h2>Product Detail</h2>
-            <span class="count">1</span>
-          </div>
-          <p class="desc">Storefront product detail page</p>
-          <ul><li><code>test_add_to_bag_from_pdp[chromium]</code></li></ul>
-        </section></div>
-</body></html>
+  li { display:flex; align-items:center; gap:10px; padding:7px 0;
+       border-top:1px solid #232020; }
+  li .dot { width:8px; height:8px; border-radius:50%; flex:none; }
+  .dot.passed { background:#22c55e; } .dot.failed { background:#ef4444; }
+  .dot.skipped { background:#eab308; } .dot.error { background:#ef4444; }
+  li .name { flex:1; font:12px/1.4 ui-monospace,SFMono-Regular,Menlo,monospace;
+             color:#e7e5e4; word-break:break-word; }
+  li .dur { font-size:11px; color:#78716c; flex:none; }
+</style></head><body><header><h1>E2E Test Cases</h1><p class="sub">Auto-generated from pytest --collect-only &middot; grouped by feature</p><div class="badges"><span class="badge dim">56 cases</span><span class="badge dim">9 features</span></div></header><div class="grid"><section class="grp"><div class="grp-head"><h2>Add Product</h2><span class="n">10</span></div><p class="desc">One product created for every admin category (ids 7-16), live</p><ul><li><span class="name">test_add_product_per_category[2-Piece Sets]</span></li><li><span class="name">test_add_product_per_category[3-Piece Suit Sets]</span></li><li><span class="name">test_add_product_per_category[Dress Materials]</span></li><li><span class="name">test_add_product_per_category[Dresses]</span></li><li><span class="name">test_add_product_per_category[Dupattas &amp; Shawls]</span></li><li><span class="name">test_add_product_per_category[Kurtis]</span></li><li><span class="name">test_add_product_per_category[Leggings]</span></li><li><span class="name">test_add_product_per_category[Sarees]</span></li><li><span class="name">test_add_product_per_category[Straight Pants]</span></li><li><span class="name">test_add_product_per_category[Tunics]</span></li></ul></section><section class="grp"><div class="grp-head"><h2>Edit Product</h2><span class="n">1</span></div><p class="desc">Update an existing product&#x27;s title and price</p><ul><li><span class="name">test_edit_product_updates_title_and_price</span></li></ul></section><section class="grp"><div class="grp-head"><h2>Clone &amp; Add</h2><span class="n">1</span></div><p class="desc">Clone a product into an independent copy</p><ul><li><span class="name">test_clone_product_creates_independent_copy</span></li></ul></section><section class="grp"><div class="grp-head"><h2>COD Checkout</h2><span class="n">1</span></div><p class="desc">Place a FULL_COD order, verify prices, then cancel (self-cleaning)</p><ul><li><span class="name">test_full_cod_place_then_cancel</span></li></ul></section><section class="grp"><div class="grp-head"><h2>Admin UI</h2><span class="n">2</span></div><p class="desc">e2e bypass gets past AdminGate; admin forms load</p><ul><li><span class="name">test_add_product_form_loads[chromium]</span></li><li><span class="name">test_admin_gate_bypassed_with_e2e_code[chromium]</span></li></ul></section><section class="grp"><div class="grp-head"><h2>Login</h2><span class="n">2</span></div><p class="desc">Login screen validation (OTP step needs real SMS — skipped)</p><ul><li><span class="name">test_full_login_flow</span></li><li><span class="name">test_login_screen_enables_continue_once_valid[chromium]</span></li></ul></section><section class="grp"><div class="grp-head"><h2>Listing</h2><span class="n">8</span></div><p class="desc">Storefront listing: cards, filters, sort, pagination</p><ul><li><span class="name">test_clear_all_appears_when_filter_selected_and_resets[chromium]</span></li><li><span class="name">test_filter_sidebar_shows_all_sections[chromium]</span></li><li><span class="name">test_no_products_found_shows_empty_state[chromium]</span></li><li><span class="name">test_pagination_navigates_when_multiple_pages[chromium]</span></li><li><span class="name">test_products_page_lists_cards[chromium]</span></li><li><span class="name">test_selecting_price_filter_shows_chip_and_can_be_removed[chromium]</span></li><li><span class="name">test_sort_dropdown_updates_label_and_orders_products[chromium]</span></li><li><span class="name">test_wishlist_click_prompts_login_for_guest[chromium]</span></li></ul></section><section class="grp"><div class="grp-head"><h2>Listing Filters</h2><span class="n">30</span></div><p class="desc">Apply + clear each fixed facet across every category</p><ul><li><span class="name">test_filter_applies_and_clears_per_category[chromium-dress-materials-Color]</span></li><li><span class="name">test_filter_applies_and_clears_per_category[chromium-dress-materials-Fabric]</span></li><li><span class="name">test_filter_applies_and_clears_per_category[chromium-dress-materials-Price]</span></li><li><span class="name">test_filter_applies_and_clears_per_category[chromium-dresses-Color]</span></li><li><span class="name">test_filter_applies_and_clears_per_category[chromium-dresses-Fabric]</span></li><li><span class="name">test_filter_applies_and_clears_per_category[chromium-dresses-Price]</span></li><li><span class="name">test_filter_applies_and_clears_per_category[chromium-dupattas-shawls-Color]</span></li><li><span class="name">test_filter_applies_and_clears_per_category[chromium-dupattas-shawls-Fabric]</span></li><li><span class="name">test_filter_applies_and_clears_per_category[chromium-dupattas-shawls-Price]</span></li><li><span class="name">test_filter_applies_and_clears_per_category[chromium-leggings-Color]</span></li><li><span class="name">test_filter_applies_and_clears_per_category[chromium-leggings-Fabric]</span></li><li><span class="name">test_filter_applies_and_clears_per_category[chromium-leggings-Price]</span></li><li><span class="name">test_filter_applies_and_clears_per_category[chromium-sarees-Color]</span></li><li><span class="name">test_filter_applies_and_clears_per_category[chromium-sarees-Fabric]</span></li><li><span class="name">test_filter_applies_and_clears_per_category[chromium-sarees-Price]</span></li><li><span class="name">test_filter_applies_and_clears_per_category[chromium-straight-pants-Color]</span></li><li><span class="name">test_filter_applies_and_clears_per_category[chromium-straight-pants-Fabric]</span></li><li><span class="name">test_filter_applies_and_clears_per_category[chromium-straight-pants-Price]</span></li><li><span class="name">test_filter_applies_and_clears_per_category[chromium-suit-set-3pc-Color]</span></li><li><span class="name">test_filter_applies_and_clears_per_category[chromium-suit-set-3pc-Fabric]</span></li><li><span class="name">test_filter_applies_and_clears_per_category[chromium-suit-set-3pc-Price]</span></li><li><span class="name">test_filter_applies_and_clears_per_category[chromium-suit-set-top-dupatta-Color]</span></li><li><span class="name">test_filter_applies_and_clears_per_category[chromium-suit-set-top-dupatta-Fabric]</span></li><li><span class="name">test_filter_applies_and_clears_per_category[chromium-suit-set-top-dupatta-Price]</span></li><li><span class="name">test_filter_applies_and_clears_per_category[chromium-suit-set-top-kurti-Color]</span></li><li><span class="name">test_filter_applies_and_clears_per_category[chromium-suit-set-top-kurti-Fabric]</span></li><li><span class="name">test_filter_applies_and_clears_per_category[chromium-suit-set-top-kurti-Price]</span></li><li><span class="name">test_filter_applies_and_clears_per_category[chromium-tunics-Color]</span></li><li><span class="name">test_filter_applies_and_clears_per_category[chromium-tunics-Fabric]</span></li><li><span class="name">test_filter_applies_and_clears_per_category[chromium-tunics-Price]</span></li></ul></section><section class="grp"><div class="grp-head"><h2>Product Detail</h2><span class="n">1</span></div><p class="desc">Storefront PDP: open in-stock product, add to bag</p><ul><li><span class="name">test_add_to_bag_from_pdp[chromium]</span></li></ul></section></div></body></html>
