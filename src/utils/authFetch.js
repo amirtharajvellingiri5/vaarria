@@ -1,4 +1,5 @@
 import { useAuthStore } from '../store/authStore'
+import { getE2eAuth } from './e2e'
 
 export async function authFetch(url, options = {}) {
   const store = useAuthStore.getState()
@@ -8,9 +9,11 @@ export async function authFetch(url, options = {}) {
     token = await store.refreshToken()
   }
 
+  const e2e = getE2eAuth()
   const makeHeaders = (t) => ({
     ...(options.headers || {}),
     ...(t ? { Authorization: `Bearer ${t}` } : {}),
+    ...(e2e ? { 'X-E2E-Auth': e2e } : {}),
   })
 
   const res = await fetch(url, { ...options, headers: makeHeaders(token) })

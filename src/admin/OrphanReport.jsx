@@ -12,7 +12,7 @@ import {
 import AdminNav from './AdminNav'
 import { INVENTORY_URL } from '../config'
 import { useAuthStore } from '../store/authStore'
-const authHeaders = () => ({ Authorization: `Bearer ${useAuthStore.getState().token || ''}` })
+import { authHeaders } from '../utils/authHeaders'
 
 const CDN = 'https://cdn.vaarria.com/'
 const API = `${INVENTORY_URL}/products/orphans`
