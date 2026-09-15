@@ -1,36 +1,52 @@
 // main.jsx or index.jsx
 
-import { StrictMode } from 'react'
+import { StrictMode, lazy, Suspense } from 'react'
 import { createRoot } from 'react-dom/client'
 import { createBrowserRouter, RouterProvider } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'  // ← add
 
 import './index.css'
 import Home from './Home.jsx'
-import Products from './ProductsListing.jsx'
-import ProductUpload from './admin/ProductUpload.jsx'
-import ProductDetail from './ProductDetail.jsx'
-import ProductListings from './admin/ProductAdminListings.jsx'
-import { BagPage } from './Bag.jsx'
-import LoginPage from './LoginPage.jsx'
-import ProductEdit from './admin/ProductEdit.jsx'
-import ContactUsPage from './info/ContactUs.jsx'
-import TermsAndConditionsPage from './info/Terms.jsx'
-import RefundPolicyPage from './info/RefundPolicy.jsx'
-import PrivacyPolicy from './info/PrivacyPolicy.jsx'
-import OrderSuccess from './info/OrderSuccess.jsx'
-import PaymentFailed from './info/PaymentFailed.jsx'
-import AdminOrders from './admin/orders/AdminOrders.jsx'
-import NoStockProducts from './admin/NoStockProducts.jsx'
-import OrphanReport from './admin/OrphanReport.jsx'
-import CategorySync from './admin/CategorySync.jsx'
-import TestReports from './admin/TestReports.jsx'
-import OrdersPage from './OrdersPage.jsx'
-import ReviewPage from './ReviewPage.jsx'
-import WishlistPage from './WishlistPage.jsx'
-import ProfilePage from './ProfilePage.jsx'
 import { useAuthStore } from './store/authStore'
 import AdminGate from './admin/AdminGate.jsx'
+
+// ponytail: Home stays eager — it's the landing route, so lazying it would only
+// buy a second round-trip before first paint. Everything else ships as its own
+// chunk; a customer never downloads the admin bundle.
+const Products = lazy(() => import('./ProductsListing.jsx'))
+const ProductDetail = lazy(() => import('./ProductDetail.jsx'))
+const BagPage = lazy(() => import('./Bag.jsx'))
+const LoginPage = lazy(() => import('./LoginPage.jsx'))
+const OrdersPage = lazy(() => import('./OrdersPage.jsx'))
+const ReviewPage = lazy(() => import('./ReviewPage.jsx'))
+const WishlistPage = lazy(() => import('./WishlistPage.jsx'))
+const ProfilePage = lazy(() => import('./ProfilePage.jsx'))
+const ContactUsPage = lazy(() => import('./info/ContactUs.jsx'))
+const TermsAndConditionsPage = lazy(() => import('./info/Terms.jsx'))
+const RefundPolicyPage = lazy(() => import('./info/RefundPolicy.jsx'))
+const PrivacyPolicy = lazy(() => import('./info/PrivacyPolicy.jsx'))
+const OrderSuccess = lazy(() => import('./info/OrderSuccess.jsx'))
+const PaymentFailed = lazy(() => import('./info/PaymentFailed.jsx'))
+const ProductUpload = lazy(() => import('./admin/ProductUpload.jsx'))
+const ProductListings = lazy(() => import('./admin/ProductAdminListings.jsx'))
+const ProductEdit = lazy(() => import('./admin/ProductEdit.jsx'))
+const AdminOrders = lazy(() => import('./admin/orders/AdminOrders.jsx'))
+const NoStockProducts = lazy(() => import('./admin/NoStockProducts.jsx'))
+const OrphanReport = lazy(() => import('./admin/OrphanReport.jsx'))
+const CategorySync = lazy(() => import('./admin/CategorySync.jsx'))
+const TestReports = lazy(() => import('./admin/TestReports.jsx'))
+
+// ponytail: same markup + classes as the pre-JS shell in index.html, so a route
+// chunk downloading looks identical to a cold boot instead of flashing blank
+const pageSkeleton = (
+  <div id='app-skeleton' aria-hidden='true'>
+    <div className='sk-nav' />
+    <div className='sk-hero'>
+      <div className='sk-line sk-line-lg' />
+      <div className='sk-line sk-line-sm' />
+    </div>
+  </div>
+)
 
 const queryClient = new QueryClient()  // ← add
 
@@ -62,18 +78,26 @@ const router = createBrowserRouter([
 
 ])
 
+// ponytail: /admin/* and /orders build their Authorization header from the
+// in-memory token synchronously on mount, so those routes still have to wait on
+// the refresh. Every other route (home included) doesn't — it used to block
+// first render on an auth round-trip for nothing.
+const NEEDS_TOKEN_ON_MOUNT = /^\/(admin|orders)\b/
+
 async function bootstrap() {
-  // Await the access-token refresh before first render — admin pages read
-  // the in-memory token synchronously on mount, and a fire-and-forget
-  // refresh here used to race them into an early 401 on hard reloads.
   const { customer, refreshToken, startAutoRefresh } = useAuthStore.getState()
-  if (customer) await refreshToken()
+  if (customer) {
+    const refreshing = refreshToken()
+    if (NEEDS_TOKEN_ON_MOUNT.test(window.location.pathname)) await refreshing
+  }
   startAutoRefresh()
 
   createRoot(document.getElementById('root')).render(
     <StrictMode>
       <QueryClientProvider client={queryClient}>  {/* ← wrap */}
-        <RouterProvider router={router} />
+        <Suspense fallback={pageSkeleton}>
+          <RouterProvider router={router} />
+        </Suspense>
       </QueryClientProvider>
     </StrictMode>
   )
