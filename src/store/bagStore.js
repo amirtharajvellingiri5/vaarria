@@ -22,7 +22,20 @@ export const useBagStore = create((set, get) => ({
   toggleCoupon: (bagId) =>
     set((s) => {
       const next = new Set(s.appliedCouponIds)
-      next.has(bagId) ? next.delete(bagId) : next.add(bagId)
+      if (next.has(bagId)) {
+        next.delete(bagId)
+        return { appliedCouponIds: next }
+      }
+      // ponytail: the same product can sit in the bag as several lines (different
+      // size/colour), each carrying the same coupon. Only one may be applied, so
+      // turning one on turns the product's other lines off — a radio, not a checkbox.
+      const productId = s.items.find((i) => i.id === bagId)?.productId
+      if (productId != null) {
+        s.items.forEach((i) => {
+          if (i.id !== bagId && i.productId === productId) next.delete(i.id)
+        })
+      }
+      next.add(bagId)
       return { appliedCouponIds: next }
     }),
 
