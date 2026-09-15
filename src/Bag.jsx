@@ -565,6 +565,8 @@ function ItemCard({ item }) {
             <img
               src={item.image?.startsWith('http') ? item.image : `https://cdn.vaarria.com/app/images/${item.image}`}
               alt={item.name}
+              loading='lazy'
+              decoding='async'
               style={{
                 width: '100%',
                 height: '100%',
@@ -647,13 +649,14 @@ function ItemCard({ item }) {
             )
           })()}
 
-          {item.couponDiscount > 0 && appliedCouponIds.has(item.id) && (
+          {item.couponDiscount > 0 && (
   <div style={styles.couponLine}>
     <Tag size={11} style={{ marginRight: 4 }} />
     Coupon Discount:{' '}
     {item.discountType === 'PERCENTAGE'
       ? `${item.couponDiscount}%`
       : `₹${item.couponDiscount}`}
+    {!appliedCouponIds.has(item.id) && ' (apply in Coupons below)'}
   </div>
 )}
 

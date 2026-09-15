@@ -37,9 +37,11 @@ function useNewArrivals() {
   const [products, setProducts] = useState([])
   const [loading, setLoading] = useState(true)
   useEffect(() => {
-    fetch(`${LISTING}/listings?page_size=8`)
-      .then(r => r.json())
-      .then(d => { setProducts(d.data ?? []); setLoading(false) })
+    // ponytail: index.html starts this during HTML parse — by the time React
+    // mounts it's usually already resolved, so this is just a handoff.
+    const pending = window.__listings ?? fetch(`${LISTING}/listings?page_size=8`).then(r => r.json())
+    pending
+      .then(d => { setProducts(d?.data ?? []); setLoading(false) })
       .catch(() => setLoading(false))
   }, [])
   return { products, loading }
@@ -76,22 +78,12 @@ function useRecentlyViewed(customerId) {
   return products
 }
 
-function usePriceImages() {
-  const [images, setImages] = useState([])
-  useEffect(() => {
-    fetch(`${LISTING}/listings?page_size=4`)
-      .then(r => r.json())
-      .then(d => setImages((d.data ?? []).filter(p => p.main_image).slice(0, 4)))
-      .catch(() => {})
-  }, [])
-  return images
-}
-
 export default function Home() {
   const navigate = useNavigate()
   const { customer } = useAuthStore()
   const { products, loading } = useNewArrivals()
-  const priceImages = usePriceImages()
+  // ponytail: same /listings endpoint as useNewArrivals — reuse its data instead of a second fetch
+  const priceImages = products.filter(p => p.main_image).slice(0, 4)
   const recentlyViewed = useRecentlyViewed(customer?.customer_id)
 
   return (
@@ -99,7 +91,7 @@ export default function Home() {
       <Navbar />
 
       {/* ── Hero ── */}
-      <section style={{ background: NAVY, backgroundImage: 'url(/hero-banner.png)', backgroundSize: 'cover', backgroundPosition: 'center top', position: 'relative', padding: 'clamp(40px,6vw,80px) clamp(20px,5vw,80px)' }}>
+      <section style={{ background: NAVY, backgroundImage: 'url(/hero-banner.webp)', backgroundSize: 'cover', backgroundPosition: 'center top', position: 'relative', padding: 'clamp(40px,6vw,80px) clamp(20px,5vw,80px)' }}>
         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(90deg, rgba(5,12,28,.92) 0%, rgba(5,12,28,.75) 50%, rgba(5,12,28,.2) 100%)', pointerEvents: 'none' }} />
         <div style={{ position: 'relative', maxWidth: 1200, margin: '0 auto', display: 'grid', gridTemplateColumns: 'minmax(0,1.2fr) minmax(0,1fr)', gap: 'clamp(24px,4vw,64px)', alignItems: 'center' }}>
 
@@ -208,6 +200,7 @@ export default function Home() {
                     <img
                       src={`${CDN}${priceImages[i].main_image}`}
                       alt=''
+                      loading="lazy"
                       style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top' }}
                       onError={e => { e.target.style.display = 'none' }}
                     />
@@ -318,6 +311,8 @@ export default function Home() {
                       <img
                         src={`${CDN}${p.main_image}`}
                         alt={p.title}
+                        fetchPriority="high"
+                        decoding="async"
                         style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top' }}
                         onError={e => { e.target.style.display = 'none' }}
                       />
@@ -375,7 +370,7 @@ export default function Home() {
                 >
                   <div style={{ background: '#F1E0C8', borderRadius: 10, overflow: 'hidden', aspectRatio: '3/4', marginBottom: 10, border: '1px solid #e8e0d0' }}>
                     {p.image && (
-                      <img src={p.image} alt={p.title} style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top' }} onError={e => { e.target.style.display = 'none' }} />
+                      <img src={p.image} alt={p.title} loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top' }} onError={e => { e.target.style.display = 'none' }} />
                     )}
                   </div>
                   <p style={{ fontSize: 12, fontWeight: 600, color: '#1f2937', lineHeight: 1.35, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', marginBottom: 4 }}>{p.title}</p>

@@ -532,6 +532,8 @@ const ProductCard = ({ product, onViewDetails, onWishlistLoginNeeded }) => {
         <img
           src={product.image}
           alt={product.name}
+          loading='lazy'
+          decoding='async'
           className='h-full w-full object-cover object-top'
           style={{ transition: 'transform 0.3s', filter: soldOut ? 'grayscale(0.7)' : 'none', opacity: soldOut ? 0.7 : 1 }}
           onMouseEnter={e => { if (!soldOut) e.currentTarget.style.transform = 'scale(1.04)' }}

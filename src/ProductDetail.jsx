@@ -344,7 +344,7 @@ async function fetchProduct(productId) {
     details,
     deliveryInfo: raw.delivery ?? { days: '3-5 Business Days', cod: true },
     offers: [
-      bankOffer,
+      ...(discountMeta?.value > 0 ? [bankOffer] : []),
       {
         icon: <CreditCard size={16} />,
         title: 'Max spends offer',
@@ -801,6 +801,7 @@ function ProductGallery({ mediaItems, onOpenSlider }) {
                   : active.src
               }
               alt='product view'
+              fetchPriority='high'
               onError={() =>
                 setImgErrors((e) => ({ ...e, [`main-${activeIndex}`]: true }))
               }
@@ -1115,6 +1116,8 @@ function FeaturedBanner({ productId }) {
           <img
             src={p.image}
             alt={p.title}
+            loading='lazy'
+            decoding='async'
             style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top', display: 'block' }}
             onError={e => { e.target.style.display = 'none' }}
           />
@@ -1616,6 +1619,8 @@ export default function ProductDetail() {
                       key={imageIndex}
                       src={image}
                       alt=''
+                      loading='lazy'
+                      decoding='async'
                       onClick={() => {
                         setReviewImages(
                           r.images.map((img) => ({
@@ -2151,7 +2156,7 @@ export default function ProductDetail() {
             {relatedProducts.map(item => (
               <div key={item.id} style={{ flexShrink: 0, width: 160, cursor: 'pointer' }} onClick={() => window.open(`/product/${item.id}`, '_blank')}>
                 <div style={{ width: 160, height: 213, borderRadius: 8, overflow: 'hidden', background: '#f3f0eb', border: '1px solid #e8e0d0', marginBottom: 8 }}>
-                  <img src={item.image} alt={item.title} style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top' }} onError={e => { e.target.style.display = 'none' }} />
+                  <img src={item.image} alt={item.title} loading='lazy' decoding='async' style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top' }} onError={e => { e.target.style.display = 'none' }} />
                 </div>
                 <div style={{ fontSize: 13, fontWeight: 600, color: '#1f2937', lineHeight: 1.3, WebkitLineClamp: 2, display: '-webkit-box', WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{item.title}</div>
                 <div style={{ fontSize: 13, fontWeight: 700, color: '#C9A84C', marginTop: 4 }}>₹{item.price}</div>
@@ -2172,7 +2177,7 @@ export default function ProductDetail() {
             {historyProducts.map(item => (
               <div key={item.id} style={{ flexShrink: 0, width: 160, cursor: 'pointer' }} onClick={() => window.open(`/product/${item.id}`, '_blank')}>
                 <div style={{ width: 160, height: 213, borderRadius: 8, overflow: 'hidden', background: '#f3f0eb', border: '1px solid #e8e0d0', marginBottom: 8 }}>
-                  <img src={item.image} alt={item.title} style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top' }} onError={e => { e.target.style.display = 'none' }} />
+                  <img src={item.image} alt={item.title} loading='lazy' decoding='async' style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top' }} onError={e => { e.target.style.display = 'none' }} />
                 </div>
                 <div style={{ fontSize: 13, fontWeight: 600, color: '#1f2937', lineHeight: 1.3, WebkitLineClamp: 2, display: '-webkit-box', WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{item.title}</div>
                 <div style={{ fontSize: 13, fontWeight: 700, color: '#C9A84C', marginTop: 4 }}>₹{item.price}</div>

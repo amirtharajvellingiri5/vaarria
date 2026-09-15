@@ -7,14 +7,63 @@
     <meta name="theme-color" content="#F3ECDC" />
     <title>VAARRIA — Adorn Your Aura</title>
 
-    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+    <!-- ponytail: defer — only Bag/Payment checkout reads window.Razorpay, always inside a click handler, so it never needs to block parsing -->
+    <script src="https://checkout.razorpay.com/v1/checkout.js" defer></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&display=swap" rel="stylesheet">
+    <!-- ponytail: was rel=stylesheet, which blocks first paint on a third-party
+         round-trip — the skeleton below couldn't paint until Google answered.
+         preload+onload swap paints immediately and swaps the face in on arrival. -->
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=DM+Sans:wght@400;500;600;700&display=swap" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=DM+Sans:wght@400;500;600;700&display=swap"></noscript>
+
+    <!-- hero is a CSS background set in JSX, so the browser only discovered it
+         after React rendered. Preload starts it during HTML parse instead. -->
+    <link rel="preload" as="image" href="/hero-banner.webp" fetchpriority="high">
+    <link rel="preconnect" href="https://cdn.vaarria.com">
+    <link rel="preconnect" href="https://b1ubc4krn6.execute-api.ap-south-1.amazonaws.com">
+    <link rel="preconnect" href="https://xei9truwoc.execute-api.ap-south-1.amazonaws.com">
+    <link rel="preconnect" href="https://zq0dbjycx6.execute-api.ap-south-1.amazonaws.com">
+
+    <script>
+      // ponytail: kick the listings request off during HTML parse instead of
+      // from a useEffect after the JS graph resolves; Home awaits this promise.
+      window.__listings = fetch('%VITE_CATALOG_URL%/listings?page_size=8')
+        .then(function (r) { return r.json() })
+        .then(function (d) {
+          (d.data || []).slice(0, 8).forEach(function (p) {
+            if (!p.main_image) return
+            var l = document.createElement('link')
+            l.rel = 'preload'; l.as = 'image'
+            l.href = 'https://cdn.vaarria.com/app/images/' + p.main_image
+            document.head.appendChild(l)
+          })
+          return d
+        })
+        .catch(function () { return null })
+    </script>
+
+    <style>
+      /* ponytail: static shell painted before JS runs, replaced the instant React's render() swaps #root's children */
+      html, body { margin: 0; background: #FAF8F4; }
+      #app-skeleton { display: flex; flex-direction: column; min-height: 100vh; }
+      .sk-nav { height: 60px; background: #050C1C; flex-shrink: 0; }
+      .sk-hero { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; }
+      .sk-line { border-radius: 4px; background: rgba(5,12,28,0.08); animation: skPulse 1.4s ease-in-out infinite; }
+      .sk-line-lg { width: 240px; height: 20px; }
+      .sk-line-sm { width: 160px; height: 14px; }
+      @keyframes skPulse { 0%, 100% { opacity: 1 } 50% { opacity: .4 } }
+    </style>
   </head>
 
   <body>
-    <div id="root"></div>
+    <div id="root"><div id="app-skeleton" aria-hidden="true">
+      <div class="sk-nav"></div>
+      <div class="sk-hero">
+        <div class="sk-line sk-line-lg"></div>
+        <div class="sk-line sk-line-sm"></div>
+      </div>
+    </div></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
