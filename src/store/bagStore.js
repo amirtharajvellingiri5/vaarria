@@ -14,46 +14,62 @@ export const clearGuestBag = () => {
   localStorage.removeItem(GUEST_BAG_KEY)
 }
 
+// ponytail: an item can carry several coupons (hourly deal + catalog offer). These three
+// helpers are the only place that knows the shape, so a new offer type needs no UI change.
+export const offerAmount = (item, offer) =>
+  !offer
+    ? 0
+    : offer.discount_type === 'PERCENTAGE'
+      ? Math.floor((item.price * item.qty * offer.value) / 100)
+      : offer.value * item.qty
+
+export const itemOffers = (item) => {
+  const offers = item.offers?.length
+    ? item.offers
+    : item.couponDiscount > 0
+      ? [{ code: `TRENDY${item.couponDiscount}`, discount_type: item.discountType || 'FLAT', value: item.couponDiscount }]
+      : []
+  return [...offers].sort((a, b) => offerAmount(item, b) - offerAmount(item, a)) // best first
+}
+
+export const appliedOffer = (item, appliedCoupons) =>
+  itemOffers(item).find((o) => o.code === appliedCoupons.get(item.id)) || null
+
 export const useBagStore = create((set, get) => ({
   items: [],
 
-  appliedCouponIds: new Set(),
+  // bagId -> the coupon code the customer picked for that line
+  appliedCoupons: new Map(),
 
-  toggleCoupon: (bagId) =>
+  toggleCoupon: (bagId, code) =>
     set((s) => {
-      const next = new Set(s.appliedCouponIds)
-      if (next.has(bagId)) {
+      const item = s.items.find((i) => i.id === bagId)
+      // ponytail: no code means "the best one", which is what a single-coupon caller meant.
+      const picked = code ?? itemOffers(item || {})[0]?.code
+      if (!picked) return {}
+      const next = new Map(s.appliedCoupons)
+      if (next.get(bagId) === picked) {
         next.delete(bagId)
-        return { appliedCouponIds: next }
+        return { appliedCoupons: next }
       }
       // ponytail: the same product can sit in the bag as several lines (different
       // size/colour), each carrying the same coupon. Only one may be applied, so
       // turning one on turns the product's other lines off — a radio, not a checkbox.
-      const productId = s.items.find((i) => i.id === bagId)?.productId
+      const productId = item?.productId
       if (productId != null) {
         s.items.forEach((i) => {
           if (i.id !== bagId && i.productId === productId) next.delete(i.id)
         })
       }
-      next.add(bagId)
-      return { appliedCouponIds: next }
+      next.set(bagId, picked)
+      return { appliedCoupons: next }
     }),
 
   getCouponSavings: () => {
-    const { items, appliedCouponIds } = get()
+    const { items, appliedCoupons } = get()
     return items
-      .filter(
-        (item) =>
-          item.selected &&
-          appliedCouponIds.has(item.id) &&
-          item.couponDiscount > 0,
-      )
-      .reduce((total, item) => {
-        if (item.discountType === 'PERCENTAGE') {
-          return total + Math.floor((item.price * item.qty * item.couponDiscount) / 100)
-        }
-        return total + item.couponDiscount * item.qty
-      }, 0)
+      .filter((item) => item.selected)
+      .reduce((total, item) => total + offerAmount(item, appliedOffer(item, appliedCoupons)), 0)
   },
 
   platformFee: 23,

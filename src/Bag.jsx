@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
-import { useBagStore } from './store/bagStore'
+import { useBagStore, itemOffers, appliedOffer, offerAmount } from './store/bagStore'
 import {
   ShoppingBag,
   Search,
@@ -422,7 +422,7 @@ function PinBar() {
   )
 }
 function ItemCard({ item }) {
-  const { items, toggleSelected, setItems, appliedCouponIds } = useBagStore()
+  const { items, toggleSelected, setItems, appliedCoupons } = useBagStore()
 
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [deleting, setDeleting] = useState(false)
@@ -624,12 +624,8 @@ function ItemCard({ item }) {
 
           {(() => {
             const lineTotal = item.price * item.qty
-            const hasCoupon = item.couponDiscount > 0 && appliedCouponIds.has(item.id)
-            const couponAmount = hasCoupon
-              ? item.discountType === 'PERCENTAGE'
-                ? Math.floor((lineTotal * item.couponDiscount) / 100)
-                : item.couponDiscount * item.qty
-              : 0
+            const couponAmount = offerAmount(item, appliedOffer(item, appliedCoupons))
+            const hasCoupon = couponAmount > 0
             return (
               <div style={styles.pricingRow}>
                 {hasCoupon ? (
@@ -649,16 +645,24 @@ function ItemCard({ item }) {
             )
           })()}
 
-          {item.couponDiscount > 0 && (
-  <div style={styles.couponLine}>
-    <Tag size={11} style={{ marginRight: 4 }} />
-    Coupon Discount:{' '}
-    {item.discountType === 'PERCENTAGE'
-      ? `${item.couponDiscount}%`
-      : `₹${item.couponDiscount}`}
-    {!appliedCouponIds.has(item.id) && ' (apply in Coupons below)'}
-  </div>
-)}
+          {(() => {
+            const offers = itemOffers(item)
+            if (!offers.length) return null
+            const picked = appliedOffer(item, appliedCoupons)
+            const shown = picked || offers[0]
+            return (
+              <div style={styles.couponLine}>
+                <Tag size={11} style={{ marginRight: 4 }} />
+                Coupon Discount:{' '}
+                {shown.discount_type === 'PERCENTAGE' ? `${shown.value}%` : `₹${shown.value}`}
+                {` (${shown.code})`}
+                {!picked &&
+                  (offers.length > 1
+                    ? ` +${offers.length - 1} more — apply in Coupons below`
+                    : ' (apply in Coupons below)')}
+              </div>
+            )
+          })()}
 
           <div style={styles.returnLine}>
             <RotateCcw size={11} style={{ marginRight: 4 }} />
@@ -792,20 +796,21 @@ function ItemCard({ item }) {
 }
 
 function CouponPanel() {
-  const { items, appliedCouponIds, toggleCoupon, getCouponSavings } = useBagStore()
+  const { items, appliedCoupons, toggleCoupon, getCouponSavings } = useBagStore()
   const [showCoupon, setShowCoupon] = useState(false)
 
   const couponSavings = getCouponSavings()
 
   // Count how many selected items have coupon toggled on
   const appliedCount = items.filter(
-    (i) => i.selected && !i.soldOut && appliedCouponIds.has(i.id) && i.couponDiscount > 0,
+    (i) => i.selected && !i.soldOut && appliedCoupons.has(i.id),
   ).length
 
-  // Count how many selected items have a coupon available (but not yet applied)
-  const availableCount = items.filter(
-    (i) => i.selected && !i.soldOut && i.couponDiscount > 0,
-  ).length
+  // Count every offer on the selected items — an item can carry several
+  const availableCount = items.reduce(
+    (n, i) => (i.selected && !i.soldOut ? n + itemOffers(i).length : n),
+    0,
+  )
 
   return (
     <div style={styles.panelCard}>
@@ -856,7 +861,7 @@ function CouponPanel() {
         isOpen={showCoupon}
         onClose={() => setShowCoupon(false)}
         items={items}
-        appliedCouponIds={appliedCouponIds}
+        appliedCoupons={appliedCoupons}
         onToggleCoupon={toggleCoupon}
       />
     </div>
@@ -979,7 +984,7 @@ function PaymentMethodSelector({ value, onChange, total, disabled }) {
 
 function PricePanel({ onNeedAuth, triggerPay, onTriggerConsumed, authReady }) {
   const navigate = useNavigate()
-  const { items, getCouponSavings, appliedCouponIds } = useBagStore()
+  const { items, getCouponSavings, appliedCoupons } = useBagStore()
   const [paymentError, setPaymentError] = useState('')
   const [paymentLoading, setPaymentLoading] = useState(false)
   const [showEmptyBagPopup, setShowEmptyBagPopup] = useState(false)
@@ -1051,7 +1056,8 @@ function PricePanel({ onNeedAuth, triggerPay, onTriggerConsumed, authReady }) {
       color: item.colorName ?? null,
       image: item.image || null,
       bag_id: item.id,
-      coupon_applied: appliedCouponIds.has(item.id) && item.couponDiscount > 0,
+      coupon_applied: appliedCoupons.has(item.id),
+      coupon_code: appliedCoupons.get(item.id) ?? null,
     }))
 
     const clearBagAndNavigate = async (order) => {
@@ -1913,6 +1919,7 @@ function BagPage() {
           mrp: item.mrp,
           couponDiscount: item.coupon_discount,
           discountType: item.discount_type, // ← NEW
+        offers: item.offers,
           returnDays: item.return_days,
           colorName: item.color,
           color:
