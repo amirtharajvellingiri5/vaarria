@@ -462,8 +462,8 @@ const SelectedFiltersBar = ({ selectedFilters, onRemoveFilter }) => {
   if (allFilters.length === 0) return null
 
   return (
-    <div className='flex items-center overflow-x-auto mb-4 pb-3' style={{ borderBottom: '1px solid #e8e0d0' }}>
-      <div className='flex flex-wrap gap-2'>
+    <div className='flex items-center gap-2 overflow-x-auto min-w-0'>
+      <div className='flex items-center gap-2'>
         {allFilters.map(({ key, value }) => (
           <span
             key={`${key}-${value}`}
@@ -923,15 +923,21 @@ const ListingPage = () => {
           {/* Floating vertical divider — doesn't touch top or bottom */}
           <div className='hidden lg:block flex-shrink-0' style={{ width: '1px', height: '20px', background: '#e8e0d0', alignSelf: 'center' }} />
 
-          {/* Sort dropdown — right-aligned in products zone */}
-          <div className='flex-1 flex items-center justify-end px-6'>
-            <SortDropdown
-              sortBy={sortBy}
-              setSortBy={(val) => {
-                setSortBy(val)
-                setCurrentPage(1)
-              }}
+          {/* Active filter chips (left) + Sort dropdown (right) */}
+          <div className='flex-1 flex items-center gap-4 min-w-0 px-6'>
+            <SelectedFiltersBar
+              selectedFilters={selectedFilters}
+              onRemoveFilter={handleRemoveFilter}
             />
+            <div className='ml-auto flex-shrink-0'>
+              <SortDropdown
+                sortBy={sortBy}
+                setSortBy={(val) => {
+                  setSortBy(val)
+                  setCurrentPage(1)
+                }}
+              />
+            </div>
           </div>
         </div>
 
@@ -956,11 +962,6 @@ const ListingPage = () => {
           {/* Products area */}
           <div className='flex-1'>
             <div className='px-6 pt-4 pb-6 flex flex-col min-h-[70vh]'>
-            <SelectedFiltersBar
-              selectedFilters={selectedFilters}
-              onRemoveFilter={handleRemoveFilter}
-            />
-
             {isLoading ? (
               <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3'>
                 {Array.from({ length: 12 }).map((_, i) => (
