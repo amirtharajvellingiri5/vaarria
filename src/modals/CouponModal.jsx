@@ -1,5 +1,6 @@
 import React from 'react'
 import { X, Check, Tag } from 'lucide-react'
+import { itemOffers, offerAmount } from '../store/bagStore'
 
 const GOLD = '#C9A84C'
 const NAVY = '#050C1C'
@@ -9,42 +10,38 @@ const NAVY = '#050C1C'
  *  isOpen          boolean
  *  onClose         () => void
  *  items           BagItem[]   — full bag items list from Zustand
- *  appliedCouponIds Set<number> — bag_ids whose coupon is toggled ON
- *  onToggleCoupon  (bagId: number) => void
+ *  appliedCoupons  Map<bagId, couponCode> — which coupon each line has applied
+ *  onToggleCoupon  (bagId: number, code: string) => void
  */
 export default function CouponModal({
   isOpen,
   onClose,
   items = [],
-  appliedCouponIds = new Set(),
+  appliedCoupons = new Map(),
   onToggleCoupon,
 }) {
   if (!isOpen) return null
 
-  // Only show items that have a coupon_discount > 0
-  const couponItems = items.filter((i) => i.couponDiscount > 0)
+  // One row per offer, not per item: an item can carry several coupons and the
+  // customer picks one (itemOffers puts the biggest first).
+  const rows = items.flatMap((item) => {
+    const offers = itemOffers(item)
+    return offers.map((offer, idx) => ({
+      item,
+      offer,
+      key: `${item.id}-${offer.code}`,
+      isBest: idx === 0 && offers.length > 1,
+      isApplied: appliedCoupons.get(item.id) === offer.code,
+      discount: offerAmount(item, offer),
+    }))
+  })
 
-  // Items currently selected in bag (eligible for coupon application)
-  const selectedItems = couponItems.filter((i) => i.selected)
-  const unselectedItems = couponItems.filter((i) => !i.selected)
+  const selectedRows = rows.filter((r) => r.item.selected)
+  const unselectedRows = rows.filter((r) => !r.item.selected)
 
-  const calcDiscount = (item) => {
-  if (item.discountType === 'PERCENTAGE') {
-    return Math.floor(
-      (item.price * item.qty * item.couponDiscount) / 100,
-    )
-  }
-
-  return item.couponDiscount * item.qty
-}
-
-  const totalSavings = selectedItems
-    .filter((i) => appliedCouponIds.has(i.id))
-    .reduce((sum, i) => sum + calcDiscount(i), 0)
-
-  const appliedCount = selectedItems.filter((i) =>
-    appliedCouponIds.has(i.id),
-  ).length
+  const appliedRows = selectedRows.filter((r) => r.isApplied)
+  const totalSavings = appliedRows.reduce((sum, r) => sum + r.discount, 0)
+  const appliedCount = appliedRows.length
 
   return (
     <div
@@ -116,7 +113,7 @@ export default function CouponModal({
 
         {/* ── Coupon list ─────────────────────────────── */}
         <div style={{ overflowY: 'auto', flex: 1 }}>
-          {couponItems.length === 0 ? (
+          {rows.length === 0 ? (
             <div
               style={{
                 padding: '48px 20px',
@@ -131,52 +128,37 @@ export default function CouponModal({
           ) : (
             <>
               {/* Selected items — interactive */}
-              {selectedItems.length > 0 && (
+              {selectedRows.length > 0 && (
                 <>
                   <div style={sectionLabel}>
-                    Coupons for selected items ({selectedItems.length})
+                    Coupons for selected items ({selectedRows.length})
                   </div>
-                  {selectedItems.map((item) => {
-                    const isApplied = appliedCouponIds.has(item.id)
-                    const discount = calcDiscount(item)
-                    const isPercentage = item.discountType === 'PERCENTAGE'
-
-                    return (
-                      <CouponRow
-                        key={item.id}
-                        item={item}
-                        isApplied={isApplied}
-                        discount={discount}
-                        isPercentage={isPercentage}
-                        onToggle={() => onToggleCoupon(item.id)}
-                        disabled={false}
-                      />
-                    )
-                  })}
+                  {selectedRows.map((row) => (
+                    <CouponRow
+                      key={row.key}
+                      {...row}
+                      onToggle={() => onToggleCoupon(row.item.id, row.offer.code)}
+                      disabled={false}
+                    />
+                  ))}
                 </>
               )}
 
               {/* Unselected items — shown dimmed, non-interactive */}
-              {unselectedItems.length > 0 && (
+              {unselectedRows.length > 0 && (
                 <>
                   <div style={{ ...sectionLabel, color: '#bbb' }}>
                     Coupons for unselected items — select items in bag to apply
                   </div>
-                  {unselectedItems.map((item) => {
-                    const discount = calcDiscount(item)
-                    const isPercentage = item.discountType === 'PERCENTAGE'
-                    return (
-                      <CouponRow
-                        key={item.id}
-                        item={item}
-                        isApplied={false}
-                        discount={discount}
-                        isPercentage={isPercentage}
-                        onToggle={() => {}}
-                        disabled={true}
-                      />
-                    )
-                  })}
+                  {unselectedRows.map((row) => (
+                    <CouponRow
+                      key={row.key}
+                      {...row}
+                      isApplied={false}
+                      onToggle={() => {}}
+                      disabled={true}
+                    />
+                  ))}
                 </>
               )}
             </>
@@ -233,7 +215,8 @@ export default function CouponModal({
 }
 
 // ── CouponRow ────────────────────────────────────────────────────────────────
-function CouponRow({ item, isApplied, discount, isPercentage, onToggle, disabled }) {
+function CouponRow({ item, offer, isApplied, isBest, discount, onToggle, disabled }) {
+  const isPercentage = offer.discount_type === 'PERCENTAGE'
   return (
     <div
       onClick={disabled ? undefined : onToggle}
@@ -311,11 +294,27 @@ function CouponRow({ item, isApplied, discount, isPercentage, onToggle, disabled
                 letterSpacing: 0.5,
               }}
             >
-              {isPercentage
-                ? `${item.couponDiscount}% OFF`
-                : `FLAT ₹${item.couponDiscount} OFF`}
+              {isPercentage ? `${offer.value}% OFF` : `FLAT ₹${offer.value} OFF`}
             </span>
           </div>
+          <span style={{ fontSize: 11, fontWeight: 700, color: '#666', letterSpacing: 0.5 }}>
+            {offer.code}
+          </span>
+          {isBest && (
+            <span
+              style={{
+                fontSize: 9,
+                fontWeight: 800,
+                letterSpacing: 0.6,
+                color: '#2e7d32',
+                background: '#eaf5ea',
+                borderRadius: 3,
+                padding: '2px 6px',
+              }}
+            >
+              BEST
+            </span>
+          )}
         </div>
 
         {/* Product name */}
@@ -350,7 +349,7 @@ function CouponRow({ item, isApplied, discount, isPercentage, onToggle, disabled
           Save ₹{discount.toLocaleString('en-IN')}
           {isPercentage && (
             <span style={{ fontSize: 11, fontWeight: 400, color: '#888', marginLeft: 5 }}>
-              ({item.couponDiscount}% on ₹{(item.price * item.qty).toLocaleString('en-IN')})
+              ({offer.value}% on ₹{(item.price * item.qty).toLocaleString('en-IN')})
             </span>
           )}
         </p>

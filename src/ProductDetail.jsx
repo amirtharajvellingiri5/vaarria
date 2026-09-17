@@ -1367,6 +1367,17 @@ export default function ProductDetail() {
           mrp: product.mrp || 0,
           couponDiscount: deal ? dealSavings : product.couponDiscount || 0,
           discountType: deal ? 'FLAT' : product.discountType || null,
+          // ponytail: same shape the bag API sends, so the bag shows every offer for guests too
+          offers: [
+            ...(dealSavings > 0 ? [{ code: 'TRENDY10', discount_type: 'FLAT', value: dealSavings }] : []),
+            ...(product.couponDiscount > 0
+              ? [{
+                  code: `TRENDY${product.couponDiscount}`,
+                  discount_type: product.discountType || 'FLAT',
+                  value: product.couponDiscount,
+                }]
+              : []),
+          ],
           returnDays: product.return_days || 7,
           selected: true,
         }
