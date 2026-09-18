@@ -48,7 +48,7 @@ export default function PrivacyPolicy() {
                 </p>
 
                 <p>
-                    Welcome to AARRIA ("we", "our", or "us"). We respect your privacy
+                    Welcome to VAARRIA ("we", "our", or "us"). We respect your privacy
                     and are committed to protecting your personal information.
                     This Privacy Policy describes how we collect, use, disclose,
                     and safeguard your information when you visit our website,
@@ -56,7 +56,7 @@ export default function PrivacyPolicy() {
                 </p>
 
                 <p>
-                    By using AARRIA, you agree to the collection and use of
+                    By using VAARRIA, you agree to the collection and use of
                     information in accordance with this Privacy Policy.
                 </p>
 
@@ -94,7 +94,7 @@ export default function PrivacyPolicy() {
                 <h2>3. Payment Information</h2>
 
                 <p>
-                    AARRIA does not collect, store, or retain your credit card
+                    VAARRIA does not collect, store, or retain your credit card
                     numbers, debit card details, CVV numbers, UPI PINs,
                     net banking credentials, or any other sensitive payment
                     information.
@@ -189,7 +189,7 @@ export default function PrivacyPolicy() {
                 <h2>13. Contact Us</h2>
 
                 <p>
-                    <strong>AARRIA</strong>
+                    <strong>VAARRIA</strong>
                     <br />
                     Email: chatoyantvortex@gmail.com
                     <br />
