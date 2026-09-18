@@ -40,7 +40,7 @@ const CDN = 'https://cdn.vaarria.com/app/images/'
 
 const getCustomerId = () => {
   const customer = JSON.parse(localStorage.getItem('customer') || 'null')
-  return customer?.customer_id ?? 2
+  return customer?.customer_id ?? 1
 }
 
 

@@ -53,7 +53,7 @@ export const useAuthStore = create((set, get) => ({
         body: JSON.stringify(stored ? { refresh_token: stored } : {}),
       })
       if (!res.ok) {
-        if (res.status === 401 && false) get().logout()   // TEMP-VERIFY
+        if (res.status === 401) get().logout()
         return null
       }
       const { token, refresh_token } = await res.json()
