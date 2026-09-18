@@ -77,6 +77,8 @@ const addressLines = (a) =>
 const shippableItems = (order) =>
   (order.items || []).filter((i) => i.item_status !== 'QC_FAILED')
 
+const itemUnits = (order) => (order.items || []).reduce((s, i) => s + (i.quantity || 1), 0)
+
 // Splits the lumped order-level discount into its two real components:
 // catalog/MRP markdown (baked into item.price) and payment-method discount
 // (2% prepaid / 1% COD), on top of the already-separate special_discount (coupon).
@@ -913,7 +915,7 @@ function OrderRow({ order, onUpdated, setToast }) {
             )}
           </div>
           <p className='text-xs text-stone-500 mt-1 truncate'>
-            {order.date} · {a.name || `Customer ${order.customer_id}`} · {(order.items || []).length} item{(order.items || []).length !== 1 ? 's' : ''}
+            {order.date} · {a.name || `Customer ${order.customer_id}`} · {itemUnits(order)} item{itemUnits(order) !== 1 ? 's' : ''}
           </p>
         </div>
         <span className='text-sm font-bold text-stone-100 whitespace-nowrap'>{formatINR(order.total)}</span>
