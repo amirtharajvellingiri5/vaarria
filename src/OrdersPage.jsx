@@ -22,7 +22,7 @@ import {
 } from 'lucide-react'
 import axios from 'axios'
 import { useAuthStore } from './store/authStore'
-import { CLOSED_ORDER_STATUSES } from './constants/orderStatus'
+import { CLOSED_ORDER_STATUSES, NO_COD_DUE_STATUSES } from './constants/orderStatus'
 const logo = '/vlogo.png'
 import './constants/global.css'
 
@@ -40,7 +40,7 @@ const CDN = 'https://cdn.vaarria.com/app/images/'
 
 const getCustomerId = () => {
   const customer = JSON.parse(localStorage.getItem('customer') || 'null')
-  return customer?.customer_id ?? 1
+  return customer?.customer_id ?? 2
 }
 
 
@@ -76,6 +76,12 @@ const gstSplit = (lineTotal, gstRate, isIntraState) => {
     sgst: isIntraState ? gstAmount / 2 : 0,
     igst: isIntraState ? 0 : gstAmount,
   }
+}
+
+const PAYMENT_MODE_LABEL = {
+  PREPAID: 'Prepaid (Online)',
+  COD: 'Cash on Delivery (₹49 paid online)',
+  FULL_COD: 'Cash on Delivery',
 }
 
 const generateInvoice = (order) => {
@@ -133,6 +139,7 @@ const generateInvoice = (order) => {
     .totals { margin-top: 16px; margin-left: auto; width: 260px; font-size: 13px; }
     .totals div { display: flex; justify-content: space-between; padding: 4px 0; }
     .totals .grand { border-top: 1px solid #C9A84C; font-weight: 700; margin-top: 4px; padding-top: 8px; color: #C9A84C; }
+    .pay-mode { font-size: 22px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; text-align: center; margin: 16px 0 0; padding: 10px; border: 2px solid #C9A84C; color: #C9A84C; }
     .footer { margin-top: 40px; font-size: 11px; color: #94969f; text-align: center; }
   </style>
 </head>
@@ -142,11 +149,12 @@ const generateInvoice = (order) => {
   </div>
   <p class="muted">www.vaarria.com</p>
 
+  <p class="pay-mode">${PAYMENT_MODE_LABEL[order.payment_method] || order.payment_method}</p>
+
   <h2>Invoice</h2>
   <p class="muted">
     Order #${order.id}<br/>
-    Date: ${order.date} · Status: ${order.status}<br/>
-    Mode of Payment: ${{ PREPAID: 'Prepaid (Online)', COD: 'Cash on Delivery (₹49 paid online)', FULL_COD: 'Cash on Delivery' }[order.payment_method] || order.payment_method}
+    Date: ${order.date} · Status: ${order.status}
   </p>
 
   <h2>Deliver To</h2>
@@ -949,12 +957,12 @@ function OrderCard({ order }) {
                 Paid Online
               </span>
             )}
-            {order.payment_method === 'COD' && (
+            {order.payment_method === 'COD' && !NO_COD_DUE_STATUSES.includes(order.status) && (
               <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 10, background: '#fef3c7', color: '#92400e', border: '1px solid #f59e0b' }}>
                 To Pay on Delivery: ₹{(order.cod_remaining ?? (order.total - (order.paid_online ?? 49))).toLocaleString('en-IN')}
               </span>
             )}
-            {order.payment_method === 'FULL_COD' && (
+            {order.payment_method === 'FULL_COD' && !NO_COD_DUE_STATUSES.includes(order.status) && (
               <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 10, background: '#fef3c7', color: '#92400e', border: '1px solid #f59e0b' }}>
                 To Pay on Delivery: ₹{(order.cod_remaining ?? order.total).toLocaleString('en-IN')}
               </span>

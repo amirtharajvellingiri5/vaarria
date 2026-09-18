@@ -24,7 +24,7 @@ import AdminNav from '../AdminNav'
 import { ORDERS_URL } from '../../config'
 import { useAuthStore } from '../../store/authStore'
 import { COURIERS, courierUrl } from '../../couriers'
-import { ORDER_STATUS_KEYS } from '../../constants/orderStatus'
+import { ORDER_STATUS_KEYS, NO_COD_DUE_STATUSES } from '../../constants/orderStatus'
 import { authHeaders } from '../../utils/authHeaders'
 const ORDERS_API_BASE = ORDERS_URL
 const CDN = 'https://cdn.vaarria.com/app/images/'
@@ -47,6 +47,22 @@ const STATUS_STYLES = {
 }
 
 const formatINR = (n) => `₹${Number(n || 0).toLocaleString('en-IN')}`
+
+// Refund state for an order that will never be delivered. Derived from the
+// status admin already sets (REFUND_CREDITED once Razorpay refunds) plus the
+// money actually captured online — mirrors _online_refund_due in orders.py.
+// ponytail: derived, add a real refund_status field only if partial refunds happen.
+const refundLabel = (order) => {
+  const paidOnline =
+    order.payment_status !== 'PAID' ? 0
+    : order.payment_method === 'PREPAID' ? Number(order.total) || 0
+    : Number(order.paid_online) || 0
+  if (paidOnline <= 0) return null
+  if (order.status === 'REFUND_CREDITED') return 'REFUND_COMPLETED'
+  return ['CANCELLED', 'RETURNED', 'REFUND_INITIATED'].includes(order.status)
+    ? 'REFUND_PENDING'
+    : null
+}
 
 // backend stamp is yyyymmddhhmmssmmm, not ISO — parse the first 14 chars manually
 const parseStamp = (s) => {
@@ -875,6 +891,7 @@ function OrderRow({ order, onUpdated, setToast }) {
   const qcFailedCount = (order.items || []).filter(
     (i) => i.item_status === 'QC_FAILED',
   ).length
+  const refund = refundLabel(order)
 
   return (
     <div className='border-t border-stone-800/60'>
@@ -888,9 +905,20 @@ function OrderRow({ order, onUpdated, setToast }) {
             <span className='text-sm font-semibold text-stone-100 font-mono'>#{order.id}</span>
             <CopyBtn text={order.id} />
             <StatusBadge status={order.status} />
-            {order.payment_status !== 'PAID' && (
+            {order.payment_status !== 'PAID' && !NO_COD_DUE_STATUSES.includes(order.status) && (
               <span className='text-[10px] font-bold text-amber-400 border border-amber-500/30 bg-amber-500/10 rounded-full px-2 py-0.5'>
                 {order.payment_status}
+              </span>
+            )}
+            {refund && (
+              <span
+                className={`text-[10px] font-bold rounded-full px-2 py-0.5 border ${
+                  refund === 'REFUND_COMPLETED'
+                    ? 'text-emerald-400 border-emerald-500/30 bg-emerald-500/10'
+                    : 'text-amber-300 border-amber-500/40 bg-amber-500/15'
+                }`}
+              >
+                {refund}
               </span>
             )}
             {order.tracking?.id && (
@@ -908,7 +936,7 @@ function OrderRow({ order, onUpdated, setToast }) {
                 QC FAILED × {qcFailedCount}
               </span>
             )}
-            {(order.payment_method === 'COD' || order.payment_method === 'FULL_COD') && (
+            {(order.payment_method === 'COD' || order.payment_method === 'FULL_COD') && !NO_COD_DUE_STATUSES.includes(order.status) && (
               <span className='text-[10px] font-bold text-amber-300 border border-amber-500/40 bg-amber-500/15 rounded-full px-2 py-0.5'>
                 To Pay on Delivery: {formatINR(order.cod_remaining ?? (order.payment_method === 'COD' ? order.total - (order.paid_online ?? 49) : order.total))}
               </span>
