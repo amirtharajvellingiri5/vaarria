@@ -634,7 +634,7 @@ export default function LoginPage() {
 
   const handleVerified = () => {
     const redirectTo = searchParams.get('redirect') || '/'
-    navigate(redirectTo)
+    navigate(redirectTo, { replace: true })  // ponytail: don't leave /login in history behind the user
   }
 
   return (

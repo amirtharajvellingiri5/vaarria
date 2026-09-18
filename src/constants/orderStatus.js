@@ -23,3 +23,14 @@ export const CLOSED_ORDER_STATUSES = [
   'REFUND_INITIATED',
   'REFUND_CREDITED',
 ]
+
+// Statuses where nothing is collectible on delivery any more — the order is
+// never getting handed over, so a PENDING_COD / "To Pay on Delivery" label is
+// stale and must not be shown.
+export const NO_COD_DUE_STATUSES = [
+  'CANCELLED',
+  'RETURN_INITIATED',
+  'RETURNED',
+  'REFUND_INITIATED',
+  'REFUND_CREDITED',
+]

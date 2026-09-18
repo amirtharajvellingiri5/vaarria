@@ -9,6 +9,7 @@ import './index.css'
 import Home from './Home.jsx'
 import { useAuthStore } from './store/authStore'
 import AdminGate from './admin/AdminGate.jsx'
+import RequireAuth from './RequireAuth.jsx'
 import { seedE2eAuth } from './utils/e2e'
 
 // ponytail: Home stays eager — it's the landing route, so lazying it would only
@@ -61,7 +62,7 @@ const router = createBrowserRouter([
   { path: '/bag', element: <BagPage /> },
   { path: '/contact-us', element: <ContactUsPage /> },
   { path: '/terms', element: <TermsAndConditionsPage/> },
-  {path: '/orders', element: <OrdersPage /> },
+  { path: '/orders', element: <RequireAuth><OrdersPage /></RequireAuth> },
   { path: '/review', element: <ReviewPage /> },
   { path: '/wishlist', element: <WishlistPage /> },
   { path: '/profile', element: <ProfilePage /> },
