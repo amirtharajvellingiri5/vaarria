@@ -51,6 +51,8 @@ const openWhatsAppSupport = (orderId) => {
   window.open(`https://wa.me/${SUPPORT_WHATSAPP}?text=${text}`, '_blank')
 }
 
+const itemCount = (order) => (order.items || []).reduce((s, i) => s + (i.quantity || 1), 0)
+
 const splitDiscounts = (order) => {
   const itemTotal = (order.items || []).reduce((s, i) => s + (i.price || 0) * (i.quantity || 1), 0)
   const specialDiscount = order.special_discount || 0
@@ -473,7 +475,9 @@ function ReturnExchangeModal({ order, onClose, onReturned }) {
                   )}
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <p style={{ fontSize: 12, fontWeight: 600, color: NAVY, margin: '0 0 2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.name}</p>
-                    <p style={{ fontSize: 11, color: '#888', margin: 0 }}>Size: {item.size} · ₹{item.price?.toLocaleString('en-IN')}</p>
+                    <p style={{ fontSize: 11, color: '#888', margin: 0 }}>
+                      Size: {item.size} · Qty: {item.quantity || 1} · ₹{((item.price || 0) * (item.quantity || 1)).toLocaleString('en-IN')}
+                    </p>
                   </div>
                 </div>
               ))}
@@ -611,7 +615,7 @@ function CancelOrderModal({ order, onClose, onCancelled }) {
         </div>
 
         <p style={{ fontSize: 13, color: '#444', margin: '0 0 6px' }}>
-          Order <b>#{order.id}</b> · {order.items.length} item{order.items.length > 1 ? 's' : ''} · ₹{order.total.toLocaleString('en-IN')}
+          Order <b>#{order.id}</b> · {itemCount(order)} item{itemCount(order) > 1 ? 's' : ''} · ₹{order.total.toLocaleString('en-IN')}
         </p>
         <p style={{ fontSize: 12, color: '#94969f', margin: '0 0 18px' }}>
           This action cannot be undone. Any payment made will be refunded to the original payment method.
@@ -957,7 +961,7 @@ function OrderCard({ order }) {
             )}
           </div>
           <p style={{ fontSize: 12, color: '#94969f', margin: 0 }}>
-            {order.items.length} item{order.items.length > 1 ? 's' : ''} ·{' '}
+            {itemCount(order)} item{itemCount(order) > 1 ? 's' : ''} ·{' '}
             <span style={{ color: GOLD, fontWeight: 600 }}>₹{order.total.toLocaleString('en-IN')}</span>
             {' '}· {order.date}
           </p>
@@ -989,7 +993,11 @@ function OrderCard({ order }) {
 
       {/* Items Preview */}
       <div style={{ padding: '0 18px 14px', display: 'flex', gap: 10, overflowX: 'auto' }}>
-        {order.items.map(item => (
+        {order.items.map(item => {
+          const qty = item.quantity || 1
+          const lineMrp = item.price * qty
+          const lineTotal = lineMrp - (item.coupon_discount || 0)
+          return (
           <div
             key={item.id}
             onClick={() => item.product_id && window.open(`/product/${item.product_id}`, '_blank')}
@@ -1016,14 +1024,14 @@ function OrderCard({ order }) {
                 {item.name}
               </p>
               <p style={{ fontSize: 11, color: '#444', margin: 0 }}>
-                Size: <b>{item.size}</b> ·{' '}
+                Size: <b>{item.size}</b> · Qty: <b>{qty}</b> ·{' '}
                 {item.coupon_discount > 0 ? (
                   <>
-                    <span style={{ color: '#94969f', textDecoration: 'line-through', marginRight: 4 }}>₹{item.price.toLocaleString('en-IN')}</span>
-                    <span style={{ color: GOLD, fontWeight: 600 }}>₹{(item.price - Math.round(item.coupon_discount / item.quantity)).toLocaleString('en-IN')}</span>
+                    <span style={{ color: '#94969f', textDecoration: 'line-through', marginRight: 4 }}>₹{lineMrp.toLocaleString('en-IN')}</span>
+                    <span style={{ color: GOLD, fontWeight: 600 }}>₹{lineTotal.toLocaleString('en-IN')}</span>
                   </>
                 ) : (
-                  <span style={{ color: GOLD, fontWeight: 600 }}>₹{item.price.toLocaleString('en-IN')}</span>
+                  <span style={{ color: GOLD, fontWeight: 600 }}>₹{lineTotal.toLocaleString('en-IN')}</span>
                 )}
               </p>
               {item.coupon_discount > 0 && (
@@ -1053,7 +1061,7 @@ function OrderCard({ order }) {
               )}
             </div>
           </div>
-        ))}
+        )})}
       </div>
 
       {/* Expanded Section */}
