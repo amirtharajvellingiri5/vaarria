@@ -48,20 +48,18 @@ const STATUS_STYLES = {
 
 const formatINR = (n) => `₹${Number(n || 0).toLocaleString('en-IN')}`
 
-// Refund state for an order that will never be delivered. Derived from the
-// status admin already sets (REFUND_CREDITED once Razorpay refunds) plus the
-// money actually captured online — mirrors _online_refund_due in orders.py.
+// Only CANCELLED hides its refund state — REFUND_INITIATED / REFUND_CREDITED
+// already say it in the status badge, so adding a second pill there is noise.
+// A cancelled order owes a refund only if money was actually captured online:
+// same rule as _online_refund_due in orders.py, which fires the ops alert.
 // ponytail: derived, add a real refund_status field only if partial refunds happen.
-const refundLabel = (order) => {
+const needsRefund = (order) => {
+  if (order.status !== 'CANCELLED') return false
   const paidOnline =
     order.payment_status !== 'PAID' ? 0
     : order.payment_method === 'PREPAID' ? Number(order.total) || 0
     : Number(order.paid_online) || 0
-  if (paidOnline <= 0) return null
-  if (order.status === 'REFUND_CREDITED') return 'REFUND_COMPLETED'
-  return ['CANCELLED', 'RETURNED', 'REFUND_INITIATED'].includes(order.status)
-    ? 'REFUND_PENDING'
-    : null
+  return paidOnline > 0
 }
 
 // backend stamp is yyyymmddhhmmssmmm, not ISO — parse the first 14 chars manually
@@ -891,7 +889,6 @@ function OrderRow({ order, onUpdated, setToast }) {
   const qcFailedCount = (order.items || []).filter(
     (i) => i.item_status === 'QC_FAILED',
   ).length
-  const refund = refundLabel(order)
 
   return (
     <div className='border-t border-stone-800/60'>
@@ -910,15 +907,9 @@ function OrderRow({ order, onUpdated, setToast }) {
                 {order.payment_status}
               </span>
             )}
-            {refund && (
-              <span
-                className={`text-[10px] font-bold rounded-full px-2 py-0.5 border ${
-                  refund === 'REFUND_COMPLETED'
-                    ? 'text-emerald-400 border-emerald-500/30 bg-emerald-500/10'
-                    : 'text-amber-300 border-amber-500/40 bg-amber-500/15'
-                }`}
-              >
-                {refund}
+            {needsRefund(order) && (
+              <span className='text-[10px] font-bold text-amber-300 border border-amber-500/40 bg-amber-500/15 rounded-full px-2 py-0.5'>
+                REFUND_PENDING
               </span>
             )}
             {order.tracking?.id && (
