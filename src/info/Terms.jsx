@@ -26,9 +26,9 @@ export default function TermsAndConditionsPage() {
         'Delivery timelines are estimates and may vary based on location, courier operations, weather, or unforeseen circumstances.'
     },
     {
-      title: 'Returns, Exchanges & Refunds',
+      title: 'Returns & Refunds',
       content:
-        'Eligible products may be returned or exchanged according to the store return policy. Items must be unused, with original tags and packaging unless otherwise stated.'
+        'Eligible products may be returned according to the store return policy. We do not offer exchanges. Items must be unused, with original tags and packaging unless otherwise stated.'
     },
     {
       title: 'Sizing Disclaimer',

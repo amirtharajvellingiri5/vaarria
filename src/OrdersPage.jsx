@@ -84,11 +84,16 @@ const PAYMENT_MODE_LABEL = {
   FULL_COD: 'Cash on Delivery',
 }
 
+// No goods shipped, no tax invoice — a cancelled order never gets one.
+const hasInvoice = (order) =>
+  Boolean(order.tracking?.shipped_date || order.tracking?.delivered_date)
+
 const generateInvoice = (order) => {
   const win = window.open('', '_blank')
   if (!win) return
 
   const { catalogDiscount, specialDiscount, paymentDiscount } = splitDiscounts(order)
+  const codDue = !NO_COD_DUE_STATUSES.includes(order.status)
   const isIntraState = (order.address?.state || '').trim().toLowerCase() === SELLER_STATE.toLowerCase()
 
   let totalCgst = 0
@@ -182,8 +187,8 @@ const generateInvoice = (order) => {
     <div class="grand"><span>Total Paid</span><span>₹${Number(order.total).toLocaleString('en-IN')}</span></div>
     ${order.payment_method === 'COD' ? `
     <div><span>Paid Online (Advance)</span><span>₹${Number(order.paid_online ?? 49).toLocaleString('en-IN')}</span></div>
-    <div><span>Payable on Delivery</span><span>₹${Number(order.cod_remaining || 0).toLocaleString('en-IN')}</span></div>` : ''}
-    ${order.payment_method === 'FULL_COD' ? `
+    ${codDue ? `<div><span>Payable on Delivery</span><span>₹${Number(order.cod_remaining || 0).toLocaleString('en-IN')}</span></div>` : ''}` : ''}
+    ${order.payment_method === 'FULL_COD' && codDue ? `
     <div><span>Payable on Delivery</span><span>₹${Number(order.cod_remaining || order.total).toLocaleString('en-IN')}</span></div>` : ''}
   </div>
 
@@ -305,7 +310,7 @@ function OrderTimeline({ status }) {
   )
 }
 
-// ─── Return / Exchange Modal ──────────────────────────────────────────────────
+// ─── Return Modal ─────────────────────────────────────────────────────────────
 
 const RETURN_REASONS = [
   'Wrong size received',
@@ -317,8 +322,7 @@ const RETURN_REASONS = [
   'Other',
 ]
 
-function ReturnExchangeModal({ order, onClose, onReturned }) {
-  const [mode, setMode] = useState('RETURN')
+function ReturnModal({ order, onClose, onReturned }) {
   const [selected, setSelected] = useState(() => new Set(order.items.map(i => i.id)))
   const [reason, setReason] = useState('')
   const [details, setDetails] = useState('')
@@ -333,14 +337,6 @@ function ReturnExchangeModal({ order, onClose, onReturned }) {
   })
 
   const handleSubmit = async () => {
-    if (mode === 'EXCHANGE') {
-      const items = order.items.filter(i => selected.has(i.id)).map(i => `${i.name} (${i.size})`).join(', ')
-      const msg = `Hi, I'd like to request an exchange for Order #${order.id}.\n\nItems: ${items}\nReason: ${reason}${details ? `\nDetails: ${details}` : ''}`
-      window.open(`https://wa.me/919731580157?text=${encodeURIComponent(msg)}`, '_blank')
-      onClose()
-      return
-    }
-
     setSubmitting(true)
     setError('')
     try {
@@ -424,7 +420,7 @@ function ReturnExchangeModal({ order, onClose, onReturned }) {
         }}>
           <div>
             <h3 style={{ fontSize: 17, fontWeight: 700, color: NAVY, margin: 0, fontFamily: "'Playfair Display', Georgia, serif" }}>
-              Return / Exchange
+              Return
             </h3>
             <p style={{ fontSize: 11, color: '#94969f', margin: '3px 0 0' }}>Order #{order.id}</p>
           </div>
@@ -432,28 +428,6 @@ function ReturnExchangeModal({ order, onClose, onReturned }) {
         </div>
 
         <div style={{ padding: '18px 22px 22px', display: 'flex', flexDirection: 'column', gap: 16 }}>
-          {/* Mode toggle */}
-          <div>
-            <p style={{ fontSize: 11, fontWeight: 700, color: '#888', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>Request type</p>
-            <div style={{ display: 'flex', gap: 10 }}>
-              {[{ v: 'RETURN', label: 'Return' }, { v: 'EXCHANGE', label: 'Exchange' }].map(({ v, label }) => (
-                <button
-                  key={v}
-                  onClick={() => setMode(v)}
-                  style={{
-                    flex: 1, padding: '10px', borderRadius: 8, cursor: 'pointer',
-                    border: mode === v ? `2px solid ${GOLD}` : '1.5px solid #e8e0d0',
-                    background: mode === v ? '#fffdf5' : '#fff',
-                    fontSize: 13, fontWeight: 600, color: mode === v ? NAVY : '#888',
-                    transition: 'all 0.15s',
-                  }}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-          </div>
-
           {/* Item selection */}
           <div>
             <p style={{ fontSize: 11, fontWeight: 700, color: '#888', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>Select items</p>
@@ -529,9 +503,7 @@ function ReturnExchangeModal({ order, onClose, onReturned }) {
 
           <div style={{ background: '#fffdf5', border: `1px solid ${GOLD}44`, borderRadius: 8, padding: '10px 12px' }}>
             <p style={{ fontSize: 12, color: '#666', margin: 0, lineHeight: 1.6 }}>
-              {mode === 'RETURN'
-                ? "We'll initiate your return right away and share reverse-pickup courier details."
-                : 'Clicking submit will open WhatsApp with your request pre-filled. Our team will respond within 24 hours.'}
+              We'll initiate your return right away and share reverse-pickup courier details.
             </p>
           </div>
 
@@ -562,7 +534,7 @@ function ReturnExchangeModal({ order, onClose, onReturned }) {
                 transition: 'all 0.15s',
               }}
             >
-              {submitting ? 'Submitting…' : mode === 'RETURN' ? 'Submit Return' : 'Submit via WhatsApp'}
+              {submitting ? 'Submitting…' : 'Submit Return'}
             </button>
           </div>
         </div>
@@ -1230,6 +1202,7 @@ function OrderCard({ order }) {
             {(() => {
               const pm = order.payment_method
               const codRemaining = order.cod_remaining || 0
+              const codDue = !NO_COD_DUE_STATUSES.includes(order.status)
               if (pm === 'PREPAID') {
                 return (
                   <>
@@ -1255,11 +1228,15 @@ function OrderCard({ order }) {
                         <span style={{ fontSize: 12, color: '#666' }}>Paid online</span>
                         <span style={{ fontSize: 12, fontWeight: 600, color: '#16a34a' }}>Rs.{(order.paid_online ?? 49).toLocaleString('en-IN')}</span>
                       </div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <span style={{ fontSize: 12, color: '#666' }}>To pay on delivery</span>
-                        <span style={{ fontSize: 12, fontWeight: 600, color: NAVY }}>Rs.{codRemaining.toLocaleString('en-IN')}</span>
-                      </div>
-                      <div style={{ fontSize: 10, color: '#888', marginTop: 2 }}>1% discount applied on delivery amount</div>
+                      {codDue && (
+                        <>
+                          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                            <span style={{ fontSize: 12, color: '#666' }}>To pay on delivery</span>
+                            <span style={{ fontSize: 12, fontWeight: 600, color: NAVY }}>Rs.{codRemaining.toLocaleString('en-IN')}</span>
+                          </div>
+                          <div style={{ fontSize: 10, color: '#888', marginTop: 2 }}>1% discount applied on delivery amount</div>
+                        </>
+                      )}
                     </div>
                   </>
                 )
@@ -1270,10 +1247,12 @@ function OrderCard({ order }) {
                       <span style={{ fontSize: 13, fontWeight: 700, color: NAVY }}>Order Total</span>
                       <span style={{ fontSize: 14, fontWeight: 700, color: GOLD }}>₹{order.total.toLocaleString('en-IN')}</span>
                     </div>
-                    <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
-                      <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 10, background: '#fef9ec', color: '#b45309', border: '1px solid #fde68a' }}>Cash on Delivery</span>
-                      <span style={{ fontSize: 11, color: '#b45309' }}>Pay Rs.{codRemaining.toLocaleString('en-IN')} on delivery</span>
-                    </div>
+                    {codDue && (
+                      <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 10, background: '#fef9ec', color: '#b45309', border: '1px solid #fde68a' }}>Cash on Delivery</span>
+                        <span style={{ fontSize: 11, color: '#b45309' }}>Pay Rs.{codRemaining.toLocaleString('en-IN')} on delivery</span>
+                      </div>
+                    )}
                   </>
                 )
               } else {
@@ -1339,7 +1318,7 @@ function OrderCard({ order }) {
               />
             )}
             {order.status === 'DELIVERED' && (
-              <ActionBtn icon={<RotateCcw size={13} />} label="Return / Exchange" onClick={() => setShowReturnModal(true)} />
+              <ActionBtn icon={<RotateCcw size={13} />} label="Return" onClick={() => setShowReturnModal(true)} />
             )}
             {(order.status === 'PLACED' || order.status === 'CONFIRMED') && (
               <ActionBtn
@@ -1369,6 +1348,8 @@ function OrderCard({ order }) {
             <ActionBtn
               icon={<Download size={13} />}
               label="Invoice"
+              disabled={!hasInvoice(order)}
+              title={!hasInvoice(order) ? 'Invoice available once your order is shipped' : undefined}
               onClick={() => generateInvoice(order)}
             />
           </div>
@@ -1392,7 +1373,7 @@ function OrderCard({ order }) {
       )}
 
       {showReturnModal && (
-        <ReturnExchangeModal
+        <ReturnModal
           order={order}
           onClose={() => setShowReturnModal(false)}
           onReturned={handleReturned}
