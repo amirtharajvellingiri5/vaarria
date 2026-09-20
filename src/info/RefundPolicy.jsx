@@ -26,11 +26,6 @@ export default function RefundPolicyPage() {
         'Once the returned product passes quality inspection, the refund will be initiated to the original payment method. Processing timelines may vary depending on your payment provider.'
     },
     {
-      title: 'Exchange Option',
-      content:
-        'Eligible products may be exchanged for a different size or replacement, subject to stock availability.'
-    },
-    {
       title: 'Return Pickup',
       content:
         'Return pickup availability depends on your delivery location. If pickup is unavailable, customers may be asked to self-ship the item as instructed by support.'
