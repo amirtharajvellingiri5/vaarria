@@ -867,10 +867,14 @@ function CouponPanel() {
     </div>
   )
 }
+// ponytail: single source for payment-mode pricing — price rows, selector and checkout all read this.
+const PAYMENT_DISCOUNT_PCT = { prepaid: 2, cod: 1, full_cod: 0 }
+const payableFor = (mode, total) => Math.round(total * (1 - (PAYMENT_DISCOUNT_PCT[mode] || 0) / 100))
+
 function PaymentMethodSelector({ value, onChange, total, disabled }) {
-  const prepaidFinal = Math.round(total * 0.98)
+  const prepaidFinal = payableFor('prepaid', total)
   const saved = total - prepaidFinal
-  const codFinal = Math.round(total * 0.99)
+  const codFinal = payableFor('cod', total)
   const codRemaining = codFinal - 49
 
   return (
@@ -1006,6 +1010,9 @@ function PricePanel({ onNeedAuth, triggerPay, onTriggerConsumed, authReady }) {
 
   const discountOnMrp = totalMrp - totalPrice
   const total = totalPrice - couponSavings
+  const baseTotal = Math.max(0, total)
+  const payable = payableFor(paymentMode, baseTotal)
+  const paymentDiscount = baseTotal - payable
 
   const API_BASE = ORDERS_API_BASE
   const { token: authToken, customer: authCustomer } = useAuthStore()
@@ -1023,9 +1030,8 @@ function PricePanel({ onNeedAuth, triggerPay, onTriggerConsumed, authReady }) {
     const token = authToken
     const customer = authCustomer
 
-    const baseTotal = Math.max(0, total)
-    const prepaidFinal = Math.round(baseTotal * 0.98)
-    const codFinal = Math.round(baseTotal * 0.99)
+    const prepaidFinal = payableFor('prepaid', baseTotal)
+    const codFinal = payableFor('cod', baseTotal)
 
     let selectedAddress = JSON.parse(localStorage.getItem('selected_address') || 'null')
     if (!selectedAddress) {
@@ -1216,19 +1222,27 @@ function PricePanel({ onNeedAuth, triggerPay, onTriggerConsumed, authReady }) {
         />
 
         <PriceRow label='Coupon Discount' value={`- ₹${couponSavings}`} green />
+
+        {paymentDiscount > 0 && (
+          <PriceRow
+            label={`Payment Discount (${PAYMENT_DISCOUNT_PCT[paymentMode]}%)`}
+            value={`- ₹${paymentDiscount.toLocaleString()}`}
+            green
+          />
+        )}
       </div>
 
       <div style={styles.priceDivider} />
 
       <div style={styles.totalRow}>
         <span>Total Amount</span>
-        <span>₹{Math.max(0, total).toLocaleString()}</span>
+        <span>₹{payable.toLocaleString()}</span>
       </div>
 
       <PaymentMethodSelector
         value={paymentMode}
         onChange={setPaymentMode}
-        total={Math.max(0, total)}
+        total={baseTotal}
         disabled={selected.length === 0}
       />
 
