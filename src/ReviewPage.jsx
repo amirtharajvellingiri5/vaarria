@@ -7,6 +7,7 @@ const NAVY = '#050C1C'
 import './constants/global.css'
 
 import { ORDERS_URL } from './config'
+import { authHeaders } from './utils/authHeaders'
 const ORDERS_API_BASE = ORDERS_URL
 const CDN = 'https://cdn.vaarria.com/app/images/'
 const MAX_PHOTOS = 3
@@ -73,7 +74,7 @@ export default function ReviewPage() {
       fd.append('customer_name', customerName)
       photos.forEach((p) => fd.append('images', p.file))
 
-      await axios.post(`${ORDERS_API_BASE}/ratings`, fd)
+      await axios.post(`${ORDERS_API_BASE}/ratings`, fd, { headers: authHeaders() })
       setDone(true)
     } catch (err) {
       const detail = err.response?.data?.detail || ''
@@ -84,6 +85,7 @@ export default function ReviewPage() {
           await axios.put(
             `${ORDERS_API_BASE}/ratings/${selected.product_id}/${customerId}`,
             { rating, review: review.trim() },
+            { headers: authHeaders() },
           )
           setWasUpdate(true)
           setDone(true)
