@@ -48,6 +48,12 @@ const STATUS_STYLES = {
 
 const formatINR = (n) => `₹${Number(n || 0).toLocaleString('en-IN')}`
 
+const PAYMENT_MODE_LABEL = {
+  PREPAID: 'Prepaid — paid online',
+  COD: '₹49 Advance + COD',
+  FULL_COD: 'Full Cash on Delivery',
+}
+
 // Only CANCELLED hides its refund state — REFUND_INITIATED / REFUND_CREDITED
 // already say it in the status badge, so adding a second pill there is noise.
 // A cancelled order owes a refund only if money was actually captured online:
@@ -1044,6 +1050,14 @@ function OrderRow({ order, onUpdated, setToast }) {
             <div>
               <p className='text-[10px] font-semibold uppercase tracking-widest text-stone-500 mb-2 flex items-center gap-1.5'>
                 <CreditCard size={12} /> Payment
+              </p>
+              <p className='text-xs text-stone-300 mb-1'>
+                Mode: <b className={order.payment_method === 'PREPAID' ? 'text-emerald-400' : 'text-amber-400'}>
+                  {PAYMENT_MODE_LABEL[order.payment_method] || order.payment_method || '—'}
+                </b>
+                {order.payment_method === 'COD' && (
+                  <span className='text-stone-500'> · advance {formatINR(order.paid_online ?? 49)}</span>
+                )}
               </p>
               <p className='text-xs text-stone-400 leading-relaxed font-mono'>
                 Razorpay: {order.razorpay_order_id || '—'}<br />
