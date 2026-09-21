@@ -17,6 +17,7 @@ import {
   ChevronLeft,
   ChevronRight,
   MessageCircle,
+  RotateCcw,
 } from 'lucide-react'
 
 import AdminNav from '../AdminNav'
@@ -961,12 +962,13 @@ function OrderRow({ order, onUpdated, setToast }) {
             <div className='space-y-2'>
               {(order.items || []).map((item) => {
                 const failed = item.item_status === 'QC_FAILED'
+                const returned = item.item_status === 'RETURN_INITIATED'
                 return (
                   <div
                     key={item.id}
                     onClick={() => item.product_id && window.open(`/product/${item.product_id}`, '_blank')}
                     className={`flex items-center gap-3 p-2 rounded-lg border bg-stone-950 ${
-                      failed ? 'border-rose-500/40 opacity-80' : 'border-stone-800'
+                      failed ? 'border-rose-500/40 opacity-80' : returned ? 'border-amber-500/50' : 'border-stone-800'
                     } ${item.product_id ? 'cursor-pointer hover:border-rose-500/40' : ''}`}
                   >
                     {item.image ? (
@@ -997,8 +999,11 @@ function OrderRow({ order, onUpdated, setToast }) {
                           <b>QC Failed</b>{item.qc_reason ? ` — ${item.qc_reason}` : ''}
                         </p>
                       )}
+                      {returned && (
+                        <p className='text-[10px] text-amber-400 mt-0.5'><b>Returned by customer</b></p>
+                      )}
                     </div>
-                    {!failed && (
+                    {!failed && !returned && (
                       <button
                         onClick={(e) => {
                           e.stopPropagation()
@@ -1079,6 +1084,26 @@ function OrderRow({ order, onUpdated, setToast }) {
                 )
               })()}
             </div>
+            {order.status?.startsWith('RETURN') && (() => {
+              const returnable = (order.items || []).filter((i) => i.item_status !== 'QC_FAILED')
+              const back = returnable.filter((i) => i.item_status === 'RETURN_INITIATED')
+              return (
+                <div>
+                  <p className='text-[10px] font-semibold uppercase tracking-widest text-stone-500 mb-2 flex items-center gap-1.5'>
+                    <RotateCcw size={12} /> {order.return_partial ? 'Partial Return' : 'Full Return'}
+                  </p>
+                  <p className='text-xs text-amber-400 mb-1'>
+                    {back.length} of {returnable.length} item{returnable.length > 1 ? 's' : ''} returned
+                    {order.return_refund > 0 && (
+                      <> · Refund due <b className='text-emerald-400'>{formatINR(order.return_refund)}</b></>
+                    )}
+                  </p>
+                  {back.map((i) => (
+                    <p key={i.id} className='text-[11px] text-stone-400 truncate'>· {i.name} (Qty {i.quantity})</p>
+                  ))}
+                </div>
+              )
+            })()}
             {order.return_reason && (
               <div>
                 <p className='text-[10px] font-semibold uppercase tracking-widest text-stone-500 mb-2 flex items-center gap-1.5'>

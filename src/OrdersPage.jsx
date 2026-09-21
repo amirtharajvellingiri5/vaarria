@@ -21,7 +21,6 @@ import {
   Pencil,
 } from 'lucide-react'
 import axios from 'axios'
-import { useAuthStore } from './store/authStore'
 import { CLOSED_ORDER_STATUSES, NO_COD_DUE_STATUSES } from './constants/orderStatus'
 const logo = '/vlogo.png'
 import './constants/global.css'
@@ -323,12 +322,15 @@ const RETURN_REASONS = [
 ]
 
 function ReturnModal({ order, onClose, onReturned }) {
-  const [selected, setSelected] = useState(() => new Set(order.items.map(i => i.id)))
+  // QC-failed lines were never shipped — not returnable, and the backend
+  // leaves them out of the refund split too.
+  const items = (order.items || []).filter(i => i.item_status !== 'QC_FAILED')
+  const [selected, setSelected] = useState(() => new Set(items.map(i => i.id)))
   const [reason, setReason] = useState('')
   const [details, setDetails] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
-  const [courierInfo, setCourierInfo] = useState('')
+  const [result, setResult] = useState(null)
 
   const toggle = (id) => setSelected(prev => {
     const n = new Set(prev)
@@ -342,10 +344,10 @@ function ReturnModal({ order, onClose, onReturned }) {
     try {
       const res = await axios.put(
         `${ORDERS_API_BASE}/orders/${order.id}/return?customer_id=${getCustomerId()}`,
-        { reason, details: details || null },
+        { reason, details: details || null, item_ids: [...selected].map(String) },
         { headers: authHeaders() },
       )
-      setCourierInfo(res.data?.courier_info || '')
+      setResult(res.data || {})
       onReturned?.()
     } catch (err) {
       setError(err.response?.data?.detail || 'Unable to initiate return')
@@ -355,7 +357,7 @@ function ReturnModal({ order, onClose, onReturned }) {
 
   const canSubmit = selected.size > 0 && reason
 
-  if (courierInfo) {
+  if (result) {
     return (
       <div
         onClick={(e) => e.target === e.currentTarget && onClose()}
@@ -377,10 +379,15 @@ function ReturnModal({ order, onClose, onReturned }) {
             <span style={{ color: '#16a34a', fontSize: 26 }}>✓</span>
           </div>
           <h3 style={{ fontSize: 17, fontWeight: 700, color: NAVY, margin: '0 0 8px', fontFamily: "'Playfair Display', Georgia, serif" }}>
-            Return initiated
+            {result.partial ? 'Partial return initiated' : 'Return initiated'}
           </h3>
+          {result.refund_amount > 0 && (
+            <p style={{ fontSize: 13, color: NAVY, margin: '0 0 10px' }}>
+              Refund amount: <b style={{ color: '#16a34a' }}>₹{Number(result.refund_amount).toLocaleString('en-IN')}</b>
+            </p>
+          )}
           <p style={{ fontSize: 13, color: '#444', margin: '0 0 16px', lineHeight: 1.6 }}>
-            {courierInfo}
+            {result.courier_info}
           </p>
           <button
             onClick={onClose}
@@ -432,7 +439,7 @@ function ReturnModal({ order, onClose, onReturned }) {
           <div>
             <p style={{ fontSize: 11, fontWeight: 700, color: '#888', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>Select items</p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {order.items.map(item => (
+              {items.map(item => (
                 <div
                   key={item.id}
                   onClick={() => toggle(item.id)}
@@ -865,6 +872,9 @@ function OrderCard({ order }) {
   const queryClient = useQueryClient()
   const meta = ORDER_STATUSES[order.status] || ORDER_STATUSES.PLACED
   const StatusIcon = meta.icon
+  // QC-failed lines were never shipped, so they are not part of a return.
+  const returnableItems = (order.items || []).filter(i => i.item_status !== 'QC_FAILED')
+  const returnedItems = returnableItems.filter(i => i.item_status === 'RETURN_INITIATED')
 
   const handleCancelled = () => {
     setShowCancelModal(false)
@@ -1023,6 +1033,17 @@ function OrderCard({ order }) {
                   Offer Applied
                 </span>
               )}
+              {item.item_status === 'RETURN_INITIATED' && (
+                <div style={{ marginTop: 4 }}>
+                  <span style={{
+                    display: 'inline-block', fontSize: 10, fontWeight: 700,
+                    color: '#b45309', background: '#fef3c7', border: '1px solid #fde68a',
+                    borderRadius: 10, padding: '1px 8px',
+                  }}>
+                    Return Initiated
+                  </span>
+                </div>
+              )}
               {item.item_status === 'QC_FAILED' && (
                 <div style={{ marginTop: 4 }}>
                   <span style={{
@@ -1054,6 +1075,29 @@ function OrderCard({ order }) {
               background: '#fef3c7', border: '1px solid #b4530944',
               borderRadius: 10, padding: '12px 16px', marginBottom: 14,
             }}>
+              <p style={{ fontSize: 12, color: '#78350f', margin: '0 0 8px', fontWeight: 700 }}>
+                {order.return_partial ? 'Partial Return' : 'Full Return'}
+                {order.return_partial && (
+                  <span style={{ fontWeight: 500 }}>
+                    {' '}· {returnedItems.length} of {returnableItems.length} item{returnableItems.length > 1 ? 's' : ''}
+                  </span>
+                )}
+                {order.return_refund > 0 && (
+                  <span style={{ fontWeight: 500 }}>
+                    {' '}· Refund <b>₹{Number(order.return_refund).toLocaleString('en-IN')}</b>
+                  </span>
+                )}
+              </p>
+              {returnedItems.length > 0 && (
+                <p style={{ fontSize: 12, color: '#78350f', margin: '0 0 8px', lineHeight: 1.5 }}>
+                  Returning: {returnedItems.map(i => `${i.name || i.brand} (Qty ${i.quantity || 1})`).join(', ')}
+                </p>
+              )}
+              {order.return_reason && (
+                <p style={{ fontSize: 12, color: '#78350f', margin: '0 0 8px', lineHeight: 1.5 }}>
+                  Reason: <b>{order.return_reason}</b>{order.return_details ? ` — ${order.return_details}` : ''}
+                </p>
+              )}
               <p style={{ fontSize: 12, color: '#78350f', margin: 0, lineHeight: 1.5 }}>
                 {RETURN_COURIER_INFO}
               </p>
