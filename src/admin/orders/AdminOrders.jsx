@@ -45,6 +45,10 @@ const STATUS_STYLES = {
   RETURNED:         'bg-stone-500/10 text-stone-400 border-stone-500/20',
   REFUND_INITIATED: 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20',
   REFUND_CREDITED:  'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
+  PARTIAL_RETURN_INITIATED: 'bg-orange-500/10 text-orange-400 border-orange-500/20',
+  PARTIAL_RETURNED:         'bg-stone-500/10 text-stone-400 border-stone-500/20',
+  PARTIAL_REFUND_INITIATED: 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20',
+  PARTIAL_REFUND_CREDITED:  'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
 }
 
 const formatINR = (n) => `₹${Number(n || 0).toLocaleString('en-IN')}`
@@ -542,7 +546,7 @@ function ShipModal({ order, onClose, onDone, setToast }) {
 
 // ─── Return pickup-date modal ───────────────────────────────────────────────────
 
-function ReturnPickupModal({ order, onClose, onDone, setToast }) {
+function ReturnPickupModal({ order, status, onClose, onDone, setToast }) {
   const [pickupDate, setPickupDate] = useState('')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
@@ -555,12 +559,12 @@ function ReturnPickupModal({ order, onClose, onDone, setToast }) {
       const res = await fetch(`${ORDERS_API_BASE}/admin/orders/${order.id}/status`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', ...authHeaders() },
-        body: JSON.stringify({ status: 'RETURN_INITIATED', pickup_date: pickupDate }),
+        body: JSON.stringify({ status, pickup_date: pickupDate }),
       })
       const data = await res.json().catch(() => ({}))
       if (!res.ok) throw new Error(data.detail || 'Failed to update status')
 
-      setToast('Return initiated')
+      setToast(status.startsWith('PARTIAL_') ? 'Partial return initiated' : 'Return initiated')
       onDone()
     } catch (e) {
       setError(e.message || 'Update failed')
@@ -784,7 +788,7 @@ function OrderActions({ order, onUpdated, setToast }) {
                 setShowShipModal(true)
                 return
               }
-              if (status === 'RETURN_INITIATED' && order.status !== 'RETURN_INITIATED') {
+              if (status.endsWith('RETURN_INITIATED') && order.status !== status) {
                 setShowReturnPickupModal(true)
                 return
               }
@@ -813,6 +817,7 @@ function OrderActions({ order, onUpdated, setToast }) {
       {showReturnPickupModal && (
         <ReturnPickupModal
           order={order}
+          status={status}
           onClose={() => setShowReturnPickupModal(false)}
           onDone={() => {
             setShowReturnPickupModal(false)
@@ -1000,7 +1005,7 @@ function OrderRow({ order, onUpdated, setToast }) {
                         </p>
                       )}
                       {returned && (
-                        <p className='text-[10px] text-amber-400 mt-0.5'><b>Returned by customer</b></p>
+                        <p className='text-[10px] text-amber-400 mt-0.5'><b>Return initiated by customer</b></p>
                       )}
                     </div>
                     {!failed && !returned && (
@@ -1084,7 +1089,7 @@ function OrderRow({ order, onUpdated, setToast }) {
                 )
               })()}
             </div>
-            {order.status?.startsWith('RETURN') && (() => {
+            {order.status?.includes('RETURN') && (() => {
               const returnable = (order.items || []).filter((i) => i.item_status !== 'QC_FAILED')
               const back = returnable.filter((i) => i.item_status === 'RETURN_INITIATED')
               return (
@@ -1241,7 +1246,7 @@ export default function AdminOrders() {
       toShip: allOrders.filter((o) => ['PLACED', 'CONFIRMED'].includes(o.status)).length,
       inTransit: allOrders.filter((o) => ['SHIPPED', 'OUT'].includes(o.status)).length,
       delivered: allOrders.filter((o) => o.status === 'DELIVERED').length,
-      cancelled: allOrders.filter((o) => ['CANCELLED', 'RETURNED'].includes(o.status)).length,
+      cancelled: allOrders.filter((o) => ['CANCELLED', 'RETURNED', 'PARTIAL_RETURNED'].includes(o.status)).length,
     }
   }, [allOrders])
 

@@ -213,6 +213,10 @@ const ORDER_STATUSES = {
   RETURN_INITIATED:  { label: 'Return Initiated',  color: '#b45309', bg: '#fef3c7', icon: RotateCcw },
   REFUND_INITIATED:  { label: 'Refund Initiated',  color: '#b45309', bg: '#fef3c7', icon: Clock },
   REFUND_CREDITED:   { label: 'Refund Credited',   color: '#16a34a', bg: '#dcfce7', icon: CheckCircle2 },
+  PARTIAL_RETURN_INITIATED: { label: 'Partial Return Initiated', color: '#b45309', bg: '#fef3c7', icon: RotateCcw },
+  PARTIAL_RETURNED:         { label: 'Partially Returned',       color: '#6b7280', bg: '#f3f4f6', icon: RotateCcw },
+  PARTIAL_REFUND_INITIATED: { label: 'Partial Refund Initiated', color: '#b45309', bg: '#fef3c7', icon: Clock },
+  PARTIAL_REFUND_CREDITED:  { label: 'Partial Refund Credited',  color: '#16a34a', bg: '#dcfce7', icon: CheckCircle2 },
 }
 
 const RETURN_COURIER_INFO =
@@ -1070,7 +1074,7 @@ function OrderCard({ order }) {
         <div style={{ borderTop: `1px solid ${GOLD}22`, padding: '14px 18px', background: '#fdfcf9' }}>
           <OrderTimeline status={order.status} />
 
-          {order.status === 'RETURN_INITIATED' && (
+          {order.status?.endsWith('RETURN_INITIATED') && (
             <div style={{
               background: '#fef3c7', border: '1px solid #b4530944',
               borderRadius: 10, padding: '12px 16px', marginBottom: 14,
@@ -1531,7 +1535,10 @@ export default function OrdersPage() {
   })
 
   const filtered = useMemo(() => {
-    let list = activeFilter === 'ALL' ? orders : orders.filter(o => o.status === activeFilter)
+    // A PARTIAL_* status belongs under its base filter chip (Returned etc.).
+    let list = activeFilter === 'ALL'
+      ? orders
+      : orders.filter(o => o.status === activeFilter || o.status === `PARTIAL_${activeFilter}`)
     if (search.trim()) {
       const q = search.toLowerCase()
       list = list.filter(o =>
