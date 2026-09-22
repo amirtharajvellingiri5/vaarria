@@ -12,6 +12,12 @@ export const ORDER_STATUS_KEYS = [
   'RETURNED',
   'REFUND_INITIATED',
   'REFUND_CREDITED',
+  // Partial return: only some lines came back. Same lifecycle, admin-side
+  // distinction only — the customer SMS/WhatsApp reuse the base template.
+  'PARTIAL_RETURN_INITIATED',
+  'PARTIAL_RETURNED',
+  'PARTIAL_REFUND_INITIATED',
+  'PARTIAL_REFUND_CREDITED',
 ]
 
 // Statuses where the delivery timeline is done/stopped rather than progressing.
@@ -22,6 +28,10 @@ export const CLOSED_ORDER_STATUSES = [
   'RETURNED',
   'REFUND_INITIATED',
   'REFUND_CREDITED',
+  'PARTIAL_RETURN_INITIATED',
+  'PARTIAL_RETURNED',
+  'PARTIAL_REFUND_INITIATED',
+  'PARTIAL_REFUND_CREDITED',
 ]
 
 // Statuses where nothing is collectible on delivery any more — the order is
@@ -33,4 +43,8 @@ export const NO_COD_DUE_STATUSES = [
   'RETURNED',
   'REFUND_INITIATED',
   'REFUND_CREDITED',
+  'PARTIAL_RETURN_INITIATED',
+  'PARTIAL_RETURNED',
+  'PARTIAL_REFUND_INITIATED',
+  'PARTIAL_REFUND_CREDITED',
 ]
