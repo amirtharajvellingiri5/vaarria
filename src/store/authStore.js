@@ -39,6 +39,7 @@ export const useAuthStore = create((set, get) => ({
   logout() {
     localStorage.removeItem('customer')
     localStorage.removeItem('refresh_token')
+    localStorage.removeItem('selected_address')
     set({ token: null, customer: null, refresh: null })
     fetch(`${AUTH_API}/api/auth/logout`, { method: 'POST', credentials: 'include' }).catch(() => {})
   },

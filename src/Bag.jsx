@@ -266,6 +266,9 @@ function PinBar() {
         } else {
           setAddresses([])
           setDefaultAddress(null)
+          // no addresses on the account — a leftover selection would silently
+          // skip the address drawer at Place Order
+          localStorage.removeItem('selected_address')
         }
       } catch (error) {
         console.error(error)
@@ -1034,6 +1037,12 @@ function PricePanel({ onNeedAuth, triggerPay, onTriggerConsumed, authReady }) {
     const codFinal = payableFor('cod', baseTotal)
 
     let selectedAddress = JSON.parse(localStorage.getItem('selected_address') || 'null')
+    if (selectedAddress?.customer_id != null &&
+        String(selectedAddress.customer_id) !== String(customer.customer_id)) {
+      // left over from another account — orders key addresses by customer_id
+      localStorage.removeItem('selected_address')
+      selectedAddress = null
+    }
     if (!selectedAddress) {
       // Try fetching from backend before showing the address drawer
       try {

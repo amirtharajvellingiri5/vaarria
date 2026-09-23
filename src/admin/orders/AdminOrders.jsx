@@ -33,6 +33,15 @@ const PER_PAGE = 10
 
 const STATUSES = ORDER_STATUS_KEYS
 
+// ponytail: item_status RETURN_INITIATED only marks WHICH lines are coming
+// back — it never advances. A returned line takes its stage from the order
+// status, so it can't read "Returning" under a "Partially Returned" order.
+const RETURN_STAGES = ['RETURN_INITIATED', 'RETURNED', 'REFUND_INITIATED', 'REFUND_CREDITED']
+const returnStage = (orderStatus) => {
+  const base = String(orderStatus || '').replace('PARTIAL_', '')
+  return RETURN_STAGES.includes(base) ? base : null
+}
+
 const STATUS_STYLES = {
   CREATED:          'bg-stone-500/10 text-stone-400 border-stone-500/20',
   PLACED:           'bg-violet-500/10 text-violet-400 border-violet-500/20',
@@ -1011,7 +1020,10 @@ function OrderRow({ order, onUpdated, setToast }) {
                       )}
                       {returned && (
                         <p className='text-[10px] text-amber-400 mt-0.5'>
-                          <b>Returning {item.return_quantity || item.quantity} of {item.quantity}</b>
+                          <b>
+                            {returnStage(order.status) === 'RETURN_INITIATED' ? 'Returning' : 'Returned'}{' '}
+                            {item.return_quantity || item.quantity} of {item.quantity}
+                          </b>
                         </p>
                       )}
                     </div>
@@ -1096,7 +1108,7 @@ function OrderRow({ order, onUpdated, setToast }) {
                 )
               })()}
             </div>
-            {order.status?.includes('RETURN') && (() => {
+            {returnStage(order.status) && (() => {
               const returnable = (order.items || []).filter((i) => i.item_status !== 'QC_FAILED')
               const back = returnable.filter((i) => i.item_status === 'RETURN_INITIATED')
               return (
@@ -1105,7 +1117,8 @@ function OrderRow({ order, onUpdated, setToast }) {
                     <RotateCcw size={12} /> {order.return_partial ? 'Partial Return' : 'Full Return'}
                   </p>
                   <p className='text-xs text-amber-400 mb-1'>
-                    {back.reduce((s, i) => s + (i.return_quantity || i.quantity || 1), 0)} of {returnable.reduce((s, i) => s + (i.quantity || 1), 0)} units returned across {back.length} item{back.length > 1 ? 's' : ''}
+                    {back.reduce((s, i) => s + (i.return_quantity || i.quantity || 1), 0)} of {returnable.reduce((s, i) => s + (i.quantity || 1), 0)} units{' '}
+                    {returnStage(order.status) === 'RETURN_INITIATED' ? 'coming back' : 'returned'} across {back.length} item{back.length > 1 ? 's' : ''}
                     {order.return_refund > 0 && (
                       <> · Refund due <b className='text-emerald-400'>{formatINR(order.return_refund)}</b></>
                     )}
