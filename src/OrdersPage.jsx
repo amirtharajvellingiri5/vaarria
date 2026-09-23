@@ -329,8 +329,11 @@ function ReturnModal({ order, onClose, onReturned }) {
   // QC-failed lines were never shipped — not returnable, and the backend
   // leaves them out of the refund split too.
   const items = (order.items || []).filter(i => i.item_status !== 'QC_FAILED')
-  const [selected, setSelected] = useState(() => new Set(items.map(i => i.id)))
-  const [qty, setQty] = useState(() => Object.fromEntries(items.map(i => [i.id, i.quantity || 1])))
+  // ponytail: opt-in, both here and per-unit. Pre-ticking every line at its
+  // full quantity meant a customer who stepped ONE line down to 1 unit still
+  // returned everything else at full quantity without ever touching it.
+  const [selected, setSelected] = useState(() => new Set())
+  const [qty, setQty] = useState({})
   const [reason, setReason] = useState('')
   const [details, setDetails] = useState('')
   const [submitting, setSubmitting] = useState(false)
@@ -377,6 +380,14 @@ function ReturnModal({ order, onClose, onReturned }) {
       setSubmitting(false)
     }
   }
+
+  // ponytail: sums the lines the customer picked. The server prorates the same
+  // picks over total_amount, so this matches to the rupee unless total_amount
+  // was edited away from the line totals (admin price override / shipping).
+  const chosen = items.filter(i => selected.has(i.id))
+  const chosenUnits = chosen.reduce((n, i) => n + (qty[i.id] || 1), 0)
+  const totalUnits = items.reduce((n, i) => n + (i.quantity || 1), 0)
+  const estimate = chosen.reduce((n, i) => n + lineValue(i, qty[i.id] || 1), 0)
 
   const canSubmit = selected.size > 0 && reason
 
@@ -488,7 +499,7 @@ function ReturnModal({ order, onClose, onReturned }) {
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <p style={{ fontSize: 12, fontWeight: 600, color: NAVY, margin: '0 0 2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.name}</p>
                     <p style={{ fontSize: 11, color: '#888', margin: 0 }}>
-                      Size: {item.size} · ₹{lineValue(item, qty[item.id] || 1).toLocaleString('en-IN')}
+                      Size: {item.size} · ₹{lineValue(item, 1).toLocaleString('en-IN')}{(item.quantity || 1) > 1 ? ' each' : ''}
                     </p>
                   </div>
                   {selected.has(item.id) && (item.quantity || 1) > 1 ? (
@@ -551,6 +562,12 @@ function ReturnModal({ order, onClose, onReturned }) {
           </div>
 
           <div style={{ background: '#fffdf5', border: `1px solid ${GOLD}44`, borderRadius: 8, padding: '10px 12px' }}>
+            {chosenUnits > 0 && (
+              <p style={{ fontSize: 13, color: NAVY, margin: '0 0 6px', fontWeight: 700 }}>
+                Returning {chosenUnits} of {totalUnits} unit{totalUnits > 1 ? 's' : ''} ·{' '}
+                Refund <b style={{ color: '#16a34a' }}>₹{estimate.toLocaleString('en-IN')}</b>
+              </p>
+            )}
             <p style={{ fontSize: 12, color: '#666', margin: 0, lineHeight: 1.6 }}>
               We'll initiate your return right away and share reverse-pickup courier details.
             </p>
@@ -1121,7 +1138,8 @@ function OrderCard({ order }) {
                 {order.return_partial ? 'Partial Return' : 'Full Return'}
                 {order.return_partial && (
                   <span style={{ fontWeight: 500 }}>
-                    {' '}· {returnedItems.length} of {returnableItems.length} item{returnableItems.length > 1 ? 's' : ''}
+                    {' '}· {returnedItems.reduce((n, i) => n + (i.return_quantity || i.quantity || 1), 0)} of{' '}
+                    {returnableItems.reduce((n, i) => n + (i.quantity || 1), 0)} units
                   </span>
                 )}
                 {order.return_refund > 0 && (
