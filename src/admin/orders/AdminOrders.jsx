@@ -1005,7 +1005,9 @@ function OrderRow({ order, onUpdated, setToast }) {
                         </p>
                       )}
                       {returned && (
-                        <p className='text-[10px] text-amber-400 mt-0.5'><b>Return initiated by customer</b></p>
+                        <p className='text-[10px] text-amber-400 mt-0.5'>
+                          <b>Returning {item.return_quantity || item.quantity} of {item.quantity}</b>
+                        </p>
                       )}
                     </div>
                     {!failed && !returned && (
@@ -1098,13 +1100,15 @@ function OrderRow({ order, onUpdated, setToast }) {
                     <RotateCcw size={12} /> {order.return_partial ? 'Partial Return' : 'Full Return'}
                   </p>
                   <p className='text-xs text-amber-400 mb-1'>
-                    {back.length} of {returnable.length} item{returnable.length > 1 ? 's' : ''} returned
+                    {back.reduce((s, i) => s + (i.return_quantity || i.quantity || 1), 0)} unit{back.length > 1 ? 's' : ''} across {back.length} of {returnable.length} item{returnable.length > 1 ? 's' : ''} returned
                     {order.return_refund > 0 && (
                       <> · Refund due <b className='text-emerald-400'>{formatINR(order.return_refund)}</b></>
                     )}
                   </p>
                   {back.map((i) => (
-                    <p key={i.id} className='text-[11px] text-stone-400 truncate'>· {i.name} (Qty {i.quantity})</p>
+                    <p key={i.id} className='text-[11px] text-stone-400 truncate'>
+                      · {i.name} (Qty {i.return_quantity || i.quantity}{i.return_quantity && i.return_quantity !== i.quantity ? ` of ${i.quantity}` : ''})
+                    </p>
                   ))}
                 </div>
               )
