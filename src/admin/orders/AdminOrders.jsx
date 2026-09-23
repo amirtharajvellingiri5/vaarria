@@ -940,8 +940,8 @@ function OrderRow({ order, onUpdated, setToast }) {
               </span>
             )}
             {(order.payment_method === 'COD' || order.payment_method === 'FULL_COD') && !NO_COD_DUE_STATUSES.includes(order.status) && (
-              <span className='text-[10px] font-bold text-amber-300 border border-amber-500/40 bg-amber-500/15 rounded-full px-2 py-0.5'>
-                To Pay on Delivery: {formatINR(order.cod_remaining ?? (order.payment_method === 'COD' ? order.total - (order.paid_online ?? 49) : order.total))}
+              <span className={`text-[10px] font-bold border rounded-full px-2 py-0.5 ${order.status === 'DELIVERED' ? 'text-emerald-300 border-emerald-500/40 bg-emerald-500/15' : 'text-amber-300 border-amber-500/40 bg-amber-500/15'}`}>
+                {order.status === 'DELIVERED' ? 'Paid on Delivery' : 'To Pay on Delivery'}: {formatINR(order.cod_remaining ?? (order.payment_method === 'COD' ? order.total - (order.paid_online ?? 49) : order.total))}
               </span>
             )}
           </div>
