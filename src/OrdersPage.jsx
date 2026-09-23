@@ -219,6 +219,15 @@ const ORDER_STATUSES = {
   PARTIAL_REFUND_CREDITED:  { label: 'Partial Refund Credited',  color: '#16a34a', bg: '#dcfce7', icon: CheckCircle2 },
 }
 
+// ponytail: item_status RETURN_INITIATED only marks WHICH lines are coming
+// back — it never advances. So a returned line takes its stage from the order
+// status, or it reads "Return Initiated" under a "Partially Returned" order.
+const RETURN_STAGES = ['RETURN_INITIATED', 'RETURNED', 'REFUND_INITIATED', 'REFUND_CREDITED']
+const returnStage = (orderStatus) => {
+  const base = String(orderStatus || '').replace('PARTIAL_', '')
+  return RETURN_STAGES.includes(base) ? base : 'RETURN_INITIATED'
+}
+
 const RETURN_COURIER_INFO =
   'Our reverse-pickup partner will contact you within 24-48 hours to collect the item. ' +
   'Please keep it packed with all original tags and invoice.'
@@ -1092,17 +1101,20 @@ function OrderCard({ order }) {
                   Offer Applied
                 </span>
               )}
-              {item.item_status === 'RETURN_INITIATED' && (
-                <div style={{ marginTop: 4 }}>
-                  <span style={{
-                    display: 'inline-block', fontSize: 10, fontWeight: 700,
-                    color: '#b45309', background: '#fef3c7', border: '1px solid #fde68a',
-                    borderRadius: 10, padding: '1px 8px',
-                  }}>
-                    Return Initiated
-                  </span>
-                </div>
-              )}
+              {item.item_status === 'RETURN_INITIATED' && (() => {
+                const stage = ORDER_STATUSES[returnStage(order.status)]
+                return (
+                  <div style={{ marginTop: 4 }}>
+                    <span style={{
+                      display: 'inline-block', fontSize: 10, fontWeight: 700,
+                      color: stage.color, background: stage.bg, border: `1px solid ${stage.color}44`,
+                      borderRadius: 10, padding: '1px 8px',
+                    }}>
+                      {stage.label}
+                    </span>
+                  </div>
+                )
+              })()}
               {item.item_status === 'QC_FAILED' && (
                 <div style={{ marginTop: 4 }}>
                   <span style={{
@@ -1129,7 +1141,9 @@ function OrderCard({ order }) {
         <div style={{ borderTop: `1px solid ${GOLD}22`, padding: '14px 18px', background: '#fdfcf9' }}>
           <OrderTimeline status={order.status} />
 
-          {order.status?.endsWith('RETURN_INITIATED') && (
+          {RETURN_STAGES.includes(String(order.status || '').replace('PARTIAL_', '')) && (() => {
+            const stage = returnStage(order.status)
+            return (
             <div style={{
               background: '#fef3c7', border: '1px solid #b4530944',
               borderRadius: 10, padding: '12px 16px', marginBottom: 14,
@@ -1150,7 +1164,7 @@ function OrderCard({ order }) {
               </p>
               {returnedItems.length > 0 && (
                 <p style={{ fontSize: 12, color: '#78350f', margin: '0 0 8px', lineHeight: 1.5 }}>
-                  Returning: {returnedItems.map(i => {
+                  {stage === 'RETURN_INITIATED' ? 'Returning' : 'Returned'}: {returnedItems.map(i => {
                     const rq = i.return_quantity || i.quantity || 1
                     return `${i.name || i.brand} (Qty ${rq}${rq !== (i.quantity || 1) ? ` of ${i.quantity}` : ''})`
                   }).join(', ')}
@@ -1161,14 +1175,17 @@ function OrderCard({ order }) {
                   Reason: <b>{order.return_reason}</b>{order.return_details ? ` — ${order.return_details}` : ''}
                 </p>
               )}
-              <p style={{ fontSize: 12, color: '#78350f', margin: 0, lineHeight: 1.5 }}>
-                {RETURN_COURIER_INFO}
-              </p>
+              {stage === 'RETURN_INITIATED' && (
+                <p style={{ fontSize: 12, color: '#78350f', margin: 0, lineHeight: 1.5 }}>
+                  {RETURN_COURIER_INFO}
+                </p>
+              )}
               <p style={{ fontSize: 12, color: '#78350f', margin: '8px 0 0', lineHeight: 1.5 }}>
                 For further queries, contact customer care at <b>{SUPPORT_PHONE_DISPLAY}</b>.
               </p>
             </div>
-          )}
+            )
+          })()}
 
           {!CLOSED_ORDER_STATUSES.includes(order.status) && (
             <div style={{
