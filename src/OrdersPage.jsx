@@ -330,6 +330,7 @@ function ReturnModal({ order, onClose, onReturned }) {
   // leaves them out of the refund split too.
   const items = (order.items || []).filter(i => i.item_status !== 'QC_FAILED')
   const [selected, setSelected] = useState(() => new Set(items.map(i => i.id)))
+  const [qty, setQty] = useState(() => Object.fromEntries(items.map(i => [i.id, i.quantity || 1])))
   const [reason, setReason] = useState('')
   const [details, setDetails] = useState('')
   const [submitting, setSubmitting] = useState(false)
@@ -342,13 +343,24 @@ function ReturnModal({ order, onClose, onReturned }) {
     return n
   })
 
+  const changeQty = (item, delta) => setQty(prev => ({
+    ...prev,
+    [item.id]: Math.min(item.quantity || 1, Math.max(1, (prev[item.id] || 1) + delta)),
+  }))
+
   const handleSubmit = async () => {
     setSubmitting(true)
     setError('')
     try {
+      const ids = [...selected].map(String)
       const res = await axios.put(
         `${ORDERS_API_BASE}/orders/${order.id}/return?customer_id=${getCustomerId()}`,
-        { reason, details: details || null, item_ids: [...selected].map(String) },
+        {
+          reason,
+          details: details || null,
+          item_ids: ids,
+          item_quantities: Object.fromEntries(ids.map(id => [id, qty[id] || 1])),
+        },
         { headers: authHeaders() },
       )
       setResult(res.data || {})
@@ -469,9 +481,28 @@ function ReturnModal({ order, onClose, onReturned }) {
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <p style={{ fontSize: 12, fontWeight: 600, color: NAVY, margin: '0 0 2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.name}</p>
                     <p style={{ fontSize: 11, color: '#888', margin: 0 }}>
-                      Size: {item.size} · Qty: {item.quantity || 1} · ₹{((item.price || 0) * (item.quantity || 1)).toLocaleString('en-IN')}
+                      Size: {item.size} · ₹{((item.price || 0) * (qty[item.id] || 1)).toLocaleString('en-IN')}
                     </p>
                   </div>
+                  {selected.has(item.id) && (item.quantity || 1) > 1 ? (
+                    <div
+                      onClick={(e) => e.stopPropagation()}
+                      style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}
+                    >
+                      <button
+                        onClick={() => changeQty(item, -1)}
+                        style={{ width: 22, height: 22, borderRadius: 5, border: '1px solid #ddd', background: '#fff', cursor: 'pointer', fontSize: 13, lineHeight: 1, color: NAVY }}
+                      >−</button>
+                      <span style={{ fontSize: 12, fontWeight: 600, color: NAVY, minWidth: 14, textAlign: 'center' }}>{qty[item.id] || 1}</span>
+                      <button
+                        onClick={() => changeQty(item, 1)}
+                        style={{ width: 22, height: 22, borderRadius: 5, border: '1px solid #ddd', background: '#fff', cursor: 'pointer', fontSize: 13, lineHeight: 1, color: NAVY }}
+                      >+</button>
+                      <span style={{ fontSize: 10, color: '#aaa' }}>/ {item.quantity}</span>
+                    </div>
+                  ) : (
+                    <span style={{ fontSize: 11, color: '#888', flexShrink: 0 }}>Qty {item.quantity || 1}</span>
+                  )}
                 </div>
               ))}
             </div>
@@ -1094,7 +1125,10 @@ function OrderCard({ order }) {
               </p>
               {returnedItems.length > 0 && (
                 <p style={{ fontSize: 12, color: '#78350f', margin: '0 0 8px', lineHeight: 1.5 }}>
-                  Returning: {returnedItems.map(i => `${i.name || i.brand} (Qty ${i.quantity || 1})`).join(', ')}
+                  Returning: {returnedItems.map(i => {
+                    const rq = i.return_quantity || i.quantity || 1
+                    return `${i.name || i.brand} (Qty ${rq}${rq !== (i.quantity || 1) ? ` of ${i.quantity}` : ''})`
+                  }).join(', ')}
                 </p>
               )}
               {order.return_reason && (
