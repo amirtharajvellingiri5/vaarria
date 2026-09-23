@@ -1386,7 +1386,10 @@ function PricePanel({ onNeedAuth, triggerPay, onTriggerConsumed, authReady }) {
               color: '#3A332A',
             }}
           >
-            Preparing secure payment...
+            {/* full_cod never opens the gateway; cod still does, for the Rs.49 advance */}
+            {paymentMode === 'full_cod'
+              ? 'Placing your order...'
+              : 'Preparing secure payment...'}
           </div>
         </div>
       )}
