@@ -73,6 +73,11 @@ const needsRefund = (order) => {
   return paidOnline > 0
 }
 
+// COD cash is collected at handover, so a DELIVERED order is settled whatever
+// the stored payment_status says. The backend only started flipping PENDING_COD
+// to PAID on delivery, so rows delivered before that still read PENDING_COD.
+const paymentSettled = (order) => order.payment_status === 'PAID' || order.status === 'DELIVERED'
+
 // backend stamp is yyyymmddhhmmssmmm, not ISO — parse the first 14 chars manually
 const parseStamp = (s) => {
   if (!s || s.length < 14) return null
@@ -211,7 +216,7 @@ const printInvoice = (order) => {
     <div style="text-align:right">
       <p style="margin:0;font-weight:700;font-size:15px">Order #${order.id}</p>
       <p class="muted" style="margin:4px 0 0">Date: ${order.date}</p>
-      <span class="paid">${order.payment_method === 'PREPAID' ? 'PREPAID' : order.payment_status}</span>
+      <span class="paid">${order.payment_method === 'PREPAID' ? 'PREPAID' : paymentSettled(order) ? 'PAID' : order.payment_status}</span>
     </div>
   </div>
 
@@ -249,7 +254,7 @@ const printInvoice = (order) => {
     ${isIntraState
       ? `<div><span>CGST</span><span>₹${totalCgst.toFixed(2)}</span></div><div><span>SGST</span><span>₹${totalSgst.toFixed(2)}</span></div>`
       : `<div><span>IGST</span><span>₹${totalIgst.toFixed(2)}</span></div>`}
-    <div class="grand"><span>Total ${order.payment_status === 'PAID' ? '(Paid)' : ''}</span><span>₹${Number(order.total).toLocaleString('en-IN')}</span></div>
+    <div class="grand"><span>Total ${paymentSettled(order) ? '(Paid)' : ''}</span><span>₹${Number(order.total).toLocaleString('en-IN')}</span></div>
   </div>
 
   <p class="footer">This is a computer generated invoice. Thank you for shopping with Vaarria.</p>
@@ -914,7 +919,7 @@ function OrderRow({ order, onUpdated, setToast }) {
             <span className='text-sm font-semibold text-stone-100 font-mono'>#{order.id}</span>
             <CopyBtn text={order.id} />
             <StatusBadge status={order.status} />
-            {order.payment_status !== 'PAID' && !NO_COD_DUE_STATUSES.includes(order.status) && (
+            {!paymentSettled(order) && !NO_COD_DUE_STATUSES.includes(order.status) && (
               <span className='text-[10px] font-bold text-amber-400 border border-amber-500/30 bg-amber-500/10 rounded-full px-2 py-0.5'>
                 {order.payment_status}
               </span>
@@ -1076,7 +1081,7 @@ function OrderRow({ order, onUpdated, setToast }) {
                 Payment: {order.payment_id || '—'}
               </p>
               <p className='text-xs text-stone-400 mt-1'>
-                Status: <b className={order.payment_status === 'PAID' ? 'text-emerald-400' : 'text-amber-400'}>{order.payment_status}</b>
+                Status: <b className={paymentSettled(order) ? 'text-emerald-400' : 'text-amber-400'}>{paymentSettled(order) ? 'PAID' : order.payment_status}</b>
                 {' · '}ETA: {order.estimated_delivery || '—'}
               </p>
               {(() => {
