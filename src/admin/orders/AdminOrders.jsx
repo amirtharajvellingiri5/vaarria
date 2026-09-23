@@ -1105,7 +1105,7 @@ function OrderRow({ order, onUpdated, setToast }) {
                     <RotateCcw size={12} /> {order.return_partial ? 'Partial Return' : 'Full Return'}
                   </p>
                   <p className='text-xs text-amber-400 mb-1'>
-                    {back.reduce((s, i) => s + (i.return_quantity || i.quantity || 1), 0)} unit{back.length > 1 ? 's' : ''} across {back.length} of {returnable.length} item{returnable.length > 1 ? 's' : ''} returned
+                    {back.reduce((s, i) => s + (i.return_quantity || i.quantity || 1), 0)} of {returnable.reduce((s, i) => s + (i.quantity || 1), 0)} units returned across {back.length} item{back.length > 1 ? 's' : ''}
                     {order.return_refund > 0 && (
                       <> · Refund due <b className='text-emerald-400'>{formatINR(order.return_refund)}</b></>
                     )}
