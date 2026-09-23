@@ -228,6 +228,21 @@ const returnStage = (orderStatus) => {
   return RETURN_STAGES.includes(base) ? base : 'RETURN_INITIATED'
 }
 
+// What the customer was actually charged for n units of this line —
+// coupon_discount is stored for the whole line, so scale it by n. Same basis
+// the backend splits the refund on; showing item.price here read high.
+const lineValue = (item, n) => Math.max(0, Math.round(
+  ((item.price || 0) * (item.quantity || 1) - (item.coupon_discount || 0)) * n / (item.quantity || 1)
+))
+
+// ponytail: backend stores one return_refund per order, not per line — split
+// it across returned lines by what each was charged, so the parts add up.
+const lineRefund = (order, item, returnedItems) => {
+  const rq = (i) => i.return_quantity || i.quantity || 1
+  const total = returnedItems.reduce((n, i) => n + lineValue(i, rq(i)), 0)
+  return total ? Math.round((order.return_refund || 0) * lineValue(item, rq(item)) / total) : 0
+}
+
 const RETURN_COURIER_INFO =
   'Our reverse-pickup partner will contact you within 24-48 hours to collect the item. ' +
   'Please keep it packed with all original tags and invoice.'
@@ -241,6 +256,14 @@ const FILTER_OPTIONS = [
   { label: 'Cancelled',  value: 'CANCELLED' },
   { label: 'Returned',   value: 'RETURNED' },
 ]
+
+// PARTIAL_* statuses match on their base, so they land under the same chip.
+const FILTER_MATCH = {
+  SHIPPED: ['SHIPPED', 'OUT'],
+  DELIVERED: ['DELIVERED'],
+  CANCELLED: ['CANCELLED'],
+  RETURNED: RETURN_STAGES,
+}
 
 // ─── Fetcher ──────────────────────────────────────────────────────────────────
 
@@ -354,13 +377,6 @@ function ReturnModal({ order, onClose, onReturned }) {
     n.has(id) ? n.delete(id) : n.add(id)
     return n
   })
-
-  // What the customer was actually charged for n units of this line —
-  // coupon_discount is stored for the whole line, so scale it by n. Same basis
-  // the backend splits the refund on; showing item.price here read high.
-  const lineValue = (item, n) => Math.max(0, Math.round(
-    ((item.price || 0) * (item.quantity || 1) - (item.coupon_discount || 0)) * n / (item.quantity || 1)
-  ))
 
   const changeQty = (item, delta) => setQty(prev => ({
     ...prev,
@@ -943,6 +959,7 @@ function OrderCard({ order }) {
   // QC-failed lines were never shipped, so they are not part of a return.
   const returnableItems = (order.items || []).filter(i => i.item_status !== 'QC_FAILED')
   const returnedItems = returnableItems.filter(i => i.item_status === 'RETURN_INITIATED')
+  const wasDelivered = order.status === 'DELIVERED' || RETURN_STAGES.includes(String(order.status).replace('PARTIAL_', ''))
 
   const handleCancelled = () => {
     setShowCancelModal(false)
@@ -1112,6 +1129,10 @@ function OrderCard({ order }) {
                     }}>
                       {stage.label}
                     </span>
+                    <p style={{ fontSize: 10, color: '#78350f', margin: '3px 0 0', maxWidth: 170 }}>
+                      {item.return_quantity || qty} of {qty} returned
+                      {order.return_refund > 0 && <> · ₹{lineRefund(order, item, returnedItems).toLocaleString('en-IN')}</>}
+                    </p>
                   </div>
                 )
               })()}
@@ -1433,13 +1454,13 @@ function OrderCard({ order }) {
           )}
 
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-            {order.status !== 'CANCELLED' && order.status !== 'RETURNED' && (
+            {order.status !== 'CANCELLED' && (
               <ActionBtn
                 icon={<Star size={13} />}
                 label="Rate & Review"
                 primary={order.status === 'DELIVERED'}
-                disabled={order.status !== 'DELIVERED'}
-                title={order.status !== 'DELIVERED' ? 'Available after delivery' : undefined}
+                disabled={!wasDelivered}
+                title={!wasDelivered ? 'Available after delivery' : undefined}
                 onClick={() =>
                   navigate('/review', {
                     state: {
@@ -1584,7 +1605,7 @@ function EmptyOrders({ filter }) {
         fontSize: 20, fontWeight: 700, color: NAVY, marginBottom: 8,
         fontFamily: "'Playfair Display', Georgia, serif",
       }}>
-        No {filter !== 'ALL' ? ORDER_STATUSES[filter]?.label : ''} Orders
+        No {filter !== 'ALL' ? FILTER_OPTIONS.find(f => f.value === filter)?.label : ''} Orders
       </h3>
       <p style={{ fontSize: 13, color: '#94969f', marginBottom: 28 }}>
         Looks like you haven't placed any orders yet. Start shopping!
@@ -1623,7 +1644,7 @@ export default function OrdersPage() {
     // A PARTIAL_* status belongs under its base filter chip (Returned etc.).
     let list = activeFilter === 'ALL'
       ? orders
-      : orders.filter(o => o.status === activeFilter || o.status === `PARTIAL_${activeFilter}`)
+      : orders.filter(o => FILTER_MATCH[activeFilter].includes(String(o.status).replace('PARTIAL_', '')))
     if (search.trim()) {
       const q = search.toLowerCase()
       list = list.filter(o =>
