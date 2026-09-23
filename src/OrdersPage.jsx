@@ -343,6 +343,13 @@ function ReturnModal({ order, onClose, onReturned }) {
     return n
   })
 
+  // What the customer was actually charged for n units of this line —
+  // coupon_discount is stored for the whole line, so scale it by n. Same basis
+  // the backend splits the refund on; showing item.price here read high.
+  const lineValue = (item, n) => Math.max(0, Math.round(
+    ((item.price || 0) * (item.quantity || 1) - (item.coupon_discount || 0)) * n / (item.quantity || 1)
+  ))
+
   const changeQty = (item, delta) => setQty(prev => ({
     ...prev,
     [item.id]: Math.min(item.quantity || 1, Math.max(1, (prev[item.id] || 1) + delta)),
@@ -481,7 +488,7 @@ function ReturnModal({ order, onClose, onReturned }) {
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <p style={{ fontSize: 12, fontWeight: 600, color: NAVY, margin: '0 0 2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.name}</p>
                     <p style={{ fontSize: 11, color: '#888', margin: 0 }}>
-                      Size: {item.size} · ₹{((item.price || 0) * (qty[item.id] || 1)).toLocaleString('en-IN')}
+                      Size: {item.size} · ₹{lineValue(item, qty[item.id] || 1).toLocaleString('en-IN')}
                     </p>
                   </div>
                   {selected.has(item.id) && (item.quantity || 1) > 1 ? (
@@ -975,13 +982,13 @@ function OrderCard({ order }) {
               </span>
             )}
             {order.payment_method === 'COD' && !NO_COD_DUE_STATUSES.includes(order.status) && (
-              <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 10, background: '#fef3c7', color: '#92400e', border: '1px solid #f59e0b' }}>
-                To Pay on Delivery: ₹{(order.cod_remaining ?? (order.total - (order.paid_online ?? 49))).toLocaleString('en-IN')}
+              <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 10, ...(order.status === 'DELIVERED' ? { background: '#dcfce7', color: '#16a34a', border: '1px solid #bbf7d0' } : { background: '#fef3c7', color: '#92400e', border: '1px solid #f59e0b' }) }}>
+                {order.status === 'DELIVERED' ? 'Paid on Delivery' : 'To Pay on Delivery'}: ₹{(order.cod_remaining ?? (order.total - (order.paid_online ?? 49))).toLocaleString('en-IN')}
               </span>
             )}
             {order.payment_method === 'FULL_COD' && !NO_COD_DUE_STATUSES.includes(order.status) && (
-              <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 10, background: '#fef3c7', color: '#92400e', border: '1px solid #f59e0b' }}>
-                To Pay on Delivery: ₹{(order.cod_remaining ?? order.total).toLocaleString('en-IN')}
+              <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 10, ...(order.status === 'DELIVERED' ? { background: '#dcfce7', color: '#16a34a', border: '1px solid #bbf7d0' } : { background: '#fef3c7', color: '#92400e', border: '1px solid #f59e0b' }) }}>
+                {order.status === 'DELIVERED' ? 'Paid on Delivery' : 'To Pay on Delivery'}: ₹{(order.cod_remaining ?? order.total).toLocaleString('en-IN')}
               </span>
             )}
           </div>
@@ -1313,10 +1320,10 @@ function OrderCard({ order }) {
                       {codDue && (
                         <>
                           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                            <span style={{ fontSize: 12, color: '#666' }}>To pay on delivery</span>
-                            <span style={{ fontSize: 12, fontWeight: 600, color: NAVY }}>Rs.{codRemaining.toLocaleString('en-IN')}</span>
+                            <span style={{ fontSize: 12, color: '#666' }}>{order.status === 'DELIVERED' ? 'Paid on delivery' : 'To pay on delivery'}</span>
+                            <span style={{ fontSize: 12, fontWeight: 600, color: order.status === 'DELIVERED' ? '#16a34a' : NAVY }}>Rs.{codRemaining.toLocaleString('en-IN')}</span>
                           </div>
-                          <div style={{ fontSize: 10, color: '#888', marginTop: 2 }}>1% discount applied on delivery amount</div>
+                          {order.status !== 'DELIVERED' && <div style={{ fontSize: 10, color: '#888', marginTop: 2 }}>1% discount applied on delivery amount</div>}
                         </>
                       )}
                     </div>
@@ -1331,8 +1338,17 @@ function OrderCard({ order }) {
                     </div>
                     {codDue && (
                       <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
-                        <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 10, background: '#fef9ec', color: '#b45309', border: '1px solid #fde68a' }}>Cash on Delivery</span>
-                        <span style={{ fontSize: 11, color: '#b45309' }}>Pay Rs.{codRemaining.toLocaleString('en-IN')} on delivery</span>
+                        {order.status === 'DELIVERED' ? (
+                          <>
+                            <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 10, background: '#dcfce7', color: '#16a34a', border: '1px solid #bbf7d0' }}>✓ Paid on Delivery</span>
+                            <span style={{ fontSize: 11, color: '#16a34a' }}>Rs.{codRemaining.toLocaleString('en-IN')} collected</span>
+                          </>
+                        ) : (
+                          <>
+                            <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 10, background: '#fef9ec', color: '#b45309', border: '1px solid #fde68a' }}>Cash on Delivery</span>
+                            <span style={{ fontSize: 11, color: '#b45309' }}>Pay Rs.{codRemaining.toLocaleString('en-IN')} on delivery</span>
+                          </>
+                        )}
                       </div>
                     )}
                   </>
