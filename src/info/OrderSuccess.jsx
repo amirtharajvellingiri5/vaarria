@@ -115,23 +115,23 @@ export default function OrderSuccess() {
           {order.payment_method === 'PREPAID' && (
             <>
               <InfoRow label="Payment ID" value={order.payment_id} mono />
-              <InfoRow label="Amount Paid" value={`₹${order.amount}`} gold />
+              <InfoRow label="Amount Paid" value={`₹${Number(order.amount).toLocaleString("en-IN")}`} gold />
             </>
           )}
           {order.payment_method === 'COD' && (
             <>
               <InfoRow label="Payment ID" value={order.payment_id} mono />
-              <InfoRow label="Paid Online (advance)" value={`Rs.${order.paid_online ?? 49}`} gold />
-              <InfoRow label="To Pay on Delivery" value={`Rs.${order.cod_remaining}`} />
+              <InfoRow label="Paid Online (advance)" value={`₹${Number(order.paid_online ?? 49).toLocaleString("en-IN")}`} gold />
+              <InfoRow label="To Pay on Delivery" value={`₹${Number(order.cod_remaining).toLocaleString("en-IN")}`} />
             </>
           )}
           {order.payment_method === 'FULL_COD' && (
-            <InfoRow label="To Pay on Delivery" value={`Rs.${order.cod_remaining ?? order.amount}`} gold />
+            <InfoRow label="To Pay on Delivery" value={`₹${Number(order.cod_remaining ?? order.amount).toLocaleString("en-IN")}`} gold />
           )}
           {!order.payment_method && (
             <>
               <InfoRow label="Payment ID" value={order.payment_id} mono />
-              <InfoRow label="Amount Paid" value={`₹${order.amount}`} gold />
+              <InfoRow label="Amount Paid" value={`₹${Number(order.amount).toLocaleString("en-IN")}`} gold />
             </>
           )}
           <InfoRow label="Estimated Delivery" value={order.estimated_delivery} last />
@@ -142,8 +142,8 @@ export default function OrderSuccess() {
           <div style={{ ...s.notice, background: '#fffdf5', borderColor: '#fde68a', marginBottom: 12 }}>
             <span style={{ ...s.noticeDot, background: '#b45309' }} />
             <p style={s.noticeText}>
-              <strong style={{ color: '#b45309' }}>Rs.49 paid online</strong> · Remaining{" "}
-              <strong style={{ color: '#333' }}>Rs.{order.cod_remaining}</strong> to be paid on delivery.
+              <strong style={{ color: '#b45309' }}>₹49 paid online</strong> · Remaining{" "}
+              <strong style={{ color: '#333' }}>₹{Number(order.cod_remaining).toLocaleString("en-IN")}</strong> to be paid on delivery.
               A 1% discount has been applied.
             </p>
           </div>
@@ -153,7 +153,7 @@ export default function OrderSuccess() {
             <span style={{ ...s.noticeDot, background: '#b45309' }} />
             <p style={s.noticeText}>
               <strong style={{ color: '#b45309' }}>Cash on Delivery</strong> · Pay{" "}
-              <strong style={{ color: '#333' }}>Rs.{order.cod_remaining ?? order.amount}</strong> when your order arrives.
+              <strong style={{ color: '#333' }}>₹{Number(order.cod_remaining ?? order.amount).toLocaleString("en-IN")}</strong> when your order arrives.
             </p>
           </div>
         )}
@@ -332,6 +332,7 @@ const s = {
     border: "1px solid #e8e0d0",
     borderRadius: 10,
     overflow: "hidden",
+    flexShrink: 0, // card scrolls at 90vh; without this the summary collapses to a line
     marginBottom: 16,
     background: "#fdfcf9",
   },
