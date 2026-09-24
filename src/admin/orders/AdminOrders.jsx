@@ -82,6 +82,24 @@ const cancelRefund = (order) =>
     : Number(order.paid_online) || 0)
 const needsRefund = (order) => order.status === 'CANCELLED' && cancelRefund(order) > 0
 
+// What admin must do next; null once the order is settled (delivered, refund
+// credited, or cancelled with nothing captured online).
+const nextAction = (order) => {
+  const refund = order.return_refund || cancelRefund(order)
+  const amt = refund > 0 ? ` Rs.${Number(refund).toLocaleString('en-IN')}` : ''
+  switch (order.status.replace(/^PARTIAL_/, '')) {
+    case 'CREATED': case 'PLACED': return 'Confirm Order'
+    case 'CONFIRMED': return 'Ship Order'
+    case 'SHIPPED': return 'Mark Out for Delivery'
+    case 'OUT': return 'Mark Delivered'
+    case 'CANCELLED': return needsRefund(order) ? `Initiate Refund${amt}` : null
+    case 'RETURN_INITIATED': return 'Mark Returned'
+    case 'RETURNED': return `Initiate Refund${amt}`
+    case 'REFUND_INITIATED': return `Credit Refund${amt}`
+    default: return null
+  }
+}
+
 // COD cash is collected at handover, so a DELIVERED order is settled whatever
 // the stored payment_status says. The backend only started flipping PENDING_COD
 // to PAID on delivery, so rows delivered before that still read PENDING_COD.
@@ -784,6 +802,11 @@ function OrderActions({ order, onUpdated, setToast }) {
 
   return (
     <div className='space-y-4'>
+      {nextAction(order) && (
+        <p className='text-xs font-bold uppercase tracking-wide text-red-500'>
+          Next action: {nextAction(order)}
+        </p>
+      )}
       {/* Status */}
       <Field label='Order Status'>
         <div className='flex gap-2'>
