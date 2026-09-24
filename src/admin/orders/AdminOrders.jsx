@@ -73,14 +73,14 @@ const PAYMENT_MODE_LABEL = {
 // A cancelled order owes a refund only if money was actually captured online:
 // same rule as _online_refund_due in orders.py, which fires the ops alert.
 // ponytail: derived, add a real refund_status field only if partial refunds happen.
-const needsRefund = (order) => {
-  if (order.status !== 'CANCELLED') return false
-  const paidOnline =
-    order.payment_status !== 'PAID' ? 0
+// Refund a cancellation owes: only what was captured online. Backend stamps
+// cancel_refund at cancel time; fallback covers orders cancelled before that.
+const cancelRefund = (order) =>
+  order.return_refund ? 0
+  : order.cancel_refund ?? (order.status !== 'CANCELLED' || order.payment_status !== 'PAID' ? 0
     : order.payment_method === 'PREPAID' ? Number(order.total) || 0
-    : Number(order.paid_online) || 0
-  return paidOnline > 0
-}
+    : Number(order.paid_online) || 0)
+const needsRefund = (order) => order.status === 'CANCELLED' && cancelRefund(order) > 0
 
 // COD cash is collected at handover, so a DELIVERED order is settled whatever
 // the stored payment_status says. The backend only started flipping PENDING_COD
@@ -867,9 +867,10 @@ function OrderActions({ order, onUpdated, setToast }) {
       </Field>
       <Field label='Net Total after Refund (₹)'>
         <div className={`${inputCls} opacity-80`}>
-          {formatINR(order.total - (order.return_refund || 0))}
-          {order.return_refund > 0 && (
-            <span className='ml-1 text-[10px] text-stone-500'>(−{formatINR(order.return_refund)} refund)</span>
+          {/* A cancelled order keeps nothing: whatever was paid online goes back. */}
+          {formatINR(order.status === 'CANCELLED' || cancelRefund(order) > 0 ? 0 : order.total - (order.return_refund || 0))}
+          {(order.return_refund || cancelRefund(order)) > 0 && (
+            <span className='ml-1 text-[10px] text-stone-500'>(−{formatINR(order.return_refund || cancelRefund(order))} refund)</span>
           )}
         </div>
       </Field>
@@ -945,7 +946,7 @@ function OrderRow({ order, onUpdated, setToast }) {
             )}
             {needsRefund(order) && (
               <span className='text-[10px] font-bold text-amber-300 border border-amber-500/40 bg-amber-500/15 rounded-full px-2 py-0.5'>
-                REFUND_PENDING
+                REFUND_PENDING · {formatINR(cancelRefund(order))}
               </span>
             )}
             {order.tracking?.id && (
@@ -1130,8 +1131,8 @@ function OrderRow({ order, onUpdated, setToast }) {
                     {back.reduce((s, i) => s + (i.return_quantity || i.quantity || 1), 0)} of {returnable.reduce((s, i) => s + (i.quantity || 1), 0)} units{' '}
                     {returnStage(order.status) === 'RETURN_INITIATED' ? 'coming back' : 'returned'} across {back.length} item{back.length > 1 ? 's' : ''}
                     {order.return_refund > 0 && (() => {
-                      // Offer share already taken off the refund (list value of returned units − refund).
-                      const offer = Math.max(0, back.reduce((s, i) => s + (i.price || 0) * (i.return_quantity || i.quantity || 1), 0) - order.return_refund)
+                      // Coupon/deal discount on the returned units only (line coupon_discount pro-rated per unit).
+                      const offer = Math.round(back.reduce((s, i) => s + (i.coupon_discount || 0) / (i.quantity || 1) * (i.return_quantity || i.quantity || 1), 0))
                       return (
                         <> · Refund due <b className='text-emerald-400'>{formatINR(order.return_refund)}</b>
                           {offer > 0 && <> (offer adjusted −{formatINR(offer)})</>}</>
