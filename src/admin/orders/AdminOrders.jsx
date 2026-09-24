@@ -842,6 +842,7 @@ function OrderActions({ order, onUpdated, setToast }) {
       )}
 
       {/* Price */}
+      <div className='grid grid-cols-2 gap-2'>
       <Field label='Total Amount (₹)'>
         <div className='flex gap-2'>
           <input
@@ -864,6 +865,15 @@ function OrderActions({ order, onUpdated, setToast }) {
           </button>
         </div>
       </Field>
+      <Field label='Net Total after Refund (₹)'>
+        <div className={`${inputCls} opacity-80`}>
+          {formatINR(order.total - (order.return_refund || 0))}
+          {order.return_refund > 0 && (
+            <span className='ml-1 text-[10px] text-stone-500'>(−{formatINR(order.return_refund)} refund)</span>
+          )}
+        </div>
+      </Field>
+      </div>
 
       {/* Tracking */}
       <button
