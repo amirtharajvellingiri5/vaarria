@@ -62,3 +62,16 @@ assert.equal(useBagStore.getState().getCouponSavings(), 1477)
 toggle3(20)                              // no code -> best offer -> already applied -> off
 assert.equal(useBagStore.getState().getCouponSavings(), 0, 'untoggle via the default code')
 console.log('ok — multiple offers per item, customer picks')
+
+// ---- removing a line drops its applied coupon ----
+const s = useBagStore.getState()
+s.setItems([
+  { id: 20, productId: 'X', selected: true, qty: 1, price: 100, couponDiscount: 10, discountType: 'FLAT' },
+  { id: 21, productId: 'Y', selected: true, qty: 1, price: 100, couponDiscount: 10, discountType: 'FLAT' },
+])
+s.toggleCoupon(20); s.toggleCoupon(21)
+s.setItems(useBagStore.getState().items.filter((i) => i.id !== 20))
+assert.deepEqual(applied(), [21], 'setItems prunes removed line')
+useBagStore.getState().removeItem(21)
+assert.deepEqual(applied(), [], 'removeItem prunes too')
+console.log('ok — removed items drop their coupon')

@@ -257,14 +257,21 @@ const returnRefund = (order, picks) => {
 // against this so the customer sees exactly how much the offer took off.
 const grossValue = (items, units) => items.reduce((s, i) => s + (i.price || 0) * units(i), 0)
 
-function RefundBreakdown({ gross, refund }) {
-  const offer = Math.max(0, gross - refund)
-  if (!offer) return null
+// Coupon/deal discount on just the returned units: the line's coupon_discount
+// is for its full quantity, so pro-rate it per unit.
+const offerValue = (items, units) =>
+  Math.round(items.reduce((s, i) => s + (i.coupon_discount || 0) / (i.quantity || 1) * units(i), 0))
+
+function RefundBreakdown({ gross, offer, refund }) {
+  // Whatever the coupon doesn't explain (order-level / payment-mode discounts) gets its own row so the rows add up.
+  const other = gross - offer - refund
+  if (!offer && !other) return null
   const row = { display: 'flex', justifyContent: 'space-between', fontSize: 12, color: '#555', margin: '0 0 3px' }
   return (
     <div style={{ margin: '0 0 8px' }}>
       <p style={row}><span>Item value</span><span>₹{gross.toLocaleString('en-IN')}</span></p>
-      <p style={row}><span>Offer / coupon discount applied</span><span style={{ color: '#dc2626' }}>−₹{offer.toLocaleString('en-IN')}</span></p>
+      {offer > 0 && <p style={row}><span>Offer / coupon discount applied</span><span style={{ color: '#dc2626' }}>−₹{offer.toLocaleString('en-IN')}</span></p>}
+      {other !== 0 && <p style={row}><span>{other > 0 ? 'Other order discount share' : 'Other order charges share'}</span><span style={{ color: other > 0 ? '#dc2626' : '#555' }}>{other > 0 ? '−' : '+'}₹{Math.abs(other).toLocaleString('en-IN')}</span></p>}
       <p style={{ ...row, color: NAVY, fontWeight: 700, margin: 0 }}><span>Refund</span><span style={{ color: '#16a34a' }}>₹{refund.toLocaleString('en-IN')}</span></p>
     </div>
   )
@@ -318,9 +325,19 @@ const fetchOrders = async () => {
   }))
 }
 
+// What a cancellation owes back: only the money captured online (a COD advance,
+// or the whole prepaid amount). The backend stamps it as cancel_refund; the
+// fallback covers orders cancelled before that field existed.
+const onlinePaid = (order) =>
+  order.payment_status !== 'PAID' ? 0
+  : order.payment_method === 'PREPAID' ? Number(order.total) || 0
+  : Number(order.paid_online) || 0
+const cancelRefund = (order) =>
+  order.return_refund ? 0 : order.cancel_refund ?? (order.status === 'CANCELLED' ? onlinePaid(order) : 0)
+
 // ─── Timeline ─────────────────────────────────────────────────────────────────
 
-function OrderTimeline({ status }) {
+function OrderTimeline({ status, refund = 0 }) {
   const steps = ['PLACED', 'CONFIRMED', 'SHIPPED', 'OUT', 'DELIVERED']
   const idx = steps.indexOf(status)
   const isCancelled = status !== 'DELIVERED' && CLOSED_ORDER_STATUSES.includes(status)
@@ -332,6 +349,11 @@ function OrderTimeline({ status }) {
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '12px 0' }}>
         <Icon size={16} color={meta.color} />
         <span style={{ fontSize: 13, color: meta.color, fontWeight: 600 }}>{meta.label}</span>
+        {refund > 0 && (
+          <span style={{ fontSize: 12, color: '#444' }}>
+            · ₹{refund.toLocaleString('en-IN')} {status === 'REFUND_CREDITED' ? 'refunded' : 'will be refunded'} to your original payment method
+          </span>
+        )}
       </div>
     )
   }
@@ -446,6 +468,7 @@ function ReturnModal({ order, onClose, onReturned }) {
   const totalUnits = items.reduce((n, i) => n + (i.quantity || 1), 0)
   const estimate = returnRefund(order, new Map(chosen.map(i => [i.id, qty[i.id] || 1])))
   const estimateGross = grossValue(chosen, i => qty[i.id] || 1)
+  const estimateOffer = offerValue(chosen, i => qty[i.id] || 1)
 
   const canSubmit = selected.size > 0 && reason
 
@@ -480,7 +503,7 @@ function ReturnModal({ order, onClose, onReturned }) {
           )}
           {result.refund_amount > 0 && (
             <div style={{ textAlign: 'left', maxWidth: 280, margin: '0 auto' }}>
-              <RefundBreakdown gross={estimateGross} refund={Number(result.refund_amount)} />
+              <RefundBreakdown gross={estimateGross} offer={estimateOffer} refund={Number(result.refund_amount)} />
             </div>
           )}
           <p style={{ fontSize: 13, color: '#444', margin: '0 0 16px', lineHeight: 1.6 }}>
@@ -631,7 +654,7 @@ function ReturnModal({ order, onClose, onReturned }) {
                 Refund <b style={{ color: '#16a34a' }}>₹{estimate.toLocaleString('en-IN')}</b>
               </p>
             )}
-            {chosenUnits > 0 && <RefundBreakdown gross={estimateGross} refund={estimate} />}
+            {chosenUnits > 0 && <RefundBreakdown gross={estimateGross} offer={estimateOffer} refund={estimate} />}
             <p style={{ fontSize: 12, color: '#666', margin: 0, lineHeight: 1.6 }}>
               We'll initiate your return right away and share reverse-pickup courier details.
             </p>
@@ -728,7 +751,10 @@ function CancelOrderModal({ order, onClose, onCancelled }) {
           Order <b>#{order.id}</b> · {itemCount(order)} item{itemCount(order) > 1 ? 's' : ''} · ₹{order.total.toLocaleString('en-IN')}
         </p>
         <p style={{ fontSize: 12, color: '#94969f', margin: '0 0 18px' }}>
-          This action cannot be undone. Any payment made will be refunded to the original payment method.
+          This action cannot be undone.{' '}
+          {onlinePaid(order) > 0
+            ? <>₹{onlinePaid(order).toLocaleString('en-IN')} paid online will be refunded to the original payment method.</>
+            : 'Nothing was paid online, so there is no refund to process.'}
         </p>
 
         {error && (
@@ -1073,6 +1099,11 @@ function OrderCard({ order }) {
                 {order.status === 'DELIVERED' ? 'Paid on Delivery' : 'To Pay on Delivery'}: ₹{(order.cod_remaining ?? order.total).toLocaleString('en-IN')}
               </span>
             )}
+            {cancelRefund(order) > 0 && (
+              <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 10, ...(order.status === 'REFUND_CREDITED' ? { background: '#dcfce7', color: '#16a34a', border: '1px solid #bbf7d0' } : { background: '#fef3c7', color: '#92400e', border: '1px solid #f59e0b' }) }}>
+                {order.status === 'REFUND_CREDITED' ? 'Refunded' : order.status === 'REFUND_INITIATED' ? 'Refund Initiated' : 'Refund Pending'}: ₹{cancelRefund(order).toLocaleString('en-IN')}
+              </span>
+            )}
           </div>
           <p style={{ fontSize: 12, color: '#94969f', margin: 0 }}>
             {itemCount(order)} item{itemCount(order) > 1 ? 's' : ''} ·{' '}
@@ -1199,7 +1230,7 @@ function OrderCard({ order }) {
       {/* Expanded Section */}
       {expanded && (
         <div style={{ borderTop: `1px solid ${GOLD}22`, padding: '14px 18px', background: '#fdfcf9' }}>
-          <OrderTimeline status={order.status} />
+          <OrderTimeline status={order.status} refund={cancelRefund(order)} />
 
           {RETURN_STAGES.includes(String(order.status || '').replace('PARTIAL_', '')) && (() => {
             const stage = returnStage(order.status)
@@ -1217,7 +1248,7 @@ function OrderCard({ order }) {
                   </span>
                 )}
                 {order.return_refund > 0 && (() => {
-                  const offer = Math.max(0, grossValue(returnedItems, i => i.return_quantity || i.quantity || 1) - order.return_refund)
+                  const offer = offerValue(returnedItems, i => i.return_quantity || i.quantity || 1)
                   return (
                     <span style={{ fontWeight: 500 }}>
                       {' '}· Refund <b>₹{Number(order.return_refund).toLocaleString('en-IN')}</b>

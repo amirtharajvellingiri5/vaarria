@@ -35,6 +35,12 @@ export const itemOffers = (item) => {
 export const appliedOffer = (item, appliedCoupons) =>
   itemOffers(item).find((o) => o.code === appliedCoupons.get(item.id)) || null
 
+const pruneCoupons = (applied, items) => {
+  const ids = new Set(items.map((i) => i.id))
+  const next = new Map([...applied].filter(([id]) => ids.has(id)))
+  return next.size === applied.size ? applied : next
+}
+
 export const useBagStore = create((set, get) => ({
   items: [],
 
@@ -75,7 +81,9 @@ export const useBagStore = create((set, get) => ({
   platformFee: 23,
   mobileMenuOpen: false,
 
-  setItems: (items) => set({ items }),
+  // ponytail: a removed line takes its applied coupon with it, whichever path removed it.
+  setItems: (items) =>
+    set((s) => ({ items, appliedCoupons: pruneCoupons(s.appliedCoupons, items) })),
 
   addGuestItem: (item) => {
     const existing = getGuestBag()
@@ -94,8 +102,7 @@ export const useBagStore = create((set, get) => ({
       ),
     })),
 
-  removeItem: (id) =>
-    set((s) => ({ items: s.items.filter((i) => i.id !== id) })),
+  removeItem: (id) => get().setItems(get().items.filter((i) => i.id !== id)),
 
   updateQty: (id, delta) =>
     set((s) => ({
