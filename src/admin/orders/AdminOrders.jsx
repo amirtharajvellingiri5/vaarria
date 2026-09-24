@@ -1119,9 +1119,14 @@ function OrderRow({ order, onUpdated, setToast }) {
                   <p className='text-xs text-amber-400 mb-1'>
                     {back.reduce((s, i) => s + (i.return_quantity || i.quantity || 1), 0)} of {returnable.reduce((s, i) => s + (i.quantity || 1), 0)} units{' '}
                     {returnStage(order.status) === 'RETURN_INITIATED' ? 'coming back' : 'returned'} across {back.length} item{back.length > 1 ? 's' : ''}
-                    {order.return_refund > 0 && (
-                      <> · Refund due <b className='text-emerald-400'>{formatINR(order.return_refund)}</b></>
-                    )}
+                    {order.return_refund > 0 && (() => {
+                      // Offer share already taken off the refund (list value of returned units − refund).
+                      const offer = Math.max(0, back.reduce((s, i) => s + (i.price || 0) * (i.return_quantity || i.quantity || 1), 0) - order.return_refund)
+                      return (
+                        <> · Refund due <b className='text-emerald-400'>{formatINR(order.return_refund)}</b>
+                          {offer > 0 && <> (offer adjusted −{formatINR(offer)})</>}</>
+                      )
+                    })()}
                   </p>
                   {back.map((i) => (
                     <p key={i.id} className='text-[11px] text-stone-400 truncate'>

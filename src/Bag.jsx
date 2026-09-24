@@ -1810,14 +1810,14 @@ function CheckoutDrawer({ open, initialStep, onClose, onSuccess, onAfterLogin })
         background: '#fff', borderRadius: '20px 20px 0 0',
         padding: '28px 24px 44px', animation: 'drawerUp 0.28s ease',
       }}>
-        <div style={{ display: 'flex', gap: 6, marginBottom: 28 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 28 }}>
           {steps.map((s, i) => (
             <div key={s} style={{ height: 3, flex: 1, borderRadius: 2, background: i <= currentIdx ? '#C9A84C' : '#eee', transition: 'background 0.3s' }} />
           ))}
+          <button onClick={onClose} aria-label='Close' style={{ marginLeft: 10, background: 'none', border: 'none', cursor: 'pointer', padding: 4, display: 'flex' }}>
+            <X size={20} color='#aaa' />
+          </button>
         </div>
-        <button onClick={onClose} style={{ position: 'absolute', top: 18, right: 18, background: 'none', border: 'none', cursor: 'pointer', padding: 4 }}>
-          <X size={20} color='#aaa' />
-        </button>
         {step === 'mobile' && (
           <DrawerMobileStep msg91Ready={msg91Ready} onSent={p => { setPhone(p); setStep('otp') }} />
         )}

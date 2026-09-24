@@ -235,6 +235,41 @@ const lineValue = (item, n) => Math.max(0, Math.round(
   ((item.price || 0) * (item.quantity || 1) - (item.coupon_discount || 0)) * n / (item.quantity || 1)
 ))
 
+// Mirrors orders_handler/orders.py::_return_refund so the preview is the
+// amount the server will store: the picks' share of total_amount (what the
+// customer actually paid), so coupons, the hourly deal and payment-mode
+// discounts all come off proportionally. picks: Map(item.id -> units).
+const returnRefund = (order, picks) => {
+  const all = order.items || []
+  const total = order.total || 0
+  const partial = all
+    .filter(i => i.item_status !== 'QC_FAILED')
+    .some(i => (picks.get(i.id) || 0) !== (i.quantity || 1))
+  if (!partial) return total
+  const paid = (i) => (i.price || 0) * (i.quantity || 1) - (i.coupon_discount || 0)
+  const denom = all.reduce((s, i) => s + paid(i), 0)
+  if (!denom) return 0
+  const returned = all.reduce((s, i) => s + paid(i) / (i.quantity || 1) * (picks.get(i.id) || 0), 0)
+  return Math.min(total, Math.round(total * returned / denom))
+}
+
+// List price of the returned units, before any offer — the refund is shown
+// against this so the customer sees exactly how much the offer took off.
+const grossValue = (items, units) => items.reduce((s, i) => s + (i.price || 0) * units(i), 0)
+
+function RefundBreakdown({ gross, refund }) {
+  const offer = Math.max(0, gross - refund)
+  if (!offer) return null
+  const row = { display: 'flex', justifyContent: 'space-between', fontSize: 12, color: '#555', margin: '0 0 3px' }
+  return (
+    <div style={{ margin: '0 0 8px' }}>
+      <p style={row}><span>Item value</span><span>₹{gross.toLocaleString('en-IN')}</span></p>
+      <p style={row}><span>Offer / coupon discount applied</span><span style={{ color: '#dc2626' }}>−₹{offer.toLocaleString('en-IN')}</span></p>
+      <p style={{ ...row, color: NAVY, fontWeight: 700, margin: 0 }}><span>Refund</span><span style={{ color: '#16a34a' }}>₹{refund.toLocaleString('en-IN')}</span></p>
+    </div>
+  )
+}
+
 // ponytail: backend stores one return_refund per order, not per line — split
 // it across returned lines by what each was charged, so the parts add up.
 const lineRefund = (order, item, returnedItems) => {
@@ -406,13 +441,11 @@ function ReturnModal({ order, onClose, onReturned }) {
     }
   }
 
-  // ponytail: sums the lines the customer picked. The server prorates the same
-  // picks over total_amount, so this matches to the rupee unless total_amount
-  // was edited away from the line totals (admin price override / shipping).
   const chosen = items.filter(i => selected.has(i.id))
   const chosenUnits = chosen.reduce((n, i) => n + (qty[i.id] || 1), 0)
   const totalUnits = items.reduce((n, i) => n + (i.quantity || 1), 0)
-  const estimate = chosen.reduce((n, i) => n + lineValue(i, qty[i.id] || 1), 0)
+  const estimate = returnRefund(order, new Map(chosen.map(i => [i.id, qty[i.id] || 1])))
+  const estimateGross = grossValue(chosen, i => qty[i.id] || 1)
 
   const canSubmit = selected.size > 0 && reason
 
@@ -444,6 +477,11 @@ function ReturnModal({ order, onClose, onReturned }) {
             <p style={{ fontSize: 13, color: NAVY, margin: '0 0 10px' }}>
               Refund amount: <b style={{ color: '#16a34a' }}>₹{Number(result.refund_amount).toLocaleString('en-IN')}</b>
             </p>
+          )}
+          {result.refund_amount > 0 && (
+            <div style={{ textAlign: 'left', maxWidth: 280, margin: '0 auto' }}>
+              <RefundBreakdown gross={estimateGross} refund={Number(result.refund_amount)} />
+            </div>
           )}
           <p style={{ fontSize: 13, color: '#444', margin: '0 0 16px', lineHeight: 1.6 }}>
             {result.courier_info}
@@ -593,6 +631,7 @@ function ReturnModal({ order, onClose, onReturned }) {
                 Refund <b style={{ color: '#16a34a' }}>₹{estimate.toLocaleString('en-IN')}</b>
               </p>
             )}
+            {chosenUnits > 0 && <RefundBreakdown gross={estimateGross} refund={estimate} />}
             <p style={{ fontSize: 12, color: '#666', margin: 0, lineHeight: 1.6 }}>
               We'll initiate your return right away and share reverse-pickup courier details.
             </p>
@@ -1177,11 +1216,15 @@ function OrderCard({ order }) {
                     {returnableItems.reduce((n, i) => n + (i.quantity || 1), 0)} units
                   </span>
                 )}
-                {order.return_refund > 0 && (
-                  <span style={{ fontWeight: 500 }}>
-                    {' '}· Refund <b>₹{Number(order.return_refund).toLocaleString('en-IN')}</b>
-                  </span>
-                )}
+                {order.return_refund > 0 && (() => {
+                  const offer = Math.max(0, grossValue(returnedItems, i => i.return_quantity || i.quantity || 1) - order.return_refund)
+                  return (
+                    <span style={{ fontWeight: 500 }}>
+                      {' '}· Refund <b>₹{Number(order.return_refund).toLocaleString('en-IN')}</b>
+                      {offer > 0 && <> (after ₹{offer.toLocaleString('en-IN')} offer discount)</>}
+                    </span>
+                  )
+                })()}
               </p>
               {returnedItems.length > 0 && (
                 <p style={{ fontSize: 12, color: '#78350f', margin: '0 0 8px', lineHeight: 1.5 }}>
