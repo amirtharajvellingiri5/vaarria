@@ -167,14 +167,34 @@ const gstSplit = (lineTotal, gstRate, isIntraState) => {
   }
 }
 
-// ─── Courier invoice / shipping slip ──────────────────────────────────────────
-const printInvoice = (order) => {
+// Cash still owed at the door (total minus the online advance).
+const codBalance = (order) =>
+  order.cod_remaining ?? (order.payment_method === 'COD' ? order.total - (order.paid_online ?? 49) : order.total)
+// What the courier must collect: nothing for prepaid or already-delivered orders.
+const codDue = (order) =>
+  order.payment_method === 'PREPAID' || order.status === 'DELIVERED' ? 0 : Math.max(0, codBalance(order))
+
+const inr = (n) => `₹${Number(n || 0).toLocaleString('en-IN', { maximumFractionDigits: 2 })}`
+
+// ─── Tax invoice / courier slip ───────────────────────────────────────────────
+// courier=false → full tax invoice (every offer deducted, GST on the net price).
+// courier=true  → slip for the parcel: no prices, only the cash to collect.
+const printInvoice = (order, courier = false) => {
   const win = window.open('', '_blank')
   if (!win) return
 
   const a = order.address || {}
   const { catalogDiscount, specialDiscount, paymentDiscount } = splitDiscounts(order)
   const isIntraState = (a.state || '').trim().toLowerCase() === SELLER_STATE.toLowerCase()
+  const isCod = order.payment_method !== 'PREPAID'
+  const fullyPaid = isCod ? order.status === 'DELIVERED' : paymentSettled(order)
+  const advance = order.payment_method === 'COD' ? Math.max(0, order.total - codBalance(order)) : 0
+  const collect = codDue(order)
+
+  // Payment-method discount is order-level; spread it pro-rata over the lines so
+  // line amounts add up to the order total and GST is extracted from the net price.
+  const afterCoupon = (order.items || []).reduce((s, i) => s + itemDisplayPrice(i) * (i.quantity || 1), 0)
+  const netFactor = afterCoupon > 0 ? Math.max(0, 1 - paymentDiscount / afterCoupon) : 1
 
   let totalCgst = 0
   let totalSgst = 0
@@ -183,36 +203,71 @@ const printInvoice = (order) => {
   // QC-failed items are not shipped, so they're excluded from the slip
   const rows = shippableItems(order)
     .map((item) => {
-      const unit = itemDisplayPrice(item)
       const qty = item.quantity || 1
+      const unit = itemDisplayPrice(item) * netFactor
       const lineTotal = unit * qty
       const gstRate = item.gst || 0
       const { cgst, sgst, igst } = gstSplit(lineTotal, gstRate, isIntraState)
       totalCgst += cgst
       totalSgst += sgst
       totalIgst += igst
+      const name = `${item.name || ''}${item.size ? ` (Size: ${item.size})` : ''}`
+      if (courier) return `<tr><td>${name}</td><td style="text-align:center">${qty}</td></tr>`
       const gstCols = isIntraState
         ? `<td style="text-align:right">₹${cgst.toFixed(2)}</td><td style="text-align:right">₹${sgst.toFixed(2)}</td>`
         : `<td style="text-align:right">₹${igst.toFixed(2)}</td>`
       return `
         <tr>
-          <td>${item.name || ''}${item.size ? ` (Size: ${item.size})` : ''}</td>
+          <td>${name}</td>
           <td style="text-align:center">${qty}</td>
-          <td style="text-align:right">₹${Number(item.mrp || unit).toLocaleString('en-IN')}</td>
-          <td style="text-align:right">₹${Number(unit).toLocaleString('en-IN')}</td>
+          <td style="text-align:right">${inr(item.mrp || item.price)}</td>
+          <td style="text-align:right">${inr(unit)}</td>
           <td style="text-align:right">${gstRate}%</td>
           ${gstCols}
-          <td style="text-align:right">₹${Number(lineTotal).toLocaleString('en-IN')}</td>
+          <td style="text-align:right">${inr(lineTotal)}</td>
         </tr>`
     })
     .join('')
 
   const gstHeaderCols = isIntraState ? `<th>CGST</th><th>SGST</th>` : `<th>IGST</th>`
+  const badge = courier
+    ? (collect > 0 ? 'COD' : 'PREPAID')
+    : isCod ? (fullyPaid ? 'PAID' : 'COD') : (fullyPaid ? 'PREPAID' : order.payment_status)
+
+  const invoiceBody = `
+  <table>
+    <thead><tr><th>Item</th><th>Qty</th><th>MRP</th><th>Net Price</th><th>GST</th>${gstHeaderCols}<th>Amount</th></tr></thead>
+    <tbody>${rows}</tbody>
+  </table>
+
+  <div class="totals">
+    <div><span>MRP Total</span><span>${inr(order.mrp || order.total)}</span></div>
+    ${catalogDiscount ? `<div style="color:#16a34a"><span>MRP Discount</span><span>-${inr(catalogDiscount)}</span></div>` : ''}
+    ${specialDiscount ? `<div style="color:#16a34a"><span>Special Discount</span><span>-${inr(specialDiscount)}</span></div>` : ''}
+    ${paymentDiscount ? `<div style="color:#16a34a"><span>${isCod ? 'COD' : 'Prepaid'} Discount</span><span>-${inr(paymentDiscount)}</span></div>` : ''}
+    ${order.delivery ? `<div><span>Delivery</span><span>${inr(order.delivery)}</span></div>` : ''}
+    <div class="grand"><span>Order Total ${fullyPaid ? '(Paid)' : ''}</span><span>${inr(order.total)}</span></div>
+    <div class="muted"><span>Incl. ${isIntraState ? `CGST ₹${totalCgst.toFixed(2)} + SGST ₹${totalSgst.toFixed(2)}` : `IGST ₹${totalIgst.toFixed(2)}`}</span></div>
+    ${!fullyPaid && advance > 0 ? `<div><span>Paid Online (Advance)</span><span>-${inr(advance)}</span></div>` : ''}
+    ${!fullyPaid && isCod ? `<div class="grand"><span>Balance on Delivery</span><span>${inr(collect)}</span></div>` : ''}
+  </div>`
+
+  const courierBody = `
+  <table>
+    <thead><tr><th>Item</th><th>Qty</th></tr></thead>
+    <tbody>${rows}</tbody>
+  </table>
+
+  <div class="collect">
+    ${collect > 0
+      ? `CASH TO COLLECT ON DELIVERY<span class="amt">${inr(collect)}</span>`
+      : `PREPAID — DO NOT COLLECT CASH<span class="amt">₹0</span>`}
+  </div>`
 
   win.document.write(`<!DOCTYPE html>
 <html>
 <head>
-  <title>Invoice-${order.id}</title>
+  <title>${courier ? 'Courier-Slip' : 'Invoice'}-${order.id}</title>
   <style>
     body { font-family: 'Segoe UI', Arial, sans-serif; color: #1d2433; padding: 32px; font-size: 13px; }
     .top { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #1d2433; padding-bottom: 12px; }
@@ -231,6 +286,8 @@ const printInvoice = (order) => {
     .totals div { display: flex; justify-content: space-between; padding: 4px 0; }
     .grand { border-top: 1.5px solid #1d2433; font-weight: 700; padding-top: 8px !important; font-size: 15px; }
     .paid { display: inline-block; margin-top: 6px; padding: 3px 10px; border: 1.5px solid #16a34a; color: #16a34a; border-radius: 4px; font-weight: 700; font-size: 12px; }
+    .collect { margin-top: 24px; border: 2.5px solid #1d2433; border-radius: 8px; padding: 18px; text-align: center; font-weight: 700; font-size: 14px; letter-spacing: 1px; }
+    .collect .amt { display: block; margin-top: 6px; font-size: 32px; }
     .footer { margin-top: 36px; font-size: 11px; color: #6b7280; text-align: center; }
   </style>
 </head>
@@ -243,7 +300,7 @@ const printInvoice = (order) => {
     <div style="text-align:right">
       <p style="margin:0;font-weight:700;font-size:15px">Order #${order.id}</p>
       <p class="muted" style="margin:4px 0 0">Date: ${order.date}</p>
-      <span class="paid">${order.payment_method === 'PREPAID' ? 'PREPAID' : paymentSettled(order) ? 'PAID' : order.payment_status}</span>
+      <span class="paid">${badge}</span>
     </div>
   </div>
 
@@ -262,29 +319,14 @@ const printInvoice = (order) => {
         Courier: <b>${order.tracking?.provider || '—'}</b><br/>
         AWB / Tracking ID: <b>${order.tracking?.id || '—'}</b><br/>
         Items: <b>${shippableItems(order).reduce((s, i) => s + (i.quantity || 1), 0)}</b><br/>
-        Payment ID: ${order.payment_id || '—'}
+        ${courier ? '' : `Payment ID: ${order.payment_id || '—'}`}
       </p>
     </div>
   </div>
 
-  <table>
-    <thead><tr><th>Item</th><th>Qty</th><th>MRP</th><th>Unit Price</th><th>GST</th>${gstHeaderCols}<th>Amount</th></tr></thead>
-    <tbody>${rows}</tbody>
-  </table>
+  ${courier ? courierBody : invoiceBody}
 
-  <div class="totals">
-    <div><span>MRP Total</span><span>₹${Number(order.mrp || order.total).toLocaleString('en-IN')}</span></div>
-    ${catalogDiscount ? `<div style="color:#16a34a"><span>MRP Discount</span><span>-₹${Number(catalogDiscount).toLocaleString('en-IN')}</span></div>` : ''}
-    ${specialDiscount ? `<div style="color:#16a34a"><span>Special Discount</span><span>-₹${Number(specialDiscount).toLocaleString('en-IN')}</span></div>` : ''}
-    ${paymentDiscount ? `<div style="color:#16a34a"><span>${order.payment_method === 'PREPAID' ? 'Prepaid' : 'COD'} Discount</span><span>-₹${Number(paymentDiscount).toLocaleString('en-IN')}</span></div>` : ''}
-    ${order.delivery ? `<div><span>Delivery</span><span>₹${Number(order.delivery).toLocaleString('en-IN')}</span></div>` : ''}
-    ${isIntraState
-      ? `<div><span>CGST</span><span>₹${totalCgst.toFixed(2)}</span></div><div><span>SGST</span><span>₹${totalSgst.toFixed(2)}</span></div>`
-      : `<div><span>IGST</span><span>₹${totalIgst.toFixed(2)}</span></div>`}
-    <div class="grand"><span>Total ${paymentSettled(order) ? '(Paid)' : ''}</span><span>₹${Number(order.total).toLocaleString('en-IN')}</span></div>
-  </div>
-
-  <p class="footer">This is a computer generated invoice. Thank you for shopping with Vaarria.</p>
+  <p class="footer">${courier ? 'Shipping slip for courier use.' : 'This is a computer generated invoice.'} Thank you for shopping with Vaarria.</p>
 </body>
 </html>`)
   win.document.close()
@@ -932,12 +974,20 @@ function OrderActions({ order, onUpdated, setToast }) {
       )}
 
       {/* Invoice */}
-      <button
-        onClick={() => printInvoice(order)}
-        className='w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-xs font-semibold border border-stone-700 text-stone-300 hover:border-rose-500/50 hover:text-rose-400 transition-all'
-      >
-        <Printer size={13} /> Print Invoice / Shipping Slip
-      </button>
+      <div className='flex gap-2'>
+        <button
+          onClick={() => printInvoice(order)}
+          className='flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-xs font-semibold border border-stone-700 text-stone-300 hover:border-rose-500/50 hover:text-rose-400 transition-all'
+        >
+          <Printer size={13} /> Print Invoice
+        </button>
+        <button
+          onClick={() => printInvoice(order, true)}
+          className='flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-xs font-semibold border border-stone-700 text-stone-300 hover:border-rose-500/50 hover:text-rose-400 transition-all'
+        >
+          <Printer size={13} /> Print Courier Slip
+        </button>
+      </div>
     </div>
   )
 }
