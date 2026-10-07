@@ -1147,6 +1147,14 @@ function PricePanel({ onNeedAuth, triggerPay, onTriggerConsumed, authReady }) {
       const customerEmail = customer.email || ''
       const customerPhone = customer.mobile || customer.phone || customer.mobile_no || ''
 
+      // Best-effort: flag the order FAILED so admin doesn't show it as pending/paid.
+      const markFailed = () =>
+        authFetch(`${API_BASE}/payments/mark-failed`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ razorpay_order_id: data.order_id }),
+        }).catch(() => {})
+
       const options = {
         key: data.key,
         amount: data.amount,
@@ -1185,6 +1193,7 @@ function PricePanel({ onNeedAuth, triggerPay, onTriggerConsumed, authReady }) {
 
         modal: {
           ondismiss: () => {
+            markFailed()
             setPaymentLoading(false)
             setPaymentError('Payment cancelled by user')
           },
@@ -1193,6 +1202,7 @@ function PricePanel({ onNeedAuth, triggerPay, onTriggerConsumed, authReady }) {
 
       const rzp = new window.Razorpay(options)
       rzp.on('payment.failed', function (response) {
+        markFailed()
         setPaymentLoading(false)
         setPaymentError(response.error.description || 'Payment failed')
       })
