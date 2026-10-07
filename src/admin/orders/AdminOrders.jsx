@@ -150,6 +150,86 @@ const splitDiscounts = (order) => {
 const itemDisplayPrice = (item) =>
   item.coupon_discount > 0 ? item.price - Math.round(item.coupon_discount / (item.quantity || 1)) : item.price
 
+// "PAID" only when the full amount is in; a COD order with just the advance
+// captured reads "₹49 PAID" until the cash is collected at delivery.
+const paymentLabel = (order) =>
+  order.payment_method === 'COD' && order.payment_status === 'PAID' && order.status !== 'DELIVERED'
+    ? `${formatINR(order.paid_online ?? 49)} PAID`
+    : paymentSettled(order) ? 'PAID' : order.payment_status
+
+// Per-line money trail: MRP → sale price → coupon → payment-method discount → final.
+// Payment discount is order-level, spread pro-rata like printInvoice so lines sum to the total.
+function PriceBreakdown({ order }) {
+  const items = order.items || []
+  const { paymentDiscount } = splitDiscounts(order)
+  const afterCoupon = items.reduce((s, i) => s + itemDisplayPrice(i) * (i.quantity || 1), 0)
+  const payShare = afterCoupon > 0 ? paymentDiscount / afterCoupon : 0
+  const rows = items.map((i) => {
+    const qty = i.quantity || 1
+    const mrp = (i.mrp || i.price || 0) * qty
+    const sale = (i.price || 0) * qty
+    const coupon = sale - itemDisplayPrice(i) * qty
+    const pay = (sale - coupon) * payShare
+    return { id: i.id, name: i.name, size: i.size, qty, mrp, sale, coupon, pay, final: sale - coupon - pay }
+  })
+  const sum = (k) => rows.reduce((s, r) => s + r[k], 0)
+  const r = (n) => formatINR(Math.round(n))
+  const neg = (n) => (Math.round(n) ? `-${r(n)}` : '—')
+  const payCol = order.payment_method === 'PREPAID' ? 'Prepaid Disc' : 'COD Disc'
+  const cell = 'px-1.5 py-1 text-right whitespace-nowrap'
+  const advance = order.payment_method === 'COD' ? Math.max(0, order.total - codBalance(order)) : 0
+
+  return (
+    <div className='mt-2 overflow-x-auto'>
+      <table className='w-full text-[11px] text-stone-300'>
+        <thead className='text-stone-500'>
+          <tr className='border-b border-stone-800'>
+            <th className={cell}>MRP</th>
+            <th className={cell}>Sale</th>
+            <th className={cell}>Coupon</th>
+            <th className={cell}>{payCol}</th>
+            <th className={cell}>Final</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((row) => (
+            <React.Fragment key={row.id}>
+            <tr>
+              <td colSpan={5} className='px-1.5 pt-1.5 text-stone-400 truncate max-w-0' title={row.name}>
+                {row.name}{row.size ? ` (${row.size})` : ''} ×{row.qty}
+              </td>
+            </tr>
+            <tr className='border-b border-stone-800/60'>
+              <td className={`${cell} text-stone-500 line-through`}>{r(row.mrp)}</td>
+              <td className={cell}>{r(row.sale)}</td>
+              <td className={`${cell} text-emerald-400`}>{neg(row.coupon)}</td>
+              <td className={`${cell} text-emerald-400`}>{neg(row.pay)}</td>
+              <td className={`${cell} font-semibold text-stone-100`}>{r(row.final)}</td>
+            </tr>
+            </React.Fragment>
+          ))}
+        </tbody>
+        <tfoot className='font-semibold'>
+          <tr><td colSpan={5} className='px-1.5 pt-1.5 text-stone-400'>Total</td></tr>
+          <tr>
+            <td className={`${cell} text-stone-500 line-through`}>{r(sum('mrp'))}</td>
+            <td className={cell}>{r(sum('sale'))}</td>
+            <td className={`${cell} text-emerald-400`}>{neg(sum('coupon'))}</td>
+            <td className={`${cell} text-emerald-400`}>{neg(sum('pay'))}</td>
+            <td className={`${cell} text-stone-100`}>{formatINR(order.total)}</td>
+          </tr>
+        </tfoot>
+      </table>
+      {order.payment_method !== 'PREPAID' && (
+        <p className='text-[11px] text-stone-500 mt-1.5'>
+          {advance > 0 && <>Paid online: <b className='text-emerald-400'>{formatINR(advance)}</b> · </>}
+          {order.status === 'DELIVERED' ? 'Collected' : 'To collect'} at door: <b className='text-amber-400'>{formatINR(codBalance(order))}</b>
+        </p>
+      )}
+    </div>
+  )
+}
+
 // ponytail: seller state hardcoded to match the registered office shown
 // elsewhere (OrderDetailsModal, ContactUs) — promote to a shared constant
 // if a GSTIN/second warehouse state ever gets added.
@@ -1172,25 +1252,23 @@ function OrderRow({ order, onUpdated, setToast }) {
                   <span className='text-stone-500'> · advance {formatINR(order.paid_online ?? 49)}</span>
                 )}
               </p>
-              <p className='text-xs text-stone-400 leading-relaxed font-mono'>
-                Razorpay: {order.razorpay_order_id || '—'}<br />
-                Payment: {order.payment_id || '—'}
-              </p>
               <p className='text-xs text-stone-400 mt-1'>
-                Status: <b className={paymentSettled(order) ? 'text-emerald-400' : 'text-amber-400'}>{paymentSettled(order) ? 'PAID' : order.payment_status}</b>
+                Status: <b className={paymentLabel(order) === 'PAID' ? 'text-emerald-400' : 'text-amber-400'}>{paymentLabel(order)}</b>
                 {' · '}ETA: {order.estimated_delivery || '—'}
+                {' · '}
+                <button onClick={() => document.getElementById(`pay-ids-${order.id}`)?.togglePopover()} className='underline text-stone-500 hover:text-stone-300'>
+                  Razorpay IDs
+                </button>
               </p>
-              {(() => {
-                const { catalogDiscount, specialDiscount, paymentDiscount } = splitDiscounts(order)
-                if (!catalogDiscount && !specialDiscount && !paymentDiscount) return null
-                return (
-                  <p className='text-[11px] text-stone-500 mt-1.5 space-y-0.5'>
-                    {catalogDiscount > 0 && <span className='block'>MRP Discount: <b className='text-emerald-400'>-{formatINR(catalogDiscount)}</b></span>}
-                    {specialDiscount > 0 && <span className='block'>Special Discount: <b className='text-emerald-400'>-{formatINR(specialDiscount)}</b></span>}
-                    {paymentDiscount > 0 && <span className='block'>{order.payment_method === 'PREPAID' ? 'Prepaid' : 'COD'} Discount: <b className='text-emerald-400'>-{formatINR(paymentDiscount)}</b></span>}
-                  </p>
-                )
-              })()}
+              <div
+                popover='auto'
+                id={`pay-ids-${order.id}`}
+                className='m-auto bg-stone-900 border border-stone-700 rounded-xl p-4 text-xs text-stone-300 font-mono leading-relaxed'
+              >
+                Razorpay: {order.razorpay_order_id || '—'} <CopyBtn text={order.razorpay_order_id || ''} /><br />
+                Payment: {order.payment_id || '—'} <CopyBtn text={order.payment_id || ''} />
+              </div>
+              <PriceBreakdown order={order} />
             </div>
             {returnStage(order.status) && (() => {
               const returnable = (order.items || []).filter((i) => i.item_status !== 'QC_FAILED')
