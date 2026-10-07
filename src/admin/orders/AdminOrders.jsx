@@ -1098,7 +1098,7 @@ function OrderRow({ order, onUpdated, setToast }) {
               </span>
             )}
             {!paymentSettled(order) && !NO_COD_DUE_STATUSES.includes(order.status) && (
-              <span className='text-[10px] font-bold text-amber-400 border border-amber-500/30 bg-amber-500/10 rounded-full px-2 py-0.5'>
+              <span className={`text-[10px] font-bold rounded-full px-2 py-0.5 border ${order.payment_status === 'FAILED' ? 'text-red-400 border-red-500/30 bg-red-500/10' : 'text-amber-400 border-amber-500/30 bg-amber-500/10'}`}>
                 {order.payment_status}
               </span>
             )}
@@ -1262,7 +1262,7 @@ function OrderRow({ order, onUpdated, setToast }) {
                 )}
               </p>
               <p className='text-xs text-stone-400 mt-1'>
-                Status: <b className={paymentLabel(order) === 'PAID' ? 'text-emerald-400' : 'text-amber-400'}>{paymentLabel(order)}</b>
+                Status: <b className={paymentLabel(order) === 'PAID' ? 'text-emerald-400' : paymentLabel(order) === 'FAILED' ? 'text-red-400' : 'text-amber-400'}>{paymentLabel(order)}</b>
                 {' · '}ETA: {order.estimated_delivery || '—'}
                 {' · '}
                 <button onClick={() => document.getElementById(`pay-ids-${order.id}`)?.togglePopover()} className='underline text-stone-500 hover:text-stone-300'>
