@@ -63,7 +63,7 @@ const STATUS_STYLES = {
 const formatINR = (n) => `₹${Number(n || 0).toLocaleString('en-IN')}`
 
 const PAYMENT_MODE_LABEL = {
-  PREPAID: 'Prepaid — paid online',
+  PREPAID: 'Prepaid (online)',
   COD: '₹49 Advance + COD',
   FULL_COD: 'Full Cash on Delivery',
 }
@@ -1249,7 +1249,7 @@ function OrderRow({ order, onUpdated, setToast }) {
                 <ChevronRight size={12} className='transition-transform group-open:rotate-90' /> Mode &amp; status
               </summary>
               <p className='text-xs text-stone-300 mb-1 mt-1'>
-                Mode: <b className={order.payment_method === 'PREPAID' ? 'text-emerald-400' : 'text-amber-400'}>
+                Mode: <b className={order.payment_method === 'PREPAID' && paymentSettled(order) ? 'text-emerald-400' : 'text-amber-400'}>
                   {PAYMENT_MODE_LABEL[order.payment_method] || order.payment_method || '—'}
                 </b>
                 {order.payment_method === 'COD' && (
