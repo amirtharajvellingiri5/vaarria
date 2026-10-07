@@ -1,6 +1,11 @@
 export default function RefundPolicyPage() {
   const policies = [
     {
+      title: 'Order Cancellation',
+      content:
+        'Orders can be cancelled from My Orders only until they are shipped. Once an order has been shipped, it can no longer be cancelled — you may request a return after delivery under the return policy below. For prepaid amounts or COD advances on a cancelled order, the refund is issued to the original payment method.'
+    },
+    {
       title: '7-Day Return Policy',
       content:
         'Customers may request a return within 7 days from the date of delivery for eligible products. No questions asked.'

@@ -33,6 +33,21 @@ const PER_PAGE = 10
 
 const STATUSES = ORDER_STATUS_KEYS
 
+const FILTERS_KEY = 'adminOrderFilters'
+const savedFilters = (() => {
+  try {
+    const f = JSON.parse(localStorage.getItem(FILTERS_KEY)) || {}
+    if (!Array.isArray(f.statusFilter)) delete f.statusFilter
+    return f
+  } catch {
+    return {}
+  }
+})()
+
+// created_at is stamped in IST (yyyymmdd…), so compare against the IST calendar day
+const istDay = (offset) =>
+  new Date(Date.now() + offset * 864e5).toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' }).replaceAll('-', '')
+
 // ponytail: item_status RETURN_INITIATED only marks WHICH lines are coming
 // back — it never advances. A returned line takes its stage from the order
 // status, so it can't read "Returning" under a "Partially Returned" order.
@@ -902,6 +917,7 @@ function OrderActions({ order, onUpdated, setToast }) {
   const [showShipModal, setShowShipModal] = useState(false)
   const [showReturnTrackingModal, setShowReturnTrackingModal] = useState(false)
   const [showReturnPickupModal, setShowReturnPickupModal] = useState(false)
+  const [cancelReason, setCancelReason] = useState('')
 
   const call = async (key, url, body) => {
     setSaving(key)
@@ -951,7 +967,8 @@ function OrderActions({ order, onUpdated, setToast }) {
                 setShowReturnPickupModal(true)
                 return
               }
-              call('status', `${ORDERS_API_BASE}/admin/orders/${order.id}/status`, { status })
+              call('status', `${ORDERS_API_BASE}/admin/orders/${order.id}/status`,
+                status === 'CANCELLED' ? { status, cancel_reason: cancelReason.trim() || undefined } : { status })
             }}
             disabled={saving === 'status' || status === order.status}
             className='px-4 py-2 rounded-lg text-xs font-semibold bg-gradient-to-r from-rose-500 to-pink-600 text-white disabled:opacity-40 disabled:cursor-not-allowed whitespace-nowrap'
@@ -960,6 +977,18 @@ function OrderActions({ order, onUpdated, setToast }) {
           </button>
         </div>
       </Field>
+      {status === 'CANCELLED' && order.status !== 'CANCELLED' && (
+        <Field label='Cancellation Reason (shown to customer)'>
+          <textarea
+            rows={2}
+            maxLength={500}
+            value={cancelReason}
+            onChange={(e) => setCancelReason(e.target.value)}
+            placeholder='e.g. Item out of stock'
+            className={inputCls}
+          />
+        </Field>
+      )}
 
       {showShipModal && (
         <ShipModal
@@ -1355,12 +1384,20 @@ export default function AdminOrders() {
   const [error, setError] = useState('')
   const [toast, setToast] = useState('')
 
-  const [search, setSearch] = useState('')
-  const [statusFilter, setStatusFilter] = useState('ALL')
-  const [paymentFilter, setPaymentFilter] = useState('ALL')
-  const [sortDir, setSortDir] = useState('desc')
+  const [search, setSearch] = useState(savedFilters.search ?? '')
+  const [statusFilter, setStatusFilter] = useState(savedFilters.statusFilter ?? []) // [] = all
+  const [paymentFilter, setPaymentFilter] = useState(savedFilters.paymentFilter ?? 'ALL')
+  const [dateFilter, setDateFilter] = useState(savedFilters.dateFilter ?? 'ALL') // ALL | TODAY | YESTERDAY | DATE
+  const [pickedDate, setPickedDate] = useState(savedFilters.pickedDate ?? '') // YYYY-MM-DD
+  const [sortDir, setSortDir] = useState(savedFilters.sortDir ?? 'desc')
   const [page, setPage] = useState(1)
-  const [tab, setTab] = useState('active')
+  const [tab, setTab] = useState(savedFilters.tab ?? 'active')
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(FILTERS_KEY, JSON.stringify({ search, statusFilter, paymentFilter, dateFilter, pickedDate, sortDir, tab }))
+    } catch { /* storage blocked — filters just won't persist */ }
+  }, [search, statusFilter, paymentFilter, dateFilter, pickedDate, sortDir, tab])
 
   const fetchOrders = async () => {
     setLoading(true)
@@ -1393,13 +1430,17 @@ export default function AdminOrders() {
   const filtered = useMemo(() => {
     let list = allOrders.filter((o) => (tab === 'archived' ? isArchived(o) : !isArchived(o)))
 
-    if (statusFilter === 'QC_FAILED') {
+    if (statusFilter.length) {
       list = list.filter((o) =>
-        (o.items || []).some((i) => i.item_status === 'QC_FAILED'),
+        statusFilter.includes(o.status) ||
+        (statusFilter.includes('QC_FAILED') && (o.items || []).some((i) => i.item_status === 'QC_FAILED')),
       )
-    } else if (statusFilter !== 'ALL') {
-      list = list.filter((o) => o.status === statusFilter)
     }
+    const day = dateFilter === 'TODAY' ? istDay(0)
+      : dateFilter === 'YESTERDAY' ? istDay(-1)
+      : dateFilter === 'DATE' && pickedDate ? pickedDate.replaceAll('-', '')
+      : ''
+    if (day) list = list.filter((o) => (o.created_at || '').startsWith(day))
     if (paymentFilter !== 'ALL') {
       list = list.filter((o) => o.payment_status === paymentFilter)
     }
@@ -1423,7 +1464,7 @@ export default function AdminOrders() {
     )
 
     return list
-  }, [allOrders, tab, statusFilter, paymentFilter, search, sortDir])
+  }, [allOrders, tab, statusFilter, paymentFilter, dateFilter, pickedDate, search, sortDir])
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PER_PAGE))
   const safePage = Math.min(page, totalPages)
@@ -1431,7 +1472,7 @@ export default function AdminOrders() {
 
   useEffect(() => {
     setPage(1)
-  }, [search, statusFilter, paymentFilter, tab])
+  }, [search, statusFilter, paymentFilter, dateFilter, pickedDate, tab])
 
   const archivedCount = useMemo(() => allOrders.filter(isArchived).length, [allOrders])
 
@@ -1527,17 +1568,32 @@ export default function AdminOrders() {
                 className='w-full pl-9 pr-4 py-2.5 bg-stone-900 border border-stone-700 rounded-xl text-sm text-stone-100 placeholder-stone-600 focus:outline-none focus:border-rose-500 transition-colors'
               />
             </div>
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className='px-3 py-2.5 bg-stone-900 border border-stone-700 rounded-xl text-sm text-stone-300 focus:outline-none focus:border-rose-500'
-            >
-              <option value='ALL'>All statuses</option>
-              {STATUSES.map((st) => (
-                <option key={st} value={st}>{st}</option>
-              ))}
-              <option value='QC_FAILED'>QC FAILED (items)</option>
-            </select>
+            <details className='relative'>
+              <summary className='list-none cursor-pointer px-3 py-2.5 bg-stone-900 border border-stone-700 rounded-xl text-sm text-stone-300'>
+                {statusFilter.length ? `Status (${statusFilter.length})` : 'All statuses'} ▾
+              </summary>
+              <div className='absolute z-20 mt-1 w-60 max-h-80 overflow-y-auto bg-stone-900 border border-stone-700 rounded-xl p-2 shadow-2xl'>
+                <button
+                  onClick={() => setStatusFilter([])}
+                  className='w-full text-left px-2 py-1.5 text-xs text-rose-400 hover:bg-stone-800 rounded'
+                >
+                  Clear (all statuses)
+                </button>
+                {[...STATUSES, 'QC_FAILED'].map((st) => (
+                  <label key={st} className='flex items-center gap-2 px-2 py-1.5 text-xs text-stone-300 hover:bg-stone-800 rounded cursor-pointer'>
+                    <input
+                      type='checkbox'
+                      checked={statusFilter.includes(st)}
+                      onChange={(e) =>
+                        setStatusFilter((f) => (e.target.checked ? [...f, st] : f.filter((x) => x !== st)))
+                      }
+                      className='accent-rose-500'
+                    />
+                    {st === 'QC_FAILED' ? 'QC FAILED (items)' : st}
+                  </label>
+                ))}
+              </div>
+            </details>
             <select
               value={paymentFilter}
               onChange={(e) => setPaymentFilter(e.target.value)}
@@ -1547,6 +1603,24 @@ export default function AdminOrders() {
               <option value='PAID'>Paid</option>
               <option value='PENDING'>Pending</option>
             </select>
+            <select
+              value={dateFilter}
+              onChange={(e) => setDateFilter(e.target.value)}
+              className='px-3 py-2.5 bg-stone-900 border border-stone-700 rounded-xl text-sm text-stone-300 focus:outline-none focus:border-rose-500'
+            >
+              <option value='ALL'>All dates</option>
+              <option value='TODAY'>Today</option>
+              <option value='YESTERDAY'>Previous Day</option>
+              <option value='DATE'>Select date…</option>
+            </select>
+            {dateFilter === 'DATE' && (
+              <input
+                type='date'
+                value={pickedDate}
+                onChange={(e) => setPickedDate(e.target.value)}
+                className='px-3 py-2 bg-stone-900 border border-stone-700 rounded-xl text-sm text-stone-300 focus:outline-none focus:border-rose-500 [color-scheme:dark]'
+              />
+            )}
             <button
               onClick={() => setSortDir((d) => (d === 'desc' ? 'asc' : 'desc'))}
               className='px-3 py-2.5 rounded-xl text-sm border border-stone-700 text-stone-300 hover:border-stone-500 transition-colors'

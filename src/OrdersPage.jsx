@@ -1232,6 +1232,16 @@ function OrderCard({ order }) {
         <div style={{ borderTop: `1px solid ${GOLD}22`, padding: '14px 18px', background: '#fdfcf9' }}>
           <OrderTimeline status={order.status} refund={cancelRefund(order)} />
 
+          {order.cancel_reason && (
+            <div style={{
+              background: '#fee2e2', border: '1px solid #dc262644',
+              borderRadius: 10, padding: '12px 16px', marginBottom: 14,
+              fontSize: 12, color: '#991b1b', lineHeight: 1.5,
+            }}>
+              Cancelled by Vaarria — Reason: <b>{order.cancel_reason}</b>
+            </div>
+          )}
+
           {RETURN_STAGES.includes(String(order.status || '').replace('PARTIAL_', '')) && (() => {
             const stage = returnStage(order.status)
             return (
