@@ -18,7 +18,7 @@ export default function TermsAndConditionsPage() {
     {
       title: 'Orders & Payments',
       content:
-        'Orders are confirmed only after successful payment authorization or confirmation of cash-on-delivery eligibility. We reserve the right to cancel suspicious or unavailable orders.'
+        'Orders are confirmed only after successful payment authorization or confirmation of cash-on-delivery eligibility. We reserve the right to cancel suspicious or unavailable orders. Customers may cancel an order only before it is shipped; shipped orders cannot be cancelled.'
     },
     {
       title: 'Shipping & Delivery',
