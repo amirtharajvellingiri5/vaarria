@@ -209,14 +209,14 @@ function PriceBreakdown({ order }) {
             </React.Fragment>
           ))}
         </tbody>
-        <tfoot className='font-semibold'>
-          <tr><td colSpan={5} className='px-1.5 pt-1.5 text-stone-400'>Total</td></tr>
+        <tfoot className='font-semibold bg-amber-500/10'>
+          <tr><td colSpan={5} className='px-1.5 pt-1.5 text-amber-400'>Total</td></tr>
           <tr>
             <td className={`${cell} text-stone-500 line-through`}>{r(sum('mrp'))}</td>
             <td className={cell}>{r(sum('sale'))}</td>
             <td className={`${cell} text-emerald-400`}>{neg(sum('coupon'))}</td>
             <td className={`${cell} text-emerald-400`}>{neg(sum('pay'))}</td>
-            <td className={`${cell} text-stone-100`}>{formatINR(order.total)}</td>
+            <td className={`${cell} text-amber-300`}>{formatINR(order.total)}</td>
           </tr>
         </tfoot>
       </table>
@@ -1244,7 +1244,11 @@ function OrderRow({ order, onUpdated, setToast }) {
               <p className='text-[10px] font-semibold uppercase tracking-widest text-stone-500 mb-2 flex items-center gap-1.5'>
                 <CreditCard size={12} /> Payment
               </p>
-              <p className='text-xs text-stone-300 mb-1'>
+              <details className='group mb-1'>
+              <summary className='list-none [&::-webkit-details-marker]:hidden cursor-pointer text-xs text-stone-500 hover:text-stone-300 flex items-center gap-1'>
+                <ChevronRight size={12} className='transition-transform group-open:rotate-90' /> Mode &amp; status
+              </summary>
+              <p className='text-xs text-stone-300 mb-1 mt-1'>
                 Mode: <b className={order.payment_method === 'PREPAID' ? 'text-emerald-400' : 'text-amber-400'}>
                   {PAYMENT_MODE_LABEL[order.payment_method] || order.payment_method || '—'}
                 </b>
@@ -1268,6 +1272,7 @@ function OrderRow({ order, onUpdated, setToast }) {
                 Razorpay: {order.razorpay_order_id || '—'} <CopyBtn text={order.razorpay_order_id || ''} /><br />
                 Payment: {order.payment_id || '—'} <CopyBtn text={order.payment_id || ''} />
               </div>
+              </details>
               <PriceBreakdown order={order} />
             </div>
             {returnStage(order.status) && (() => {
