@@ -1092,6 +1092,11 @@ function OrderRow({ order, onUpdated, setToast }) {
             <span className='text-sm font-semibold text-stone-100 font-mono'>#{order.id}</span>
             <CopyBtn text={order.id} />
             <StatusBadge status={order.status} />
+            {order.payment_method && (
+              <span className='text-[10px] font-bold text-sky-300 border border-sky-500/30 bg-sky-500/10 rounded-full px-2 py-0.5'>
+                {{ PREPAID: 'FULL-PAID', COD: `${order.paid_online ?? 49}-PAID`, FULL_COD: 'COD' }[order.payment_method] || order.payment_method}
+              </span>
+            )}
             {!paymentSettled(order) && !NO_COD_DUE_STATUSES.includes(order.status) && (
               <span className='text-[10px] font-bold text-amber-400 border border-amber-500/30 bg-amber-500/10 rounded-full px-2 py-0.5'>
                 {order.payment_status}
