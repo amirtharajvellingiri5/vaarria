@@ -1413,98 +1413,165 @@ function PricePanel({ onNeedAuth, triggerPay, onTriggerConsumed, authReady }) {
         </div>
       )}
 
-      {paymentError && (
-        <div
-          style={{
-            position: 'fixed',
-            inset: 0,
-            background: 'rgba(0,0,0,0.45)',
-            zIndex: 9999,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: 16,
-          }}
-        >
+      {paymentError && (() => {
+        // Closing the Razorpay sheet isn't a failure — soften the copy for it.
+        const cancelled = /cancel/i.test(paymentError)
+        const close = () => setPaymentError('')
+        return (
           <div
+            onClick={close}
             style={{
-              width: '100%',
-              maxWidth: 420,
-              background: '#fff',
-              borderRadius: 20,
-              padding: 28,
-              textAlign: 'center',
+              position: 'fixed',
+              inset: 0,
+              background: 'rgba(5,12,28,0.55)',
+              backdropFilter: 'blur(4px)',
+              zIndex: 9999,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: 16,
             }}
           >
-            <XCircle size={70} color='#ef4444' />
-
-            <h2
-              style={{
-                marginTop: 16,
-                marginBottom: 10,
-                fontSize: 24,
-                fontWeight: 700,
-              }}
-            >
-              Payment Failed
-            </h2>
-
-            <p
-              style={{
-                color: '#666',
-                fontSize: 14,
-                marginBottom: 24,
-              }}
-            >
-              {paymentError}
-            </p>
-
             <div
+              role='dialog'
+              aria-modal='true'
+              aria-labelledby='payment-error-title'
+              onClick={(e) => e.stopPropagation()}
               style={{
-                display: 'flex',
-                gap: 12,
-                justifyContent: 'center',
+                position: 'relative',
+                width: '100%',
+                maxWidth: 400,
+                background: '#FFFDF8',
+                borderRadius: 20,
+                overflow: 'hidden',
+                textAlign: 'center',
+                boxShadow: '0 24px 60px rgba(5,12,28,0.35)',
               }}
             >
-              <button
-                onClick={() => {
-                  setPaymentError('')
-                  // actually relaunch the payment, not just hide the dialog
-                  handlePlaceOrder()
-                }}
-                style={{
-                  background: '#050C1C',
-                  color: '#C9A84C',
-                  border: '1px solid #C9A84C',
-                  padding: '12px 20px',
-                  borderRadius: 10,
-                  fontWeight: 700,
-                  cursor: 'pointer',
-                }}
-              >
-                TRY AGAIN
-              </button>
+              <div style={{ height: 4, background: 'linear-gradient(90deg, #A65A66, #C9A84C)' }} />
 
               <button
-                onClick={() => {
-                  setPaymentError('')
-                  navigate('/bag')
-                }}
+                onClick={close}
+                aria-label='Close'
                 style={{
-                  background: '#fff',
-                  border: '1px solid #ddd',
-                  padding: '12px 20px',
-                  borderRadius: 10,
-                  fontWeight: 700,
+                  position: 'absolute',
+                  top: 14,
+                  right: 14,
+                  width: 32,
+                  height: 32,
+                  borderRadius: '50%',
+                  border: 'none',
+                  background: '#F3EEE4',
+                  color: '#3A332A',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
                   cursor: 'pointer',
                 }}
               >
-                CONTINUE SHOPPING
+                <X size={16} />
               </button>
+
+              <div style={{ padding: '32px 28px 28px' }}>
+                <div
+                  style={{
+                    width: 64,
+                    height: 64,
+                    margin: '0 auto',
+                    borderRadius: '50%',
+                    background: '#F8E9EB',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <XCircle size={34} color='#A65A66' strokeWidth={1.75} />
+                </div>
+
+                <h2
+                  id='payment-error-title'
+                  style={{
+                    marginTop: 18,
+                    marginBottom: 8,
+                    fontSize: 22,
+                    fontWeight: 700,
+                    color: '#050C1C',
+                  }}
+                >
+                  {cancelled ? 'Payment not completed' : 'Payment failed'}
+                </h2>
+
+                <p style={{ color: '#6B6358', fontSize: 14, lineHeight: 1.5, margin: 0 }}>
+                  {cancelled ? 'You closed the payment window before finishing.' : paymentError}
+                </p>
+
+                <div
+                  style={{
+                    marginTop: 18,
+                    padding: '10px 12px',
+                    borderRadius: 12,
+                    background: '#F3EEE4',
+                    color: '#3A332A',
+                    fontSize: 12.5,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 8,
+                    textAlign: 'left',
+                  }}
+                >
+                  <ShieldCheck size={16} color='#C9A84C' style={{ flexShrink: 0 }} />
+                  {cancelled
+                    ? 'Your bag is saved. No money was charged.'
+                    : 'Your bag is saved. If any amount was debited, it will be refunded automatically.'}
+                </div>
+
+                <button
+                  onClick={() => {
+                    close()
+                    // actually relaunch the payment, not just hide the dialog
+                    handlePlaceOrder()
+                  }}
+                  style={{
+                    marginTop: 22,
+                    width: '100%',
+                    background: '#050C1C',
+                    color: '#C9A84C',
+                    border: 'none',
+                    padding: '14px 20px',
+                    borderRadius: 12,
+                    fontWeight: 700,
+                    letterSpacing: '0.08em',
+                    cursor: 'pointer',
+                  }}
+                >
+                  TRY AGAIN
+                </button>
+
+                <button
+                  onClick={() => {
+                    close()
+                    navigate('/')
+                  }}
+                  style={{
+                    marginTop: 10,
+                    width: '100%',
+                    background: 'transparent',
+                    color: '#3A332A',
+                    border: '1px solid #E4DCCB',
+                    padding: '13px 20px',
+                    borderRadius: 12,
+                    fontWeight: 600,
+                    letterSpacing: '0.06em',
+                    cursor: 'pointer',
+                  }}
+                >
+                  CONTINUE SHOPPING
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )
+      })()}
     </div>
   )
 }
