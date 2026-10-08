@@ -978,11 +978,11 @@ function PaymentMethodSelector({ value, onChange, total, disabled }) {
             border: value === 'full_cod' ? '4px solid #C9A84C' : '1.5px solid #ccc',
             transition: 'all 0.15s',
           }} />
-          <span style={{ fontSize: 12, color: value === 'full_cod' ? '#C9A84C' : '#aaa', fontWeight: value === 'full_cod' ? 600 : 400 }}>
+          <span style={{ fontSize: 12, color: value === 'full_cod' ? '#C9A84C' : '#111', fontWeight: value === 'full_cod' ? 600 : 400 }}>
             Full Cash on Delivery
           </span>
         </div>
-        <span style={{ fontSize: 12, color: '#aaa' }}>₹{total.toLocaleString()}</span>
+        <span style={{ fontSize: 12, color: '#111' }}>₹{total.toLocaleString()}</span>
       </button>
 
     </div>
