@@ -1348,6 +1348,14 @@ function OrderRow({ order, onUpdated, setToast }) {
                 </p>
               </div>
             )}
+            {order.cancel_reason && (
+              <div>
+                <p className='text-[10px] font-semibold uppercase tracking-widest text-stone-500 mb-2 flex items-center gap-1.5'>
+                  <AlertTriangle size={12} /> Cancellation Reason
+                </p>
+                <p className='text-xs text-rose-400 leading-relaxed'>{order.cancel_reason}</p>
+              </div>
+            )}
           </div>
 
           {/* Actions */}
