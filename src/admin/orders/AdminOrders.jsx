@@ -968,9 +968,9 @@ function OrderActions({ order, onUpdated, setToast }) {
                 return
               }
               call('status', `${ORDERS_API_BASE}/admin/orders/${order.id}/status`,
-                status === 'CANCELLED' ? { status, cancel_reason: cancelReason.trim() || undefined } : { status })
+                status === 'CANCELLED' ? { status, cancel_reason: cancelReason.trim() } : { status })
             }}
-            disabled={saving === 'status' || status === order.status}
+            disabled={saving === 'status' || status === order.status || (status === 'CANCELLED' && !cancelReason.trim())}
             className='px-4 py-2 rounded-lg text-xs font-semibold bg-gradient-to-r from-rose-500 to-pink-600 text-white disabled:opacity-40 disabled:cursor-not-allowed whitespace-nowrap'
           >
             {saving === 'status' ? <Loader2 size={13} className='animate-spin' /> : 'Update'}
@@ -978,7 +978,7 @@ function OrderActions({ order, onUpdated, setToast }) {
         </div>
       </Field>
       {status === 'CANCELLED' && order.status !== 'CANCELLED' && (
-        <Field label='Cancellation Reason (shown to customer)'>
+        <Field label='Cancellation Reason * (required, shown to customer)'>
           <textarea
             rows={2}
             maxLength={500}
