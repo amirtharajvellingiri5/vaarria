@@ -716,7 +716,8 @@ function ShipModal({ order, onClose, onDone, setToast }) {
 // ─── Return pickup-date modal ───────────────────────────────────────────────────
 
 function ReturnPickupModal({ order, status, onClose, onDone, setToast }) {
-  const [pickupDate, setPickupDate] = useState('')
+  const today = new Date().toLocaleDateString('en-CA') // YYYY-MM-DD in local time
+  const [pickupDate, setPickupDate] = useState(today)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
@@ -762,7 +763,7 @@ function ReturnPickupModal({ order, status, onClose, onDone, setToast }) {
             <input
               type='date'
               value={pickupDate}
-              min={new Date().toLocaleDateString('en-CA')}
+              min={today}
               onChange={(e) => setPickupDate(e.target.value)}
               className={inputCls}
             />
