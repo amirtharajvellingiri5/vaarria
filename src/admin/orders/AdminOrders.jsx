@@ -733,7 +733,7 @@ function ReturnPickupModal({ order, status, onClose, onDone, setToast }) {
       const data = await res.json().catch(() => ({}))
       if (!res.ok) throw new Error(data.detail || 'Failed to update status')
 
-      setToast(status.startsWith('PARTIAL_') ? 'Partial return initiated' : 'Return initiated')
+      setToast(order.status === status ? 'Pickup date updated' : status.startsWith('PARTIAL_') ? 'Partial return initiated' : 'Return initiated')
       onDone()
     } catch (e) {
       setError(e.message || 'Update failed')
@@ -762,6 +762,7 @@ function ReturnPickupModal({ order, status, onClose, onDone, setToast }) {
             <input
               type='date'
               value={pickupDate}
+              min={new Date().toLocaleDateString('en-CA')}
               onChange={(e) => setPickupDate(e.target.value)}
               className={inputCls}
             />
@@ -963,20 +964,24 @@ function OrderActions({ order, onUpdated, setToast }) {
                 setShowShipModal(true)
                 return
               }
-              if (status.endsWith('RETURN_INITIATED') && order.status !== status) {
+              // Same-status re-save is allowed here: reschedules the pickup and re-sends the SMS.
+              if (status.endsWith('RETURN_INITIATED')) {
                 setShowReturnPickupModal(true)
                 return
               }
               call('status', `${ORDERS_API_BASE}/admin/orders/${order.id}/status`,
                 status === 'CANCELLED' ? { status, cancel_reason: cancelReason.trim() } : { status })
             }}
-            disabled={saving === 'status' || status === order.status || (status === 'CANCELLED' && !cancelReason.trim())}
+            disabled={saving === 'status' || (status === order.status && !status.endsWith('RETURN_INITIATED')) || (status === 'CANCELLED' && !cancelReason.trim())}
             className='px-4 py-2 rounded-lg text-xs font-semibold bg-gradient-to-r from-rose-500 to-pink-600 text-white disabled:opacity-40 disabled:cursor-not-allowed whitespace-nowrap'
           >
-            {saving === 'status' ? <Loader2 size={13} className='animate-spin' /> : 'Update'}
+            {saving === 'status' ? <Loader2 size={13} className='animate-spin' /> : status === order.status && status.endsWith('RETURN_INITIATED') ? 'Set Pickup Date' : 'Update'}
           </button>
         </div>
       </Field>
+      {order.return_pickup_date && returnStage(order.status) === 'RETURN_INITIATED' && (
+        <p className='text-xs text-stone-400'>Pickup scheduled: <b className='text-amber-400'>{order.return_pickup_date}</b></p>
+      )}
       {status === 'CANCELLED' && order.status !== 'CANCELLED' && (
         <Field label='Cancellation Reason * (required, shown to customer)'>
           <textarea
