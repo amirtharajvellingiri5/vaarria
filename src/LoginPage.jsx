@@ -247,7 +247,8 @@ function useMSG91Script() {
   const [ready, setReady] = useState(() => msg91Loaded)
 
   useEffect(() => {
-    if (msg91Loaded) {
+    // widget already live (e2e stub, or loaded by another page)
+    if (msg91Loaded || typeof window.sendOtp === 'function') {
       setReady(true)
       return
     }

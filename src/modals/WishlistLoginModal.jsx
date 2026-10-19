@@ -13,7 +13,7 @@ let msg91Loaded = false
 function useMSG91Script() {
   const [ready, setReady] = useState(() => msg91Loaded)
   useEffect(() => {
-    if (msg91Loaded) { setReady(true); return }
+    if (msg91Loaded || typeof window.sendOtp === 'function') { setReady(true); return }
     if (document.querySelector('script[src*="otp-provider.js"]')) { msg91Loaded = true; setReady(true); return }
     msg91Loaded = true
     const script = document.createElement('script')

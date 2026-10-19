@@ -12,6 +12,19 @@ export function seedE2eAuth() {
   } catch {
     /* private-mode / SSR: nothing to seed */
   }
+  stubMsg91()
+}
+
+// ponytail: e2e OTP bypass. Swap in fake MSG91 widget methods so no real OTP is
+// sent; verify hands the e2e code to /msg91-login as the access token, and the
+// auth Lambda accepts it only for numbers in its TEST_MOBILES env. Any 4 digits work.
+function stubMsg91() {
+  const code = getE2eAuth()
+  if (!code) return
+  window.initSendOTP = () => {}
+  window.sendOtp = (_mobile, ok) => ok({ message: 'e2e' })
+  window.retryOtp = (_channel, ok) => ok({ message: 'e2e' })
+  window.verifyOtp = (_otp, ok) => ok({ message: code })
 }
 
 export function getE2eAuth() {
