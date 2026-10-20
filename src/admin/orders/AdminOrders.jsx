@@ -191,7 +191,8 @@ function PriceBreakdown({ order }) {
   const r = (n) => formatINR(Math.round(n))
   const neg = (n) => (Math.round(n) ? `-${r(n)}` : '—')
   const payCol = order.payment_method === 'PREPAID' ? 'Prepaid Disc' : 'COD Disc'
-  const cell = 'px-1.5 py-1 text-right whitespace-nowrap'
+  // ponytail: px-1 (not 1.5) so the Qty column still fits the narrow order card
+  const cell = 'px-1 py-1 text-right whitespace-nowrap'
   const advance = order.payment_method === 'COD' ? Math.max(0, order.total - codBalance(order)) : 0
 
   return (
@@ -199,6 +200,7 @@ function PriceBreakdown({ order }) {
       <table className='w-full text-[11px] text-stone-300'>
         <thead className='text-stone-500'>
           <tr className='border-b border-stone-800'>
+            <th className={cell}>Qty</th>
             <th className={cell}>MRP</th>
             <th className={cell}>Sale</th>
             <th className={cell}>Coupon</th>
@@ -210,11 +212,12 @@ function PriceBreakdown({ order }) {
           {rows.map((row) => (
             <React.Fragment key={row.id}>
             <tr>
-              <td colSpan={5} className='px-1.5 pt-1.5 text-stone-400 truncate max-w-0' title={row.name}>
-                {row.name}{row.size ? ` (${row.size})` : ''} ×{row.qty}
+              <td colSpan={6} className='px-1.5 pt-1.5 text-stone-400 truncate max-w-0' title={row.name}>
+                {row.name}{row.size ? ` (${row.size})` : ''}
               </td>
             </tr>
             <tr className='border-b border-stone-800/60'>
+              <td className={cell}>{row.qty}</td>
               <td className={`${cell} text-stone-500 line-through`}>{r(row.mrp)}</td>
               <td className={cell}>{r(row.sale)}</td>
               <td className={`${cell} text-emerald-400`}>{neg(row.coupon)}</td>
@@ -225,8 +228,9 @@ function PriceBreakdown({ order }) {
           ))}
         </tbody>
         <tfoot className='font-semibold bg-amber-500/10'>
-          <tr><td colSpan={5} className='px-1.5 pt-1.5 text-amber-400'>Total</td></tr>
+          <tr><td colSpan={6} className='px-1.5 pt-1.5 text-amber-400'>Total</td></tr>
           <tr>
+            <td className={cell}>{sum('qty')}</td>
             <td className={`${cell} text-stone-500 line-through`}>{r(sum('mrp'))}</td>
             <td className={cell}>{r(sum('sale'))}</td>
             <td className={`${cell} text-emerald-400`}>{neg(sum('coupon'))}</td>
