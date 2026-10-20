@@ -1,6 +1,6 @@
 import React from 'react'
 import { X, Check, Tag } from 'lucide-react'
-import { itemOffers, offerAmount } from '../store/bagStore'
+import { itemOffers, offerAmount, couponKey } from '../store/bagStore'
 
 const GOLD = '#C9A84C'
 const NAVY = '#050C1C'
@@ -10,7 +10,7 @@ const NAVY = '#050C1C'
  *  isOpen          boolean
  *  onClose         () => void
  *  items           BagItem[]   — full bag items list from Zustand
- *  appliedCoupons  Map<bagId, couponCode> — which coupon each line has applied
+ *  appliedCoupons  Map<couponKey, couponCode> — which coupon each product has applied
  *  onToggleCoupon  (bagId: number, code: string) => void
  */
 export default function CouponModal({
@@ -22,17 +22,31 @@ export default function CouponModal({
 }) {
   if (!isOpen) return null
 
-  // One row per offer, not per item: an item can carry several coupons and the
-  // customer picks one (itemOffers puts the biggest first).
-  const rows = items.flatMap((item) => {
-    const offers = itemOffers(item)
+  // One row per (product, offer): every size/colour of a product shares the coupon,
+  // so its lines collapse into one row whose saving is the sum over those lines.
+  const groups = new Map()
+  items.forEach((i) => {
+    const k = couponKey(i)
+    groups.set(k, [...(groups.get(k) || []), i])
+  })
+  const rows = [...groups.entries()].flatMap(([k, lines]) => {
+    const live = lines.filter((l) => l.selected)
+    const counted = live.length ? live : lines
+    const item = {
+      ...lines[0],
+      selected: live.length > 0,
+      size: [...new Set(counted.map((l) => l.size))].join(', '),
+      qty: counted.reduce((n, l) => n + l.qty, 0),
+      lineTotal: counted.reduce((n, l) => n + l.price * l.qty, 0),
+    }
+    const offers = itemOffers(lines[0])
     return offers.map((offer, idx) => ({
       item,
       offer,
-      key: `${item.id}-${offer.code}`,
+      key: `${k}-${offer.code}`,
       isBest: idx === 0 && offers.length > 1,
-      isApplied: appliedCoupons.get(item.id) === offer.code,
-      discount: offerAmount(item, offer),
+      isApplied: appliedCoupons.get(k) === offer.code,
+      discount: counted.reduce((n, l) => n + offerAmount(l, offer), 0),
     }))
   })
 
@@ -349,7 +363,7 @@ function CouponRow({ item, offer, isApplied, isBest, discount, onToggle, disable
           Save ₹{discount.toLocaleString('en-IN')}
           {isPercentage && (
             <span style={{ fontSize: 11, fontWeight: 400, color: '#888', marginLeft: 5 }}>
-              ({offer.value}% on ₹{(item.price * item.qty).toLocaleString('en-IN')})
+              ({offer.value}% on ₹{item.lineTotal.toLocaleString('en-IN')})
             </span>
           )}
         </p>

@@ -32,11 +32,15 @@ export const itemOffers = (item) => {
   return [...offers].sort((a, b) => offerAmount(item, b) - offerAmount(item, a)) // best first
 }
 
+// ponytail: coupons are per product, not per bag line — one coupon covers every
+// size/colour of that product in the bag.
+export const couponKey = (item) => item.productId ?? item.id
+
 export const appliedOffer = (item, appliedCoupons) =>
-  itemOffers(item).find((o) => o.code === appliedCoupons.get(item.id)) || null
+  itemOffers(item).find((o) => o.code === appliedCoupons.get(couponKey(item))) || null
 
 const pruneCoupons = (applied, items) => {
-  const ids = new Set(items.map((i) => i.id))
+  const ids = new Set(items.map(couponKey))
   const next = new Map([...applied].filter(([id]) => ids.has(id)))
   return next.size === applied.size ? applied : next
 }
@@ -44,7 +48,7 @@ const pruneCoupons = (applied, items) => {
 export const useBagStore = create((set, get) => ({
   items: [],
 
-  // bagId -> the coupon code the customer picked for that line
+  // couponKey(item) -> the coupon code the customer picked for that product
   appliedCoupons: new Map(),
 
   toggleCoupon: (bagId, code) =>
@@ -53,21 +57,10 @@ export const useBagStore = create((set, get) => ({
       // ponytail: no code means "the best one", which is what a single-coupon caller meant.
       const picked = code ?? itemOffers(item || {})[0]?.code
       if (!picked) return {}
+      const key = couponKey(item || { id: bagId })
       const next = new Map(s.appliedCoupons)
-      if (next.get(bagId) === picked) {
-        next.delete(bagId)
-        return { appliedCoupons: next }
-      }
-      // ponytail: the same product can sit in the bag as several lines (different
-      // size/colour), each carrying the same coupon. Only one may be applied, so
-      // turning one on turns the product's other lines off — a radio, not a checkbox.
-      const productId = item?.productId
-      if (productId != null) {
-        s.items.forEach((i) => {
-          if (i.id !== bagId && i.productId === productId) next.delete(i.id)
-        })
-      }
-      next.set(bagId, picked)
+      if (next.get(key) === picked) next.delete(key)
+      else next.set(key, picked)
       return { appliedCoupons: next }
     }),
 

@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
-import { useBagStore, itemOffers, appliedOffer, offerAmount } from './store/bagStore'
+import { useBagStore, itemOffers, appliedOffer, offerAmount, couponKey } from './store/bagStore'
 import {
   ShoppingBag,
   Search,
@@ -804,14 +804,15 @@ function CouponPanel() {
 
   const couponSavings = getCouponSavings()
 
-  // Count how many selected items have coupon toggled on
-  const appliedCount = items.filter(
-    (i) => i.selected && !i.soldOut && appliedCoupons.has(i.id),
-  ).length
+  // Count per product, not per bag line — sizes of one product share a coupon
+  const liveByProduct = new Map(
+    items.filter((i) => i.selected && !i.soldOut).map((i) => [couponKey(i), i]),
+  )
+  const appliedCount = [...liveByProduct.keys()].filter((k) => appliedCoupons.has(k)).length
 
-  // Count every offer on the selected items — an item can carry several
-  const availableCount = items.reduce(
-    (n, i) => (i.selected && !i.soldOut ? n + itemOffers(i).length : n),
+  // Count every offer on the selected products — a product can carry several
+  const availableCount = [...liveByProduct.values()].reduce(
+    (n, i) => n + itemOffers(i).length,
     0,
   )
 
@@ -1071,8 +1072,8 @@ function PricePanel({ onNeedAuth, triggerPay, onTriggerConsumed, authReady }) {
       color: item.colorName ?? null,
       image: item.image || null,
       bag_id: item.id,
-      coupon_applied: appliedCoupons.has(item.id),
-      coupon_code: appliedCoupons.get(item.id) ?? null,
+      coupon_applied: appliedCoupons.has(couponKey(item)),
+      coupon_code: appliedCoupons.get(couponKey(item)) ?? null,
     }))
 
     const clearBagAndNavigate = async (order) => {
