@@ -212,8 +212,12 @@ function PriceBreakdown({ order }) {
           {rows.map((row) => (
             <React.Fragment key={row.id}>
             <tr>
-              <td colSpan={6} className='px-1.5 pt-1.5 text-stone-400 truncate max-w-0' title={row.name}>
-                {row.name}{row.size ? ` (${row.size})` : ''}
+              <td colSpan={6} className='px-1.5 pt-1.5 text-stone-400 max-w-0' title={row.name}>
+                {/* Size sits outside the truncation so a long name can't hide it. */}
+                <div className='flex gap-1.5'>
+                  <span className='truncate'>{row.name}</span>
+                  {row.size && <span className='shrink-0 font-semibold text-stone-200'>· {row.size}</span>}
+                </div>
               </td>
             </tr>
             <tr className='border-b border-stone-800/60'>
@@ -986,6 +990,13 @@ function OrderActions({ order, onUpdated, setToast }) {
       </Field>
       {order.return_pickup_date && returnStage(order.status) === 'RETURN_INITIATED' && (
         <p className='text-xs text-stone-400'>Pickup scheduled: <b className='text-amber-400'>{order.return_pickup_date}</b></p>
+      )}
+      {/* Money still owed to the customer: shown until the refund is credited. */}
+      {order.return_refund > 0 && ['RETURN_INITIATED', 'RETURNED', 'REFUND_INITIATED'].includes(returnStage(order.status)) && (
+        <div className='flex items-center justify-between rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-3 py-2'>
+          <span className='text-xs font-semibold uppercase tracking-wide text-emerald-300'>Refund due to customer</span>
+          <b className='text-base text-emerald-400'>{formatINR(order.return_refund)}</b>
+        </div>
       )}
       {status === 'CANCELLED' && order.status !== 'CANCELLED' && (
         <Field label='Cancellation Reason * (required, shown to customer)'>
