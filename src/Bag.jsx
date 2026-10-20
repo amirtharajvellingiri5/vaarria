@@ -890,8 +890,9 @@ function PaymentMethodSelector({ value, onChange, total, disabled }) {
         onClick={() => onChange('prepaid')}
         style={{
           width: '100%', textAlign: 'left', cursor: 'pointer',
-          border: 'none', borderRadius: 10, padding: '14px 16px',
-          background: value === 'prepaid' ? '#050C1C' : '#f7f4ef',
+          border: value === 'prepaid' ? '1px solid #050C1C' : '1px solid #e5e7eb',
+          borderRadius: 10, padding: '14px 16px',
+          background: value === 'prepaid' ? '#050C1C' : '#fff',
           transition: 'all 0.18s', marginBottom: 8,
           boxShadow: value === 'prepaid' ? '0 4px 16px rgba(5,12,28,0.18)' : 'none',
         }}
@@ -969,8 +970,10 @@ function PaymentMethodSelector({ value, onChange, total, disabled }) {
         type='button'
         onClick={() => onChange('full_cod')}
         style={{
-          width: '100%', background: 'none', border: 'none', cursor: 'pointer',
-          padding: '6px 4px', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          width: '100%', cursor: 'pointer', borderRadius: 10, transition: 'all 0.15s',
+          background: value === 'full_cod' ? '#fffbf0' : 'none',
+          border: value === 'full_cod' ? '1.5px solid #C9A84C' : '1.5px solid transparent',
+          padding: '6px 10px', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
