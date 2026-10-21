@@ -19,12 +19,20 @@ export default defineConfig({
     },
   },
   server: {
-    proxy: {
-      '/api': {
-        target: 'https://b1ubc4krn6.execute-api.ap-south-1.amazonaws.com/prod',
-        changeOrigin: true,
-      },
-    },
+    // ponytail: mirrors workers/api-router (prod) — keep both maps in sync.
+    proxy: Object.fromEntries(Object.entries({
+      auth: 'https://b1ubc4krn6.execute-api.ap-south-1.amazonaws.com/prod',
+      orders: 'https://zq0dbjycx6.execute-api.ap-south-1.amazonaws.com/prod',
+      catalog: 'https://xei9truwoc.execute-api.ap-south-1.amazonaws.com/prod',
+      inventory: 'https://8184radc92.execute-api.ap-south-1.amazonaws.com/prod',
+      payment: 'https://d8obcfi1ua.execute-api.ap-south-1.amazonaws.com/prod',
+      products: 'https://products-api.chatoyantvortex.workers.dev',
+      upload: 'https://aarria-image-upload.chatoyantvortex.workers.dev/upload',
+    }).map(([name, target]) => [`/api/${name}`, {
+      target,
+      changeOrigin: true,
+      rewrite: path => path.slice(`/api/${name}`.length),
+    }])),
   },
 })
   

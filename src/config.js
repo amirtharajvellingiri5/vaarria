@@ -1,5 +1,6 @@
-export const AUTH_URL = import.meta.env.VITE_AUTH_URL ?? ''
-export const ORDERS_URL = import.meta.env.VITE_ORDERS_URL ?? ''
-export const CATALOG_URL = import.meta.env.VITE_CATALOG_URL ?? ''
-export const INVENTORY_URL = import.meta.env.VITE_INVENTORY_URL ?? ''
-export const PAYMENT_URL = import.meta.env.VITE_PAYMENT_URL ?? ''
+// All backends sit behind vaarria.com/api/* (workers/api-router); vite.config.js proxies the same paths in dev.
+export const AUTH_URL = '/api/auth'
+export const ORDERS_URL = '/api/orders'
+export const CATALOG_URL = '/api/catalog'
+export const INVENTORY_URL = '/api/inventory'
+export const PAYMENT_URL = '/api/payment'
