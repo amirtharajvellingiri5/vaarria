@@ -80,7 +80,7 @@ const ColorSwatch = ({ name, size = 14 }) => {
 }
 
 const BASE_URL = 'https://cdn.vaarria.com/app/images/'
-const PRODUCTS_API_URL = 'https://products-api.chatoyantvortex.workers.dev'
+const PRODUCTS_API_URL = '/api/products'
 
 const fetchSiblingCategories = async (categoryId) => {
   if (!categoryId) return []

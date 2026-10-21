@@ -678,7 +678,7 @@ const ProductUpload = () => {
     })
 
     const res = await fetch(
-      'https://aarria-image-upload.chatoyantvortex.workers.dev/upload',
+      '/api/upload',
       {
         method: 'POST',
         body: formData,

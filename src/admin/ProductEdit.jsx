@@ -872,7 +872,7 @@ const ProductEdit = ({ onBack }) => {
 
     if (!hasFiles) return [] // nothing to upload
 
-    const res = await fetch('https://aarria-image-upload.chatoyantvortex.workers.dev/upload', {
+    const res = await fetch('/api/upload', {
       method: 'POST',
       body: formData,
     })
