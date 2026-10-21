@@ -132,14 +132,8 @@ const MENU_DATA = [
   },
 
   {
-    name: 'NIGHTWEAR',
-    url: '/genz',
-    columns: [],
-  },
-
-  {
     name: 'SALE',
-    url: '/studio',
+    url: '/products',
     isNew: true,
     columns: [],
   },
@@ -312,6 +306,7 @@ const Navbar = () => {
                 onMouseEnter={() => setActiveMenu(item.name)}
               >
                 <button
+                  onClick={() => item.columns.length === 0 && navigate(item.url)}
                   style={{
                     background: 'none',
                     border: 'none',
@@ -395,7 +390,7 @@ const Navbar = () => {
             padding: '0 14px',
             gap: '8px',
             height: '36px',
-            minWidth: '260px',
+            minWidth: '160px',
             maxWidth: '360px',
             flex: '1 1 260px',
           }}
@@ -407,6 +402,8 @@ const Navbar = () => {
             placeholder='Search for products'
             value={searchValue}
             onChange={(e) => setSearchValue(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Enter' && e.target.value.trim()) navigate(`/products?q=${encodeURIComponent(e.target.value.trim())}`) }}
+            aria-label='Search for products'
             style={{
               border: 'none',
               background: 'transparent',
@@ -434,6 +431,7 @@ const Navbar = () => {
   onMouseLeave={() => setProfileOpen(false)}
 >
   <button
+    aria-label='Account'
     style={{
       background: 'none',
       border: 'none',
@@ -530,6 +528,7 @@ const Navbar = () => {
 </div>
           <button
             onClick={() => navigate('/wishlist')}
+            aria-label='Wishlist'
             style={{
               background: 'none',
               border: 'none',
@@ -565,6 +564,7 @@ const Navbar = () => {
           </button>
           <button
             onClick={() => navigate('/bag')}
+            aria-label='Bag'
             style={{
               background: 'none',
               border: 'none',
@@ -614,6 +614,7 @@ const Navbar = () => {
           {/* Mobile burger */}
           <button
             onClick={() => setMobileOpen(!mobileOpen)}
+            aria-label='Menu'
             style={{
               background: 'none',
               border: 'none',
@@ -647,6 +648,8 @@ const Navbar = () => {
               <input
                 type='text'
                 placeholder='Search for products, brands and more'
+                aria-label='Search for products'
+                onKeyDown={(e) => { if (e.key === 'Enter' && e.target.value.trim()) { setMobileOpen(false); navigate(`/products?q=${encodeURIComponent(e.target.value.trim())}`) } }}
                 style={{
                   border: 'none',
                   background: 'transparent',
@@ -664,9 +667,10 @@ const Navbar = () => {
               style={{ borderBottom: '0.5px solid #1a2d4a' }}
             >
               <button
-                onClick={() =>
+                onClick={() => {
+                  if (item.columns.length === 0) { setMobileOpen(false); navigate(item.url); return }
                   setActiveMenu(activeMenu === item.name ? null : item.name)
-                }
+                }}
                 style={{
                   width: '100%',
                   background: 'none',

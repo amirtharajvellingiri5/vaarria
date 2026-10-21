@@ -16,6 +16,7 @@ import { seedE2eAuth } from './utils/e2e'
 // buy a second round-trip before first paint. Everything else ships as its own
 // chunk; a customer never downloads the admin bundle.
 const Products = lazy(() => import('./ProductsListing.jsx'))
+const NotFound = lazy(() => import('./NotFound.jsx'))
 const ProductDetail = lazy(() => import('./ProductDetail.jsx'))
 const BagPage = lazy(() => import('./Bag.jsx'))
 const LoginPage = lazy(() => import('./LoginPage.jsx'))
@@ -79,6 +80,7 @@ const router = createBrowserRouter([
   { path: '/test/cases', element: <AdminGate><TestCases /></AdminGate> },
   { path: '/order-success', element: <OrderSuccess /> },
   { path: '/payment-failed', element: <PaymentFailed /> },
+  { path: '*', element: <NotFound /> },
 
 ])
 

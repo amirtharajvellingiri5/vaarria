@@ -132,8 +132,8 @@ export default function Home() {
               <p style={{ fontSize: 10, color: 'rgba(255,255,255,.3)', marginBottom: 8, letterSpacing: '.06em' }}>OTHERS</p>
               <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                 {['Mill', 'Distributor', 'Brand', 'Retailer', 'You'].map((s, i) => (
-                  <div key={s} style={{ display: 'flex', alignItems: 'center', flex: i === 4 ? 'none' : 1 }}>
-                    <div style={{ flex: 1, background: i < 4 ? 'rgba(255,255,255,.12)' : `${GOLD}22`, border: i < 4 ? '1px solid rgba(255,255,255,.1)' : `1px solid ${GOLD}44`, borderRadius: 4, padding: '6px 4px', textAlign: 'center' }}>
+                  <div key={s} style={{ display: 'flex', alignItems: 'center', flex: i === 4 ? 'none' : 1, minWidth: 0 }}>
+                    <div style={{ flex: 1, minWidth: 0, overflow: 'hidden', background: i < 4 ? 'rgba(255,255,255,.12)' : `${GOLD}22`, border: i < 4 ? '1px solid rgba(255,255,255,.1)' : `1px solid ${GOLD}44`, borderRadius: 4, padding: '6px 4px', textAlign: 'center' }}>
                       <p style={{ fontSize: 10, color: i < 4 ? 'rgba(255,255,255,.4)' : GOLD, fontWeight: i === 4 ? 700 : 400 }}>{s}</p>
                     </div>
                     {i < 4 && <ArrowRight size={10} color='rgba(255,255,255,.2)' style={{ flexShrink: 0 }} />}
@@ -152,8 +152,8 @@ export default function Home() {
               <p style={{ fontSize: 10, color: GOLD, marginBottom: 8, letterSpacing: '.06em' }}>VAARRIA</p>
               <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                 {['Mill', 'Vaarria', 'You'].map((s, i) => (
-                  <div key={s} style={{ display: 'flex', alignItems: 'center', flex: i === 2 ? 'none' : 1 }}>
-                    <div style={{ flex: 1, background: i === 2 ? GOLD : `${GOLD}18`, border: `1px solid ${GOLD}${i === 2 ? 'ff' : '44'}`, borderRadius: 4, padding: '6px 4px', textAlign: 'center' }}>
+                  <div key={s} style={{ display: 'flex', alignItems: 'center', flex: i === 2 ? 'none' : 1, minWidth: 0 }}>
+                    <div style={{ flex: 1, minWidth: 0, background: i === 2 ? GOLD : `${GOLD}18`, border: `1px solid ${GOLD}${i === 2 ? 'ff' : '44'}`, borderRadius: 4, padding: '6px 4px', textAlign: 'center' }}>
                       <p style={{ fontSize: 10, color: i === 2 ? NAVY : GOLD, fontWeight: 700 }}>{s}</p>
                     </div>
                     {i < 2 && <ArrowRight size={10} color={`${GOLD}88`} style={{ flexShrink: 0 }} />}

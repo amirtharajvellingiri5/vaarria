@@ -634,14 +634,14 @@ function ItemCard({ item }) {
                 {hasCoupon ? (
                   <>
                     <span style={styles.priceFinal}>₹{lineTotal - couponAmount}</span>
-                    <span style={styles.priceMrp}>₹{item.mrp}</span>
+                    <span style={styles.priceMrp}>₹{item.mrp * item.qty}</span>
                     <span style={{ ...styles.priceOff, textDecoration: 'line-through' }}>₹{lineTotal}</span>
                   </>
                 ) : (
                   <>
                     <span style={styles.priceFinal}>₹{lineTotal}</span>
-                    <span style={styles.priceMrp}>₹{item.mrp}</span>
-                    <span style={styles.priceOff}>₹{item.mrp - item.price} OFF</span>
+                    <span style={styles.priceMrp}>₹{item.mrp * item.qty}</span>
+                    <span style={styles.priceOff}>₹{(item.mrp - item.price) * item.qty} OFF</span>
                   </>
                 )}
               </div>
@@ -657,8 +657,7 @@ function ItemCard({ item }) {
               <div style={styles.couponLine}>
                 <Tag size={11} style={{ marginRight: 4 }} />
                 Coupon Discount:{' '}
-                {shown.discount_type === 'PERCENTAGE' ? `${shown.value}%` : `₹${shown.value}`}
-                {` (${shown.code})`}
+                {`₹${offerAmount(item, shown)} (${shown.code})`}
                 {!picked &&
                   (offers.length > 1
                     ? ` +${offers.length - 1} more — apply in Coupons below`
@@ -1229,10 +1228,12 @@ function PricePanel({ onNeedAuth, triggerPay, onTriggerConsumed, authReady }) {
     }
   }, [triggerPay])
 
+  const selectedUnits = selected.reduce((n, i) => n + i.qty, 0)
+
   return (
     <div style={styles.panelCard}>
       <div style={styles.panelLabel}>
-        PRICE DETAILS ({selected.length} Item{selected.length !== 1 ? 's' : ''})
+        PRICE DETAILS ({selectedUnits} Item{selectedUnits !== 1 ? 's' : ''})
       </div>
 
       <div style={styles.priceRows}>
@@ -2063,9 +2064,12 @@ function BagPage() {
           0% { background-position: 100% 50%; }
           100% { background-position: 0 50%; }
         }
+        @media (max-width: 900px) {
+          .bag-container { grid-template-columns: 1fr !important; padding: 12px 16px !important; }
+        }
       `}</style>
       <Navbar />
-      <div style={styles.container}>
+      <div className='bag-container' style={styles.container}>
         <div style={styles.leftCol}>
           <PinBar />
 

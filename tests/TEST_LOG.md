@@ -17,6 +17,8 @@ Severity: Critical > High > Medium > Low.
 
 ## Findings
 
+**Status (2026-10-21):** F1–F4 and F6–F16 are fixed and shipped. F5 and the data/content notes are still open.
+
 ### F13: Static e2e bypass code grants admin on the live orders API (Critical, security)
 - **Where:** `orders_handler/auth.py`, `BYPASS_CODE` constant.
   - Any request carrying that code in the `X-E2E-Auth` header is treated as an admin with `e2e_bypass: True`.
