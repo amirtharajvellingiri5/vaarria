@@ -1,5 +1,6 @@
 import assert from 'node:assert'
-globalThis.localStorage = { getItem: () => null, setItem() {}, removeItem() {} }
+const store = {}
+globalThis.localStorage = { getItem: (k) => store[k] ?? null, setItem: (k, v) => { store[k] = v }, removeItem: (k) => { delete store[k] } }
 const { useBagStore } = await import('./bagStore.js')
 
 const { setItems, toggleCoupon } = useBagStore.getState()
@@ -12,14 +13,15 @@ setItems([
 const applied = () => [...useBagStore.getState().appliedCoupons.keys()].sort()
 
 toggleCoupon(1)
-assert.deepEqual(applied(), [1])
-toggleCoupon(2)                       // same product -> replaces, not adds
-assert.deepEqual(applied(), [2], 'only one coupon per product')
+assert.deepEqual(applied(), ['P1'])  // keyed by product, not bag line
+toggleCoupon(2)                       // same product shares the pick -> toggles it off
+assert.deepEqual(applied(), [], 'only one coupon per product')
+toggleCoupon(2)
 toggleCoupon(3)                       // different product -> coexists
-assert.deepEqual(applied(), [2, 3], 'other products unaffected')
+assert.deepEqual(applied(), ['P1', 'P2'], 'other products unaffected')
 toggleCoupon(3)                       // untoggle still works
-assert.deepEqual(applied(), [2])
-assert.equal(useBagStore.getState().getCouponSavings(), 10, 'savings counted once')
+assert.deepEqual(applied(), ['P1'])
+assert.equal(useBagStore.getState().getCouponSavings(), 20, 'one pick covers both P1 lines')
 console.log('ok — one coupon per product enforced')
 
 // ---- getCouponSavings math: FLAT branch, PERCENTAGE floor at qty>1, gating ----
@@ -71,7 +73,13 @@ s.setItems([
 ])
 s.toggleCoupon(20); s.toggleCoupon(21)
 s.setItems(useBagStore.getState().items.filter((i) => i.id !== 20))
-assert.deepEqual(applied(), [21], 'setItems prunes removed line')
+assert.deepEqual(applied(), ['Y'], 'setItems prunes removed line')
 useBagStore.getState().removeItem(21)
 assert.deepEqual(applied(), [], 'removeItem prunes too')
 console.log('ok — removed items drop their coupon')
+
+// ---- applied coupons survive a reload (F11) ----
+useBagStore.getState().setItems([{ id: 30, productId: 'Z', selected: true, qty: 1, price: 100, couponDiscount: 10, discountType: 'FLAT' }])
+useBagStore.getState().toggleCoupon(30)
+assert.deepEqual(JSON.parse(store.vaarria_applied_coupons), [['Z', useBagStore.getState().appliedCoupons.get('Z')]], 'saved to storage')
+console.log('ok — applied coupons persisted')

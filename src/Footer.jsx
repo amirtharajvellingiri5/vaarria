@@ -28,12 +28,6 @@ const Footer = () => {
 
               <li>
                 <Link to='/products' className='transition hover:text-pink-300'>
-                  Lehengas
-                </Link>
-              </li>
-
-              <li>
-                <Link to='/products' className='transition hover:text-pink-300'>
                   Suits
                 </Link>
               </li>
@@ -57,7 +51,7 @@ const Footer = () => {
               </li>
 
               <li>
-                <Link to='/bag' className='transition hover:text-pink-300'>
+                <Link to='/orders' className='transition hover:text-pink-300'>
                   Track Order
                 </Link>
               </li>
@@ -71,11 +65,6 @@ const Footer = () => {
                 </Link>
               </li>
 
-              <li>
-                <Link to='/terms' className='transition hover:text-pink-300'>
-                  Size Guide
-                </Link>
-              </li>
             </ul>
           </div>
 
@@ -95,6 +84,12 @@ const Footer = () => {
                   className='transition hover:text-pink-300'
                 >
                   Refund Policy
+                </Link>
+              </li>
+
+              <li>
+                <Link to='/privacy-policy' className='transition hover:text-pink-300'>
+                  Privacy Policy
                 </Link>
               </li>
 

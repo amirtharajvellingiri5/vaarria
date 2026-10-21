@@ -2,33 +2,72 @@
   :root { color-scheme: dark; }
   * { box-sizing: border-box; }
   body { margin:0; font:14px/1.5 -apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif;
-         background:#0c0a09; color:#e7e5e4; padding:24px 20px 40px; }
-  header { max-width:1200px; margin:0 auto 20px; }
-  header h1 { font-size:19px; margin:0 0 6px; letter-spacing:.2px; }
-  header .sub { color:#a8a29e; font-size:12px; margin:0; }
+         background:#0c0a09; color:#e7e5e4; padding:24px 16px 40px; }
+  main { max-width:1000px; margin:0 auto; }
+  h1 { font-size:19px; margin:0 0 6px; }
+  h2 { font-size:15px; margin:28px 0 10px; color:#fda4af; }
+  .sub { color:#a8a29e; font-size:12px; margin:0; }
   .badges { display:flex; flex-wrap:wrap; gap:8px; margin:14px 0 0; }
-  .badge { font-size:12px; font-weight:700; padding:5px 12px; border-radius:999px;
-           border:1px solid #292524; background:#1c1917; }
-  .badge.pass { color:#86efac; border-color:#14532d; background:#0f2417; }
-  .badge.fail { color:#fca5a5; border-color:#7f1d1d; background:#2a1414; }
-  .badge.skip { color:#fcd34d; border-color:#78350f; background:#241a08; }
-  .badge.dim  { color:#d6d3d1; }
-  .grid { max-width:1200px; margin:0 auto; display:grid; gap:16px;
-          grid-template-columns:repeat(auto-fill,minmax(340px,1fr)); }
-  .grp { background:#1c1917; border:1px solid #292524; border-radius:16px;
-         padding:16px 18px; }
-  .grp-head { display:flex; align-items:baseline; justify-content:space-between; gap:10px; }
-  .grp-head h2 { font-size:15px; margin:0; color:#fda4af; }
-  .grp-head .n { font-size:11px; font-weight:700; color:#d6d3d1;
-                 background:#292524; padding:2px 9px; border-radius:999px; white-space:nowrap; }
-  .desc { color:#a8a29e; font-size:12px; margin:6px 0 12px; }
-  ul { list-style:none; margin:0; padding:0; }
-  li { display:flex; align-items:center; gap:10px; padding:7px 0;
-       border-top:1px solid #232020; }
-  li .dot { width:8px; height:8px; border-radius:50%; flex:none; }
-  .dot.passed { background:#22c55e; } .dot.failed { background:#ef4444; }
-  .dot.skipped { background:#eab308; } .dot.error { background:#ef4444; }
-  li .name { flex:1; font:12px/1.4 ui-monospace,SFMono-Regular,Menlo,monospace;
-             color:#e7e5e4; word-break:break-word; }
-  li .dur { font-size:11px; color:#78716c; flex:none; }
-</style></head><body><header><h1>E2E Test Report</h1><p class="sub">Live prod &middot; 5 tests in 71s &middot; 15 Sep 2026, 19:37</p><div class="badges"><span class="badge pass">5 passed</span><span class="badge dim">1 features</span></div></header><div class="grid"><section class="grp"><div class="grp-head"><h2>Order Status Flow</h2><span class="n">5/5</span></div><p class="desc">Every admin status CREATED→…→DELIVERED, return+refund tail, cancel; fires SMS</p><ul><li><span class="dot passed"></span><span class="name">test_admin_cancel_fires_sms</span><span class="dur">21.2s</span></li><li><span class="dot passed"></span><span class="name">test_forward_lifecycle_to_delivered</span><span class="dur">10.4s</span></li><li><span class="dot passed"></span><span class="name">test_invalid_status_rejected</span><span class="dur">7.4s</span></li><li><span class="dot passed"></span><span class="name">test_return_and_refund_lifecycle</span><span class="dur">25.2s</span></li><li><span class="dot passed"></span><span class="name">test_return_initiated_requires_pickup_date</span><span class="dur">6.3s</span></li></ul></section></div></body></html>
+  .badge { font-size:12px; font-weight:700; padding:5px 12px; border-radius:999px; border:1px solid #292524; background:#1c1917; }
+  .pass { color:#86efac; border-color:#14532d; background:#0f2417; }
+  .fail { color:#fca5a5; border-color:#7f1d1d; background:#2a1414; }
+  .skip { color:#fcd34d; border-color:#78350f; background:#241a08; }
+  .card { background:#1c1917; border:1px solid #292524; border-radius:14px; padding:4px 16px; }
+  table { width:100%; border-collapse:collapse; font-size:13px; }
+  td, th { text-align:left; padding:9px 8px; border-top:1px solid #232020; vertical-align:top; }
+  th { color:#a8a29e; font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.4px; border-top:0; }
+  td.id { font:12px ui-monospace,Menlo,monospace; color:#d6d3d1; white-space:nowrap; }
+  td .badge { padding:2px 9px; font-size:11px; white-space:nowrap; }
+  .muted { color:#a8a29e; font-size:12px; }
+  @media (max-width:600px) { td.sev, th.sev { display:none; } }
+</style></head><body><main>
+<h1>VAARRIA live E2E test report</h1>
+<p class="sub">Target: vaarria.com (production) &middot; Tested 20 Oct 2026, fixes shipped 21 Oct 2026 &middot; Chromium at 1440, 1280, 1024 and 375px &middot; Guest session</p>
+<div class="badges"><span class="badge pass">15 fixed</span><span class="badge skip">1 open</span><span class="badge pass">15 checks passed</span></div>
+
+<h2>Findings</h2>
+<div class="card"><table>
+<tr><th>ID</th><th>Issue</th><th class="sev">Severity</th><th>Status</th></tr>
+<tr><td class="id">F13</td><td>Security issue (details withheld)</td><td class="sev">Critical</td><td><span class="badge pass">Fixed</span></td></tr>
+<tr><td class="id">F16</td><td>Bag page not responsive; summary and Place Order off-screen on mobile</td><td class="sev">High</td><td><span class="badge pass">Fixed</span></td></tr>
+<tr><td class="id">F10</td><td>Header search did nothing on Enter</td><td class="sev">High</td><td><span class="badge pass">Fixed</span></td></tr>
+<tr><td class="id">F3</td><td>NIGHTWEAR and SALE nav items were dead</td><td class="sev">High</td><td><span class="badge pass">Fixed</span> <span class="muted">SALE goes to all products; NIGHTWEAR removed</span></td></tr>
+<tr><td class="id">F5</td><td>Stock differs between listing and detail endpoints</td><td class="sev">Medium–High</td><td><span class="badge skip">Open</span> <span class="muted">needs an admin Category Sync check</span></td></tr>
+<tr><td class="id">F14</td><td>Home page wider than a phone; pans sideways</td><td class="sev">Medium</td><td><span class="badge pass">Fixed</span></td></tr>
+<tr><td class="id">F12</td><td>Product page headlined the worse coupon</td><td class="sev">Medium</td><td><span class="badge pass">Fixed</span></td></tr>
+<tr><td class="id">F4</td><td>Unknown URLs showed the full product grid instead of a 404</td><td class="sev">Medium</td><td><span class="badge pass">Fixed</span></td></tr>
+<tr><td class="id">F1</td><td>Header overflowed at 1024px; logo squeezed</td><td class="sev">Medium</td><td><span class="badge pass">Fixed</span></td></tr>
+<tr><td class="id">F2</td><td>Footer links wrong or missing (Lehengas, Track Order, Size Guide, Privacy Policy)</td><td class="sev">Medium</td><td><span class="badge pass">Fixed</span></td></tr>
+<tr><td class="id">F6</td><td>Bag row mixed qty-scaled and per-unit prices</td><td class="sev">Low–Medium</td><td><span class="badge pass">Fixed</span></td></tr>
+<tr><td class="id">F8</td><td>Coupon popup thumbnails broken</td><td class="sev">Low–Medium</td><td><span class="badge pass">Fixed</span></td></tr>
+<tr><td class="id">F11</td><td>Applied coupons lost on reload</td><td class="sev">Low–Medium</td><td><span class="badge pass">Fixed</span></td></tr>
+<tr><td class="id">F7</td><td>Coupon label showed per-unit amount, not the applied total</td><td class="sev">Low</td><td><span class="badge pass">Fixed</span></td></tr>
+<tr><td class="id">F9</td><td>Full COD label not clickable</td><td class="sev">Low</td><td><span class="badge pass">Fixed</span></td></tr>
+<tr><td class="id">F15</td><td>Header icon buttons had no accessible name</td><td class="sev">Low</td><td><span class="badge pass">Fixed</span></td></tr>
+</table></div>
+
+<h2>Content notes (open, for the catalogue team)</h2>
+<div class="card"><table>
+<tr><td>Kurta 89499105923072: the title says Black, the image is mustard, and the description says red.</td></tr>
+<tr><td>Listing cards show a hardcoded 4.0 rating and an "Ethnic" category.</td></tr>
+<tr><td>The product page takes about 7s to first content; there is no toast after Add to Bag; /profile is blank for guests.</td></tr>
+</table></div>
+
+<h2>Passed checks</h2>
+<div class="card"><table>
+<tr><th>Area</th><th>Check</th></tr>
+<tr><td>Home</td><td>Loads with no console errors; the mega menu opens</td></tr>
+<tr><td>Category</td><td>All 10 categories load; filters, empty state and Clear work</td></tr>
+<tr><td>Listing</td><td>Sort and filter results are correct</td></tr>
+<tr><td>Product page</td><td>Size validation; pincode check rejects bad input and accepts a valid pincode</td></tr>
+<tr><td>Bag math</td><td>Single item, qty 2, two coupons, and multi-item totals across Online, Partial COD and Full COD</td></tr>
+<tr><td>Coupons</td><td>Per-item list with a BEST tag; coupons for one item are mutually exclusive</td></tr>
+<tr><td>Payment</td><td>Full COD selection moves the highlight and drops the online discount</td></tr>
+<tr><td>Qty / Remove</td><td>Quantity limits hold; remove asks to confirm and totals update</td></tr>
+<tr><td>Guest checkout</td><td>Place Order opens the OTP modal with input validation</td></tr>
+<tr><td>Wishlist / Account</td><td>Guest wishlist prompts login; My Orders shows an empty state</td></tr>
+<tr><td>Static pages</td><td>Terms, Refund Policy, Privacy Policy and Contact Us load</td></tr>
+</table></div>
+
+<p class="muted" style="margin-top:24px">Still to test: admin and signed-in flows (product create/edit, order lifecycle, cancellation) and the F5 stock check.</p>
+</main></body></html>

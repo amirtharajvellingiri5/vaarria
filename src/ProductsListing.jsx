@@ -1,7 +1,8 @@
 import { useState, useMemo, useRef, useEffect, useCallback } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { useNavigate, useParams, Link } from 'react-router-dom'
+import { useNavigate, useParams, useSearchParams, Link } from 'react-router-dom'
+import NotFound from './NotFound'
 import { useCartStore } from './store/cartStore'
 import {
   ShoppingBag,
@@ -764,6 +765,9 @@ const ListingPage = () => {
   const { slug } = useParams()
   const category = ADMIN_CATEGORIES.find((c) => c.slug === slug)
   const categoryId = category ? category.category_id : null
+  const [searchParams] = useSearchParams()
+  const q = (searchParams.get('q') || '').trim().toLowerCase()
+  useEffect(() => setCurrentPage(1), [q])
 
   const { data: siblingCategories = [] } = useQuery({
     queryKey: ['siblings', categoryId],
@@ -814,14 +818,6 @@ const ListingPage = () => {
     }),
   })
 
-  const formatTitleFromSlug = (s) =>
-    s
-      ? s
-          .split('-')
-          .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-          .join(' ')
-      : 'Products'
-
   const handleFilterChange = useCallback(
     (filterKey, value, checked) => {
       if (filterKey === 'category' && checked) {
@@ -866,12 +862,13 @@ const ListingPage = () => {
   // Client-side fallback sort (if API doesn't sort)
   const sortedProducts = useMemo(() => {
     if (!products) return []
-    const list = [...products]
+    // ponytail: client-side name match over the already-fetched list; server search when the catalog outgrows one fetch
+    const list = q ? products.filter((p) => p.name?.toLowerCase().includes(q)) : [...products]
     if (sortBy === 'price-low') list.sort((a, b) => a.price - b.price)
     else if (sortBy === 'price-high') list.sort((a, b) => b.price - a.price)
     else if (sortBy === 'rating') list.sort((a, b) => b.rating - a.rating)
     return list
-  }, [products, sortBy])
+  }, [products, sortBy, q])
 
   const totalPages = Math.max(
     1,
@@ -884,6 +881,8 @@ const ListingPage = () => {
 
   const isLoading = productsLoading || filtersLoading
 
+  if (slug && !category) return <NotFound />
+
   return (
     <div className='min-h-screen' style={{ background: '#F9F6F0' }}>
       <Navbar />
@@ -895,11 +894,11 @@ const ListingPage = () => {
             <a href='/' style={{ color: '#C9A84C', textDecoration: 'none' }}>Home</a>
             <span style={{ margin: '0 6px' }}>›</span>
             <span style={{ color: '#666' }}>
-              {category ? category.name : slug ? formatTitleFromSlug(slug) : 'Products'}
+              {category ? category.name : q ? `Results for "${searchParams.get('q').trim()}"` : 'Products'}
             </span>
           </p>
           <h1 style={{ fontSize: '1.35rem', fontWeight: 700, color: '#1a1a1a', display: 'inline-block', paddingBottom: '6px', borderBottom: '2px solid #C9A84C', fontFamily: "'Playfair Display', Georgia, serif" }}>
-            {category ? category.name : slug ? formatTitleFromSlug(slug) : 'Products'}
+            {category ? category.name : q ? `Results for "${searchParams.get('q').trim()}"` : 'Products'}
           </h1>
         </div>
 

@@ -1197,7 +1197,8 @@ export default function ProductDetail() {
     : null
   // A roll at/above the selling price saves nothing — the backend (offers.py) drops
   // zero-value deals too, so fall back to the stored coupon exactly like it does.
-  const deal = hourlyDeal && hourlyDeal.price < product.price ? hourlyDeal : null
+  // ponytail: headline the best offer — the bag applies the bigger one too (itemOffers sorts best first)
+  const deal = hourlyDeal && hourlyDeal.price < (product.coupon?.effectivePrice ?? product.price) ? hourlyDeal : null
   const dealSavings = deal ? Math.max(0, Math.round(product.price - deal.price)) : 0
 
   // Sarees don't show a size selector; single-size products don't need one either —

@@ -45,11 +45,16 @@ const pruneCoupons = (applied, items) => {
   return next.size === applied.size ? applied : next
 }
 
+// ponytail: coupon picks survive a reload (F11); storage can throw (private mode), so it's best-effort.
+const COUPON_KEY = 'vaarria_applied_coupons'
+const loadCoupons = () => { try { return new Map(JSON.parse(localStorage.getItem(COUPON_KEY)) || []) } catch { return new Map() } }
+const saveCoupons = (m) => { try { localStorage.setItem(COUPON_KEY, JSON.stringify([...m])) } catch {} return m }
+
 export const useBagStore = create((set, get) => ({
   items: [],
 
   // couponKey(item) -> the coupon code the customer picked for that product
-  appliedCoupons: new Map(),
+  appliedCoupons: loadCoupons(),
 
   toggleCoupon: (bagId, code) =>
     set((s) => {
@@ -61,7 +66,7 @@ export const useBagStore = create((set, get) => ({
       const next = new Map(s.appliedCoupons)
       if (next.get(key) === picked) next.delete(key)
       else next.set(key, picked)
-      return { appliedCoupons: next }
+      return { appliedCoupons: saveCoupons(next) }
     }),
 
   getCouponSavings: () => {
@@ -76,7 +81,7 @@ export const useBagStore = create((set, get) => ({
 
   // ponytail: a removed line takes its applied coupon with it, whichever path removed it.
   setItems: (items) =>
-    set((s) => ({ items, appliedCoupons: pruneCoupons(s.appliedCoupons, items) })),
+    set((s) => ({ items, appliedCoupons: saveCoupons(pruneCoupons(s.appliedCoupons, items)) })),
 
   addGuestItem: (item) => {
     const existing = getGuestBag()
