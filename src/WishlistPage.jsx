@@ -9,7 +9,7 @@ import './constants/global.css'
 
 const GOLD = '#C9A84C'
 const NAVY = '#050C1C'
-const PRODUCTS_API = 'https://products-api.chatoyantvortex.workers.dev/product?id='
+const PRODUCTS_API = '/api/products/product?id='
 import { ORDERS_URL } from './config'
 const ORDERS = ORDERS_URL
 

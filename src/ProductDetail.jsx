@@ -197,7 +197,7 @@ async function fetchProduct(productId) {
   // KV is refreshed (e.g. after an order) the worker returns the latest JSON, so
   // the PDP never shows stale sold-out / quantity data.
   const res = await fetch(
-    `https://products-api.chatoyantvortex.workers.dev/product?id=${productId}`,
+    `/api/products/product?id=${productId}`,
     { cache: 'no-cache' },
   )
   if (!res.ok) {
@@ -1251,7 +1251,7 @@ export default function ProductDetail() {
           const ids = product_ids.filter(id => String(id) !== String(productId)).slice(0, 12)
           const products = await Promise.all(
             ids.map(id =>
-              fetch(`https://products-api.chatoyantvortex.workers.dev/product?id=${id}`)
+              fetch(`/api/products/product?id=${id}`)
                 .then(r => r.json())
                 .then(raw => ({
                   id,

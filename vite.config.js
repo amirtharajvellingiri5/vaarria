@@ -19,12 +19,8 @@ export default defineConfig({
     },
   },
   server: {
-    proxy: {
-      '/api': {
-        target: 'https://b1ubc4krn6.execute-api.ap-south-1.amazonaws.com/prod',
-        changeOrigin: true,
-      },
-    },
+    // ponytail: dev goes through the prod router too, so workers/api-router is the only route map.
+    proxy: { '/api': { target: 'https://vaarria.com', changeOrigin: true } },
   },
 })
   

@@ -58,7 +58,7 @@ function useRecentlyViewed(customerId) {
         const ids = product_ids.slice(0, 10)
         const results = await Promise.all(
           ids.map(id =>
-            fetch(`https://products-api.chatoyantvortex.workers.dev/product?id=${id}`)
+            fetch(`/api/products/product?id=${id}`)
               .then(r => r.json())
               .then(raw => ({
                 id,
