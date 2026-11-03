@@ -103,7 +103,7 @@ const fetchProductsByCategory = async (
     const items = []
     let page = 1
     while (true) {
-      const response = await fetch(`${PRODUCTS_API_URL}/products?page=${page}`)
+      const response = await fetch(`${PRODUCTS_API_URL}/products?page=${page}`, { cache: 'no-cache' })
       if (!response.ok) break
       const data = await response.json()
       items.push(...(data.data || []))
@@ -192,6 +192,7 @@ const fetchProductsByCategory = async (
 
   const res = await fetch(
     `${PRODUCTS_API_URL}/products/by-category?${params.toString()}`,
+    { cache: 'no-cache' }, // revalidate via ETag each load: 304 if unchanged, fresh list after a sync
   )
   if (!res.ok) return []
 
@@ -787,6 +788,7 @@ const ListingPage = () => {
       if (!categoryId) return {}
       const res = await fetch(
         `${PRODUCTS_API_URL}/products/by-category/filters?category_id=${categoryId}`,
+        { cache: 'no-cache' },
       )
       if (!res.ok) return {}
       return res.json()
