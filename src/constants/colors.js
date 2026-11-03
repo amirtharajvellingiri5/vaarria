@@ -47,3 +47,31 @@ export const COLOR_MAP = {
 // shared formatter
 export const formatColorLabel = (key) =>
   key.replace(/\b\w/g, (c) => c.toUpperCase())
+// Shade → primary family, so the filter shows one swatch per family.
+const FAMILY_OF = {
+  black: 'Black', white: 'White', cream: 'White', ivory: 'White', off: 'White',
+  grey: 'Grey', gray: 'Grey', silver: 'Grey',
+  brown: 'Brown', beige: 'Brown', coffee: 'Brown', khaki: 'Brown', tan: 'Brown',
+  red: 'Red', maroon: 'Red', wine: 'Red', burgundy: 'Red',
+  pink: 'Pink', rose: 'Pink', fuchsia: 'Pink', magenta: 'Pink', mauve: 'Pink',
+  orange: 'Orange', rust: 'Orange', peach: 'Orange', coral: 'Orange',
+  yellow: 'Yellow', mustard: 'Yellow', gold: 'Yellow', golden: 'Yellow', lemon: 'Yellow',
+  green: 'Green', olive: 'Green', mint: 'Green', emerald: 'Green', pista: 'Green', sage: 'Green',
+  blue: 'Blue', navy: 'Blue', teal: 'Blue', turquoise: 'Blue', aqua: 'Blue', indigo: 'Blue', denim: 'Blue',
+  purple: 'Purple', lavender: 'Purple', lilac: 'Purple', plum: 'Purple', violet: 'Purple',
+}
+
+export const FAMILY_HEX = {
+  Black: '#1a1a1a', White: '#ffffff', Grey: '#9e9e9e', Brown: '#6d4c41',
+  Red: '#e53935', Pink: '#f48fb1', Orange: '#fb8c00', Yellow: '#fdd835',
+  Green: '#43a047', Blue: '#1e63c4', Purple: '#8e24aa', Multicolor: null,
+}
+
+// Base colour is usually the last word ("Mustard Yellow", "Rust Red"); combos like "Black & Red" → Multicolor.
+export const colorFamily = (name) => {
+  const s = (name || '').toLowerCase()
+  if (/[&,/+]| and /.test(s)) return 'Multicolor'
+  const words = s.split(/[\s-]+/).reverse()
+  for (const w of words) if (FAMILY_OF[w]) return FAMILY_OF[w]
+  return 'Multicolor'
+}

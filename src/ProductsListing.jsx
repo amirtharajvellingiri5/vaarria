@@ -25,7 +25,7 @@ import WishlistLoginModal from './modals/WishlistLoginModal'
 
 import logo from './assets/logo.jpg'
 
-import { COLOR_MAP, formatColorLabel } from './constants/colors'
+import { COLOR_MAP, FAMILY_HEX, colorFamily } from './constants/colors'
 import { PRODUCT_CATEGORY_NAMES, ADMIN_CATEGORIES } from './utils/categories'
 import { INVENTORY_URL } from './config'
 
@@ -282,8 +282,8 @@ const FilterSection = ({
           : filterKey === 'color'
           ? (
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-                {splitCsvValues(items).map((item) => {
-                  const hex = COLOR_MAP[item.toLowerCase()] || null
+                {Object.keys(FAMILY_HEX).filter((f) => splitCsvValues(items).some((c) => colorFamily(c) === f)).map((item) => {
+                  const hex = FAMILY_HEX[item]
                   const isSelected = selectedFilters[filterKey]?.includes(item) || false
                   return (
                     <button
@@ -776,12 +776,6 @@ const ListingPage = () => {
     enabled: !!categoryId,
   })
 
-  // Products query — refetches whenever filters or sort change
-  const { data: products, isLoading: productsLoading } = useQuery({
-    queryKey: ['products', categoryId, selectedFilters, sortBy],
-    queryFn: () => fetchProductsByCategory(categoryId, selectedFilters, sortBy),
-  })
-
   const { data: availableFilters } = useQuery({
     queryKey: ['availableFilters', categoryId],
     queryFn: async () => {
@@ -793,6 +787,18 @@ const ListingPage = () => {
       if (!res.ok) return {}
       return res.json()
     },
+  })
+
+  // Colour filter holds families ("Blue"); the API matches exact shades, so expand to every shade in that family.
+  const queryFilters = useMemo(() => ({
+    ...selectedFilters,
+    color: (availableFilters?.colors || []).filter((c) => selectedFilters.color?.includes(colorFamily(c))),
+  }), [selectedFilters, availableFilters])
+
+  // Products query — refetches whenever filters or sort change
+  const { data: products, isLoading: productsLoading } = useQuery({
+    queryKey: ['products', categoryId, queryFilters, sortBy],
+    queryFn: () => fetchProductsByCategory(categoryId, queryFilters, sortBy),
   })
 
   const { data: filters, isLoading: filtersLoading } = useQuery({
