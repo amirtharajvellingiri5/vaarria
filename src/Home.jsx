@@ -5,12 +5,11 @@ import Navbar from './Navbar'
 import Footer from './Footer'
 import { useAuthStore } from './store/authStore'
 import { authFetch } from './utils/authFetch'
-import { CATALOG_URL, ORDERS_URL } from './config'
+import { ORDERS_URL } from './config'
 import { cardImg } from './utils/img'
 
 const GOLD = '#C9A84C'
 const NAVY = '#050C1C'
-const LISTING = CATALOG_URL
 const CDN = 'https://cdn.vaarria.com/app/images/'
 
 const CATEGORIES = [
@@ -40,9 +39,9 @@ function useNewArrivals() {
   useEffect(() => {
     // ponytail: index.html starts this during HTML parse — by the time React
     // mounts it's usually already resolved, so this is just a handoff.
-    const pending = window.__listings ?? fetch(`${LISTING}/listings?page_size=8`).then(r => r.json())
+    const pending = window.__listings ?? fetch('/api/products/products?page=1').then(r => r.json())
     pending
-      .then(d => { setProducts(d?.data ?? []); setLoading(false) })
+      .then(d => { setProducts((d?.data ?? []).slice(0, 8)); setLoading(false) })
       .catch(() => setLoading(false))
   }, [])
   return { products, loading }

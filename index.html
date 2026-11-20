@@ -25,14 +25,21 @@
     <script>
       // ponytail: kick the listings request off during HTML parse instead of
       // from a useEffect after the JS graph resolves; Home awaits this promise.
-      window.__listings = fetch('/api/catalog/listings?page_size=8')
+      // KV worker (edge-cached ~50ms) instead of the catalog Lambda (~760ms cold).
+      window.__listings = fetch('/api/products/products?page=1')
         .then(function (r) { return r.json() })
         .then(function (d) {
-          (d.data || []).slice(0, 8).forEach(function (p) {
+          // Preload the SAME resized URLs cardImg() renders (src/utils/img.js),
+          // not the ~275KB originals. Keep in sync with cardImg.
+          var T = 'https://cdn.vaarria.com/cdn-cgi/image/width=W,fit=scale-down,format=auto,quality=80,onerror=redirect/app/images/'
+          ;(d.data || []).slice(0, 4).forEach(function (p) {
             if (!p.main_image) return
+            var u = function (w) { return T.replace('W', w) + p.main_image }
             var l = document.createElement('link')
             l.rel = 'preload'; l.as = 'image'
-            l.href = 'https://cdn.vaarria.com/app/images/' + p.main_image
+            l.href = u(400)
+            l.setAttribute('imagesrcset', [300, 400, 600, 800].map(function (w) { return u(w) + ' ' + w + 'w' }).join(', '))
+            l.setAttribute('imagesizes', '(min-width: 1024px) 25vw, 50vw')
             document.head.appendChild(l)
           })
           return d
