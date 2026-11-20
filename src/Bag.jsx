@@ -35,6 +35,7 @@ import { AUTH_URL, ORDERS_URL } from './config'
 import { getGuestBag, saveGuestBag, clearGuestBag } from './store/bagStore'
 import { authFetch } from './utils/authFetch'
 import { img } from './utils/img'
+import { getTurnstileToken } from './utils/turnstile'
 
 // Orders handler (DynamoDB-backed) — all bag APIs go here
 const ORDERS_API_BASE = ORDERS_URL
@@ -1107,6 +1108,7 @@ function PricePanel({ onNeedAuth, triggerPay, onTriggerConsumed, authReady }) {
             cod_remaining: baseTotal,
             receipt: `order_${Date.now()}`,
             items: orderItems,
+            turnstile_token: await getTurnstileToken(),
           }),
         })
         const data = await res.json().catch(() => ({}))
@@ -1138,6 +1140,7 @@ function PricePanel({ onNeedAuth, triggerPay, onTriggerConsumed, authReady }) {
           cod_remaining: paymentMode === 'cod' ? codFinal - 49 : 0,
           receipt: `order_${Date.now()}`,
           items: orderItems,
+          turnstile_token: await getTurnstileToken(),
         }),
       })
       const data = await createRes.json().catch(() => ({}))
@@ -1691,7 +1694,7 @@ function DrawerOtpStep({ phone, onBack, onVerified }) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ mobile_no: phone, access_token: widgetData?.message }),
+        body: JSON.stringify({ mobile_no: phone, access_token: widgetData?.message, turnstile_token: await getTurnstileToken() }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.detail || 'Invalid OTP')

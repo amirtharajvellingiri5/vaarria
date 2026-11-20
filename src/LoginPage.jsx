@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import Navbar from './Navbar'
 import { useAuthStore } from './store/authStore'
 import { AUTH_URL } from './config'
+import { getTurnstileToken } from './utils/turnstile'
 
 // ─── MSG91 Config — replace with your real values ─────────────────────────────
 const MSG91_WIDGET_ID = '366568623534393236303030' // widgetId from MSG91 dashboard
@@ -337,6 +338,7 @@ function OtpScreen({ phone, onBack, onVerified, onLogin }) {
             body: JSON.stringify({
               mobile_no: phone,
               access_token: widgetData?.message,
+              turnstile_token: await getTurnstileToken(),
             }),
           },
         )

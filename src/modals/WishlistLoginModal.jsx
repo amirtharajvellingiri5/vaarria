@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { X, Heart } from 'lucide-react'
 import { useAuthStore } from '../store/authStore'
 import { AUTH_URL } from '../config'
+import { getTurnstileToken } from '../utils/turnstile'
 
 const MSG91_WIDGET_ID = '366568623534393236303030'
 const MSG91_TOKEN_AUTH = '147259Txua8xfclqV69fd54e9P1'
@@ -124,7 +125,7 @@ function OtpStep({ phone, onBack, onSuccess }) {
       const res = await fetch(`${AUTH_URL}/api/auth/msg91-login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ mobile_no: phone, access_token: widgetData?.message }),
+        body: JSON.stringify({ mobile_no: phone, access_token: widgetData?.message, turnstile_token: await getTurnstileToken() }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.detail || 'Invalid OTP')
