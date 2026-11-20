@@ -34,6 +34,7 @@ const NAVY = '#050C1C'
 
 import { ORDERS_URL } from './config'
 import { authHeaders } from './utils/authHeaders'
+import { img } from './utils/img'
 const ORDERS_API_BASE = ORDERS_URL
 const CDN = 'https://cdn.vaarria.com/app/images/'
 
@@ -580,7 +581,7 @@ function ReturnModal({ order, onClose, onReturned }) {
                     {selected.has(item.id) && <span style={{ color: '#fff', fontSize: 11, fontWeight: 700 }}>✓</span>}
                   </div>
                   {item.image && (
-                    <img src={item.image} alt={item.name} style={{ width: 40, height: 50, objectFit: 'cover', borderRadius: 4, border: '1px solid #e8e0d0' }} />
+                    <img src={img(item.image, 160)} alt={item.name} style={{ width: 40, height: 50, objectFit: 'cover', borderRadius: 4, border: '1px solid #e8e0d0' }} />
                   )}
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <p style={{ fontSize: 12, fontWeight: 600, color: NAVY, margin: '0 0 2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.name}</p>
@@ -1154,7 +1155,7 @@ function OrderCard({ order }) {
             }}
           >
             <img
-              src={item.image}
+              src={img(item.image, 160)}
               alt={item.name}
               style={{
                 width: 52, height: 64, objectFit: 'cover', borderRadius: 6,

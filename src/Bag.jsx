@@ -34,6 +34,7 @@ import { useAuthStore } from './store/authStore'
 import { AUTH_URL, ORDERS_URL } from './config'
 import { getGuestBag, saveGuestBag, clearGuestBag } from './store/bagStore'
 import { authFetch } from './utils/authFetch'
+import { img } from './utils/img'
 
 // Orders handler (DynamoDB-backed) — all bag APIs go here
 const ORDERS_API_BASE = ORDERS_URL
@@ -566,7 +567,7 @@ function ItemCard({ item }) {
         >
           <div style={{ ...styles.itemThumb, background: item.color }}>
             <img
-              src={item.image?.startsWith('http') ? item.image : `https://cdn.vaarria.com/app/images/${item.image}`}
+              src={img(item.image, 240)}
               alt={item.name}
               loading='lazy'
               decoding='async'

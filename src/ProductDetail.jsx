@@ -30,6 +30,7 @@ import WishlistLoginModal from './modals/WishlistLoginModal'
 import { ORDERS_URL, CATALOG_URL } from './config'
 import { authFetch } from './utils/authFetch'
 import { ADMIN_CATEGORIES } from './utils/categories'
+import { img, srcSet, cardImg } from './utils/img'
 
 // ─── Mock API Response ────────────────────────────────────────────────────────
 const MOCK_PRODUCT_API_RESPONSE = {
@@ -228,8 +229,10 @@ async function fetchProduct(productId) {
   const mediaItems = [
     ...images.map((src, i) => ({
       type: 'image',
-      src,
-      thumb: src,
+      src: img(src, 2000), // full-screen slider
+      main: img(src, 1200),
+      mainSrcSet: srcSet(src, [600, 900, 1200, 1600]),
+      thumb: img(src, 240),
       placeholder: `https://placehold.co/1080x1440/ec4899/ffffff?text=Image+${i + 1}`,
     })),
     ...productVideos,
@@ -798,8 +801,10 @@ function ProductGallery({ mediaItems, onOpenSlider }) {
               src={
                 imgErrors[`main-${activeIndex}`]
                   ? active.placeholder
-                  : active.src
+                  : active.main || active.src
               }
+              srcSet={imgErrors[`main-${activeIndex}`] ? undefined : active.mainSrcSet}
+              sizes='(min-width: 1024px) 50vw, 100vw'
               alt='product view'
               fetchPriority='high'
               onError={() =>
@@ -1114,7 +1119,7 @@ function FeaturedBanner({ productId }) {
       >
         <div style={{ position: 'absolute', inset: 0, opacity: fading ? 0 : 1, transition: 'opacity 0.3s ease' }}>
           <img
-            src={p.image}
+            src={img(p.image, 800)}
             alt={p.title}
             loading='lazy'
             decoding='async'
@@ -1632,7 +1637,7 @@ export default function ProductDetail() {
                   {r.images.map((image, imageIndex) => (
                     <img
                       key={imageIndex}
-                      src={image}
+                      src={img(image, 240)}
                       alt=''
                       loading='lazy'
                       decoding='async'
@@ -2171,7 +2176,7 @@ export default function ProductDetail() {
             {relatedProducts.map(item => (
               <div key={item.id} style={{ flexShrink: 0, width: 160, cursor: 'pointer' }} onClick={() => window.open(`/product/${item.id}`, '_blank')}>
                 <div style={{ width: 160, height: 213, borderRadius: 8, overflow: 'hidden', background: '#f3f0eb', border: '1px solid #e8e0d0', marginBottom: 8 }}>
-                  <img src={item.image} alt={item.title} loading='lazy' decoding='async' style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top' }} onError={e => { e.target.style.display = 'none' }} />
+                  <img {...cardImg(item.image)} alt={item.title} loading='lazy' decoding='async' style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top' }} onError={e => { e.target.style.display = 'none' }} />
                 </div>
                 <div style={{ fontSize: 13, fontWeight: 600, color: '#1f2937', lineHeight: 1.3, WebkitLineClamp: 2, display: '-webkit-box', WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{item.title}</div>
                 <div style={{ fontSize: 13, fontWeight: 700, color: '#C9A84C', marginTop: 4 }}>₹{item.price}</div>
@@ -2192,7 +2197,7 @@ export default function ProductDetail() {
             {historyProducts.map(item => (
               <div key={item.id} style={{ flexShrink: 0, width: 160, cursor: 'pointer' }} onClick={() => window.open(`/product/${item.id}`, '_blank')}>
                 <div style={{ width: 160, height: 213, borderRadius: 8, overflow: 'hidden', background: '#f3f0eb', border: '1px solid #e8e0d0', marginBottom: 8 }}>
-                  <img src={item.image} alt={item.title} loading='lazy' decoding='async' style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top' }} onError={e => { e.target.style.display = 'none' }} />
+                  <img {...cardImg(item.image)} alt={item.title} loading='lazy' decoding='async' style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top' }} onError={e => { e.target.style.display = 'none' }} />
                 </div>
                 <div style={{ fontSize: 13, fontWeight: 600, color: '#1f2937', lineHeight: 1.3, WebkitLineClamp: 2, display: '-webkit-box', WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{item.title}</div>
                 <div style={{ fontSize: 13, fontWeight: 700, color: '#C9A84C', marginTop: 4 }}>₹{item.price}</div>
