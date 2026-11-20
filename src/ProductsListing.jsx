@@ -28,6 +28,7 @@ import logo from './assets/logo.jpg'
 import { COLOR_MAP, FAMILY_HEX, colorFamily } from './constants/colors'
 import { PRODUCT_CATEGORY_NAMES, ADMIN_CATEGORIES } from './utils/categories'
 import { INVENTORY_URL } from './config'
+import { cardImg } from './utils/img'
 
 // ── Swatch helper ─────────────────────────────────────────────────────────────
 const ColorSwatch = ({ name, size = 14 }) => {
@@ -532,7 +533,7 @@ const ProductCard = ({ product, onViewDetails, onWishlistLoginNeeded }) => {
     >
       <div className='relative aspect-[3/4] overflow-hidden' style={{ background: '#F1E0C8' }}>
         <img
-          src={product.image}
+          {...cardImg(product.image)}
           alt={product.name}
           loading='lazy'
           decoding='async'

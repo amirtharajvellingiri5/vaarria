@@ -11,6 +11,7 @@ const GOLD = '#C9A84C'
 const NAVY = '#050C1C'
 const PRODUCTS_API = '/api/products/product?id='
 import { ORDERS_URL } from './config'
+import { cardImg } from './utils/img'
 const ORDERS = ORDERS_URL
 
 async function fetchProductCard(id) {
@@ -131,7 +132,7 @@ export default function WishlistPage() {
                 {/* Image */}
                 <div style={{ aspectRatio: '3/4', background: '#F1E0C8', overflow: 'hidden' }}>
                   <img
-                    src={p.image}
+                    {...cardImg(p.image)}
                     alt={p.title}
                     style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top' }}
                     onError={e => { e.target.style.display = 'none' }}

@@ -6,6 +6,7 @@ import Footer from './Footer'
 import { useAuthStore } from './store/authStore'
 import { authFetch } from './utils/authFetch'
 import { CATALOG_URL, ORDERS_URL } from './config'
+import { cardImg } from './utils/img'
 
 const GOLD = '#C9A84C'
 const NAVY = '#050C1C'
@@ -198,7 +199,7 @@ export default function Home() {
                 }}>
                   {priceImages[i]?.main_image && (
                     <img
-                      src={`${CDN}${priceImages[i].main_image}`}
+                      {...cardImg(priceImages[i].main_image)}
                       alt=''
                       loading="lazy"
                       style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top' }}
@@ -309,7 +310,7 @@ export default function Home() {
                   <div style={{ background: '#F1E0C8', borderRadius: 10, overflow: 'hidden', aspectRatio: '3/4', marginBottom: 10, border: '1px solid #e8e0d0' }}>
                     {p.main_image && (
                       <img
-                        src={`${CDN}${p.main_image}`}
+                        {...cardImg(p.main_image)}
                         alt={p.title}
                         fetchPriority="high"
                         decoding="async"
@@ -370,7 +371,7 @@ export default function Home() {
                 >
                   <div style={{ background: '#F1E0C8', borderRadius: 10, overflow: 'hidden', aspectRatio: '3/4', marginBottom: 10, border: '1px solid #e8e0d0' }}>
                     {p.image && (
-                      <img src={p.image} alt={p.title} loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top' }} onError={e => { e.target.style.display = 'none' }} />
+                      <img {...cardImg(p.image)} alt={p.title} loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top' }} onError={e => { e.target.style.display = 'none' }} />
                     )}
                   </div>
                   <p style={{ fontSize: 12, fontWeight: 600, color: '#1f2937', lineHeight: 1.35, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', marginBottom: 4 }}>{p.title}</p>

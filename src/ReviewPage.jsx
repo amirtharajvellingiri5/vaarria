@@ -8,6 +8,7 @@ import './constants/global.css'
 
 import { ORDERS_URL } from './config'
 import { authHeaders } from './utils/authHeaders'
+import { img } from './utils/img'
 const ORDERS_API_BASE = ORDERS_URL
 const CDN = 'https://cdn.vaarria.com/app/images/'
 const MAX_PHOTOS = 3
@@ -257,7 +258,7 @@ export default function ReviewPage() {
                   >
                     {item.image && (
                       <img
-                        src={item.image}
+                        src={img(item.image, 160)}
                         alt=''
                         style={{ width: 44, height: 54, objectFit: 'cover', borderRadius: 6, flexShrink: 0 }}
                       />

@@ -1,6 +1,7 @@
 import React from 'react'
 import { X, Check, Tag } from 'lucide-react'
 import { itemOffers, offerAmount, couponKey } from '../store/bagStore'
+import { img } from '../utils/img'
 
 const GOLD = '#C9A84C'
 const NAVY = '#050C1C'
@@ -278,7 +279,7 @@ function CouponRow({ item, offer, isApplied, isBest, discount, onToggle, disable
         }}
       >
         <img
-          src={item.image?.startsWith('http') ? item.image : `https://cdn.vaarria.com/app/images/${item.image}`}
+          src={img(item.image, 240)}
           alt={item.name}
           style={{ width: '100%', height: '100%', objectFit: 'cover' }}
         />
