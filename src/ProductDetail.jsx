@@ -27,7 +27,7 @@ import { useAuthStore } from './store/authStore'
 import { useBagStore } from './store/bagStore'
 import { useWishlistStore } from './store/wishlistStore'
 import WishlistLoginModal from './modals/WishlistLoginModal'
-import { ORDERS_URL, CATALOG_URL } from './config'
+import { ORDERS_URL } from './config'
 import { authFetch } from './utils/authFetch'
 import { ADMIN_CATEGORIES } from './utils/categories'
 import { img, srcSet, cardImg } from './utils/img'
@@ -1072,7 +1072,7 @@ function FeaturedBanner({ productId }) {
   const [fading, setFading] = useState(false)
 
   useEffect(() => {
-    fetch(`${CATALOG_URL}/listings?page_size=30`)
+    fetch('/api/products/products?page=1') // KV edge, not the catalog Lambda
       .then(r => r.json())
       .then(data => {
         const list = data.listings ?? data.products ?? data.data ?? data ?? []
@@ -1236,7 +1236,6 @@ export default function ProductDetail() {
     if (!product || !productId) return
     const cid = customer?.customer_id
     const ORDERS = ORDERS_URL
-    const LISTING = CATALOG_URL
 
     // Record view (best-effort, only when logged in)
     if (cid) {
@@ -1274,7 +1273,7 @@ export default function ProductDetail() {
 
     // Related products slider — no category filter until listing DB has category_id populated
     {
-      fetch(`${LISTING}/listings?page_size=13`)
+      fetch('/api/products/products?page=1') // KV edge, not the catalog Lambda
         .then(r => r.json())
         .then(data => {
           const items = (data.listings ?? data.products ?? data.data ?? data ?? [])
