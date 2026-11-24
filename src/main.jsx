@@ -11,6 +11,7 @@ import { useAuthStore } from './store/authStore'
 import AdminGate from './admin/AdminGate.jsx'
 import RequireAuth from './RequireAuth.jsx'
 import { seedE2eAuth } from './utils/e2e'
+import { GridSkeleton, DetailSkeleton, ListSkeleton, FormSkeleton, TextSkeleton } from './RouteSkeletons.jsx'
 
 // ponytail: Home stays eager — it's the landing route, so lazying it would only
 // buy a second round-trip before first paint. Everything else ships as its own
@@ -52,35 +53,38 @@ const pageSkeleton = (
   </div>
 )
 
+// per-route fallback so a downloading chunk shows that page's shape, not the generic shell
+const page = (el, fb) => <Suspense fallback={fb}>{el}</Suspense>
+
 const queryClient = new QueryClient()  // ← add
 
 const router = createBrowserRouter([
   { path: '/', element: <Home /> },
-  { path: '/product/:id', element: <ProductDetail /> },
-  { path: '/products', element: <Products /> },
-  { path: '/:slug', element: <Products /> },
-  { path: '/login', element: <LoginPage /> },
-  { path: '/bag', element: <BagPage /> },
-  { path: '/contact-us', element: <ContactUsPage /> },
-  { path: '/terms', element: <TermsAndConditionsPage/> },
-  { path: '/orders', element: <RequireAuth><OrdersPage /></RequireAuth> },
-  { path: '/review', element: <ReviewPage /> },
-  { path: '/wishlist', element: <WishlistPage /> },
-  { path: '/profile', element: <ProfilePage /> },
-  { path: '/refund-policy', element: <RefundPolicyPage/> },
-  { path: '/privacy-policy', element: <PrivacyPolicy/> },
-  { path: '/admin/products/new', element: <AdminGate><ProductUpload /></AdminGate> },
-  { path: '/admin/', element: <AdminGate><ProductListings /></AdminGate> },
-  { path: '/admin/products/edit/:id', element: <AdminGate><ProductEdit /></AdminGate> },
-  { path: '/admin/orders', element: <AdminGate><AdminOrders/></AdminGate> },
-  { path: '/admin/products/no-stock', element: <AdminGate><NoStockProducts /></AdminGate> },
-  { path: '/admin/products/orphans', element: <AdminGate><OrphanReport /></AdminGate> },
-  { path: '/admin/products/sync', element: <AdminGate><CategorySync /></AdminGate> },
-  { path: '/test/reports', element: <AdminGate><TestReports /></AdminGate> },
-  { path: '/test/cases', element: <AdminGate><TestCases /></AdminGate> },
-  { path: '/order-success', element: <OrderSuccess /> },
-  { path: '/payment-failed', element: <PaymentFailed /> },
-  { path: '*', element: <NotFound /> },
+  { path: '/product/:id', element: page(<ProductDetail />, <DetailSkeleton />) },
+  { path: '/products', element: page(<Products />, <GridSkeleton />) },
+  { path: '/:slug', element: page(<Products />, <GridSkeleton />) },
+  { path: '/login', element: page(<LoginPage />, <FormSkeleton />) },
+  { path: '/bag', element: page(<BagPage />, <ListSkeleton />) },
+  { path: '/contact-us', element: page(<ContactUsPage />, <TextSkeleton />) },
+  { path: '/terms', element: page(<TermsAndConditionsPage/>, <TextSkeleton />) },
+  { path: '/orders', element: page(<RequireAuth><OrdersPage /></RequireAuth>, <ListSkeleton nav={false} />) },
+  { path: '/review', element: page(<ReviewPage />, <FormSkeleton nav={false} />) },
+  { path: '/wishlist', element: page(<WishlistPage />, <GridSkeleton />) },
+  { path: '/profile', element: page(<ProfilePage />, <FormSkeleton />) },
+  { path: '/refund-policy', element: page(<RefundPolicyPage/>, <TextSkeleton />) },
+  { path: '/privacy-policy', element: page(<PrivacyPolicy/>, <TextSkeleton />) },
+  { path: '/admin/products/new', element: page(<AdminGate><ProductUpload /></AdminGate>, <FormSkeleton nav={false} />) },
+  { path: '/admin/', element: page(<AdminGate><ProductListings /></AdminGate>, <ListSkeleton nav={false} />) },
+  { path: '/admin/products/edit/:id', element: page(<AdminGate><ProductEdit /></AdminGate>, <FormSkeleton nav={false} />) },
+  { path: '/admin/orders', element: page(<AdminGate><AdminOrders/></AdminGate>, <ListSkeleton nav={false} />) },
+  { path: '/admin/products/no-stock', element: page(<AdminGate><NoStockProducts /></AdminGate>, <ListSkeleton nav={false} />) },
+  { path: '/admin/products/orphans', element: page(<AdminGate><OrphanReport /></AdminGate>, <ListSkeleton nav={false} />) },
+  { path: '/admin/products/sync', element: page(<AdminGate><CategorySync /></AdminGate>, <ListSkeleton nav={false} />) },
+  { path: '/test/reports', element: page(<AdminGate><TestReports /></AdminGate>, <ListSkeleton nav={false} />) },
+  { path: '/test/cases', element: page(<AdminGate><TestCases /></AdminGate>, <ListSkeleton nav={false} />) },
+  { path: '/order-success', element: page(<OrderSuccess />, <TextSkeleton />) },
+  { path: '/payment-failed', element: page(<PaymentFailed />, <TextSkeleton />) },
+  { path: '*', element: page(<NotFound />, <TextSkeleton nav />) },
 
 ])
 
