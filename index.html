@@ -52,10 +52,15 @@
       html, body { margin: 0; background: #FAF8F4; }
       #app-skeleton { display: flex; flex-direction: column; min-height: 100vh; }
       .sk-nav { height: 60px; background: #050C1C; flex-shrink: 0; }
-      .sk-hero { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; }
-      .sk-line { border-radius: 4px; background: rgba(5,12,28,0.08); animation: skPulse 1.4s ease-in-out infinite; }
-      .sk-line-lg { width: 240px; height: 20px; }
-      .sk-line-sm { width: 160px; height: 14px; }
+      /* ponytail: shaped like Home (nav → navy hero → card row) since "/" is the cold-boot route */
+      .sk-hero { background: #050C1C; padding: clamp(40px,6vw,80px) clamp(20px,5vw,80px); display: flex; flex-direction: column; gap: 14px; }
+      .sk-hero .sk-line { background: rgba(255,255,255,.1); }
+      .sk-line { border-radius: 4px; background: #e8e0d0; animation: skPulse 1.4s ease-in-out infinite; }
+      .sk-line-lg { width: min(480px,80%); height: 32px; }
+      .sk-line-sm { width: min(320px,60%); height: 14px; }
+      .sk-btn { width: 140px; height: 42px; margin-top: 14px; }
+      .sk-row { padding: clamp(32px,5vw,56px) clamp(20px,5vw,80px); display: grid; grid-template-columns: repeat(auto-fill,minmax(180px,1fr)); gap: 16px; max-width: 1200px; margin: 0 auto; width: 100%; box-sizing: border-box; }
+      .sk-card { aspect-ratio: 3/4; border-radius: 10px; }
       @keyframes skPulse { 0%, 100% { opacity: 1 } 50% { opacity: .4 } }
     </style>
   </head>
@@ -66,6 +71,11 @@
       <div class="sk-hero">
         <div class="sk-line sk-line-lg"></div>
         <div class="sk-line sk-line-sm"></div>
+        <div class="sk-line sk-line-sm"></div>
+        <div class="sk-line sk-btn"></div>
+      </div>
+      <div class="sk-row">
+        <div class="sk-line sk-card"></div><div class="sk-line sk-card"></div><div class="sk-line sk-card"></div><div class="sk-line sk-card"></div>
       </div>
     </div></div>
     <script type="module" src="/src/main.jsx"></script>
