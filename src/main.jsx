@@ -49,6 +49,11 @@ const pageSkeleton = (
     <div className='sk-hero'>
       <div className='sk-line sk-line-lg' />
       <div className='sk-line sk-line-sm' />
+      <div className='sk-line sk-line-sm' />
+      <div className='sk-line sk-btn' />
+    </div>
+    <div className='sk-row'>
+      {[0, 1, 2, 3].map(i => <div key={i} className='sk-line sk-card' />)}
     </div>
   </div>
 )
